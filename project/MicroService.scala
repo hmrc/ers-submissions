@@ -49,9 +49,7 @@ trait MicroService {
       retrieveManaged := true
     )
     .settings(Repositories.playPublishingSettings : _*)
-//    .settings(inConfig(TemplateTest)(Defaults.testSettings): _*)
     .configs(IntegrationTest)
-//    .settings(inConfig(TemplateItTest)(Defaults.itSettings): _*)
     .settings(inConfig(IntegrationTest)(Defaults.itSettings): _*)
     .settings(
       Keys.fork in IntegrationTest := false,
@@ -61,6 +59,7 @@ trait MicroService {
       parallelExecution in IntegrationTest := false)
     .disablePlugins(sbt.plugins.JUnitXmlReportPlugin)
     .settings(resolvers += Resolver.bintrayRepo("hmrc", "releases"))
+    .settings(evictionWarningOptions in update := EvictionWarningOptions.default.withWarnTransitiveEvictions(false).withWarnDirectEvictions(false).withWarnScalaVersionEviction(false))
 }
 
 private object TestPhases {
@@ -81,7 +80,6 @@ private object Repositories {
 
   import uk.gov.hmrc._
   import PublishingSettings._
-  import NexusPublishing._
 
   lazy val playPublishingSettings : Seq[sbt.Setting[_]] = sbtrelease.ReleasePlugin.releaseSettings ++ Seq(
 
@@ -90,6 +88,5 @@ private object Repositories {
     publishArtifact in(Compile, packageDoc) := false,
     publishArtifact in(Compile, packageSrc) := false
   ) ++
-    publishAllArtefacts ++
-    nexusPublishingSettings
+    publishAllArtefacts
 }
