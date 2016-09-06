@@ -9,9 +9,7 @@ class IntegrationServer(override val testName: String, extraConfig: Map[String, 
 
   import ExternalService.runFromJar
 
-  override protected val externalServices: Seq[ExternalService] = Seq(
-    "auth"
-  ).map(runFromJar(_))
+  override protected val externalServices: Seq[ExternalService] = Seq().map(runFromJar(_))
 
   override val additionalConfig = extraConfig
 }
