@@ -230,7 +230,8 @@ object EMI {
         )
       )
     ),
-    trustees = None
+    trustees = None,
+    status = Some("saved")
   )
 
 
@@ -250,6 +251,7 @@ object EMI {
     ),
     schemeOrganiser = None,
     companies = None,
-    trustees = None
+    trustees = None,
+    status = Some("saved")
   )
 }

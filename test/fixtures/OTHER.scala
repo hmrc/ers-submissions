@@ -330,7 +330,8 @@ object OTHER {
         )
       )
     ),
-    trustees = None
+    trustees = None,
+    status = Some("saved")
   )
 
 
@@ -350,7 +351,8 @@ object OTHER {
     ),
     schemeOrganiser = None,
     companies = None,
-    trustees = None
+    trustees = None,
+    status = Some("saved")
   )
 
 }

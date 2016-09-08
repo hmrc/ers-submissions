@@ -177,7 +177,8 @@ object SIP {
           trusteeDetailsMin
         )
       )
-    )
+    ),
+    status = Some("saved")
   )
 
 
@@ -197,7 +198,8 @@ object SIP {
     ),
     schemeOrganiser = None,
     companies = None,
-    trustees = None
+    trustees = None,
+    status = Some("saved")
   )
 
   val metadataNilReturnWithAllAltAmmends: ErsSummary = ErsSummary(
@@ -224,7 +226,8 @@ object SIP {
     ),
     schemeOrganiser = None,
     companies = None,
-    trustees = None
+    trustees = None,
+    status = Some("saved")
   )
 
   val metadataNilReturnWithSomeAltAmmends: ErsSummary = ErsSummary(
@@ -251,7 +254,8 @@ object SIP {
     ),
     schemeOrganiser = None,
     companies = None,
-    trustees = None
+    trustees = None,
+    status = Some("saved")
   )
 
 }

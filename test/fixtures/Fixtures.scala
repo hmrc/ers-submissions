@@ -61,7 +61,8 @@ object Fixtures extends MockitoSugar {
     groupService = None,
     schemeOrganiser = None,
     companies = None,
-    trustees = None
+    trustees = None,
+    status = Some("saved")
   )
 
   val EMISchemeInfo: SchemeInfo = SchemeInfo (
@@ -93,7 +94,8 @@ object Fixtures extends MockitoSugar {
     groupService = None,
     schemeOrganiser = None,
     companies = None,
-    trustees = None
+    trustees = None,
+    status = Some("saved")
   )
 
   val scheetName: String = "EMI40_Adjustments_V3"
@@ -205,7 +207,8 @@ object Fixtures extends MockitoSugar {
         )
       )
     ),
-    trustees = None
+    trustees = None,
+    status = Some("saved")
   )
 
   val metadataJson: JsObject = Json.toJson(metadata).as[JsObject]
@@ -230,7 +233,8 @@ object Fixtures extends MockitoSugar {
         List(companyDetails)
       )
     ),
-    trustees = None
+    trustees = None,
+    status = Some("saved")
   )
 
   val invalidMetadataNilReturn: ErsSummary = ErsSummary(
@@ -244,7 +248,8 @@ object Fixtures extends MockitoSugar {
     groupService = None,
     schemeOrganiser = None,
     companies = None,
-    trustees = None
+    trustees = None,
+    status = Some("saved")
   )
 
   val invalidMetadataMissingSchemeRef: ErsSummary = ErsSummary(
@@ -272,7 +277,8 @@ object Fixtures extends MockitoSugar {
     groupService = None,
     schemeOrganiser = None,
     companies = None,
-    trustees = None
+    trustees = None,
+    status = Some("saved")
   )
 
   val invalidMetadataMissingSchemeType: ErsSummary = ErsSummary(
@@ -300,7 +306,8 @@ object Fixtures extends MockitoSugar {
     groupService = None,
     schemeOrganiser = None,
     companies = None,
-    trustees = None
+    trustees = None,
+    status = Some("saved")
   )
 
   val postSubmissionData: PostSubmissionData = PostSubmissionData (

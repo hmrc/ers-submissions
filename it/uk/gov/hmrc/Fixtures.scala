@@ -77,7 +77,8 @@ object Fixtures {
         List(companyDetails)
       )
     ),
-    trustees = None
+    trustees = None,
+    status = Some("saved")
   )
 
   def buildErsSummaryPayload(isNilReturn: Boolean): JsValue = Json.toJson(

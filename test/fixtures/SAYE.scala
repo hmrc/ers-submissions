@@ -142,7 +142,8 @@ object SAYE {
         )
       )
     ),
-    trustees = None
+    trustees = None,
+    status = Some("saved")
   )
 
   val ersSumarryWithAllAmmends: ErsSummary = ErsSummary(
@@ -176,7 +177,8 @@ object SAYE {
         )
       )
     ),
-    trustees = None
+    trustees = None,
+    status = Some("saved")
   )
 
 
@@ -196,7 +198,8 @@ object SAYE {
     ),
     schemeOrganiser = None,
     companies = None,
-    trustees = None
+    trustees = None,
+    status = Some("saved")
   )
 
 
@@ -224,7 +227,8 @@ object SAYE {
     ),
     schemeOrganiser = None,
     companies = None,
-    trustees = None
+    trustees = None,
+    status = Some("saved")
   )
 
   val ersSummaryNilReturnWithSomeAltAmmends: ErsSummary = ErsSummary(
@@ -251,7 +255,8 @@ object SAYE {
     ),
     schemeOrganiser = None,
     companies = None,
-    trustees = None
+    trustees = None,
+    status = Some("saved")
   )
 
   val ersSummaryNilReturnWithoutAltAmmends: ErsSummary = ErsSummary(
@@ -270,7 +275,8 @@ object SAYE {
     ),
     schemeOrganiser = None,
     companies = None,
-    trustees = None
+    trustees = None,
+    status = Some("saved")
   )
 
 }
