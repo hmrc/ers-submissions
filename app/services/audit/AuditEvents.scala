@@ -63,6 +63,7 @@ trait AuditEvents {
       "correlationId" -> correlationId.getOrElse(""),
       "nilReturn" -> ersSummaryData.isNilReturn,
       "fileType" -> ersSummaryData.fileType.getOrElse(""),
+      "numberOfRows" -> ersSummaryData.nofOfRows.getOrElse(-1).toString,
       "source" -> source.getOrElse("")
     )
     auditService.sendEvent(context, eventMap(ersSummaryData.metaData.schemeInfo, additionalData))
