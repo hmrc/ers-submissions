@@ -24,7 +24,7 @@ import org.joda.time.DateTime
 import play.api.Logger
 import play.api.libs.json.JsObject
 import play.api.mvc.Request
-import repositories.{MetadataMongoRepository, Repositories, JsonStoreInfoMongoRepository, JsonStoreInfoRepository}
+import repositories.{MetadataMongoRepository, Repositories}
 import services.audit.AuditEvents
 import uk.gov.hmrc.play.http.HeaderCarrier
 import utils.{SubmissionCommon, ADRSubmission}
@@ -48,25 +48,6 @@ trait SubmissionCommonService {
   val metrics: Metrics
   val ersLoggingAndAuditing: ErsLoggingAndAuditing
   val metadataRepository: MetadataMongoRepository
-
-  def getErsSummaryBySchemeInfo(schemeInfo: SchemeInfo)(implicit request: Request[_], hc: HeaderCarrier): Future[ErsSummary] = {
-    metadataRepository.getErsSummary(schemeInfo).map { ersSummary =>
-      if(ersSummary.isDefined) {
-        ersSummary.get
-      }
-      else {
-        ersLoggingAndAuditing.handleFailure(schemeInfo, "Related ErsSummary is not found in SubmissionCommon.extractErsSummary")
-        ResubmissionExceptionEmiter.emitFrom(
-          Map(
-            "message" -> "Related ErsSummary is not found",
-            "context" -> "SubmissionCommon.getErsSummaryBySchemeInfo.getErsSummary"
-          ),
-          None,
-          Some(schemeInfo)
-        )
-      }
-    }
-  }
 
   def callProcessData(ersSummary: ErsSummary, failedStatus: String)(implicit request: Request[_], hc: HeaderCarrier): Future[Boolean] = {
     processData(ersSummary, failedStatus).map {

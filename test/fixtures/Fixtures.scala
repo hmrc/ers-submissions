@@ -16,12 +16,9 @@
 
 package fixtures
 
-import com.typesafe.config.Config
 import models._
 import org.joda.time.{DateTimeZone, DateTime}
-import org.joda.time.format.DateTimeFormat
 import play.api.libs.json.{Json, JsObject}
-import utils.SubmissionCommon._
 import scala.collection.mutable.ListBuffer
 import org.scalatest.mock.MockitoSugar
 import uk.gov.hmrc.domain.Generator
@@ -117,56 +114,6 @@ object Fixtures extends MockitoSugar {
   )
 
   val schemeDataJson: JsObject = Json.toJson(schemeData).as[JsObject]
-
-  val adjustmentEMI: SchemeData = schemeData
-
-  val replacedEMI: SchemeData = SchemeData(
-    EMISchemeInfo,
-    "EMI40_Replaced_V3",
-    None,
-    Some(
-      ListBuffer(
-        Seq("2014-01-01", "2014-01-01", "First", "Second", "Last", nino, "123/123456", "1234.5678", "Company Name", "Company address line 1", "Company address line 2", "Company address line 3", "Company address line 4", "UK", "ZZ98 1ZZ", "1234567899", "XT123456"),
-        Seq("2014-01-01", "2014-01-01", "First", "Second", "Last", nino, "123/123456", "1234.5678", "Company Name", "Company address line 1", "Company address line 2", "Company address line 3", "Company address line 4", "UK", "ZZ98 1ZZ", "1234567899", "XT123456")
-      )
-    )
-  )
-
-  val rlcEMI: SchemeData = SchemeData(
-    EMISchemeInfo,
-    "EMI40_RLC_V3",
-    None,
-    Some(
-      ListBuffer(
-        Seq("2014-01-01", "true", "1", "First", "Second", "Last", nino, "123/123456", "10.12", "true", "1234.5678", "true"),
-        Seq("2014-01-02", "true", "1", "First", "Second", "Last", nino, "123/123456", "10.12", "true", "1234.5678", "true")
-      )
-    )
-  )
-
-  val nonTaxableEMI: SchemeData = SchemeData(
-    EMISchemeInfo,
-    "EMI40_NonTaxable_V3",
-    None,
-    Some(
-      ListBuffer(
-        Seq("2014-09-08", "First", "", "Last", nino, "333/123456", "299.99", "1.1234", "1.0001", "2.2222", "no", "yes", "CM1234567", "300.0200", "no"),
-        Seq("2014-05-15", "First", "", "Last", "", "", "", "", "", "", "yes", "", "", "", "")
-      )
-    )
-  )
-
-  val taxableEMI: SchemeData = SchemeData(
-    EMISchemeInfo,
-    "EMI40_Taxable_V3",
-    None,
-    Some(
-      ListBuffer(
-        Seq("2014-01-01", "no", "", "First", "Second", "Last", nino, "123/123456", "10.12", "1234.5678", "1234.5678", "1234.5678", "1234.5678", "1234.5678", "yes", "", "", "yes", "yes", "1234.5678"),
-        Seq("2014-01-02", "no", "", "First", "Second", "Last", nino, "123/123456", "10.12", "1234.5678", "1234.5678", "1234.5678", "1234.5678", "1234.5678", "yes", "", "", "yes", "yes", "1234.5678")
-      )
-    )
-  )
 
   val invalidJson: JsObject = Json.obj(
     "metafield1" -> "metavalue1",
@@ -316,15 +263,5 @@ object Fixtures extends MockitoSugar {
     nofOfRows = None,
     transferStatus = Some("saved")
   )
-
-  val postSubmissionData: PostSubmissionData = PostSubmissionData (
-    EMISchemeInfo,
-    "waiting",
-    schemeDataJson
-  )
-
-  val otherSchemeType: String = "OTHER"
-
-  val ersJsonStoreInfo = ErsJsonStoreInfo(postSubmissionData.schemeInfo, Some("123456789"), Some("fileName") ,  Some("32190382343934".toLong), Some("321903823439342".toLong), "JsonSaved")
 
 }

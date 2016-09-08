@@ -27,7 +27,7 @@ object ApplicationConfig extends ServicesConfig {
 
   lazy val presubmissionCollection = Try(loadConfig(s"$env.settings.presubmission-collection")).getOrElse("")
   lazy val metadataCollection = Try(loadConfig(s"$env.settings.metadata-collection")).getOrElse("")
-  lazy val gridFSCollection = Try(loadConfig(s"$env.settings.gridfs-collection")).getOrElse("")
+
   lazy val adrBaseURI: String = baseUrl("ers-stub")
   lazy val adrFullSubmissionURI: String = config("ers-stub").getString("full-submission-url").get
   lazy val UrlHeaderEnvironment: String = config("ers-stub").getString("environment").get
@@ -50,23 +50,4 @@ object ApplicationConfig extends ServicesConfig {
   lazy val schedulerSchemeRefList: List[String] = Try(loadConfig(s"$env.scheduling.resubmit-list-schemeRefs").split(",").toList).getOrElse(List())
   lazy val schedulerSchemeRefStatusList: List[String] = Try(loadConfig(s"$env.scheduling.resubmit-list-statuses").split(",").toList).getOrElse(List())
   lazy val schedulerSchemeRefFailStatus: String = Try(loadConfig(s"$env.scheduling.resubmit-list-failStatus")).getOrElse("failedScheduler")
-  lazy val schedulerSync: Boolean = Try(loadConfig(s"$env.scheduling.resubmit-list-sync").toBoolean).getOrElse(false)
-
-  lazy val monitoringEnabled = Try(loadConfig(s"$env.monitoring.enable").toBoolean).getOrElse(false)
-  lazy val monitoringStatuses = Try(loadConfig(s"$env.monitoring.statuses").split(",").toList).getOrElse(List())
-  lazy val monitoringPresubmission = Try(loadConfig(s"$env.monitoring.check-presubmission.enable").toBoolean).getOrElse(false)
-  lazy val monitoringPresubmissionInitDay = Try(loadConfig(s"$env.monitoring.check-presubmission.initial-date.day").toInt).getOrElse(23)
-  lazy val monitoringPresubmissionInitMonth = Try(loadConfig(s"$env.monitoring.check-presubmission.initial-date.month").toInt).getOrElse(6)
-  lazy val monitoringPresubmissionInitYear = Try(loadConfig(s"$env.monitoring.check-presubmission.initial-date.year").toInt).getOrElse(2016)
-  lazy val monitoringPresubmissionPeriodDays = Try(loadConfig(s"$env.monitoring.check-presubmission.period-days").toInt).getOrElse(1)
-
-  lazy val syncCompleteStoreInfo = Try(loadConfig(s"$env.monitoring.check-store-info.enabled").toBoolean).getOrElse(false)
-  lazy val syncCompleteStoreInfoInitDay = Try(loadConfig(s"$env.monitoring.check-store-info.initial-date.day").toInt).getOrElse(23)
-  lazy val syncCompleteStoreInfoInitMonth = Try(loadConfig(s"$env.monitoring.check-store-info.initial-date.month").toInt).getOrElse(6)
-  lazy val syncCompleteStoreInfoInitYear = Try(loadConfig(s"$env.monitoring.check-store-info.initial-date.year").toInt).getOrElse(2016)
-  lazy val syncCompleteStoreInfoFinalDay = Try(loadConfig(s"$env.monitoring.check-store-info.final-date.day").toInt).getOrElse(23)
-  lazy val syncCompleteStoreInfoFinalMonth = Try(loadConfig(s"$env.monitoring.check-store-info.final-date.month").toInt).getOrElse(6)
-  lazy val syncCompleteStoreInfoFinalYear = Try(loadConfig(s"$env.monitoring.check-store-info.final-date.year").toInt).getOrElse(2016)
-
-  lazy val EnableRetrieveSubmissionData: Boolean = Try(loadConfig(s"$env.settings.enable-retrieve-submission-data").toBoolean).getOrElse(false)
 }

@@ -66,20 +66,3 @@ case class FullMetaDataContainer(metaData: FullSchemeInfoContainer)
 object FullMetaDataContainer {
   implicit val format = Json.format[FullMetaDataContainer]
 }
-
-case class PostSubmissionData(schemeInfo: SchemeInfo, status: String, data: JsObject)
-object PostSubmissionData {
-  implicit val format = Json.format[PostSubmissionData]
-}
-
-case class ErsJsonStoreInfo(
-                             schemeInfo: SchemeInfo,
-                             fileId: Option[String],
-                             fileName: Option[String],
-                             fileLength: Option[Long],
-                             uploadDate: Option[Long],
-                             status: String
-                             )
-object ErsJsonStoreInfo {
-  implicit val format = Json.format[ErsJsonStoreInfo]
-}

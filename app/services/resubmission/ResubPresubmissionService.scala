@@ -16,10 +16,9 @@
 
 package services.resubmission
 
-import config.ApplicationConfig
 import models._
 import play.api.mvc.Request
-import repositories.{MetadataMongoRepository, Repositories, JsonStoreInfoMongoRepository, JsonStoreInfoRepository}
+import repositories.{MetadataMongoRepository, Repositories}
 import services.SubmissionCommonService
 import services.audit.AuditEvents
 import uk.gov.hmrc.play.http.HeaderCarrier

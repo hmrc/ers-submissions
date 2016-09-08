@@ -17,21 +17,18 @@
 package repositories
 
 import fixtures.Fixtures
-import models.{ErsSummary, PostSubmissionData}
-import play.api.libs.json.{JsObject, Reads}
-import reactivemongo.api.Cursor
+import models.ErsSummary
+import play.api.libs.json.JsObject
 import org.mockito.Mockito._
 import org.scalatest.mock.MockitoSugar
 import reactivemongo.api.DB
 import reactivemongo.api.collections.GenericQueryBuilder
 import reactivemongo.api.commands.{UpdateWriteResult, WriteError, DefaultWriteResult, WriteResult}
 import reactivemongo.bson._
-import reactivemongo.json.JSONSerializationPack.Reader
 import reactivemongo.json.collection.JSONCollection
 import uk.gov.hmrc.play.test.{WithFakeApplication, UnitSpec}
-import scala.collection.generic.CanBuildFrom
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 import org.mockito.Matchers._
 
 class MetadataMongoRepositorySpec extends UnitSpec with MockitoSugar with WithFakeApplication {
@@ -47,7 +44,7 @@ class MetadataMongoRepositorySpec extends UnitSpec with MockitoSugar with WithFa
         case _ => None
       }
 
-      when(mockCollection.insert(any[PostSubmissionData], any())(any(), any())).thenReturn(Future(writeRes.getOrElse(throw new Exception)))
+      when(mockCollection.insert(any[ErsSummary], any())(any(), any())).thenReturn(Future(writeRes.getOrElse(throw new Exception)))
 
       override lazy val collection = mockCollection
     }
@@ -84,7 +81,7 @@ class MetadataMongoRepositorySpec extends UnitSpec with MockitoSugar with WithFa
         case _ => None
       }
 
-      when(mockCollection.insert(any[PostSubmissionData], any())(any(), any())).thenReturn(Future(writeRes.getOrElse(throw new Exception)))
+      when(mockCollection.insert(any[ErsSummary], any())(any(), any())).thenReturn(Future(writeRes.getOrElse(throw new Exception)))
 
       override lazy val collection = mockCollection
     }
@@ -93,34 +90,6 @@ class MetadataMongoRepositorySpec extends UnitSpec with MockitoSugar with WithFa
       val result = buildMetadataMongoRepository(Some(true)).buildSelector(Fixtures.schemeInfo)
       result.get("metaData.schemeInfo.schemeRef").get shouldBe BSONString("XA1100000000000")
       result.get("metaData.schemeInfo.timestamp").get shouldBe BSONLong(1449319855000L)
-    }
-  }
-
-  "calling getErsSummary" should {
-
-    val mockCollection = mock[JSONCollection]
-    val genericQueryBuilder = mock[GenericQueryBuilder[mockCollection.pack.type]]
-
-    val buildMetadataMongoRepository: MetadataMongoRepository = new MetadataMongoRepository()(() => mock[DB]) {
-      override lazy val collection = mockCollection
-    }
-
-    "return related to given SchemeInfo ErsSummary" in {
-      reset(mockCollection)
-      reset(genericQueryBuilder)
-      when(
-        mockCollection.find(any())(any())
-      ).thenReturn(
-        genericQueryBuilder
-      )
-      when(
-        genericQueryBuilder.one[ErsSummary](any, any)
-      ).thenReturn(
-        Future.successful(Some(Fixtures.EMISummaryDate))
-      )
-
-      val result = await(buildMetadataMongoRepository.getErsSummary(Fixtures.schemeInfo))
-      result.get shouldBe Fixtures.EMISummaryDate
     }
   }
 

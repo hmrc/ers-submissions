@@ -16,7 +16,7 @@
 
 package services.audit
 
-import models.{ErsJsonStoreInfo, ErsSummary, SchemeInfo}
+import models.{ErsSummary, SchemeInfo}
 import org.apache.commons.lang3.exception.ExceptionUtils
 import play.api.mvc.Request
 import uk.gov.hmrc.play.http.HeaderCarrier

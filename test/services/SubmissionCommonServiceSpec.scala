@@ -27,7 +27,7 @@ import org.scalatest.BeforeAndAfterEach
 import play.api.libs.json.{Json, JsObject}
 import play.api.mvc.Request
 import play.api.test.FakeRequest
-import repositories.{MetadataMongoRepository, JsonStoreInfoRepository}
+import repositories.MetadataMongoRepository
 import uk.gov.hmrc.play.http.{HttpResponse, HeaderCarrier}
 import uk.gov.hmrc.play.test.{WithFakeApplication, UnitSpec}
 import utils.{SubmissionCommon, ADRSubmission}
@@ -46,44 +46,6 @@ class SubmissionCommonServiceSpec extends UnitSpec with MockitoSugar with Before
       case _ => ""
     }
     override def handleFailure(schemeInfo: SchemeInfo, message: String)(implicit request: Request[_], hc: HeaderCarrier): Unit = {}
-  }
-
-  "getErsSummaryBySchemeInfo" should {
-    val mockMetadataRepository: MetadataMongoRepository = mock[MetadataMongoRepository]
-
-    val submissionCommonService: SubmissionCommonService = new SubmissionCommonService {
-      val adrConnector: ADRConnector = mock[ADRConnector]
-      val adrSubmission: ADRSubmission = mock[ADRSubmission]
-      val submissionCommon: SubmissionCommon = mock[SubmissionCommon]
-      val metrics: Metrics = mock[Metrics]
-      val ersLoggingAndAuditing: ErsLoggingAndAuditing = mockErsLoggingAndAuditing
-      val metadataRepository: MetadataMongoRepository = mockMetadataRepository
-    }
-    "return the result of getErsSummary if finds related one in db" in  {
-      reset(mockMetadataRepository)
-      when(
-        mockMetadataRepository.getErsSummary(any[SchemeInfo]())
-      ).thenReturn(
-        Future.successful(Some(Fixtures.EMISummaryDate))
-      )
-      val result = await(submissionCommonService.getErsSummaryBySchemeInfo(Fixtures.schemeInfo))
-      result shouldBe Fixtures.EMISummaryDate
-    }
-
-    "throws exception if related data is not found" in {
-      reset(mockMetadataRepository)
-      when(
-        mockMetadataRepository.getErsSummary(any[SchemeInfo]())
-      ).thenReturn(
-        Future.successful(None)
-      )
-      val result = intercept[ResubmissionException] {
-        await(submissionCommonService.getErsSummaryBySchemeInfo(Fixtures.schemeInfo))
-      }
-      result.message shouldBe "Related ErsSummary is not found"
-      result.context shouldBe "SubmissionCommon.getErsSummaryBySchemeInfo.getErsSummary"
-      result.schemeInfo.get shouldBe Fixtures.schemeInfo
-    }
   }
 
   "callProcessData" should {

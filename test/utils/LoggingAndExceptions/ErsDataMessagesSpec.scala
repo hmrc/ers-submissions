@@ -31,13 +31,6 @@ class ErsDataMessagesSpec extends UnitSpec {
     }
   }
 
-  "calling buildErsJsonStoreInfoMessage" should {
-    "display correct message for ErsJsonStoreInfo" in {
-      val result = TestDataMessages.buildErsJsonStoreInfoMessage(Fixtures.ersJsonStoreInfo)
-      result shouldBe "FileId: 123456789,\nFileName: fileName,\nFileLength: 32190382343934,\nUploadDate: 321903823439342,\nStatus: JsonSaved, \nSchemeInfo: SchemeInfo(XA1100000000000,2015-12-05T12:50:55.000Z,123PA12345678,2014/15,My scheme,EMI)"
-    }
-  }
-
   "calling buildErsSummaryMessage" should {
     "display correct message for ErsSummary" in {
       val result = TestDataMessages.buildErsSummaryMessage(Fixtures.EMISummaryDate)

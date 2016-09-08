@@ -27,7 +27,6 @@ object Repositories {
   }
 
   lazy val presubmissionRepository: PresubmissionMongoRepository = new PresubmissionMongoRepository()
-  lazy val postsubmissionRepository: JsonStoreInfoMongoRepository = new JsonStoreInfoMongoRepository()
   lazy val metadataRepository: MetadataMongoRepository = new MetadataMongoRepository()
   lazy val lockRepository: LockRepository = new LockRepository
 }

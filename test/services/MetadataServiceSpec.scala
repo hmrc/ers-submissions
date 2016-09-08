@@ -27,7 +27,6 @@ import uk.gov.hmrc.play.http.HeaderCarrier
 import uk.gov.hmrc.play.test.UnitSpec
 import utils.LoggingAndRexceptions.ErsLoggingAndAuditing
 import scala.concurrent.Future
-import scala.concurrent.ExecutionContext.Implicits.global
 
 class MetadataServiceSpec extends UnitSpec with MockitoSugar {
 
