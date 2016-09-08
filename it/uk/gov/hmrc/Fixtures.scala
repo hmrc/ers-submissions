@@ -78,7 +78,8 @@ object Fixtures {
       )
     ),
     trustees = None,
-    status = Some("saved")
+    nofOfRows = None,
+    transferStatus = Some("saved")
   )
 
   def buildErsSummaryPayload(isNilReturn: Boolean): JsValue = Json.toJson(

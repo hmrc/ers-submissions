@@ -52,7 +52,6 @@ class SubmissionCommonServiceSpec extends UnitSpec with MockitoSugar with Before
     val mockMetadataRepository: MetadataMongoRepository = mock[MetadataMongoRepository]
 
     val submissionCommonService: SubmissionCommonService = new SubmissionCommonService {
-      override lazy val jsonStoreInfoRepository: JsonStoreInfoRepository = mock[JsonStoreInfoRepository]
       val adrConnector: ADRConnector = mock[ADRConnector]
       val adrSubmission: ADRSubmission = mock[ADRSubmission]
       val submissionCommon: SubmissionCommon = mock[SubmissionCommon]
@@ -90,7 +89,6 @@ class SubmissionCommonServiceSpec extends UnitSpec with MockitoSugar with Before
   "callProcessData" should {
     "return the result of processData if there are no exceptions" in {
       val submissionCommonService: SubmissionCommonService = new SubmissionCommonService {
-        override lazy val jsonStoreInfoRepository: JsonStoreInfoRepository = mock[JsonStoreInfoRepository]
         val adrConnector: ADRConnector = mock[ADRConnector]
         val adrSubmission: ADRSubmission = mock[ADRSubmission]
         val submissionCommon: SubmissionCommon = mock[SubmissionCommon]
@@ -109,19 +107,18 @@ class SubmissionCommonServiceSpec extends UnitSpec with MockitoSugar with Before
 
     "rethrows ADRTransferException" in {
       val submissionCommonService: SubmissionCommonService = new SubmissionCommonService {
-        val mockJsonStoreInfoRepository: JsonStoreInfoRepository = mock[JsonStoreInfoRepository]
+        val mockMetadataRepository: MetadataMongoRepository = mock[MetadataMongoRepository]
         when(
-          mockJsonStoreInfoRepository.updateStatus(anyString(), any[SchemeInfo]())
+          mockMetadataRepository.updateStatus( any[SchemeInfo](), anyString())
         ).thenReturn(
           Future.successful(true)
         )
-        override lazy val jsonStoreInfoRepository: JsonStoreInfoRepository = mockJsonStoreInfoRepository
         val adrConnector: ADRConnector = mock[ADRConnector]
         val adrSubmission: ADRSubmission = mock[ADRSubmission]
         val submissionCommon: SubmissionCommon = mock[SubmissionCommon]
         val metrics: Metrics = mock[Metrics]
         val ersLoggingAndAuditing: ErsLoggingAndAuditing = mockErsLoggingAndAuditing
-        val metadataRepository: MetadataMongoRepository = mock[MetadataMongoRepository]
+        val metadataRepository: MetadataMongoRepository = mockMetadataRepository
 
         override def processData(ersSummary: ErsSummary, failedStatus: String)(implicit request: Request[_], hc: HeaderCarrier): Future[Boolean] = {
           Future.failed(ADRTransferException(Fixtures.EMIMetaData, "test message", "text context"))
@@ -138,19 +135,18 @@ class SubmissionCommonServiceSpec extends UnitSpec with MockitoSugar with Before
 
     "throws ADRTransferException if Exception occurs" in {
       val submissionCommonService: SubmissionCommonService = new SubmissionCommonService {
-        val mockJsonStoreInfoRepository: JsonStoreInfoRepository = mock[JsonStoreInfoRepository]
+        val mockMetadataRepository: MetadataMongoRepository = mock[MetadataMongoRepository]
         when(
-          mockJsonStoreInfoRepository.updateStatus(anyString(), any[SchemeInfo]())
+          mockMetadataRepository.updateStatus( any[SchemeInfo](), anyString())
         ).thenReturn(
           Future.successful(true)
         )
-        override lazy val jsonStoreInfoRepository: JsonStoreInfoRepository = mockJsonStoreInfoRepository
         val adrConnector: ADRConnector = mock[ADRConnector]
         val adrSubmission: ADRSubmission = mock[ADRSubmission]
         val submissionCommon: SubmissionCommon = mock[SubmissionCommon]
         val metrics: Metrics = mock[Metrics]
         val ersLoggingAndAuditing: ErsLoggingAndAuditing = mockErsLoggingAndAuditing
-        val metadataRepository: MetadataMongoRepository = mock[MetadataMongoRepository]
+        val metadataRepository: MetadataMongoRepository = mockMetadataRepository
 
         override def processData(ersSummary: ErsSummary, failedStatus: String)(implicit request: Request[_], hc: HeaderCarrier): Future[Boolean] = {
           Future.failed(new Exception("test message"))
@@ -168,7 +164,6 @@ class SubmissionCommonServiceSpec extends UnitSpec with MockitoSugar with Before
 
   "processData" should {
     val submissionCommonService: SubmissionCommonService = new SubmissionCommonService {
-      override lazy val jsonStoreInfoRepository: JsonStoreInfoRepository = mock[JsonStoreInfoRepository]
       val adrConnector: ADRConnector = mock[ADRConnector]
       val adrSubmission: ADRSubmission = mock[ADRSubmission]
       val submissionCommon: SubmissionCommon = mock[SubmissionCommon]
@@ -195,7 +190,6 @@ class SubmissionCommonServiceSpec extends UnitSpec with MockitoSugar with Before
     val mockADRSubmission: ADRSubmission = mock[ADRSubmission]
 
     val submissionCommonService: SubmissionCommonService = new SubmissionCommonService {
-      override lazy val jsonStoreInfoRepository: JsonStoreInfoRepository = mock[JsonStoreInfoRepository]
       val adrConnector: ADRConnector = mock[ADRConnector]
       val adrSubmission: ADRSubmission = mockADRSubmission
       val submissionCommon: SubmissionCommon = mock[SubmissionCommon]
@@ -253,7 +247,6 @@ class SubmissionCommonServiceSpec extends UnitSpec with MockitoSugar with Before
     val mockADRConnector: ADRConnector = mock[ADRConnector]
 
     val submissionCommonService: SubmissionCommonService = new SubmissionCommonService {
-      override lazy val jsonStoreInfoRepository: JsonStoreInfoRepository = mock[JsonStoreInfoRepository]
       val adrConnector: ADRConnector = mockADRConnector
       val adrSubmission: ADRSubmission = mock[ADRSubmission]
       val submissionCommon: SubmissionCommon = mock[SubmissionCommon]
@@ -330,22 +323,21 @@ class SubmissionCommonServiceSpec extends UnitSpec with MockitoSugar with Before
 
   "updatePostsubmission" should {
     val mockMetrics: Metrics = mock[Metrics]
-    val mockJsonStoreInfoRepository: JsonStoreInfoRepository = mock[JsonStoreInfoRepository]
+    val mockMetadataRepository: MetadataMongoRepository = mock[MetadataMongoRepository]
     val submissionCommonService: SubmissionCommonService = new SubmissionCommonService {
-      override lazy val jsonStoreInfoRepository: JsonStoreInfoRepository = mockJsonStoreInfoRepository
       val adrConnector: ADRConnector = mock[ADRConnector]
       val adrSubmission: ADRSubmission = mock[ADRSubmission]
       val submissionCommon: SubmissionCommon = mock[SubmissionCommon]
       val metrics: Metrics = mockMetrics
       val ersLoggingAndAuditing: ErsLoggingAndAuditing = mockErsLoggingAndAuditing
-      val metadataRepository: MetadataMongoRepository = mock[MetadataMongoRepository]
+      val metadataRepository: MetadataMongoRepository = mockMetadataRepository
     }
 
     "true if update is successful and sending to ADR returned 202" in {
       reset(mockMetrics)
-      reset(mockJsonStoreInfoRepository)
+      reset(mockMetadataRepository)
       when(
-        mockJsonStoreInfoRepository.updateStatus(anyString(), any[SchemeInfo]())
+        mockMetadataRepository.updateStatus(any[SchemeInfo](), anyString())
       ).thenReturn(
         Future.successful(true)
       )
@@ -356,9 +348,9 @@ class SubmissionCommonServiceSpec extends UnitSpec with MockitoSugar with Before
 
     "throws ADRTransferException if update failed" in {
       reset(mockMetrics)
-      reset(mockJsonStoreInfoRepository)
+      reset(mockMetadataRepository)
       when(
-        mockJsonStoreInfoRepository.updateStatus(anyString(), any[SchemeInfo]())
+        mockMetadataRepository.updateStatus(any[SchemeInfo](), anyString())
       ).thenReturn(
         Future.successful(false)
       )
@@ -370,9 +362,9 @@ class SubmissionCommonServiceSpec extends UnitSpec with MockitoSugar with Before
 
     "throws ADRTransferException if update is successful and sending to ADR returned 500" in {
       reset(mockMetrics)
-      reset(mockJsonStoreInfoRepository)
+      reset(mockMetadataRepository)
       when(
-        mockJsonStoreInfoRepository.updateStatus(anyString(), any[SchemeInfo]())
+        mockMetadataRepository.updateStatus(any[SchemeInfo](), anyString())
       ).thenReturn(
         Future.successful(true)
       )

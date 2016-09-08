@@ -270,7 +270,8 @@ case class ErsSummary(
                        schemeOrganiser: Option[SchemeOrganiserDetails],
                        companies: Option[CompanyDetailsList],
                        trustees: Option[TrusteeDetailsList],
-                       status: Option[String]
+                       nofOfRows: Option[Int],
+                       transferStatus: Option[String]
                        )
 object ErsSummary {
   implicit val format = Json.format[ErsSummary]

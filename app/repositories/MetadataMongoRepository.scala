@@ -17,7 +17,8 @@
 package repositories
 
 import org.joda.time.DateTime
-import play.Logger
+import play.api.Logger
+import play.api.libs.json.Json
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import reactivemongo.api.DB
@@ -26,8 +27,6 @@ import uk.gov.hmrc.mongo.json.ReactiveMongoFormats
 import uk.gov.hmrc.mongo.{ReactiveRepository, Repository}
 import models._
 import config.ApplicationConfig
-
-import scala.util.Try
 
 trait MetadataRepository extends Repository[ErsSummary, BSONObjectID] {
 
@@ -42,6 +41,10 @@ trait MetadataRepository extends Repository[ErsSummary, BSONObjectID] {
   def getSchemeInfo(startDate: DateTime, endDate: DateTime, exclude: List[SchemeInfo]): Future[List[SchemeInfo]]
 
   def getSchemeInfoBySchemeRefs(schemeRefs: List[String]): Future[List[SchemeInfo]]
+
+  def updateStatus(schemeInfo: SchemeInfo, status: String): Future[Boolean]
+
+  def findAndUpdateByStatus(statusList: List[String], schemeRefList: Option[List[String]]): Future[Option[ErsSummary]]
 }
 
 class MetadataMongoRepository()(implicit mongo: () => DB)
@@ -125,5 +128,42 @@ class MetadataMongoRepository()(implicit mongo: () => DB)
         "metaData.schemeInfo" -> 1
       )
     ).cursor[FullMetaDataContainer]().collect[List]().map(_.map(_.metaData.schemeInfo))
+  }
+
+  override def updateStatus(schemeInfo: SchemeInfo, status: String): Future[Boolean] = {
+    val selector = buildSelector(schemeInfo)
+    val update = Json.obj("$set" -> Json.obj("transferStatus" ->  status))
+
+    collection.update(selector, update).map { res =>
+      if (res.hasErrors) {
+        Logger.warn(s"Faling updating metadata status. Error: ${res.errmsg.getOrElse("")} for ${schemeInfo.toString}, status: ${status}")
+      }
+      res.ok
+    }
+  }
+
+  override def findAndUpdateByStatus(statusList: List[String], schemeRefList: Option[List[String]]): Future[Option[ErsSummary]] = {
+    val baseSelector: BSONDocument = BSONDocument(
+      "transferStatus" -> BSONDocument(
+        "$in" -> statusList
+      )
+    )
+
+    val selector: BSONDocument = if(schemeRefList.isDefined) {
+      baseSelector ++ BSONDocument("metaData.schemeInfo.schemeRef" -> BSONDocument("$in" -> schemeRefList.get))
+    }
+    else {
+      baseSelector
+    }
+
+    val modifier: BSONDocument = BSONDocument(
+      "$set" -> BSONDocument(
+        "transferStatus" -> Statuses.Process.toString
+      )
+    )
+
+    collection.findAndUpdate(selector, modifier, fetchNewObject = false, sort = Some(Json.obj("metaData.schemeInfo.timestamp" -> 1))).map { res =>
+      res.result[ErsSummary]
+    }
   }
 }

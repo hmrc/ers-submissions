@@ -18,13 +18,13 @@ package repositories
 
 import fixtures.Fixtures
 import models.{ErsSummary, PostSubmissionData}
-import play.api.libs.json.Reads
+import play.api.libs.json.{JsObject, Reads}
 import reactivemongo.api.Cursor
 import org.mockito.Mockito._
 import org.scalatest.mock.MockitoSugar
 import reactivemongo.api.DB
 import reactivemongo.api.collections.GenericQueryBuilder
-import reactivemongo.api.commands.{WriteError, DefaultWriteResult, WriteResult}
+import reactivemongo.api.commands.{UpdateWriteResult, WriteError, DefaultWriteResult, WriteResult}
 import reactivemongo.bson._
 import reactivemongo.json.JSONSerializationPack.Reader
 import reactivemongo.json.collection.JSONCollection
@@ -122,6 +122,44 @@ class MetadataMongoRepositorySpec extends UnitSpec with MockitoSugar with WithFa
       val result = await(buildMetadataMongoRepository.getErsSummary(Fixtures.schemeInfo))
       result.get shouldBe Fixtures.EMISummaryDate
     }
+  }
+
+  "calling updateStatus" should {
+
+    def buildMetadataMongoRepository(updateResult: Option[Boolean] = None): MetadataMongoRepository = new MetadataMongoRepository()(() => mock[DB]) {
+      val mockCollection = mock[JSONCollection]
+
+      val writeRes: Option[UpdateWriteResult] = updateResult match {
+        case Some (true) => Some(new UpdateWriteResult (updateResult.getOrElse (true), 200, 1, Seq (), Seq (), None, None, None))
+        case Some (false) => Some(new UpdateWriteResult (updateResult.getOrElse (false), 400, 0, Seq (), Seq(new WriteError (1, 400, "Error message") ), None, None, Some ("Error message") ))
+        case _ => None
+      }
+
+      when(
+        mockCollection.update(any[JsObject], any[JsObject](), any(), any(), any())(any(), any(), any())
+      ).thenReturn(
+        Future(writeRes.getOrElse(throw new Exception))
+      )
+
+      override lazy val collection = mockCollection
+    }
+
+    "return true if update is successful" in {
+      val result = await(buildMetadataMongoRepository(Some(true)).updateStatus(Fixtures.EMISchemeInfo, "sent"))
+      result shouldBe true
+    }
+
+    "return false if update fails" in {
+      val result = await(buildMetadataMongoRepository(Some(false)).updateStatus(Fixtures.EMISchemeInfo, "sent"))
+      result shouldBe false
+    }
+
+    "throws exception if exception occurs" in {
+      intercept[Exception] {
+        await(buildMetadataMongoRepository(None).updateStatus(Fixtures.EMISchemeInfo, "sent"))
+      }
+    }
+
   }
 
 }
