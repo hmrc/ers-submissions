@@ -24,7 +24,7 @@ import org.joda.time.DateTime
 import play.api.Logger
 import play.api.libs.json.JsObject
 import play.api.mvc.Request
-import repositories.{MetadataMongoRepository, Repositories, JsonStoreInfoMongoRepository, JsonStoreInfoRepository}
+import repositories.{MetadataMongoRepository, Repositories}
 import services.audit.AuditEvents
 import uk.gov.hmrc.play.http.HeaderCarrier
 import utils.{SubmissionCommon, ADRSubmission}
@@ -33,7 +33,6 @@ import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 
 object SubmissionCommonService extends SubmissionCommonService {
-  override lazy val jsonStoreInfoRepository: JsonStoreInfoMongoRepository = Repositories.postsubmissionRepository
   override val adrConnector: ADRConnector = ADRConnector
   override val adrSubmission: ADRSubmission = ADRSubmission
   override val submissionCommon: SubmissionCommon = SubmissionCommon
@@ -43,7 +42,6 @@ object SubmissionCommonService extends SubmissionCommonService {
 }
 
 trait SubmissionCommonService {
-  lazy val jsonStoreInfoRepository: JsonStoreInfoRepository = ???
   val adrConnector: ADRConnector
   val adrSubmission: ADRSubmission
   val submissionCommon: SubmissionCommon
@@ -51,37 +49,18 @@ trait SubmissionCommonService {
   val ersLoggingAndAuditing: ErsLoggingAndAuditing
   val metadataRepository: MetadataMongoRepository
 
-  def getErsSummaryBySchemeInfo(schemeInfo: SchemeInfo)(implicit request: Request[_], hc: HeaderCarrier): Future[ErsSummary] = {
-    metadataRepository.getErsSummary(schemeInfo).map { ersSummary =>
-      if(ersSummary.isDefined) {
-        ersSummary.get
-      }
-      else {
-        ersLoggingAndAuditing.handleFailure(schemeInfo, "Related ErsSummary is not found in SubmissionCommon.extractErsSummary")
-        ResubmissionExceptionEmiter.emitFrom(
-          Map(
-            "message" -> "Related ErsSummary is not found",
-            "context" -> "SubmissionCommon.getErsSummaryBySchemeInfo.getErsSummary"
-          ),
-          None,
-          Some(schemeInfo)
-        )
-      }
-    }
-  }
-
   def callProcessData(ersSummary: ErsSummary, failedStatus: String)(implicit request: Request[_], hc: HeaderCarrier): Future[Boolean] = {
     processData(ersSummary, failedStatus).map {
       res => res
     }.recover {
       case aex: ADRTransferException => {
         ersLoggingAndAuditing.logWarn(s"Submission journey 4. start creating json exception ${aex.message}: ${DateTime.now}", Some(ersSummary))
-        jsonStoreInfoRepository.updateStatus(failedStatus, ersSummary.metaData.schemeInfo).map[Boolean] { res => res }
+        metadataRepository.updateStatus(ersSummary.metaData.schemeInfo, failedStatus).map[Boolean] { res => res }
         throw aex
       }
       case ex: Exception => {
         ersLoggingAndAuditing.logWarn(s"Submission journey 4. start creating json exception ${ex.getMessage}: ${DateTime.now}", Some(ersSummary))
-        jsonStoreInfoRepository.updateStatus(failedStatus, ersSummary.metaData.schemeInfo).map[Boolean] { res => res }
+        metadataRepository.updateStatus(ersSummary.metaData.schemeInfo, failedStatus).map[Boolean] { res => res }
         ADRExceptionEmitter.emitFrom(
           ersSummary.metaData,
           Map(
@@ -136,7 +115,7 @@ trait SubmissionCommonService {
     val startTime = System.currentTimeMillis()
     adrConnector.sendData(adrData, ersSummary.metaData.schemeInfo.schemeType).flatMap { response =>
       ersLoggingAndAuditing.logWarn(s"Submission journey 7. data is sent with response ${response.status}: ${DateTime.now}", Some(ersSummary))
-      val adrStatus: String = response.status match {
+      val transferStatus: String = response.status match {
         case 202 => {
           Logger.debug("LFP -> 14. Data sent ")
           metrics.sendToADR(System.currentTimeMillis() - startTime, TimeUnit.MILLISECONDS)
@@ -158,7 +137,7 @@ trait SubmissionCommonService {
           failedStatus
         }
       }
-      updatePostsubmission(response.status, adrStatus, ersSummary).map(res => res)
+      updatePostsubmission(response.status, transferStatus, ersSummary).map(res => res)
     }.recover {
       case adr: ADRTransferException => {
         ersLoggingAndAuditing.logWarn(s"Submission journey 7. data is sent exception ${adr.message}: ${DateTime.now}", Some(ersSummary))
@@ -178,11 +157,11 @@ trait SubmissionCommonService {
     }
   }
 
-  def updatePostsubmission(adrSubmissionStatus: Int, status: String, ersSummary: ErsSummary)(implicit request: Request[_], hc: HeaderCarrier): Future[Boolean] = {
-    ersLoggingAndAuditing.logWarn(s"Submission journey 8. start updating status ${status}: ${DateTime.now}", Some(ersSummary))
+  def updatePostsubmission(adrSubmissionStatus: Int, transferStatus: String, ersSummary: ErsSummary)(implicit request: Request[_], hc: HeaderCarrier): Future[Boolean] = {
+    ersLoggingAndAuditing.logWarn(s"Submission journey 8. start updating status ${transferStatus}: ${DateTime.now}", Some(ersSummary))
     Logger.info(s"Start updating status for ${ersSummary.metaData.schemeInfo.toString}")
     val startUpdateTime = System.currentTimeMillis()
-    jsonStoreInfoRepository.updateStatus(status, ersSummary.metaData.schemeInfo).map[Boolean] {
+    metadataRepository.updateStatus(ersSummary.metaData.schemeInfo, transferStatus).map[Boolean] {
       case true if (adrSubmissionStatus == 202) =>  {
         ersLoggingAndAuditing.logWarn(s"Submission journey 9. status was updated: ${DateTime.now}", Some(ersSummary))
         metrics.updatePostsubmissionStatus(System.currentTimeMillis() - startUpdateTime, TimeUnit.MILLISECONDS)

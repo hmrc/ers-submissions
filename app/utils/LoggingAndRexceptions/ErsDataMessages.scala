@@ -16,13 +16,12 @@
 
 package utils.LoggingAndRexceptions
 
-import models.{ErsJsonStoreInfo, ErsSummary, SchemeInfo}
+import models.{ErsSummary, SchemeInfo}
 
 trait ErsDataMessages {
 
   val dataMessagePF: Seq[PartialFunction[Object, String]] = Seq(
     buildSchemeInfoMessage,
-    buildErsJsonStoreInfoMessage,
     buildErsSummaryMessage,
     buildWildcardDataMessage
   )
@@ -34,15 +33,6 @@ trait ErsDataMessages {
 
   def buildSchemeInfoMessage: PartialFunction[Object, String] = {
     case schemeInfo: SchemeInfo => s"SchemeInfo: ${schemeInfo.toString}"
-  }
-
-  def buildErsJsonStoreInfoMessage: PartialFunction[Object, String] = {
-    case ersJsonStoreInfo: ErsJsonStoreInfo => s"FileId: ${ersJsonStoreInfo.fileId.getOrElse("Undefined fileId")},\n" +
-      s"FileName: ${ersJsonStoreInfo.fileName.getOrElse("Undefined fileName")},\n" +
-      s"FileLength: ${ersJsonStoreInfo.fileLength.getOrElse("Undefined fileLength")},\n" +
-      s"UploadDate: ${ersJsonStoreInfo.uploadDate.getOrElse("Undefined uploadDate")},\n" +
-      s"Status: ${ersJsonStoreInfo.status}, \n" +
-      buildSchemeInfoMessage(ersJsonStoreInfo.schemeInfo)
   }
 
   def buildErsSummaryMessage: PartialFunction[Object, String] = {

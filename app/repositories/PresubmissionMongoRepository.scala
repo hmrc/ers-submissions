@@ -38,7 +38,6 @@ trait PresubmissionRepository extends Repository[SchemeData, BSONObjectID] {
 
   def findAndUpdate(schemeInfo: SchemeInfo): Future[Option[SchemeData]]
 
-  def getSchemeRefs(startDate: DateTime, endDate: DateTime): Future[List[String]]
 }
 
 class PresubmissionMongoRepository()(implicit mongo: () => DB)
@@ -99,20 +98,6 @@ class PresubmissionMongoRepository()(implicit mongo: () => DB)
       result.result[SchemeData]
     }
 
-  }
-
-  override def getSchemeRefs(startDate: DateTime, endDate: DateTime): Future[List[String]] = {
-    collection.find(
-      BSONDocument(
-        "schemeInfo.timestamp" -> BSONDocument(
-          "$gte" -> startDate.getMillis,
-          "$lte" -> endDate.getMillis
-        )
-      ),
-      BSONDocument(
-        "schemeInfo.schemeRef" -> 1
-      )
-    ).cursor[SchemeInfoContainer]().collect[List]().map(_.map(_.schemeInfo.schemeRef))
   }
 
 }

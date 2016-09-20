@@ -31,7 +31,7 @@ import scala.concurrent.Future
 
 object SubmissionController extends SubmissionController {
 
-  override val postsubmissionService: PostsubmissionService = PostsubmissionService
+  override val submissionCommonService: SubmissionCommonService = SubmissionCommonService
   override val metadataService: MetadataService = MetadataService
   override val metrics: Metrics = Metrics
   override val ersLoggingAndAuditing: ErsLoggingAndAuditing = ErsLoggingAndAuditing
@@ -41,7 +41,7 @@ object SubmissionController extends SubmissionController {
 
 trait SubmissionController extends BaseController {
 
-  val postsubmissionService: PostsubmissionService
+  val submissionCommonService: SubmissionCommonService
   val metadataService: MetadataService
   val metrics: Metrics
   val ersLoggingAndAuditing: ErsLoggingAndAuditing
@@ -55,7 +55,7 @@ trait SubmissionController extends BaseController {
         ersLoggingAndAuditing.logWarn(s"Submission journey 2. validated request: ${DateTime.now}", Some(ersSummary))
 
         try {
-          postsubmissionService.processDataForADR(ersSummary).map{ _ =>
+          submissionCommonService.callProcessData(ersSummary, Statuses.Failed.toString).map{ _ =>
             ersLoggingAndAuditing.handleSuccess(ersSummary.metaData.schemeInfo, "Submission is successfully completed")
             Ok
           }.recover {

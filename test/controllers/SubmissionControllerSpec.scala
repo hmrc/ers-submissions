@@ -26,7 +26,7 @@ import org.scalatest.mock.MockitoSugar
 import play.api.libs.json.JsObject
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
-import services.{ValidationService, MetadataService, PostsubmissionService, PresubmissionService}
+import services._
 import uk.gov.hmrc.play.http.HeaderCarrier
 import uk.gov.hmrc.play.test.{WithFakeApplication, UnitSpec}
 import org.mockito.Matchers._
@@ -51,7 +51,7 @@ class SubmissionControllerSpec extends UnitSpec with MockitoSugar with BeforeAnd
 
     def buildSubmissionController(isValidJson: Boolean = true, expectedResult: Future[Boolean]= Future(true)): SubmissionController = new SubmissionController {
       val mockPresubmissionService: PresubmissionService = mock[PresubmissionService]
-      val mockPostsubmissionService: PostsubmissionService = mock[PostsubmissionService]
+      val mockSubmissionCommonService: SubmissionCommonService = mock[SubmissionCommonService]
       val mockMetaService = mock[MetadataService]
 
       when(mockMetaService.validateErsSummaryFromJson(any[JsObject])).thenReturn(
@@ -59,12 +59,12 @@ class SubmissionControllerSpec extends UnitSpec with MockitoSugar with BeforeAnd
       )
 
       when(
-        mockPostsubmissionService.processDataForADR(any[ErsSummary])(any[Request[_]](), any[HeaderCarrier]())
+        mockSubmissionCommonService.callProcessData(any[ErsSummary], anyString())(any[Request[_]](), any[HeaderCarrier]())
       ).thenReturn(
         expectedResult
       )
 
-      override val postsubmissionService: PostsubmissionService = mockPostsubmissionService
+      override val submissionCommonService: SubmissionCommonService = mockSubmissionCommonService
       override val metadataService = mockMetaService
       override val metrics = mockMetrics
       override val ersLoggingAndAuditing = mockErsLoggingAndAuditing
@@ -98,7 +98,7 @@ class SubmissionControllerSpec extends UnitSpec with MockitoSugar with BeforeAnd
     "report an error when the process of sending data to adr throws exception" in {
       val submissionController = new SubmissionController {
         val mockPresubmissionService: PresubmissionService = mock[PresubmissionService]
-        val mockPostsubmissionService: PostsubmissionService = mock[PostsubmissionService]
+        val mockSubmissionCommonService: SubmissionCommonService = mock[SubmissionCommonService]
         val mockMetaService = mock[MetadataService]
 
         when(mockMetaService.validateErsSummaryFromJson(any[JsObject])).thenReturn(
@@ -106,12 +106,12 @@ class SubmissionControllerSpec extends UnitSpec with MockitoSugar with BeforeAnd
         )
 
         when(
-          mockPostsubmissionService.processDataForADR(any[ErsSummary])(any[Request[_]](), any[HeaderCarrier]())
+          mockSubmissionCommonService.callProcessData(any[ErsSummary], anyString())(any[Request[_]](), any[HeaderCarrier]())
         ).thenThrow(
           new RuntimeException
         )
 
-        override val postsubmissionService: PostsubmissionService = mockPostsubmissionService
+        override val submissionCommonService: SubmissionCommonService = mockSubmissionCommonService
         override val metadataService = mockMetaService
         override val metrics = mockMetrics
         override val ersLoggingAndAuditing = mockErsLoggingAndAuditing
@@ -127,7 +127,7 @@ class SubmissionControllerSpec extends UnitSpec with MockitoSugar with BeforeAnd
 
     def buildSubmissionController(validateErsSummaryFromJsonResult: Boolean = true, storeErsSummaryResult: Boolean = true): SubmissionController = new SubmissionController {
       val mockPresubmissionService: PresubmissionService = mock[PresubmissionService]
-      val mockPostsubmissionService: PostsubmissionService = mock[PostsubmissionService]
+      val mockSubmissionCommonService: SubmissionCommonService = mock[SubmissionCommonService]
       val mockMetaService = mock[MetadataService]
 
       when(
@@ -147,7 +147,7 @@ class SubmissionControllerSpec extends UnitSpec with MockitoSugar with BeforeAnd
         Future.successful(storeErsSummaryResult)
       )
 
-      override val postsubmissionService: PostsubmissionService = mockPostsubmissionService
+      override val submissionCommonService: SubmissionCommonService = mockSubmissionCommonService
       override val metadataService = mockMetaService
       override val metrics = mockMetrics
       override val ersLoggingAndAuditing = mockErsLoggingAndAuditing

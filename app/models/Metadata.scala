@@ -269,7 +269,9 @@ case class ErsSummary(
                        groupService: Option[GroupSchemeInfo],
                        schemeOrganiser: Option[SchemeOrganiserDetails],
                        companies: Option[CompanyDetailsList],
-                       trustees: Option[TrusteeDetailsList]
+                       trustees: Option[TrusteeDetailsList],
+                       nofOfRows: Option[Int],
+                       transferStatus: Option[String]
                        )
 object ErsSummary {
   implicit val format = Json.format[ErsSummary]

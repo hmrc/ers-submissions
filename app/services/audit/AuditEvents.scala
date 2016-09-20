@@ -16,7 +16,7 @@
 
 package services.audit
 
-import models.{ErsJsonStoreInfo, ErsSummary, SchemeInfo}
+import models.{ErsSummary, SchemeInfo}
 import org.apache.commons.lang3.exception.ExceptionUtils
 import play.api.mvc.Request
 import uk.gov.hmrc.play.http.HeaderCarrier
@@ -63,6 +63,7 @@ trait AuditEvents {
       "correlationId" -> correlationId.getOrElse(""),
       "nilReturn" -> ersSummaryData.isNilReturn,
       "fileType" -> ersSummaryData.fileType.getOrElse(""),
+      "numberOfRows" -> ersSummaryData.nofOfRows.getOrElse(-1).toString,
       "source" -> source.getOrElse("")
     )
     auditService.sendEvent(context, eventMap(ersSummaryData.metaData.schemeInfo, additionalData))

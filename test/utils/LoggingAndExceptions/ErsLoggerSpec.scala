@@ -16,7 +16,6 @@
 
 package utils.LoggingAndExceptions
 
-import org.mockito.Mockito
 import uk.gov.hmrc.play.test.UnitSpec
 import utils.LoggingAndRexceptions.ErsLogger
 

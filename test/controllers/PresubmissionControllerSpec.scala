@@ -18,7 +18,7 @@ package controllers
 
 import java.util.concurrent.TimeUnit
 import metrics.Metrics
-import models.{SchemeInfo, SchemeData}
+import models.SchemeInfo
 import org.mockito.Matchers._
 import org.mockito.Mockito._
 import org.mockito.internal.verification.VerificationModeFactory

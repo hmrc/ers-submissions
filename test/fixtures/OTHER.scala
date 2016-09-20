@@ -330,7 +330,9 @@ object OTHER {
         )
       )
     ),
-    trustees = None
+    trustees = None,
+    nofOfRows = None,
+    transferStatus = Some("saved")
   )
 
 
@@ -350,7 +352,9 @@ object OTHER {
     ),
     schemeOrganiser = None,
     companies = None,
-    trustees = None
+    trustees = None,
+    nofOfRows = None,
+    transferStatus = Some("saved")
   )
 
 }

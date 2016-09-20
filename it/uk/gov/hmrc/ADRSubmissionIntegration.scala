@@ -1,7 +1,7 @@
 package uk.gov.hmrc
 
 import org.scalatest.BeforeAndAfterEach
-import repositories.{MetadataMongoRepository, JsonStoreInfoMongoRepository, PresubmissionMongoRepository}
+import repositories.{MetadataMongoRepository, PresubmissionMongoRepository}
 import scala.concurrent.ExecutionContext.Implicits.global
 import _root_.play.api.test.Helpers._
 
@@ -11,7 +11,6 @@ class ADRSubmissionIntegration extends ISpec("ADRSubmissionIntegration", additio
 )) with BeforeAndAfterEach with FakeErsStubService {
 
   private lazy val presubmissionRepository = new PresubmissionMongoRepository()
-  private lazy val postSubmissionRepository = new JsonStoreInfoMongoRepository()
   private lazy val metadataMongoRepository = new MetadataMongoRepository()
 
   override protected def beforeEach: Unit = {
@@ -21,7 +20,6 @@ class ADRSubmissionIntegration extends ISpec("ADRSubmissionIntegration", additio
 
   override protected def afterEach: Unit = {
     super.afterEach
-    await(postSubmissionRepository.drop)
     await(presubmissionRepository.drop)
     await(metadataMongoRepository.drop)
   }
@@ -30,21 +28,35 @@ class ADRSubmissionIntegration extends ISpec("ADRSubmissionIntegration", additio
   "Receiving data for submission" should {
 
     "return OK if valid metadata is received, filedata is extracted from database and it's successfully sent to ADR" in {
-      val res = await(request("ers/submit-metadata").post(Fixtures.buildErsSummaryPayload(false)))
+      val data = Fixtures.buildErsSummaryPayload(false)
+
+      val saveMetadata = await(metadataMongoRepository.storeErsSummary(Fixtures.buildErsSummary(false)))
+      val metadataAfterSave = await(metadataMongoRepository.getJson(Fixtures.schemeInfo))
+      metadataAfterSave.length shouldBe 1
+      metadataAfterSave.head.transferStatus.get shouldBe "saved"
+
+      val res = await(request("ers/submit-metadata").post(data))
       res.status shouldBe OK
 
-      val postsubmissionData = await(postSubmissionRepository.findPostsubmission(Fixtures.schemeInfo))
-      postsubmissionData.length shouldBe 1
-      postsubmissionData.head.status shouldBe "sent"
+      val metadata = await(metadataMongoRepository.getJson(Fixtures.schemeInfo))
+      metadata.length shouldBe 1
+      metadata.head.transferStatus.get shouldBe "sent"
     }
 
     "return OK if valid metadata is received for nil return and it's successfully sent to ADR" in {
+      val data = Fixtures.buildErsSummaryPayload(true)
+
+      val saveMetadata = await(metadataMongoRepository.storeErsSummary(Fixtures.buildErsSummary(true)))
+      val metadataAfterSave = await(metadataMongoRepository.getJson(Fixtures.schemeInfo))
+      metadataAfterSave.length shouldBe 1
+      metadataAfterSave.head.transferStatus.get shouldBe "saved"
+
       val res = await(request("ers/submit-metadata").post(Fixtures.buildErsSummaryPayload(true)))
       res.status shouldBe OK
 
-      val postsubmissionData = await(postSubmissionRepository.findPostsubmission(Fixtures.schemeInfo))
-      postsubmissionData.length shouldBe 1
-      postsubmissionData.head.status shouldBe "sent"
+      val metadata = await(metadataMongoRepository.getJson(Fixtures.schemeInfo))
+      metadata.length shouldBe 1
+      metadata.head.transferStatus.get shouldBe "sent"
     }
 
     "return BAD_REQUEST if invalid request is made" in {

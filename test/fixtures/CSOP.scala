@@ -155,7 +155,9 @@ object CSOP {
         )
       )
     ),
-    trustees = None
+    trustees = None,
+    nofOfRows = None,
+    transferStatus = Some("saved")
   )
 
   val metadataWithAllAmmends: ErsSummary = ErsSummary(
@@ -189,7 +191,9 @@ object CSOP {
         )
       )
     ),
-    trustees = None
+    trustees = None,
+    nofOfRows = None,
+    transferStatus = Some("saved")
   )
 
   val metadataNilReturnWithAllAltAmmends: ErsSummary = ErsSummary(
@@ -216,7 +220,9 @@ object CSOP {
     ),
     schemeOrganiser = None,
     companies = None,
-    trustees = None
+    trustees = None,
+    nofOfRows = None,
+    transferStatus = Some("saved")
   )
 
   val metadataNilReturnWithSomeAltAmmends: ErsSummary = ErsSummary(
@@ -243,7 +249,9 @@ object CSOP {
     ),
     schemeOrganiser = None,
     companies = None,
-    trustees = None
+    trustees = None,
+    nofOfRows = None,
+    transferStatus = Some("saved")
   )
 
   val metadataNilReturnWithoutAltAmmends: ErsSummary = ErsSummary(
@@ -262,6 +270,8 @@ object CSOP {
     ),
     schemeOrganiser = None,
     companies = None,
-    trustees = None
+    trustees = None,
+    nofOfRows = None,
+    transferStatus = Some("saved")
   )
 }
