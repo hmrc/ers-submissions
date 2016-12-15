@@ -28,6 +28,7 @@ import uk.gov.hmrc.play.http.ws._
 import uk.gov.hmrc.play.http.{HeaderCarrier, HttpResponse}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
+import scala.concurrent.duration.Duration
 
 object WSHttp extends WSGet with WSPut with WSPost with WSDelete with WSPatch with AppName with RunMode with HttpAuditing {
   override val hooks = Seq(AuditingHook)
@@ -45,7 +46,7 @@ object WSHttpWithCustomTimeOut extends WSHttp with AppName with RunMode with Htt
 
   override def buildRequest[A](url: String)(implicit hc: HeaderCarrier) = {
     val ersTimeOut = (Play.configuration.getInt("ers-submissions-timeout-seconds").getOrElse(20)) * 1000
-    super.buildRequest[A](url).withRequestTimeout(ersTimeOut)
+    super.buildRequest[A](url).withRequestTimeout(Duration(ersTimeOut.toString))
   }
 }
 

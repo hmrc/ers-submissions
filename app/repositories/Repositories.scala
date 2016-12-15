@@ -15,7 +15,7 @@
  */
 
 package repositories
-
+import uk.gov.hmrc.mongo.MongoConnector
 import play.modules.reactivemongo.ReactiveMongoPlugin
 import uk.gov.hmrc.lock.LockRepository
 
