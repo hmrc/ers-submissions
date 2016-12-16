@@ -36,7 +36,7 @@ object ERSRequest {
 
       override def method: String = "POST"
 
-      override def headers: Headers = new Headers {
+      override def headers: Headers = new Headers(Seq()) {
         override protected val data: Seq[(String, Seq[String])] = Seq()
       }
 
