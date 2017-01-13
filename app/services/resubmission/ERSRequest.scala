@@ -24,6 +24,11 @@ object ERSRequest {
   def createERSRequest(): Request[JsObject] = {
 
     new Request[JsObject] {
+
+      //val cert: java.security.cert.X509Certificate =  java.security.cert.X509Certificate
+
+      override def clientCertificateChain: Option[Seq[java.security.cert.X509Certificate]] = None
+
       override def body: JsObject = Json.obj()
 
       override def secure: Boolean = false
@@ -37,7 +42,7 @@ object ERSRequest {
       override def method: String = "POST"
 
       override def headers: Headers = new Headers(Seq()) {
-        override protected val data: Seq[(String, Seq[String])] = Seq()
+         protected val data: Seq[(String, Seq[String])] = Seq()
       }
 
       override def path: String = "ers-submissions"

@@ -19,10 +19,10 @@ package utils.Schemes_ADRSubmissionSpec
 import com.typesafe.config.Config
 import fixtures.{Common, Fixtures, OTHER}
 import models.{SchemeInfo, SchemeData}
-import org.mockito.Matchers._
+import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
 import org.scalatest.BeforeAndAfter
-import org.scalatest.mock.MockitoSugar
+import org.scalatest.mockito.MockitoSugar
 import play.api.libs.json._
 import play.api.mvc.Request
 import play.api.test.FakeRequest
@@ -34,7 +34,7 @@ import utils.SubmissionCommon._
 import scala.collection.mutable.ListBuffer
 import scala.concurrent.Future
 
-class OTHER_ADRSubmissionSpec extends UnitSpec with MockitoSugar with BeforeAndAfter with WithFakeApplication {
+class OTHER_ADRSubmissionSpec extends UnitSpec with MockitoSugar with BeforeAndAfter {
 
   implicit val hc: HeaderCarrier = new HeaderCarrier()
   implicit val request = FakeRequest().withBody(Fixtures.metadataJson)
@@ -47,7 +47,7 @@ class OTHER_ADRSubmissionSpec extends UnitSpec with MockitoSugar with BeforeAndA
     override val configUtils: ConfigUtils = ConfigUtils
   }
 
-  override def before(fun : => scala.Any) = {
+  def before(fun : => scala.Any) = {
     super.before(())
     reset(mockPresubmissionService)
   }

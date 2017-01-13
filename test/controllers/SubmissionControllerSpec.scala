@@ -22,14 +22,14 @@ import metrics.Metrics
 import models._
 import org.mockito.internal.verification.VerificationModeFactory
 import org.scalatest.BeforeAndAfterEach
-import org.scalatest.mock.MockitoSugar
+import org.scalatest.mockito.MockitoSugar
 import play.api.libs.json.JsObject
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import services._
 import uk.gov.hmrc.play.http.HeaderCarrier
 import uk.gov.hmrc.play.test.{WithFakeApplication, UnitSpec}
-import org.mockito.Matchers._
+import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
 import utils.LoggingAndRexceptions.ErsLoggingAndAuditing
 import scala.concurrent.ExecutionContext.Implicits.global

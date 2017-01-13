@@ -27,6 +27,8 @@ private object AppDependencies {
   private val mongoLock = "4.0.0"
   private val wiremockVersion = "2.4.1"
   private val reactiveMongoVersion = "5.1.0"
+  private val mockitoVersion = "2.6.1"
+
 
   val compile = Seq(
     "uk.gov.hmrc" %% "play-reactivemongo" % playReactivemongoVersion,
@@ -58,6 +60,7 @@ private object AppDependencies {
         "uk.gov.hmrc" %% "reactivemongo-test" % reactivemongoTestVersion % scope,
         "org.scalatest" %% "scalatest" % scalatestVersion % scope,
         "org.scalatestplus.play" %% "scalatestplus-play" % "1.5.1" % scope,
+        "org.mockito" % "mockito-core" % mockitoVersion % scope,
         "org.pegdown" % "pegdown" % pegdownVersion % scope,
         "org.jsoup" % "jsoup" % jsoupVersion % scope,
         "com.typesafe.play" %% "play-test" % PlayVersion.current % scope,

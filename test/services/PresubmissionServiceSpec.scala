@@ -17,11 +17,11 @@
 package services
 
 import models.{SchemeInfo, SchemeData}
-import org.mockito.Matchers._
+import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
 import play.api.test.Helpers._
 import play.api.test.{FakeRequest, FakeApplication}
-import org.scalatest.mock.MockitoSugar
+import org.scalatest.mockito.MockitoSugar
 import repositories.PresubmissionMongoRepository
 import uk.gov.hmrc.play.http.HeaderCarrier
 import uk.gov.hmrc.play.test.{WithFakeApplication, UnitSpec}

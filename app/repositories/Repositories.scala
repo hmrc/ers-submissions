@@ -16,14 +16,17 @@
 
 package repositories
 import uk.gov.hmrc.mongo.MongoConnector
-import play.modules.reactivemongo.ReactiveMongoPlugin
+//import play.modules.reactivemongo.ReactiveMongoPlugin
+import play.modules.reactivemongo.MongoDbConnection
+
 import uk.gov.hmrc.lock.LockRepository
 
-object Repositories {
+object Repositories extends MongoDbConnection{
 
   private implicit val connection = {
     import play.api.Play.current
-    ReactiveMongoPlugin.mongoConnector.db
+   // ReactiveMongoPlugin.mongoConnector.db
+    mongoConnector.db
   }
 
   lazy val presubmissionRepository: PresubmissionMongoRepository = new PresubmissionMongoRepository()

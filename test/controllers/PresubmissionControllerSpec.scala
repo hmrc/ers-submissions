@@ -19,14 +19,14 @@ package controllers
 import java.util.concurrent.TimeUnit
 import metrics.Metrics
 import models.SchemeInfo
-import org.mockito.Matchers._
+import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
 import org.mockito.internal.verification.VerificationModeFactory
 import org.scalatest.BeforeAndAfterEach
 import play.api.libs.json.{Json, JsObject}
 import play.api.test._
 import play.api.test.Helpers._
-import org.scalatest.mock.MockitoSugar
+import org.scalatest.mockito.MockitoSugar
 import services.{ValidationService, PresubmissionService}
 import uk.gov.hmrc.play.http.HeaderCarrier
 import uk.gov.hmrc.play.test.{WithFakeApplication, UnitSpec}
