@@ -25,8 +25,6 @@ object ERSRequest {
 
     new Request[JsObject] {
 
-      //val cert: java.security.cert.X509Certificate =  java.security.cert.X509Certificate
-
       override def clientCertificateChain: Option[Seq[java.security.cert.X509Certificate]] = None
 
       override def body: JsObject = Json.obj()

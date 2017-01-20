@@ -45,8 +45,9 @@ object WSHttpWithCustomTimeOut extends WSHttp with AppName with RunMode with Htt
   }
 
   override def buildRequest[A](url: String)(implicit hc: HeaderCarrier) = {
-    val ersTimeOut = (Play.configuration.getInt("ers-submissions-timeout-seconds").getOrElse(20)) * 1000
-    super.buildRequest[A](url).withRequestTimeout(Duration(ersTimeOut.toString))
+    val ersTimeOut = (Play.configuration.getString("ers-submissions-timeout-seconds").getOrElse("20"))
+    val d = Duration(ersTimeOut)
+    super.buildRequest[A](url).withRequestTimeout(d)
   }
 }
 

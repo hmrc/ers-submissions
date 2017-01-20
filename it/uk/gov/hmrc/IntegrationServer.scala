@@ -7,7 +7,7 @@ import uk.gov.hmrc.play.it.{ServiceSpec, ExternalService, MicroServiceEmbeddedSe
 
 class IntegrationServer(override val testName: String, extraConfig: Map[String, String]) extends MicroServiceEmbeddedServer {
 
-  import ExternalService.runFromJar
+  import uk.gov.hmrc.play.it.ExternalServiceRunner.runFromJar
 
   override protected val externalServices: Seq[ExternalService] = Seq().map(runFromJar(_))
 
