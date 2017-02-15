@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 HM Revenue & Customs
+ * Copyright 2017 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,15 +15,16 @@
  */
 
 package repositories
+import uk.gov.hmrc.mongo.MongoConnector
+import play.modules.reactivemongo.MongoDbConnection
 
-import play.modules.reactivemongo.ReactiveMongoPlugin
 import uk.gov.hmrc.lock.LockRepository
 
-object Repositories {
+object Repositories extends MongoDbConnection{
 
   private implicit val connection = {
     import play.api.Play.current
-    ReactiveMongoPlugin.mongoConnector.db
+    mongoConnector.db
   }
 
   lazy val presubmissionRepository: PresubmissionMongoRepository = new PresubmissionMongoRepository()

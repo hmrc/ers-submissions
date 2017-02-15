@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 HM Revenue & Customs
+ * Copyright 2017 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ package utils
 import com.typesafe.config.{ConfigValueFactory, ConfigFactory, Config}
 import fixtures.Common
 import org.joda.time.{DateTimeZone, DateTime}
-import org.scalatest.mock.MockitoSugar
+import org.scalatest.mockito.MockitoSugar
 import play.api.libs.json.{JsObject, Json}
 import reactivemongo.bson.BSONObjectID
 import uk.gov.hmrc.play.http.HttpResponse
@@ -107,12 +107,13 @@ class SubmissionCommonSpec extends UnitSpec with MockitoSugar with WithFakeAppli
   }
 
   "getNewField" should {
+    "get the expected field" in{
+      val testConfig = ConfigFactory.empty().withValue("name", ConfigValueFactory.fromAnyRef("fieldName"))
 
-    val testConfig = ConfigFactory.empty().withValue("name", ConfigValueFactory.fromAnyRef("fieldName"))
+      val result = SubmissionCommon.getNewField(testConfig, "value")
 
-    val result = SubmissionCommon.getNewField(testConfig, "value")
-
-    result shouldBe Json.obj("fieldName" -> "value")
+     result shouldBe Json.obj("fieldName" -> "value")
+    }
   }
 
   "getObjectFromJson" should {

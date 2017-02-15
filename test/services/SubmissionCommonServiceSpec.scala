@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 HM Revenue & Customs
+ * Copyright 2017 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,8 +34,8 @@ import utils.{SubmissionCommon, ADRSubmission}
 import utils.LoggingAndRexceptions.ErsLoggingAndAuditing
 import scala.concurrent.Future
 import org.mockito.Mockito._
-import org.mockito.Matchers._
-import org.scalatest.mock.MockitoSugar
+import org.scalatest.mockito.MockitoSugar
+import org.mockito.ArgumentMatchers._
 
 class SubmissionCommonServiceSpec extends UnitSpec with MockitoSugar with BeforeAndAfterEach with WithFakeApplication {
   implicit val hc: HeaderCarrier = new HeaderCarrier()

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 HM Revenue & Customs
+ * Copyright 2017 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ import fixtures.Fixtures
 import models.ErsSummary
 import play.api.libs.json.JsObject
 import org.mockito.Mockito._
-import org.scalatest.mock.MockitoSugar
+import org.scalatest.mockito.MockitoSugar
 import reactivemongo.api.DB
 import reactivemongo.api.collections.GenericQueryBuilder
 import reactivemongo.api.commands.{UpdateWriteResult, WriteError, DefaultWriteResult, WriteResult}
@@ -29,7 +29,7 @@ import reactivemongo.json.collection.JSONCollection
 import uk.gov.hmrc.play.test.{WithFakeApplication, UnitSpec}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
-import org.mockito.Matchers._
+import org.mockito.ArgumentMatchers._
 
 class MetadataMongoRepositorySpec extends UnitSpec with MockitoSugar with WithFakeApplication {
 

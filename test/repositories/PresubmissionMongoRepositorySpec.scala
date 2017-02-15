@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 HM Revenue & Customs
+ * Copyright 2017 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,19 +18,19 @@ package repositories
 
 import fixtures.Fixtures
 import models.SchemeData
-import org.mockito.Matchers._
+import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
-import org.scalatest.mock.MockitoSugar
+import org.scalatest.mockito.MockitoSugar
 import play.api.test.FakeApplication
 import play.api.test.Helpers._
 import reactivemongo.api.DB
 import reactivemongo.api.commands.{WriteError, DefaultWriteResult, WriteResult}
 import reactivemongo.json.collection.JSONCollection
-import uk.gov.hmrc.play.test.{WithFakeApplication, UnitSpec}
+import uk.gov.hmrc.play.test.{UnitSpec}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class PresubmissionMongoRepositorySpec extends UnitSpec with MockitoSugar with WithFakeApplication {
+class PresubmissionMongoRepositorySpec extends UnitSpec with MockitoSugar {
 
   val presubmissionJson = Fixtures.schemeDataJson
 

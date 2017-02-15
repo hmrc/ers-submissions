@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 HM Revenue & Customs
+ * Copyright 2017 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,8 +20,8 @@ import fixtures.Fixtures
 import models.{ADRTransferException, ErsSummary, ResubmissionException}
 import org.mockito.Mockito._
 import org.scalatest.BeforeAndAfterEach
-import org.scalatest.mock.MockitoSugar
-import org.mockito.Matchers._
+import org.scalatest.mockito.MockitoSugar
+import org.mockito.ArgumentMatchers._
 import play.api.mvc.Request
 import play.api.test.FakeRequest
 import repositories.MetadataMongoRepository

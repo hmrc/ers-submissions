@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 HM Revenue & Customs
+ * Copyright 2017 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,9 @@ object ERSRequest {
   def createERSRequest(): Request[JsObject] = {
 
     new Request[JsObject] {
+
+      override def clientCertificateChain: Option[Seq[java.security.cert.X509Certificate]] = None
+
       override def body: JsObject = Json.obj()
 
       override def secure: Boolean = false
@@ -36,8 +39,8 @@ object ERSRequest {
 
       override def method: String = "POST"
 
-      override def headers: Headers = new Headers {
-        override protected val data: Seq[(String, Seq[String])] = Seq()
+      override def headers: Headers = new Headers(Seq()) {
+         protected val data: Seq[(String, Seq[String])] = Seq()
       }
 
       override def path: String = "ers-submissions"
