@@ -26,9 +26,10 @@ import uk.gov.hmrc.play.auth.microservice.connectors.AuthConnector
 import uk.gov.hmrc.play.config.{AppName, RunMode, ServicesConfig}
 import uk.gov.hmrc.play.http.ws._
 import uk.gov.hmrc.play.http.{HeaderCarrier, HttpResponse}
+
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
-import scala.concurrent.duration.Duration
+import scala.concurrent.duration._
 
 object WSHttp extends WSGet with WSPut with WSPost with WSDelete with WSPatch with AppName with RunMode with HttpAuditing {
   override val hooks = Seq(AuditingHook)
@@ -39,15 +40,14 @@ object WSHttpWithCustomTimeOut extends WSHttp with AppName with RunMode with Htt
   override val hooks = Seq(AuditingHook)
   override val auditConnector = MicroserviceAuditConnector
 
-  override def doPost[A](url: String, body: A, headers: Seq[(String,String)])(implicit rds: Writes[A], hc: HeaderCarrier): Future[HttpResponse] = {
+  override def doPost[A](url: String, body: A, headers: Seq[(String, String)])(implicit rds: Writes[A], hc: HeaderCarrier): Future[HttpResponse] = {
     val jsonbody = Json.toJson(body)
     buildRequest(url).withHeaders(headers: _*).post(jsonbody).map(new WSHttpResponse(_))
   }
 
   override def buildRequest[A](url: String)(implicit hc: HeaderCarrier) = {
-    val ersTimeOut = (Play.configuration.getString("ers-submissions-timeout-seconds").getOrElse("20"))
-    val d = Duration(ersTimeOut)
-    super.buildRequest[A](url).withRequestTimeout(d)
+    val ersTimeOut = Play.configuration.getInt("ers-submissions-timeout-seconds").getOrElse(20).seconds
+    super.buildRequest[A](url).withRequestTimeout(ersTimeOut)
   }
 }
 
