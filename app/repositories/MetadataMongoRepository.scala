@@ -112,7 +112,9 @@ class MetadataMongoRepository()(implicit mongo: () => DB)
 
     val isAfterDateSelector: BSONDocument = if(resubmitAfterDate){
       BSONDocument(
-        "metaData.schemeInfo.timestamp" -> DateTime.parse("2016-01-01").getMillis
+        "metaData.schemeInfo.timestamp" -> BSONDocument(
+          "$lte" -> DateTime.parse("2017-06-02").getMillis
+        )
       )
     }else(
       BSONDocument()
