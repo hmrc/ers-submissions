@@ -884,7 +884,7 @@ class SAYE_ADRSubmissionSpec extends UnitSpec with MockitoSugar with BeforeAndAf
                                                                 |"optionsGrantedInYear":false,
                                                                 |"optionsExercisedInYear":true,
                                                                 |"exercised":{
-                                                                |"exercisedEvents":[
+                                                                |"exerciseEvents":[
                                                                 |{
                                                                 |"dateOfEvent":"2014-01-01",
                                                                 |"individual":{
@@ -1006,7 +1006,7 @@ class SAYE_ADRSubmissionSpec extends UnitSpec with MockitoSugar with BeforeAndAf
                                                                 |"optionsGrantedInYear":false,
                                                                 |"optionsExercisedInYear":true,
                                                                 |"exercised":{
-                                                                |"exercisedEvents":[
+                                                                |"exerciseEvents":[
                                                                 |{
                                                                 |"dateOfEvent":"2014-01-01",
                                                                 |"individual":{
@@ -1158,7 +1158,7 @@ class SAYE_ADRSubmissionSpec extends UnitSpec with MockitoSugar with BeforeAndAf
                                                                 |},
                                                                 |"optionsExercisedInYear":true,
                                                                 |"exercised":{
-                                                                |"exercisedEvents":[
+                                                                |"exerciseEvents":[
                                                                 |{
                                                                 |"dateOfEvent":"2014-01-01",
                                                                 |"individual":{
@@ -1321,7 +1321,7 @@ class SAYE_ADRSubmissionSpec extends UnitSpec with MockitoSugar with BeforeAndAf
                                                                 |},
                                                                 |"optionsExercisedInYear":true,
                                                                 |"exercised":{
-                                                                |"exercisedEvents":[
+                                                                |"exerciseEvents":[
                                                                 |{
                                                                 |"dateOfEvent":"2014-01-01",
                                                                 |"individual":{
@@ -1440,7 +1440,7 @@ class SAYE_ADRSubmissionSpec extends UnitSpec with MockitoSugar with BeforeAndAf
       result shouldBe Json.parse("""{
                                    |"optionsExercisedInYear":true,
                                    |"exercised":{
-                                   |"exercisedEvents":[
+                                   |"exerciseEvents":[
                                    |{
                                    |"dateOfEvent":"2014-01-01",
                                    |"individual":{
@@ -1491,7 +1491,7 @@ class SAYE_ADRSubmissionSpec extends UnitSpec with MockitoSugar with BeforeAndAf
       result shouldBe Json.parse("""{
                                    |"optionsExercisedInYear":true,
                                    |"exercised":{
-                                   |"exercisedEvents":[
+                                   |"exerciseEvents":[
                                    |{
                                    |"dateOfEvent":"2014-01-01",
                                    |"individual":{
@@ -1546,7 +1546,7 @@ class SAYE_ADRSubmissionSpec extends UnitSpec with MockitoSugar with BeforeAndAf
       result shouldBe Json.parse("""{
                                    |"optionsExercisedInYear":true,
                                    |"exercised":{
-                                   |"exercisedEvents":[
+                                   |"exerciseEvents":[
                                    |{
                                    |"dateOfEvent":"2014-01-01",
                                    |"individual":{
