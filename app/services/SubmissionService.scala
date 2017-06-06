@@ -17,9 +17,10 @@
 package services
 
 import java.util.concurrent.TimeUnit
+
 import connectors.ADRConnector
 import metrics.Metrics
-import models.{SchemeInfo, Statuses, ADRTransferException, ErsSummary}
+import models.{ADRTransferException, ErsSummary}
 import org.joda.time.DateTime
 import play.api.Logger
 import play.api.libs.json.JsObject
@@ -27,10 +28,11 @@ import play.api.mvc.Request
 import repositories.{MetadataMongoRepository, Repositories}
 import services.audit.AuditEvents
 import uk.gov.hmrc.play.http.HeaderCarrier
-import utils.{SubmissionCommon, ADRSubmission}
-import utils.LoggingAndRexceptions.{ResubmissionExceptionEmiter, ErsLoggingAndAuditing, ADRExceptionEmitter}
-import scala.concurrent.Future
+import utils.LoggingAndRexceptions.{ADRExceptionEmitter, ErsLoggingAndAuditing}
+import utils.{ADRSubmission, SubmissionCommon}
+
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 
 object SubmissionCommonService extends SubmissionCommonService {
   override val adrConnector: ADRConnector = ADRConnector
@@ -39,7 +41,7 @@ object SubmissionCommonService extends SubmissionCommonService {
   override val metrics: Metrics = Metrics
   override val ersLoggingAndAuditing: ErsLoggingAndAuditing = ErsLoggingAndAuditing
   override lazy val metadataRepository: MetadataMongoRepository = Repositories.metadataRepository
-}
+  }
 
 trait SubmissionCommonService {
   val adrConnector: ADRConnector
@@ -49,8 +51,8 @@ trait SubmissionCommonService {
   val ersLoggingAndAuditing: ErsLoggingAndAuditing
   val metadataRepository: MetadataMongoRepository
 
-  def callProcessData(ersSummary: ErsSummary, failedStatus: String)(implicit request: Request[_], hc: HeaderCarrier): Future[Boolean] = {
-    processData(ersSummary, failedStatus).map {
+  def callProcessData(ersSummary: ErsSummary, failedStatus: String, successStatus: String)(implicit request: Request[_], hc: HeaderCarrier): Future[Boolean] = {
+    processData(ersSummary, failedStatus, successStatus).map {
       res => res
     }.recover {
       case aex: ADRTransferException => {
@@ -73,11 +75,11 @@ trait SubmissionCommonService {
     }
   }
 
-  def processData(ersSummary: ErsSummary, failedStatus: String)(implicit request: Request[_], hc: HeaderCarrier): Future[Boolean] = {
+  def processData(ersSummary: ErsSummary, failedStatus: String, successStatus: String)(implicit request: Request[_], hc: HeaderCarrier): Future[Boolean] = {
     ersLoggingAndAuditing.logWarn(s"Submission journey 3. start processing data: ${DateTime.now}", Some(ersSummary))
     Logger.info(s"Start processing data for ${ersLoggingAndAuditing.buildDataMessage(ersSummary)}")
     transformData(ersSummary).flatMap { adrData =>
-      sendToADRUpdatePostData(ersSummary, adrData, failedStatus) map {res => res}
+      sendToADRUpdatePostData(ersSummary, adrData, failedStatus, successStatus) map {res => res}
     }
   }
 
@@ -109,7 +111,7 @@ trait SubmissionCommonService {
     }
   }
 
-  def sendToADRUpdatePostData(ersSummary: ErsSummary, adrData: JsObject, failedStatus: String)(implicit request: Request[_], hc: HeaderCarrier): Future[Boolean] = {
+  def sendToADRUpdatePostData(ersSummary: ErsSummary, adrData: JsObject, failedStatus: String, successStatus: String)(implicit request: Request[_], hc: HeaderCarrier): Future[Boolean] = {
     ersLoggingAndAuditing.logWarn(s"Submission journey 6. start sending data: ${DateTime.now}", Some(ersSummary))
     Logger.info(s"Start sending data ${ersLoggingAndAuditing.buildDataMessage(ersSummary)}")
     val startTime = System.currentTimeMillis()
@@ -126,7 +128,7 @@ trait SubmissionCommonService {
           ersLoggingAndAuditing.handleSuccess(ersSummary, s"Data is sent successfully to ADR. CorrelationId : ${correlationID}" + "size of Fields in Json: " + adrData.fields.size)
 
           AuditEvents.sendToAdrEvent("ErsTransferToAdrResponseReceived", ersSummary, Some(correlationID))
-          Statuses.Sent.toString
+          successStatus
         }
         case _ => {
           metrics.failedSendToADR()

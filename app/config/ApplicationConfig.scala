@@ -50,4 +50,9 @@ object ApplicationConfig extends ServicesConfig {
   lazy val schedulerSchemeRefList: List[String] = Try(loadConfig(s"$env.scheduling.resubmit-list-schemeRefs").split(",").toList).getOrElse(List())
   lazy val schedulerSchemeRefStatusList: List[String] = Try(loadConfig(s"$env.scheduling.resubmit-list-statuses").split(",").toList).getOrElse(List())
   lazy val schedulerSchemeRefFailStatus: String = Try(loadConfig(s"$env.scheduling.resubmit-list-failStatus")).getOrElse("failedScheduler")
+
+  lazy val schedulerEnableResubmitByScheme: Boolean = Try(loadConfig(s"$env.scheduling.resubmit-scheme-enable").toBoolean).getOrElse(false)
+  lazy val schedulerResubmitScheme: String = loadConfig(s"$env.scheduling.resubmit-scheme")
+  lazy val schedulerSuccessStatus: String = loadConfig(s"$env.scheduling.resubmit-successful-status")
+  lazy val schedulerResubmitWithNilReturn: Boolean = Try(loadConfig(s"$env.scheduling.resubmit-scheme-with-nil-returns").toBoolean).getOrElse(true)
 }

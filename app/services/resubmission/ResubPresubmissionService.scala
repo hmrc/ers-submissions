@@ -38,7 +38,7 @@ trait ResubPresubmissionService extends SchedulerConfig {
   val submissionCommonService: SubmissionCommonService
 
   def processFailedSubmissions()(implicit request: Request[_], hc: HeaderCarrier): Future[Boolean] = {
-    metadataRepository.findAndUpdateByStatus(searchStatusList, schemeRefList).flatMap { ersSummary =>
+    metadataRepository.findAndUpdateByStatus(searchStatusList, resubmitWithNilReturn, schemeRefList, resubmitScheme).flatMap { ersSummary =>
       if(ersSummary.isDefined) {
         startResubmission(ersSummary.get).map(res => res)
       }
@@ -60,7 +60,7 @@ trait ResubPresubmissionService extends SchedulerConfig {
   }
 
   def startResubmission(ersSummary: ErsSummary)(implicit request: Request[_], hc: HeaderCarrier): Future[Boolean] = {
-    submissionCommonService.callProcessData(ersSummary, failedStatus).map(res => res).recover {
+    submissionCommonService.callProcessData(ersSummary, failedStatus, resubmitSuccessStatus).map(res => res).recover {
       case aex: ADRTransferException => {
         AuditEvents.sendToAdrEvent("ErsTransferToAdrFailed", ersSummary, source = Some("scheduler"))
         ResubmissionExceptionEmiter.emitFrom(

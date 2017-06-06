@@ -35,7 +35,9 @@ trait MetadataRepository extends Repository[ErsSummary, BSONObjectID] {
 
   def updateStatus(schemeInfo: SchemeInfo, status: String): Future[Boolean]
 
-  def findAndUpdateByStatus(statusList: List[String], schemeRefList: Option[List[String]]): Future[Option[ErsSummary]]
+  def findAndUpdateByStatus(statusList: List[String], resubmitWithNilReturn: Boolean, schemeRefList: Option[List[String]], schemeType: Option[String]): Future[Option[ErsSummary]]
+
+  def findAndUpdateBySchemeType(statusList: List[String], schemeType: String): Future[Option[ErsSummary]]
 }
 
 class MetadataMongoRepository()(implicit mongo: () => DB)
@@ -74,19 +76,70 @@ class MetadataMongoRepository()(implicit mongo: () => DB)
     }
   }
 
-  override def findAndUpdateByStatus(statusList: List[String], schemeRefList: Option[List[String]]): Future[Option[ErsSummary]] = {
+  override def findAndUpdateByStatus(statusList: List[String], resubmitWithNilReturn: Boolean =  true, schemeRefList: Option[List[String]], schemeType: Option[String]): Future[Option[ErsSummary]] = {
     val baseSelector: BSONDocument = BSONDocument(
       "transferStatus" -> BSONDocument(
         "$in" -> statusList
       )
     )
 
-    val selector: BSONDocument = if(schemeRefList.isDefined) {
-      baseSelector ++ BSONDocument("metaData.schemeInfo.schemeRef" -> BSONDocument("$in" -> schemeRefList.get))
+    val schemeRefSelector: BSONDocument = if(schemeRefList.isDefined) {
+      BSONDocument("metaData.schemeInfo.schemeRef" -> BSONDocument("$in" -> schemeRefList.get))
     }
     else {
-      baseSelector
+      BSONDocument()
     }
+
+    val schemeSelector: BSONDocument = if(schemeType.isDefined) {
+      BSONDocument(
+        "metaData.schemeInfo.schemeType" -> schemeType.get
+      )
+    }
+    else {
+      BSONDocument()
+    }
+
+    val nilReturnSelector: BSONDocument = if(resubmitWithNilReturn) {
+      BSONDocument()
+    }
+    else {
+      // TODO: Find the right value
+      BSONDocument(
+        "isNilReturn" -> "0"
+      )
+    }
+
+    val modifier: BSONDocument = BSONDocument(
+      "$set" -> BSONDocument(
+        "transferStatus" -> Statuses.Process.toString
+      )
+    )
+
+    collection.findAndUpdate(
+      baseSelector ++ schemeRefSelector ++ schemeSelector,
+      modifier,
+      fetchNewObject = false,
+      sort = Some(Json.obj("metaData.schemeInfo.timestamp" -> 1))
+    ).map { res =>
+      res.result[ErsSummary]
+    }
+  }
+
+  override def findAndUpdateBySchemeType(statusList: List[String], schemeType: String): Future[Option[ErsSummary]] = {
+    val baseSelector: BSONDocument = BSONDocument(
+      "transferStatus" -> BSONDocument(
+        "$in" -> statusList
+      )
+    )
+
+    val selector: BSONDocument = baseSelector ++ BSONDocument("metaData.schemeInfo.schemeType" -> BSONDocument("$in" -> schemeType))
+
+//    val selector: BSONDocument = if(schemeRefList.isDefined) {
+//      baseSelector ++ BSONDocument("metaData.schemeInfo.schemeRef" -> BSONDocument("$in" -> schemeRefList.get))
+//    }
+//    else {
+//      baseSelector
+//    }
 
     val modifier: BSONDocument = BSONDocument(
       "$set" -> BSONDocument(
@@ -98,4 +151,5 @@ class MetadataMongoRepository()(implicit mongo: () => DB)
       res.result[ErsSummary]
     }
   }
+
 }

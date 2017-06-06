@@ -58,12 +58,12 @@ class SubmissionCommonServiceSpec extends UnitSpec with MockitoSugar with Before
         val ersLoggingAndAuditing: ErsLoggingAndAuditing = mockErsLoggingAndAuditing
         val metadataRepository: MetadataMongoRepository = mock[MetadataMongoRepository]
 
-        override def processData(ersSummary: ErsSummary, failedStatus: String)(implicit request: Request[_], hc: HeaderCarrier): Future[Boolean] = {
+        override def processData(ersSummary: ErsSummary, failedStatus: String, successStatus: String)(implicit request: Request[_], hc: HeaderCarrier): Future[Boolean] = {
           Future.successful(true)
         }
       }
 
-      val result = await(submissionCommonService.callProcessData(Fixtures.EMISummaryDate, "failed"))
+      val result = await(submissionCommonService.callProcessData(Fixtures.EMISummaryDate, "failed", "success"))
       result shouldBe true
     }
 
@@ -82,13 +82,13 @@ class SubmissionCommonServiceSpec extends UnitSpec with MockitoSugar with Before
         val ersLoggingAndAuditing: ErsLoggingAndAuditing = mockErsLoggingAndAuditing
         val metadataRepository: MetadataMongoRepository = mockMetadataRepository
 
-        override def processData(ersSummary: ErsSummary, failedStatus: String)(implicit request: Request[_], hc: HeaderCarrier): Future[Boolean] = {
+        override def processData(ersSummary: ErsSummary, failedStatus: String, successStatus: String)(implicit request: Request[_], hc: HeaderCarrier): Future[Boolean] = {
           Future.failed(ADRTransferException(Fixtures.EMIMetaData, "test message", "text context"))
         }
       }
 
       val result = intercept[ADRTransferException] {
-        await(submissionCommonService.callProcessData(Fixtures.EMISummaryDate, "failed"))
+        await(submissionCommonService.callProcessData(Fixtures.EMISummaryDate, "failed", "success"))
       }
       result.message shouldBe "test message"
       result.context shouldBe "text context"
@@ -110,13 +110,13 @@ class SubmissionCommonServiceSpec extends UnitSpec with MockitoSugar with Before
         val ersLoggingAndAuditing: ErsLoggingAndAuditing = mockErsLoggingAndAuditing
         val metadataRepository: MetadataMongoRepository = mockMetadataRepository
 
-        override def processData(ersSummary: ErsSummary, failedStatus: String)(implicit request: Request[_], hc: HeaderCarrier): Future[Boolean] = {
+        override def processData(ersSummary: ErsSummary, failedStatus: String, successStatus: String)(implicit request: Request[_], hc: HeaderCarrier): Future[Boolean] = {
           Future.failed(new Exception("test message"))
         }
       }
 
       val result = intercept[ADRTransferException] {
-        await(submissionCommonService.callProcessData(Fixtures.EMISummaryDate, "failed"))
+        await(submissionCommonService.callProcessData(Fixtures.EMISummaryDate, "failed", "success"))
       }
       result.message shouldBe "Exception processing submission"
       result.context shouldBe "PostsubmissionService.callProcessData"
@@ -136,13 +136,13 @@ class SubmissionCommonServiceSpec extends UnitSpec with MockitoSugar with Before
       override def transformData(ersSummary: ErsSummary)(implicit request: Request[_], hc: HeaderCarrier): Future[JsObject] = {
         Future.successful(Json.obj())
       }
-      override def sendToADRUpdatePostData(ersSummary: ErsSummary, adrData: JsObject, failedStatus: String)(implicit request: Request[_], hc: HeaderCarrier): Future[Boolean] = {
+      override def sendToADRUpdatePostData(ersSummary: ErsSummary, adrData: JsObject, failedStatus: String, successStatus: String)(implicit request: Request[_], hc: HeaderCarrier): Future[Boolean] = {
         Future.successful(true)
       }
     }
 
     "return the result of storePostSubmissionData" in {
-      val result = await(submissionCommonService.processData(Fixtures.EMISummaryDate, "failed"))
+      val result = await(submissionCommonService.processData(Fixtures.EMISummaryDate, "failed", "success"))
       result shouldBe true
     }
   }
@@ -227,7 +227,7 @@ class SubmissionCommonServiceSpec extends UnitSpec with MockitoSugar with Before
         Future.successful(HttpResponse(202))
       )
 
-      val result = await(submissionCommonService.sendToADRUpdatePostData(Fixtures.metadata, Fixtures.metadataJson, Statuses.Failed.toString))
+      val result = await(submissionCommonService.sendToADRUpdatePostData(Fixtures.metadata, Fixtures.metadataJson, Statuses.Failed.toString, Statuses.Sent.toString))
       result shouldBe true
       verify(mockMetrics, VerificationModeFactory.times(1)).sendToADR(any[Long](), any[TimeUnit]())
       verify(mockMetrics, VerificationModeFactory.times(1)).successfulSendToADR()
@@ -243,7 +243,7 @@ class SubmissionCommonServiceSpec extends UnitSpec with MockitoSugar with Before
         Future.successful(HttpResponse(500))
       )
 
-      val result = await(submissionCommonService.sendToADRUpdatePostData(Fixtures.metadata, Fixtures.metadataJson, Statuses.Failed.toString))
+      val result = await(submissionCommonService.sendToADRUpdatePostData(Fixtures.metadata, Fixtures.metadataJson, Statuses.Failed.toString, Statuses.Sent.toString))
       result shouldBe true
       verify(mockMetrics, VerificationModeFactory.times(0)).sendToADR(any[Long](), any[TimeUnit]())
       verify(mockMetrics, VerificationModeFactory.times(0)).successfulSendToADR()
@@ -259,7 +259,7 @@ class SubmissionCommonServiceSpec extends UnitSpec with MockitoSugar with Before
         Future.failed(new ADRTransferException(Fixtures.metadata.metaData, "errorMessage", "errorContext"))
       )
       intercept[ADRTransferException] {
-        await(submissionCommonService.sendToADRUpdatePostData(Fixtures.metadata, Fixtures.metadataJson, Statuses.Failed.toString))
+        await(submissionCommonService.sendToADRUpdatePostData(Fixtures.metadata, Fixtures.metadataJson, Statuses.Failed.toString, Statuses.Sent.toString))
       }
       verify(mockMetrics, VerificationModeFactory.times(0)).sendToADR(any[Long](), any[TimeUnit]())
       verify(mockMetrics, VerificationModeFactory.times(0)).successfulSendToADR()
@@ -275,7 +275,7 @@ class SubmissionCommonServiceSpec extends UnitSpec with MockitoSugar with Before
         Future.failed(new Exception("errorMessage"))
       )
       intercept[ADRTransferException] {
-        await(submissionCommonService.sendToADRUpdatePostData(Fixtures.metadata, Fixtures.metadataJson, Statuses.Failed.toString))
+        await(submissionCommonService.sendToADRUpdatePostData(Fixtures.metadata, Fixtures.metadataJson, Statuses.Failed.toString, Statuses.Sent.toString))
       }
       verify(mockMetrics, VerificationModeFactory.times(0)).sendToADR(any[Long](), any[TimeUnit]())
       verify(mockMetrics, VerificationModeFactory.times(0)).successfulSendToADR()

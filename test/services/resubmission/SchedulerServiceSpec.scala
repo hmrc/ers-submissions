@@ -19,13 +19,14 @@ package services.resubmission
 import org.joda.time.DateTime
 import org.mockito.Mockito._
 import org.scalatest.BeforeAndAfterEach
-import org.scalatest.mock.MockitoSugar
 import play.api.mvc.Request
-import play.api.test.FakeRequest
+import play.api.test.{FakeApplication, FakeRequest}
 import uk.gov.hmrc.play.http.HeaderCarrier
-import uk.gov.hmrc.play.test.{WithFakeApplication, UnitSpec}
+import uk.gov.hmrc.play.test.{UnitSpec, WithFakeApplication}
 import utils.LoggingAndRexceptions.ErsLoggingAndAuditing
+
 import scala.concurrent.Future
+import org.scalatest.mockito.MockitoSugar
 
 class SchedulerServiceSpec extends UnitSpec with MockitoSugar with BeforeAndAfterEach with WithFakeApplication {
 
