@@ -30,16 +30,22 @@ import concurrent.duration._
 import scala.concurrent.Future
 
 object SchedulerService extends SchedulerService {
+  println("SchedulerService SIX")
+
   override val resubPresubmissionService: ResubPresubmissionService = ResubPresubmissionService
   override val schedulerLoggingAndAuditing: ErsLoggingAndAuditing = ErsLoggingAndAuditing
 }
 
 trait SchedulerService extends SchedulerConfig {
+  println("SchedulerService ONE")
   val resubPresubmissionService: ResubPresubmissionService
+  println("SchedulerService TWO")
   val schedulerLoggingAndAuditing: ErsLoggingAndAuditing
-
+  println("SchedulerService THREE")
   val request = ERSRequest.createERSRequest()
+  println("SchedulerService FOUR")
   val hc: HeaderCarrier = new HeaderCarrier()
+  println("SchedulerService FIVE")
 
   def run() = {
     val lock = ResubmissionLock(ApplicationConfig.schedulerLockName, new Duration(ApplicationConfig.schedulerLockExpireMin * 60000), Repositories.lockRepository)
