@@ -18,6 +18,7 @@ package repositories
 
 import play.api.Logger
 import play.api.libs.json.Json
+
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import reactivemongo.api.DB
@@ -26,6 +27,7 @@ import uk.gov.hmrc.mongo.json.ReactiveMongoFormats
 import uk.gov.hmrc.mongo.{ReactiveRepository, Repository}
 import models._
 import config.ApplicationConfig
+import org.joda.time.DateTime
 
 trait MetadataRepository extends Repository[ErsSummary, BSONObjectID] {
 
@@ -35,7 +37,7 @@ trait MetadataRepository extends Repository[ErsSummary, BSONObjectID] {
 
   def updateStatus(schemeInfo: SchemeInfo, status: String): Future[Boolean]
 
-  def findAndUpdateByStatus(statusList: List[String], resubmitWithNilReturn: Boolean, schemeRefList: Option[List[String]], schemeType: Option[String]): Future[Option[ErsSummary]]
+  def findAndUpdateByStatus(statusList: List[String], resubmitWithNilReturn: Boolean,resubmitAfterDate:Boolean = true, schemeRefList: Option[List[String]], schemeType: Option[String]): Future[Option[ErsSummary]]
 
   def findAndUpdateBySchemeType(statusList: List[String], schemeType: String): Future[Option[ErsSummary]]
 }
@@ -76,7 +78,7 @@ class MetadataMongoRepository()(implicit mongo: () => DB)
     }
   }
 
-  override def findAndUpdateByStatus(statusList: List[String], resubmitWithNilReturn: Boolean =  true, schemeRefList: Option[List[String]], schemeType: Option[String]): Future[Option[ErsSummary]] = {
+  override def findAndUpdateByStatus(statusList: List[String], resubmitWithNilReturn: Boolean =  true, resubmitAfterDate:Boolean = true, schemeRefList: Option[List[String]], schemeType: Option[String]): Future[Option[ErsSummary]] = {
     val baseSelector: BSONDocument = BSONDocument(
       "transferStatus" -> BSONDocument(
         "$in" -> statusList
@@ -103,11 +105,18 @@ class MetadataMongoRepository()(implicit mongo: () => DB)
       BSONDocument()
     }
     else {
-      // TODO: Find the right value
       BSONDocument(
-        "isNilReturn" -> "0"
+        "isNilReturn" -> "1"
       )
     }
+
+    val isAfterDateSelector: BSONDocument = if(resubmitAfterDate){
+      BSONDocument(
+        "metaData.schemeInfo.timestamp" -> DateTime.parse("2016-01-01").getMillis
+      )
+    }else(
+      BSONDocument()
+    )
 
     val modifier: BSONDocument = BSONDocument(
       "$set" -> BSONDocument(
@@ -116,7 +125,7 @@ class MetadataMongoRepository()(implicit mongo: () => DB)
     )
 
     collection.findAndUpdate(
-      baseSelector ++ schemeRefSelector ++ schemeSelector,
+      baseSelector ++ schemeRefSelector ++ schemeSelector ++ isAfterDateSelector,
       modifier,
       fetchNewObject = false,
       sort = Some(Json.obj("metaData.schemeInfo.timestamp" -> 1))

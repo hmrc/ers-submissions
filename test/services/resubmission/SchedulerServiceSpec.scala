@@ -109,7 +109,7 @@ class SchedulerServiceSpec extends UnitSpec with MockitoSugar with BeforeAndAfte
         Future.successful(true)
       )
       val result = await(schedulerService.resubmit())
-      result shouldBe true
+      result shouldBe Some(true)
     }
 
     "return false if resubmitting gridFS data throws exception" in {
@@ -125,7 +125,7 @@ class SchedulerServiceSpec extends UnitSpec with MockitoSugar with BeforeAndAfte
         Future.failed(new RuntimeException)
       )
       val result = await(schedulerService.resubmit())
-      result shouldBe false
+      result shouldBe Some(false)
     }
 
   }
