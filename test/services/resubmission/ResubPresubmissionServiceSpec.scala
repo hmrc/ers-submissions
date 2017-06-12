@@ -65,17 +65,17 @@ class ResubPresubmissionServiceSpec extends UnitSpec with MockitoSugar with Befo
         Future.successful(Some(Fixtures.metadata))
       )
       val result = await(resubPresubmissionService.processFailedSubmissions())
-      result shouldBe false
+      result shouldBe Some(false)
     }
 
-    "return true if findAndUpdateByStatus is successful but returns None" in {
+    "return None if findAndUpdateByStatus is successful but returns None" in {
       when(
         mockMetadataRepository.findAndUpdateByStatus(any[List[String]](), anyBoolean(), anyBoolean(), any[Option[List[String]]], any[Option[String]])
       ).thenReturn(
         Future.successful(None)
       )
       val result = await(resubPresubmissionService.processFailedSubmissions())
-      result shouldBe true
+      result shouldBe None
     }
 
     "rethrow ResubmissionException if such one occurs" in {

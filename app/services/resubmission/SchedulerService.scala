@@ -56,7 +56,7 @@ trait SchedulerService extends SchedulerConfig {
   def resubmit()(implicit request: Request[_], hc: HeaderCarrier): Future[Option[Boolean]] = {
     resubPresubmissionService.processFailedSubmissions().map { result =>
       schedulerLoggingAndAuditing.handleResult(result, Some("Resubmission was successful"), Some("Resubmission failed"))
-      Some(result)
+      result
     }.recover {
       case ex: Exception => {
         schedulerLoggingAndAuditing.handleException("Resubmission failed with Exception", ex, "SchedulerService.resubmit")

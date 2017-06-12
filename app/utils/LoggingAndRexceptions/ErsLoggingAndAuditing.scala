@@ -39,10 +39,11 @@ trait ErsLoggingAndAuditing extends ErsLogger {
 
   def handleSuccess(data: Object, message: String): Unit = logWarn(message, Some(data))
 
-  def handleResult(result: Boolean, successMsg: Option[String], errorMsg: Option[String], data: Option[Object] = None)(implicit request: Request[_], hc: HeaderCarrier): Unit = {
+  def handleResult(result: Option[Boolean], successMsg: Option[String], errorMsg: Option[String], data: Option[Object] = None)(implicit request: Request[_], hc: HeaderCarrier): Unit = {
     result match {
-      case true if successMsg.isDefined => logWarn(successMsg.get, data)
-      case false if errorMsg.isDefined => logError(errorMsg.get, data)
+      case Some(true) if successMsg.isDefined => logWarn(successMsg.get, data)
+      case Some(false) if errorMsg.isDefined => logError(errorMsg.get, data)
+      case None => logWarn("Nothing to submit")
     }
   }
 }

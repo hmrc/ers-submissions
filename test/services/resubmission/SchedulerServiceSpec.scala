@@ -106,7 +106,7 @@ class SchedulerServiceSpec extends UnitSpec with MockitoSugar with BeforeAndAfte
       when(
         mockResubPresubmissionService.processFailedSubmissions()
       ).thenReturn(
-        Future.successful(true)
+        Future.successful(Some(true))
       )
       val result = await(schedulerService.resubmit())
       result shouldBe Some(true)

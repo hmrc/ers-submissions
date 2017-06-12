@@ -37,14 +37,17 @@ trait ResubPresubmissionService extends SchedulerConfig {
   val schedulerLoggingAndAuditing: ErsLoggingAndAuditing
   val submissionCommonService: SubmissionCommonService
 
-  def processFailedSubmissions()(implicit request: Request[_], hc: HeaderCarrier): Future[Boolean] = {
+  def processFailedSubmissions()(implicit request: Request[_], hc: HeaderCarrier): Future[Option[Boolean]] = {
     metadataRepository.findAndUpdateByStatus(searchStatusList, resubmitWithNilReturn, resubmitAfterDate, schemeRefList, resubmitScheme).flatMap { ersSummary =>
       if(ersSummary.isDefined) {
-        startResubmission(ersSummary.get).map(res => res)
+        startResubmission(ersSummary.get).map(res => {
+          AuditEvents.resubmissionResult(ersSummary.get.metaData.schemeInfo, res)
+          Some(res)
+        })
       }
       else {
         schedulerLoggingAndAuditing.logWarn("No data found for resubmission")
-        Future(true)
+        Future(None)
       }
     }.recover {
       case rex: ResubmissionException => throw rex

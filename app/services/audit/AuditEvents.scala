@@ -70,6 +70,11 @@ trait AuditEvents {
     true
   }
 
+  def resubmissionResult(schemeInfo: SchemeInfo, res: Boolean)(implicit request: Request[_], hc: HeaderCarrier): Boolean = {
+    auditService.sendEvent("resubmissionResult", eventMap(schemeInfo,Map("result"-> res.toString)))
+    true
+  }
+
   def eventMap(schemeInfo: SchemeInfo, additionalMap: Map[String, String] = Map.empty): Map[String,String] = {
     Map(
       "schemeRef" -> schemeInfo.schemeRef,
