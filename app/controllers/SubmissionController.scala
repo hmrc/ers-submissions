@@ -55,7 +55,7 @@ trait SubmissionController extends BaseController {
         ersLoggingAndAuditing.logWarn(s"Submission journey 2. validated request: ${DateTime.now}", Some(ersSummary))
 
         try {
-          submissionCommonService.callProcessData(ersSummary, Statuses.Failed.toString).map{ _ =>
+          submissionCommonService.callProcessData(ersSummary, Statuses.Failed.toString, Statuses.Sent.toString).map{ _ =>
             ersLoggingAndAuditing.handleSuccess(ersSummary.metaData.schemeInfo, "Submission is successfully completed")
             Ok
           }.recover {

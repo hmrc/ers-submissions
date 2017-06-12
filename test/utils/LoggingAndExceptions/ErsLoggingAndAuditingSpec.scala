@@ -56,11 +56,11 @@ class ErsLoggingAndAuditingSpec extends UnitSpec with WithFakeApplication {
 
   "calling handleResult" should {
     "log warnrning with success message if result is true" in {
-      val result = ErsLoggingAndAuditing.handleResult(true, Some("Success message"), None, None)
+      val result = ErsLoggingAndAuditing.handleResult(Some(true), Some("Success message"), None, None)
       result shouldBe (())
     }
     "log error with error message if result is false" in {
-      val result = ErsLoggingAndAuditing.handleResult(false, None, Some("Error message"), None)
+      val result = ErsLoggingAndAuditing.handleResult(Some(false), None, Some("Error message"), None)
       result shouldBe (())
     }
   }

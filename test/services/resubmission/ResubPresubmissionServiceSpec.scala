@@ -60,27 +60,27 @@ class ResubPresubmissionServiceSpec extends UnitSpec with MockitoSugar with Befo
 
     "return the result of startResubmission if findAndUpdateByStatus is successful and returns a record" in {
       when(
-        mockMetadataRepository.findAndUpdateByStatus(any[List[String]](), any[Option[List[String]]])
+        mockMetadataRepository.findAndUpdateByStatus(any[List[String]](), anyBoolean(), anyBoolean(),any[Option[List[String]]], any[Option[String]])
       ).thenReturn(
         Future.successful(Some(Fixtures.metadata))
       )
       val result = await(resubPresubmissionService.processFailedSubmissions())
-      result shouldBe false
+      result shouldBe Some(false)
     }
 
-    "return true if findAndUpdateByStatus is successful but returns None" in {
+    "return None if findAndUpdateByStatus is successful but returns None" in {
       when(
-        mockMetadataRepository.findAndUpdateByStatus(any[List[String]](), any[Option[List[String]]])
+        mockMetadataRepository.findAndUpdateByStatus(any[List[String]](), anyBoolean(), anyBoolean(), any[Option[List[String]]], any[Option[String]])
       ).thenReturn(
         Future.successful(None)
       )
       val result = await(resubPresubmissionService.processFailedSubmissions())
-      result shouldBe true
+      result shouldBe None
     }
 
     "rethrow ResubmissionException if such one occurs" in {
       when(
-        mockMetadataRepository.findAndUpdateByStatus(any[List[String]](), any[Option[List[String]]])
+        mockMetadataRepository.findAndUpdateByStatus(any[List[String]](), anyBoolean(), anyBoolean(), any[Option[List[String]]], any[Option[String]])
       ).thenReturn(
         Future.failed(ResubmissionException("test message", "test context", Some(Fixtures.schemeInfo)))
       )
@@ -94,7 +94,7 @@ class ResubPresubmissionServiceSpec extends UnitSpec with MockitoSugar with Befo
 
     "throw ResubmissionException if Exception occurs" in {
       when(
-        mockMetadataRepository.findAndUpdateByStatus(any[List[String]](), any[Option[List[String]]])
+        mockMetadataRepository.findAndUpdateByStatus(any[List[String]](), anyBoolean(), anyBoolean(), any[Option[List[String]]], any[Option[String]])
       ).thenReturn(
         Future.failed(new Exception("test message"))
       )
@@ -117,7 +117,7 @@ class ResubPresubmissionServiceSpec extends UnitSpec with MockitoSugar with Befo
 
     "return the result of callProcessData if ErsSubmissions is successfully extracted" in {
       when(
-        mockSubmissionCommonService.callProcessData(any[ErsSummary](), anyString())(any(), any())
+        mockSubmissionCommonService.callProcessData(any[ErsSummary](), anyString(), anyString())(any(), any())
       ).thenReturn(
         Future.successful(true)
       )
@@ -127,7 +127,7 @@ class ResubPresubmissionServiceSpec extends UnitSpec with MockitoSugar with Befo
 
     "audit failed submission if callProcessData throws exception" in {
       when(
-        mockSubmissionCommonService.callProcessData(any[ErsSummary](), anyString())(any(), any())
+        mockSubmissionCommonService.callProcessData(any[ErsSummary](), anyString(), anyString())(any(), any())
       ).thenReturn(
         Future.failed(new RuntimeException("test message"))
       )
@@ -141,7 +141,7 @@ class ResubPresubmissionServiceSpec extends UnitSpec with MockitoSugar with Befo
 
     "throw ResubmissionException if ADRTransferException occurs" in {
       when(
-        mockSubmissionCommonService.callProcessData(any[ErsSummary](), anyString())(any(), any())
+        mockSubmissionCommonService.callProcessData(any[ErsSummary](), anyString(), anyString())(any(), any())
       ).thenReturn(
         Future.failed(ADRTransferException(Fixtures.EMIMetaData, "test message", "test context"))
       )
@@ -155,7 +155,7 @@ class ResubPresubmissionServiceSpec extends UnitSpec with MockitoSugar with Befo
 
     "throw ResubmissionException if Exception occurs" in {
       when(
-        mockSubmissionCommonService.callProcessData(any[ErsSummary](), anyString())(any(), any())
+        mockSubmissionCommonService.callProcessData(any[ErsSummary](), anyString(), anyString())(any(), any())
       ).thenReturn(
         Future.failed(new Exception("test message"))
       )

@@ -30,6 +30,7 @@ import concurrent.duration._
 import scala.concurrent.Future
 
 object SchedulerService extends SchedulerService {
+
   override val resubPresubmissionService: ResubPresubmissionService = ResubPresubmissionService
   override val schedulerLoggingAndAuditing: ErsLoggingAndAuditing = ErsLoggingAndAuditing
 }
@@ -37,7 +38,6 @@ object SchedulerService extends SchedulerService {
 trait SchedulerService extends SchedulerConfig {
   val resubPresubmissionService: ResubPresubmissionService
   val schedulerLoggingAndAuditing: ErsLoggingAndAuditing
-
   val request = ERSRequest.createERSRequest()
   val hc: HeaderCarrier = new HeaderCarrier()
 
@@ -53,14 +53,14 @@ trait SchedulerService extends SchedulerConfig {
     }
   }
 
-  def resubmit()(implicit request: Request[_], hc: HeaderCarrier): Future[Boolean] = {
+  def resubmit()(implicit request: Request[_], hc: HeaderCarrier): Future[Option[Boolean]] = {
     resubPresubmissionService.processFailedSubmissions().map { result =>
       schedulerLoggingAndAuditing.handleResult(result, Some("Resubmission was successful"), Some("Resubmission failed"))
       result
     }.recover {
       case ex: Exception => {
         schedulerLoggingAndAuditing.handleException("Resubmission failed with Exception", ex, "SchedulerService.resubmit")
-        false
+        Some(false)
       }
     }
   }

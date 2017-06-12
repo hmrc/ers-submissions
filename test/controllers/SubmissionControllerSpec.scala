@@ -59,7 +59,7 @@ class SubmissionControllerSpec extends UnitSpec with MockitoSugar with BeforeAnd
       )
 
       when(
-        mockSubmissionCommonService.callProcessData(any[ErsSummary], anyString())(any[Request[_]](), any[HeaderCarrier]())
+        mockSubmissionCommonService.callProcessData(any[ErsSummary], anyString(), anyString())(any[Request[_]](), any[HeaderCarrier]())
       ).thenReturn(
         expectedResult
       )
@@ -106,7 +106,7 @@ class SubmissionControllerSpec extends UnitSpec with MockitoSugar with BeforeAnd
         )
 
         when(
-          mockSubmissionCommonService.callProcessData(any[ErsSummary], anyString())(any[Request[_]](), any[HeaderCarrier]())
+          mockSubmissionCommonService.callProcessData(any[ErsSummary], anyString(), anyString())(any[Request[_]](), any[HeaderCarrier]())
         ).thenThrow(
           new RuntimeException
         )

@@ -43,6 +43,18 @@ trait SchedulerConfig {
     None
   }
 
+  val resubmitBySchemeEnabled: Boolean = ApplicationConfig.schedulerEnableResubmitByScheme
+  val resubmitScheme: Option[String] = if(resubmitBySchemeEnabled) {
+    Some(ApplicationConfig.schedulerResubmitScheme)
+  }
+  else {
+    None
+  }
+
+  val resubmitSuccessStatus: String = ApplicationConfig.schedulerSuccessStatus
+  val resubmitWithNilReturn: Boolean = ApplicationConfig.schedulerResubmitWithNilReturn
+  val resubmitAfterDate: Boolean = ApplicationConfig.schedulerSubmitAfterDate
+
   val r = scala.util.Random
   val delay = r.nextInt(ApplicationConfig.schedulerMaxDelayInMilliseconds) + ApplicationConfig.schedulerInitialDelayInMilliseconds
   val repeat = r.nextInt(ApplicationConfig.schedulerMaxRepeatIntervalInSeconds) + ApplicationConfig.schedulerRepeatIntervalInSeconds
