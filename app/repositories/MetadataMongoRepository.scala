@@ -133,7 +133,23 @@ class MetadataMongoRepository()(implicit mongo: () => DB)
       )
     )
 
+    def statusSelector(status: String) = {
+      BSONDocument("transferStatus" -> status)
+    }
+
+    val countByStatus = {
+      for(status <- statusList) {
+        val futureTotal = collection.count(Option((statusSelector(status) ++ schemeSelector ++ isAfterDateSelector).as[collection.pack.Document]))
+        for{
+          total <- futureTotal
+        }yield {
+          Logger.warn(s"The number of ${status.toUpperCase} files in the database is: ${total}")
+        }
+      }
+    }
+
     val selector = baseSelector ++ schemeRefSelector ++ schemeSelector ++ dateRangeSelector
+
     collection.findAndUpdate(
       selector,
       modifier,
