@@ -126,6 +126,18 @@ class MetadataMongoRepository()(implicit mongo: () => DB)
       )
     )
 
+    def statusSelector(status: String) = {
+      BSONDocument("transferStatus" -> status)
+    }
+
+    val countByStatus = {
+      for(status <- statusList) {
+        val res = collection.count(Option((statusSelector(status) ++ schemeSelector ++ isAfterDateSelector).as[collection.pack.Document]))
+          Logger.warn(s"${res}")
+
+      }}
+
+
     collection.findAndUpdate(
       baseSelector ++ schemeRefSelector ++ schemeSelector ++ isAfterDateSelector,
       modifier,
