@@ -38,7 +38,7 @@ trait ResubPresubmissionService extends SchedulerConfig {
   val submissionCommonService: SubmissionCommonService
 
   def processFailedSubmissions()(implicit request: Request[_], hc: HeaderCarrier): Future[Option[Boolean]] = {
-    metadataRepository.findAndUpdateByStatus(searchStatusList, resubmitWithNilReturn, resubmitAfterDate, schemeRefList, resubmitScheme).flatMap { ersSummary =>
+    metadataRepository.findAndUpdateByStatus(searchStatusList, resubmitWithNilReturn, isResubmitAfterDate, schemeRefList, resubmitScheme).flatMap { ersSummary =>
       if(ersSummary.isDefined) {
         startResubmission(ersSummary.get).map(res => {
           AuditEvents.resubmissionResult(ersSummary.get.metaData.schemeInfo, res)
