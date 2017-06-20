@@ -132,10 +132,14 @@ class MetadataMongoRepository()(implicit mongo: () => DB)
 
     val countByStatus = {
       for(status <- statusList) {
-        val res = collection.count(Option((statusSelector(status) ++ schemeSelector ++ isAfterDateSelector).as[collection.pack.Document]))
-          Logger.warn(s"${res}")
-
-      }}
+        val futureTotal = collection.count(Option((statusSelector(status) ++ schemeSelector ++ isAfterDateSelector).as[collection.pack.Document]))
+        for{
+          total <- futureTotal
+        }yield {
+          Logger.warn(s"The number of ${status.toUpperCase} files in the database is: ${total}")
+        }
+      }
+    }
 
 
     collection.findAndUpdate(
