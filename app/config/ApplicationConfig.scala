@@ -55,5 +55,10 @@ object ApplicationConfig extends ServicesConfig {
   lazy val schedulerResubmitScheme: String = Try(loadConfig(s"$env.scheduling.resubmit-scheme")).getOrElse("SAYE")
   lazy val schedulerSuccessStatus: String = Try(loadConfig(s"$env.scheduling.resubmit-successful-status")).getOrElse("successResubmit")
   lazy val schedulerResubmitWithNilReturn: Boolean = Try(loadConfig(s"$env.scheduling.resubmit-scheme-with-nil-returns").toBoolean).getOrElse(false)
-  lazy val schedulerSubmitAfterDate: Boolean = Try(loadConfig(s"$env.scheduling.resubmit-scheme-after-date").toBoolean).getOrElse(true)
+  lazy val schedulerSubmitBeforeDate: Boolean = Try(loadConfig(s"$env.scheduling.resubmit-scheme-before-date").toBoolean).getOrElse(true)
+
+  lazy val defaultScheduleStartDate: String = Try(loadConfig(s"$env.scheduling.default-resubmit-start-date")).getOrElse("2016-04-01")
+  lazy val scheduleStartDate: String = Try(loadConfig(s"$env.scheduling.resubmit-start-date")).getOrElse("2016-04-01")
+  lazy val scheduleEndDate: String = Try(loadConfig(s"$env.scheduling.resubmit-end-date")).getOrElse("2016-04-01")
+
 }

@@ -37,7 +37,7 @@ trait MetadataRepository extends Repository[ErsSummary, BSONObjectID] {
 
   def updateStatus(schemeInfo: SchemeInfo, status: String): Future[Boolean]
 
-  def findAndUpdateByStatus(statusList: List[String], resubmitWithNilReturn: Boolean,resubmitAfterDate:Boolean = true, schemeRefList: Option[List[String]], schemeType: Option[String]): Future[Option[ErsSummary]]
+  def findAndUpdateByStatus(statusList: List[String], resubmitWithNilReturn: Boolean, resubmitBeforeDate:Boolean = true, schemeRefList: Option[List[String]], schemeType: Option[String]): Future[Option[ErsSummary]]
 
   def findAndUpdateBySchemeType(statusList: List[String], schemeType: String): Future[Option[ErsSummary]]
 }
@@ -78,7 +78,7 @@ class MetadataMongoRepository()(implicit mongo: () => DB)
     }
   }
 
-  override def findAndUpdateByStatus(statusList: List[String], resubmitWithNilReturn: Boolean =  true, resubmitAfterDate:Boolean = true, schemeRefList: Option[List[String]], schemeType: Option[String]): Future[Option[ErsSummary]] = {
+  override def findAndUpdateByStatus(statusList: List[String], resubmitWithNilReturn: Boolean =  true, isResubmitBeforeDate:Boolean = true, schemeRefList: Option[List[String]], schemeType: Option[String]): Future[Option[ErsSummary]] = {
     val baseSelector: BSONDocument = BSONDocument(
       "transferStatus" -> BSONDocument(
         "$in" -> statusList
@@ -110,14 +110,21 @@ class MetadataMongoRepository()(implicit mongo: () => DB)
       )
     }
 
-    val isAfterDateSelector: BSONDocument = if(resubmitAfterDate){
+    val dateRangeSelector: BSONDocument = if(isResubmitBeforeDate){
       BSONDocument(
         "metaData.schemeInfo.timestamp" -> BSONDocument(
-          "$lte" -> DateTime.parse("2017-06-02").getMillis
+          "$gte" -> DateTime.parse(ApplicationConfig.defaultScheduleStartDate).getMillis,
+          "$lte" -> DateTime.parse(ApplicationConfig.scheduleEndDate).getMillis
         )
       )
-    }else(
-      BSONDocument()
+    } else(
+      BSONDocument(
+        "metaData.schemeInfo.timestamp" -> BSONDocument(
+          "$gte" -> DateTime.parse(ApplicationConfig.scheduleStartDate).getMillis,
+          "$lte" -> DateTime.parse(ApplicationConfig.scheduleEndDate).getMillis
+        )
+      )
+      //BSONDocument()
     )
 
     val modifier: BSONDocument = BSONDocument(
@@ -126,8 +133,9 @@ class MetadataMongoRepository()(implicit mongo: () => DB)
       )
     )
 
+    val selector = baseSelector ++ schemeRefSelector ++ schemeSelector ++ dateRangeSelector
     collection.findAndUpdate(
-      baseSelector ++ schemeRefSelector ++ schemeSelector ++ isAfterDateSelector,
+      selector,
       modifier,
       fetchNewObject = false,
       sort = Some(Json.obj("metaData.schemeInfo.timestamp" -> 1))
