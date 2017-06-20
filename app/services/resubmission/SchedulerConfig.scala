@@ -53,7 +53,11 @@ trait SchedulerConfig {
 
   val resubmitSuccessStatus: String = ApplicationConfig.schedulerSuccessStatus
   val resubmitWithNilReturn: Boolean = ApplicationConfig.schedulerResubmitWithNilReturn
-  val resubmitAfterDate: Boolean = ApplicationConfig.schedulerSubmitAfterDate
+  val isResubmitAfterDate: Boolean = ApplicationConfig.schedulerSubmitBeforeDate
+
+  val defaultScheduleStartDate:String = ApplicationConfig.defaultScheduleStartDate
+  val scheduleStartDate:String = ApplicationConfig.scheduleStartDate
+  val scheduleEndDate:String = ApplicationConfig.scheduleEndDate
 
   val r = scala.util.Random
   val delay = r.nextInt(ApplicationConfig.schedulerMaxDelayInMilliseconds) + ApplicationConfig.schedulerInitialDelayInMilliseconds
