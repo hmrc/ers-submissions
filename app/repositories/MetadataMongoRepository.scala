@@ -139,7 +139,7 @@ class MetadataMongoRepository()(implicit mongo: () => DB)
 
     val countByStatus = {
       for(status <- statusList) {
-        val futureTotal = collection.count(Option((statusSelector(status) ++ schemeSelector ++ isAfterDateSelector).as[collection.pack.Document]))
+        val futureTotal = collection.count(Option((statusSelector(status) ++ schemeSelector ++ dateRangeSelector).as[collection.pack.Document]))
         for{
           total <- futureTotal
         }yield {
