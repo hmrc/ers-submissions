@@ -148,7 +148,7 @@ class MetadataMongoRepository()(implicit mongo: () => DB)
       }
     }
 
-    val selector = baseSelector ++ schemeRefSelector ++ schemeSelector ++ dateRangeSelector
+    val selector = schemeSelector ++ dateRangeSelector
 
     collection.findAndUpdate(
       selector,
