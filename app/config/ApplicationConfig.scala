@@ -61,4 +61,10 @@ object ApplicationConfig extends ServicesConfig {
   lazy val scheduleStartDate: String = Try(loadConfig(s"$env.scheduling.resubmit-start-date")).getOrElse("2016-04-01")
   lazy val scheduleEndDate: String = Try(loadConfig(s"$env.scheduling.resubmit-end-date")).getOrElse("2016-04-01")
 
+  lazy val isErsQueryEnabled: Boolean = Try(loadConfig(s"$env.ers-query.enabled").toBoolean).getOrElse(false)
+  lazy val ersQuerySchemeType: String = Try(loadConfig(s"$env.ers-query.schemetype")).getOrElse("SAYE")
+  lazy val ersQueryStartDate: String = Try(loadConfig(s"$env.ers-query.start-date")).getOrElse("2016-04-01")
+  lazy val ersQueryEndDate: String = Try(loadConfig(s"$env.ers-query.end-date")).getOrElse("2016-04-01")
+
+
 }

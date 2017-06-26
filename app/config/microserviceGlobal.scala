@@ -20,6 +20,7 @@ import com.typesafe.config.Config
 import net.ceedubs.ficus.Ficus._
 import play.api.{Application, Configuration, Logger, Play}
 import services.resubmission.SchedulerService
+import services.query.DataVerificationService
 import uk.gov.hmrc.play.audit.filters.AuditFilter
 import uk.gov.hmrc.play.auth.controllers.AuthParamsControllerConfig
 import uk.gov.hmrc.play.auth.microservice.filters.AuthorisationFilter
@@ -70,6 +71,11 @@ object MicroserviceGlobal extends DefaultMicroserviceGlobal with RunMode {
     if(isSchedulerEnabled) {
       Logger.info("Scheduler is enabled")
       SchedulerService.run
+    }
+
+    if(isErsQueryEnabled) {
+      Logger.info("Data Verification is enabled")
+      DataVerificationService.start
     }
 
   }
