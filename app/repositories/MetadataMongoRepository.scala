@@ -124,7 +124,6 @@ class MetadataMongoRepository()(implicit mongo: () => DB)
           "$lte" -> DateTime.parse(ApplicationConfig.scheduleEndDate).getMillis
         )
       )
-      //BSONDocument()
     )
 
     val modifier: BSONDocument = BSONDocument(
@@ -143,7 +142,7 @@ class MetadataMongoRepository()(implicit mongo: () => DB)
         for{
           total <- futureTotal
         }yield {
-          Logger.warn(s"The number of ${status.toUpperCase} files in the database is: ${total}")
+          Logger.warn(s"The number of ${status} files in the database is: ${total}")
         }
       }
     }
