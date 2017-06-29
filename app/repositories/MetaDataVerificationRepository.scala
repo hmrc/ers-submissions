@@ -53,8 +53,7 @@ class MetaDataVerificationMongoRepository()(implicit mongo: () => DB)
       BSONDocument()
     }
 
-    val selector = (schemeSelector).as[collection.pack.Document]
-    //val selector = (schemeSelector ++ dateRangeSelector).as[collection.pack.Document]
+    val selector = (schemeSelector ++ dateRangeSelector).as[collection.pack.Document]
 
     collection.find(selector).cursor[ErsSummary]().collect[List]().map(
       _.map{ results =>
