@@ -28,6 +28,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 trait MetaDataVerificationRepository extends Repository[ErsSummary, BSONObjectID] {
+  def getCountBySchemeTypeWithInDateRange(ersQuery: ERSQuery): Future[Int]
   def getBundleRefAndSchemeRefBySchemeTypeWithInDateRange(ersQuery: ERSQuery): Future[List[(String,String)]]
 }
 
@@ -35,9 +36,29 @@ class MetaDataVerificationMongoRepository()(implicit mongo: () => DB)
   extends ReactiveRepository[ErsSummary, BSONObjectID](metadataCollection, mongo, ErsSummary.format, ReactiveMongoFormats.objectIdFormats)
   with MetaDataVerificationRepository {
 
+  override def getCountBySchemeTypeWithInDateRange(ersQuery: ERSQuery): Future[Int] = {
+
+    val dateRangeSelector: BSONDocument = BSONDocument(
+      "metaData.schemeInfo.timestamp" -> BSONDocument(
+        "$gte" -> DateTime.parse(ersQuery.startDate.getOrElse(defaultScheduleStartDate)).getMillis,
+        "$lte" -> DateTime.parse(ersQuery.endDate.getOrElse(defaultScheduleStartDate)).getMillis
+      )
+    )
+
+    val schemeSelector: BSONDocument = if(ersQuery.schemeType.nonEmpty) {
+      BSONDocument(
+        "metaData.schemeInfo.schemeType" -> BSONString(ersQuery.schemeType.getOrElse(ersQuerySchemeType))
+      )
+    }
+    else {
+      BSONDocument()
+    }
+
+    collection.count(Option((schemeSelector ++ dateRangeSelector).as[collection.pack.Document]))
+  }
 
   override def getBundleRefAndSchemeRefBySchemeTypeWithInDateRange(ersQuery: ERSQuery):  Future[List[(String,String)]] = {
-   val dateRangeSelector: BSONDocument = BSONDocument(
+    val dateRangeSelector: BSONDocument = BSONDocument(
       "metaData.schemeInfo.timestamp" -> BSONDocument(
         "$gte" -> DateTime.parse(ersQuery.startDate.getOrElse(defaultScheduleStartDate)).getMillis,
         "$lte" -> DateTime.parse(ersQuery.endDate.getOrElse(defaultScheduleStartDate)).getMillis

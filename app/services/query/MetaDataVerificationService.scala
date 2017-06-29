@@ -32,12 +32,20 @@ trait MetaDataVerificationService extends DataVerificationConfig {
 
   def start() = {
     Logger.info(s"Start MetaData Verification ${DateTime.now.toString}")
+    getCountBySchemeTypeWithInDateRange
     getBundleRefAndSchemeRefBySchemeTypeWithInDateRange
+  }
+
+  def getCountBySchemeTypeWithInDateRange():Future[Int] = {
+    metaDataVerificationRepository.getCountBySchemeTypeWithInDateRange(ersQuery).map{ total=>
+      Logger.warn(s"The total number of ${ersQuery.schemeType} Scheme Type files available in the 'ers-metadata' database is => ${total}")
+      total
+    }
   }
 
   def getBundleRefAndSchemeRefBySchemeTypeWithInDateRange():Future[List[(String,String)]] = {
     metaDataVerificationRepository.getBundleRefAndSchemeRefBySchemeTypeWithInDateRange(ersQuery).map{ schemeRefsList =>
-        Logger.warn(s"The total (BundleRefs,SchemeRefs) of ${ersQuery.schemeType} Scheme Type available in the database are => ${schemeRefsList}")
+        Logger.warn(s"The total (BundleRefs,SchemeRefs) of ${ersQuery.schemeType} Scheme Type available in the 'ers-metadata' database are => ${schemeRefsList}")
         schemeRefsList
       }
   }

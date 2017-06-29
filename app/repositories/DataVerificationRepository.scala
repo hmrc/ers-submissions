@@ -17,17 +17,20 @@
 package repositories
 
 import config.ApplicationConfig
-import models.ERSQuery
+import config.ApplicationConfig._
+import models.{ERSQuery, ErsSummary}
 import org.joda.time.DateTime
 import uk.gov.hmrc.mongo.{ReactiveRepository, Repository}
 import reactivemongo.api.DB
 import reactivemongo.bson._
 import uk.gov.hmrc.mongo.json.ReactiveMongoFormats
+
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 trait DataVerificationRepository extends Repository[ERSQuery, BSONObjectID] {
   def getCountBySchemeTypeWithInDateRange(ersQuery: ERSQuery): Future[Int]
+  def getSchemeRefBySchemeTypeWithInDateRange(ersQuery: ERSQuery): Future[List[String]]
 }
 
 class DataVerificationMongoRepository()(implicit mongo: () => DB)
@@ -38,14 +41,14 @@ class DataVerificationMongoRepository()(implicit mongo: () => DB)
 
     val dateRangeSelector: BSONDocument = BSONDocument(
       "schemeInfo.timestamp" -> BSONDocument(
-        "$gte" -> DateTime.parse(ersQuery.startDate.getOrElse("2016-04-01")).getMillis,
-        "$lte" -> DateTime.parse(ersQuery.endDate.getOrElse("2016-04-01")).getMillis
+        "$gte" -> DateTime.parse(ersQuery.startDate.getOrElse(defaultScheduleStartDate)).getMillis,
+        "$lte" -> DateTime.parse(ersQuery.endDate.getOrElse(defaultScheduleStartDate)).getMillis
       )
     )
 
     val schemeSelector: BSONDocument = if(ersQuery.schemeType.nonEmpty) {
       BSONDocument(
-        "schemeInfo.schemeType" -> BSONString(ersQuery.schemeType.getOrElse(""))
+        "schemeInfo.schemeType" -> BSONString(ersQuery.schemeType.getOrElse(ersQuerySchemeType))
       )
     }
     else {
@@ -53,6 +56,31 @@ class DataVerificationMongoRepository()(implicit mongo: () => DB)
     }
 
     collection.count(Option((schemeSelector ++ dateRangeSelector).as[collection.pack.Document]))
+  }
+
+  override def getSchemeRefBySchemeTypeWithInDateRange(ersQuery: ERSQuery):  Future[List[String]] = {
+    val dateRangeSelector: BSONDocument = BSONDocument(
+      "metaData.schemeInfo.timestamp" -> BSONDocument(
+        "$gte" -> DateTime.parse(ersQuery.startDate.getOrElse(defaultScheduleStartDate)).getMillis,
+        "$lte" -> DateTime.parse(ersQuery.endDate.getOrElse(defaultScheduleStartDate)).getMillis
+      )
+    )
+
+    val schemeSelector: BSONDocument = if (ersQuery.schemeType.nonEmpty) {
+      BSONDocument(
+        "metaData.schemeInfo.schemeType" -> BSONString(ersQuery.schemeType.getOrElse(ersQuerySchemeType))
+      )
+    }
+    else {
+      BSONDocument()
+    }
+
+    val selector = (schemeSelector ++ dateRangeSelector).as[collection.pack.Document]
+
+    collection.find(selector).cursor[ErsSummary]().collect[List]().map(
+      _.map(_.metaData.schemeInfo.schemeRef)
+    )
+
   }
 
 }
