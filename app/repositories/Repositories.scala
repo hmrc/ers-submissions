@@ -30,5 +30,6 @@ object Repositories extends MongoDbConnection{
   lazy val presubmissionRepository: PresubmissionMongoRepository = new PresubmissionMongoRepository()
   lazy val metadataRepository: MetadataMongoRepository = new MetadataMongoRepository()
   lazy val dataVerificationRepository: DataVerificationMongoRepository = new DataVerificationMongoRepository()
+  lazy val metaDataVerificationRepository: MetaDataVerificationMongoRepository = new MetaDataVerificationMongoRepository()
   lazy val lockRepository: LockRepository = new LockRepository
 }

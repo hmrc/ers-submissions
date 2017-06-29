@@ -19,7 +19,6 @@ package repositories
 import config.ApplicationConfig
 import models.ERSQuery
 import org.joda.time.DateTime
-import play.api.Logger
 import uk.gov.hmrc.mongo.{ReactiveRepository, Repository}
 import reactivemongo.api.DB
 import reactivemongo.bson._
