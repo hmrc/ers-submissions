@@ -60,7 +60,7 @@ class DataVerificationMongoRepository()(implicit mongo: () => DB)
 
   override def getSchemeRefBySchemeTypeWithInDateRange(ersQuery: ERSQuery):  Future[List[String]] = {
     val dateRangeSelector: BSONDocument = BSONDocument(
-      "metaData.schemeInfo.timestamp" -> BSONDocument(
+      "schemeInfo.timestamp" -> BSONDocument(
         "$gte" -> DateTime.parse(ersQuery.startDate.getOrElse(defaultScheduleStartDate)).getMillis,
         "$lte" -> DateTime.parse(ersQuery.endDate.getOrElse(defaultScheduleStartDate)).getMillis
       )
@@ -68,7 +68,7 @@ class DataVerificationMongoRepository()(implicit mongo: () => DB)
 
     val schemeSelector: BSONDocument = if (ersQuery.schemeType.nonEmpty) {
       BSONDocument(
-        "metaData.schemeInfo.schemeType" -> BSONString(ersQuery.schemeType.getOrElse(ersQuerySchemeType))
+        "schemeInfo.schemeType" -> BSONString(ersQuery.schemeType.getOrElse(ersQuerySchemeType))
       )
     }
     else {
