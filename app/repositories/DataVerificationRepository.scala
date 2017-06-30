@@ -18,13 +18,12 @@ package repositories
 
 import config.ApplicationConfig
 import config.ApplicationConfig._
-import models.{ERSQuery, ErsSummary}
+import models.{ERSQuery, SchemeData}
 import org.joda.time.DateTime
 import uk.gov.hmrc.mongo.{ReactiveRepository, Repository}
 import reactivemongo.api.DB
 import reactivemongo.bson._
 import uk.gov.hmrc.mongo.json.ReactiveMongoFormats
-
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
@@ -77,8 +76,8 @@ class DataVerificationMongoRepository()(implicit mongo: () => DB)
 
     val selector = (schemeSelector ++ dateRangeSelector).as[collection.pack.Document]
 
-    collection.find(selector).cursor[ErsSummary]().collect[List]().map(
-      _.map(_.metaData.schemeInfo.schemeRef)
+    collection.find(selector).cursor[SchemeData]().collect[List]().map(
+      _.map(_.schemeInfo.schemeRef)
     )
 
   }
