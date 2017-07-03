@@ -17,6 +17,7 @@
 package services.query
 
 import config.ApplicationConfig
+import models.ERSQuery
 
 trait DataVerificationConfig {
 
@@ -25,4 +26,7 @@ trait DataVerificationConfig {
   lazy val ersQueryStartDate: String = ApplicationConfig.ersQueryStartDate
   lazy val ersQueryEndDate: String = ApplicationConfig.ersQueryEndDate
 
+  def ersQuery: ERSQuery = {
+    ERSQuery(Some(ersQuerySchemeType),Some(ersQueryStartDate),Some(ersQueryEndDate),None)
+  }
 }
