@@ -31,7 +31,7 @@ trait MetaDataVerificationService extends DataVerificationConfig {
   lazy val metaDataVerificationRepository: MetaDataVerificationMongoRepository = ???
 
   def start() = {
-    Logger.info(s"Start MetaData Verification ${DateTime.now.toString}")
+    Logger.warn(s"Start MetaData Verification ${DateTime.now.toString}")
     getCountBySchemeTypeWithInDateRange
     getBundleRefAndSchemeRefBySchemeTypeWithInDateRange
   }
