@@ -69,17 +69,17 @@ object MicroserviceGlobal extends DefaultMicroserviceGlobal with RunMode {
     super.onStart(app)
 
     if(isSchedulerEnabled) {
-      Logger.info("Scheduler is enabled")
+      Logger.warn("Scheduler is enabled")
       SchedulerService.run
     }
 
     if(isErsQueryEnabled) {
-      Logger.info("Meta Data Verification is enabled")
+      Logger.warn("Meta Data Verification is enabled")
       MetaDataVerificationService.start
     }
 
     if(isErsQueryEnabled) {
-      Logger.info("Data Verification is enabled")
+      Logger.warn("Data Verification is enabled")
       DataVerificationService.start
     }
 
