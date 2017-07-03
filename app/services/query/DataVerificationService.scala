@@ -38,19 +38,16 @@ trait DataVerificationService extends DataVerificationConfig {
 
   def getCountBySchemeTypeWithInDateRange():Future[Int] = {
       dataVerificationRepository.getCountBySchemeTypeWithInDateRange(ersQuery).map{ total=>
-        Logger.warn(s"The total number of ${ersQuery.schemeType} Scheme Type files available in the 'ers-presubmission' database is => ${total}")
+        Logger.warn(s"The total number of ${ersQuery.schemeType} Scheme Type files available in the 'ers-presubmission' is => ${total}")
         total
       }
   }
 
   def getSchemeRefBySchemeTypeWithInDateRange():Future[List[String]] = {
     dataVerificationRepository.getSchemeRefBySchemeTypeWithInDateRange(ersQuery).map{ schemeRefsList =>
-      Logger.warn(s"The total (SchemeRefs) of ${ersQuery.schemeType} Scheme Type available in the 'ers-presubmission' database are => ${schemeRefsList}")
+      Logger.warn(s"The total (SchemeRefs) of ${ersQuery.schemeType} Scheme Type available in the 'ers-presubmission' are => ${schemeRefsList}")
       schemeRefsList
     }
   }
 
-  def ersQuery: ERSQuery = {
-    ERSQuery(Some(ersQuerySchemeType),Some(ersQueryStartDate),Some(ersQueryEndDate),None)
-  }
 }

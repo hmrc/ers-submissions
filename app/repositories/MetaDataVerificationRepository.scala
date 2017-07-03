@@ -78,7 +78,7 @@ class MetaDataVerificationMongoRepository()(implicit mongo: () => DB)
 
     collection.find(selector).cursor[ErsSummary]().collect[List]().map(
       _.map{ results =>
-        (results.bundleRef,results.metaData.schemeInfo.schemeRef,results.transferStatus.get)
+        (results.bundleRef,results.metaData.schemeInfo.schemeRef,results.transferStatus.getOrElse("Unknown"))
       }
     )
 
