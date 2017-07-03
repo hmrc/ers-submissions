@@ -29,7 +29,7 @@ import scala.concurrent.Future
 
 trait MetaDataVerificationRepository extends Repository[ErsSummary, BSONObjectID] {
   def getCountBySchemeTypeWithInDateRange(ersQuery: ERSQuery): Future[Int]
-  def getBundleRefAndSchemeRefBySchemeTypeWithInDateRange(ersQuery: ERSQuery): Future[List[(String,String)]]
+  def getBundleRefAndSchemeRefBySchemeTypeWithInDateRange(ersQuery: ERSQuery): Future[List[(String,String,String)]]
 }
 
 class MetaDataVerificationMongoRepository()(implicit mongo: () => DB)
@@ -57,7 +57,7 @@ class MetaDataVerificationMongoRepository()(implicit mongo: () => DB)
     collection.count(Option((schemeSelector ++ dateRangeSelector).as[collection.pack.Document]))
   }
 
-  override def getBundleRefAndSchemeRefBySchemeTypeWithInDateRange(ersQuery: ERSQuery):  Future[List[(String,String)]] = {
+  override def getBundleRefAndSchemeRefBySchemeTypeWithInDateRange(ersQuery: ERSQuery):  Future[List[(String,String,String)]] = {
     val dateRangeSelector: BSONDocument = BSONDocument(
       "metaData.schemeInfo.timestamp" -> BSONDocument(
         "$gte" -> DateTime.parse(ersQuery.startDate.getOrElse(defaultScheduleStartDate)).getMillis,
@@ -78,7 +78,7 @@ class MetaDataVerificationMongoRepository()(implicit mongo: () => DB)
 
     collection.find(selector).cursor[ErsSummary]().collect[List]().map(
       _.map{ results =>
-        (results.bundleRef,results.metaData.schemeInfo.schemeRef)
+        (results.bundleRef,results.metaData.schemeInfo.schemeRef,results.transferStatus.get)
       }
     )
 
