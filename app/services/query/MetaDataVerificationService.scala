@@ -45,7 +45,7 @@ trait MetaDataVerificationService extends DataVerificationConfig {
 
   def getBundleRefAndSchemeRefBySchemeTypeWithInDateRange():Future[List[(String,String,String)]] = {
     metaDataVerificationRepository.getBundleRefAndSchemeRefBySchemeTypeWithInDateRange(ersQuery).map{ schemeRefsList =>
-        Logger.warn(s"The total (BundleRefs,SchemeRefs) of ${ersQuery.schemeType} Scheme Type available in the 'ers-metadata' database are => ${schemeRefsList}")
+        Logger.warn(s"The total (BundleRefs,SchemeRefs,TransferStatus) of ${ersQuery.schemeType} Scheme Type available in the 'ers-metadata' database are => ${schemeRefsList}")
         schemeRefsList
       }
   }
