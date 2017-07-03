@@ -81,7 +81,7 @@ class MetadataMongoRepository()(implicit mongo: () => DB)
   override def findAndUpdateByStatus(statusList: List[String], resubmitWithNilReturn: Boolean =  true, isResubmitBeforeDate:Boolean = true, schemeRefList: Option[List[String]], schemeType: Option[String]): Future[Option[ErsSummary]] = {
     val baseSelector: BSONDocument = BSONDocument(
       "transferStatus" -> BSONDocument(
-        "$in" -> statusList
+        "$nin" -> statusList
       )
     )
 
@@ -147,7 +147,7 @@ class MetadataMongoRepository()(implicit mongo: () => DB)
       }
     }
 
-    val selector = baseSelector ++ schemeSelector ++ dateRangeSelector
+    val selector = baseSelector ++ schemeRefSelector ++ schemeSelector ++ dateRangeSelector
 
     collection.findAndUpdate(
       selector,
