@@ -113,18 +113,13 @@ class MetadataMongoRepository()(implicit mongo: () => DB)
     val dateRangeSelector: BSONDocument = if(isResubmitBeforeDate){
       BSONDocument(
         "metaData.schemeInfo.timestamp" -> BSONDocument(
-          "$gte" -> DateTime.parse(ApplicationConfig.defaultScheduleStartDate).getMillis,
-          "$lte" -> DateTime.parse(ApplicationConfig.scheduleEndDate).getMillis
-        )
-      )
-    } else(
-      BSONDocument(
-        "metaData.schemeInfo.timestamp" -> BSONDocument(
           "$gte" -> DateTime.parse(ApplicationConfig.scheduleStartDate).getMillis,
           "$lte" -> DateTime.parse(ApplicationConfig.scheduleEndDate).getMillis
         )
       )
-    )
+    } else {
+      BSONDocument()
+    }
 
     val modifier: BSONDocument = BSONDocument(
       "$set" -> BSONDocument(
