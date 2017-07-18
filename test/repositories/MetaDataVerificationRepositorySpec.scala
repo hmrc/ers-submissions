@@ -16,21 +16,19 @@
 
 package repositories
 
-import fixtures.Fixtures
 import models.ERSQuery
+import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
 import org.scalatest.mockito.MockitoSugar
+import play.api.test.FakeApplication
+import play.api.test.Helpers.running
 import reactivemongo.api.DB
 import reactivemongo.json.collection.JSONCollection
 import uk.gov.hmrc.play.test.UnitSpec
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
-import org.mockito.ArgumentMatchers._
-import play.api.test.FakeApplication
-import play.api.test.Helpers.running
 
-class DataVerificationRepositorySpec extends UnitSpec with MockitoSugar {
-  val presubmissionJson = Fixtures.schemeDataJson
+import scala.concurrent.Future
+
+class MetaDataVerificationRepositorySpec extends UnitSpec with MockitoSugar {
 
   val sayeERSQuery: ERSQuery = ERSQuery (
     schemeType = Some("SAYE"),
@@ -40,7 +38,7 @@ class DataVerificationRepositorySpec extends UnitSpec with MockitoSugar {
     schemeRefsList = List()
   )
 
-  def buildMongoRepository(countResult: Option[Int] = None): DataVerificationMongoRepository = new DataVerificationMongoRepository()(() => mock[DB]) {
+  def buildMongoRepository(countResult: Option[Int] = None): MetaDataVerificationMongoRepository = new MetaDataVerificationMongoRepository()(() => mock[DB]) {
     val mockCollection = mock[JSONCollection]
     when(
       mockCollection.count(any(), anyInt(), anyInt(), any())(any(), any())
@@ -59,8 +57,8 @@ class DataVerificationRepositorySpec extends UnitSpec with MockitoSugar {
     "Check numberOfRecords = 1" in {
       running(FakeApplication()) {
         val numberOfRecords: Int = 1
-        val dataVerificationRepository = buildMongoRepository(countResult = Some(numberOfRecords))
-        val result = await(dataVerificationRepository.getCountBySchemeTypeWithInDateRange(sayeERSQuery))
+        val metadataVerificationRepository = buildMongoRepository(countResult = Some(numberOfRecords))
+        val result = await(metadataVerificationRepository.getCountBySchemeTypeWithInDateRange(sayeERSQuery))
         result shouldBe numberOfRecords
       }
     }
@@ -68,8 +66,8 @@ class DataVerificationRepositorySpec extends UnitSpec with MockitoSugar {
     "Check numberOfRecords = 3" in {
       running(FakeApplication()) {
         val numberOfRecords: Int = 3
-        val dataVerificationRepository = buildMongoRepository(countResult = Some(numberOfRecords))
-        val result = await(dataVerificationRepository.getCountBySchemeTypeWithInDateRange(sayeERSQuery))
+        val metadataVerificationRepository = buildMongoRepository(countResult = Some(numberOfRecords))
+        val result = await(metadataVerificationRepository.getCountBySchemeTypeWithInDateRange(sayeERSQuery))
         result shouldBe numberOfRecords
       }
     }

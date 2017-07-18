@@ -17,7 +17,7 @@
 package repositories
 
 import config.ApplicationConfig._
-import models.{ERSQuery, ErsSummary}
+import models.{ERSQuery, ErsSummary, ERSMetaDataResults}
 import org.joda.time.DateTime
 import uk.gov.hmrc.mongo.{ReactiveRepository, Repository}
 import reactivemongo.api.DB
@@ -30,6 +30,7 @@ import scala.concurrent.Future
 trait MetaDataVerificationRepository extends Repository[ErsSummary, BSONObjectID] {
   def getCountBySchemeTypeWithInDateRange(ersQuery: ERSQuery): Future[Int]
   def getBundleRefAndSchemeRefBySchemeTypeWithInDateRange(ersQuery: ERSQuery): Future[List[(String,String,String)]]
+  def getSchemeRefsInfo(ersQuery: ERSQuery): Future[List[ERSMetaDataResults]]
 }
 
 class MetaDataVerificationMongoRepository()(implicit mongo: () => DB)
@@ -57,7 +58,7 @@ class MetaDataVerificationMongoRepository()(implicit mongo: () => DB)
     collection.count(Option((schemeSelector ++ dateRangeSelector).as[collection.pack.Document]))
   }
 
-  override def getBundleRefAndSchemeRefBySchemeTypeWithInDateRange(ersQuery: ERSQuery):  Future[List[(String,String,String)]] = {
+  override def getBundleRefAndSchemeRefBySchemeTypeWithInDateRange(ersQuery: ERSQuery): Future[List[(String,String,String)]] = {
     val dateRangeSelector: BSONDocument = BSONDocument(
       "metaData.schemeInfo.timestamp" -> BSONDocument(
         "$gte" -> DateTime.parse(ersQuery.startDate.getOrElse(defaultScheduleStartDate)).getMillis,
@@ -81,7 +82,41 @@ class MetaDataVerificationMongoRepository()(implicit mongo: () => DB)
         (results.bundleRef,results.metaData.schemeInfo.schemeRef,results.transferStatus.getOrElse("Unknown"))
       }
     )
-
   }
 
+  override def getSchemeRefsInfo(ersQuery: ERSQuery): Future[List[ERSMetaDataResults]] = {
+    val dateRangeSelector: BSONDocument = BSONDocument(
+      "metaData.schemeInfo.timestamp" -> BSONDocument(
+        "$gte" -> DateTime.parse(ersQuery.startDate.getOrElse(defaultScheduleStartDate)).getMillis,
+        "$lte" -> DateTime.parse(ersQuery.endDate.getOrElse(defaultScheduleStartDate)).getMillis
+      )
+    )
+
+    val schemeSelector: BSONDocument = if (ersQuery.schemeType.nonEmpty) {
+      BSONDocument(
+        "metaData.schemeInfo.schemeType" -> BSONString(ersQuery.schemeType.getOrElse(ersQuerySchemeType))
+      )
+    }
+    else {
+      BSONDocument()
+    }
+
+    val schemeRefsSelector: BSONDocument = if(!ersQuery.schemeRefsList.isEmpty) {
+      BSONDocument("metaData.schemeInfo.schemeRef" -> BSONDocument("$in" -> ersQuery.schemeRefsList))
+    }
+    else {
+      BSONDocument()
+    }
+
+    val selector = (schemeSelector ++ dateRangeSelector ++ schemeRefsSelector).as[collection.pack.Document]
+
+    collection.find(selector).cursor[ErsSummary]().collect[List]().map(
+      _.map{results =>
+        ERSMetaDataResults(results.bundleRef, results.metaData.schemeInfo.schemeRef,
+          results.transferStatus.getOrElse("Unknown"),
+          results.fileType.getOrElse(""), results.metaData.schemeInfo.timestamp.toString,
+          results.metaData.schemeInfo.taxYear)
+      }
+    )
+  }
 }

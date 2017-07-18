@@ -17,9 +17,10 @@
 package services.query
 
 import repositories.{MetaDataVerificationMongoRepository, Repositories}
-import models.ERSQuery
+import models.{ERSMetaDataResults, ERSQuery}
 import org.joda.time.DateTime
 import play.api.Logger
+
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -34,6 +35,7 @@ trait MetaDataVerificationService extends DataVerificationConfig {
     Logger.warn(s"Start MetaData Verification ${DateTime.now.toString}")
     getCountBySchemeTypeWithInDateRange
     getBundleRefAndSchemeRefBySchemeTypeWithInDateRange
+    getSchemeRefsInfo
   }
 
   def getCountBySchemeTypeWithInDateRange():Future[Int] = {
@@ -48,6 +50,13 @@ trait MetaDataVerificationService extends DataVerificationConfig {
         Logger.warn(s"The total (BundleRefs,SchemeRefs,TransferStatus) of ${ersQuery.schemeType} Scheme Type available in the 'ers-metadata' are => ${schemeRefsList}")
         schemeRefsList
       }
+  }
+
+  def getSchemeRefsInfo():Future[List[ERSMetaDataResults]] = {
+    metaDataVerificationRepository.getSchemeRefsInfo(ersQuery).map{ ersMetaDataResults =>
+      Logger.warn(s"(BundleRefs,SchemeRefs,TransferStatus,FileType,Timestamp, TaxYear) from 'ers-metadata' => ${ersMetaDataResults}")
+      ersMetaDataResults
+    }
   }
 
 }

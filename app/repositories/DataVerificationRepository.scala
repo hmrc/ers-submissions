@@ -18,7 +18,7 @@ package repositories
 
 import config.ApplicationConfig
 import config.ApplicationConfig._
-import models.{ERSQuery, SchemeData}
+import models.{ERSQuery, SchemeData,ERSDataResults}
 import org.joda.time.DateTime
 import uk.gov.hmrc.mongo.{ReactiveRepository, Repository}
 import reactivemongo.api.DB
@@ -30,6 +30,7 @@ import scala.concurrent.Future
 trait DataVerificationRepository extends Repository[ERSQuery, BSONObjectID] {
   def getCountBySchemeTypeWithInDateRange(ersQuery: ERSQuery): Future[Int]
   def getSchemeRefBySchemeTypeWithInDateRange(ersQuery: ERSQuery): Future[List[String]]
+  def getSchemeRefsInfo(ersQuery: ERSQuery): Future[List[ERSDataResults]]
 }
 
 class DataVerificationMongoRepository()(implicit mongo: () => DB)
@@ -57,7 +58,7 @@ class DataVerificationMongoRepository()(implicit mongo: () => DB)
     collection.count(Option((schemeSelector ++ dateRangeSelector).as[collection.pack.Document]))
   }
 
-  override def getSchemeRefBySchemeTypeWithInDateRange(ersQuery: ERSQuery):  Future[List[String]] = {
+  override def getSchemeRefBySchemeTypeWithInDateRange(ersQuery: ERSQuery): Future[List[String]] = {
     val dateRangeSelector: BSONDocument = BSONDocument(
       "schemeInfo.timestamp" -> BSONDocument(
         "$gte" -> DateTime.parse(ersQuery.startDate.getOrElse(defaultScheduleStartDate)).getMillis,
@@ -78,6 +79,40 @@ class DataVerificationMongoRepository()(implicit mongo: () => DB)
 
     collection.find(selector).cursor[SchemeData]().collect[List]().map(
       _.map(_.schemeInfo.schemeRef)
+    )
+
+  }
+
+  override def getSchemeRefsInfo(ersQuery: ERSQuery): Future[List[ERSDataResults]] = {
+    val dateRangeSelector: BSONDocument = BSONDocument(
+      "schemeInfo.timestamp" -> BSONDocument(
+        "$gte" -> DateTime.parse(ersQuery.startDate.getOrElse(defaultScheduleStartDate)).getMillis,
+        "$lte" -> DateTime.parse(ersQuery.endDate.getOrElse(defaultScheduleStartDate)).getMillis
+      )
+    )
+
+    val schemeSelector: BSONDocument = if (ersQuery.schemeType.nonEmpty) {
+      BSONDocument(
+        "schemeInfo.schemeType" -> BSONString(ersQuery.schemeType.getOrElse(ersQuerySchemeType))
+      )
+    }
+    else {
+      BSONDocument()
+    }
+
+    val schemeRefsSelector: BSONDocument = if(!ersQuery.schemeRefsList.isEmpty) {
+      BSONDocument("schemeInfo.schemeRef" -> BSONDocument("$in" -> ersQuery.schemeRefsList))
+    }
+    else {
+      BSONDocument()
+    }
+
+    val selector = (schemeSelector ++ dateRangeSelector ++ schemeRefsSelector).as[collection.pack.Document]
+
+    collection.find(selector).cursor[SchemeData]().collect[List]().map(
+      _.map{ results =>
+        ERSDataResults(results.schemeInfo.schemeRef, results.schemeInfo.taxYear, results.schemeInfo.timestamp.toString, results.sheetName)
+      }
     )
 
   }
