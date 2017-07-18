@@ -25,8 +25,9 @@ trait DataVerificationConfig {
   lazy val ersQuerySchemeType: String = ApplicationConfig.ersQuerySchemeType
   lazy val ersQueryStartDate: String = ApplicationConfig.ersQueryStartDate
   lazy val ersQueryEndDate: String = ApplicationConfig.ersQueryEndDate
+  lazy val schedulerSchemeRefList: List[String] = ApplicationConfig.schedulerSchemeRefList
 
   def ersQuery: ERSQuery = {
-    ERSQuery(Some(ersQuerySchemeType),Some(ersQueryStartDate),Some(ersQueryEndDate),None)
+    ERSQuery(Some(ersQuerySchemeType),Some(ersQueryStartDate),Some(ersQueryEndDate),None,schedulerSchemeRefList)
   }
 }

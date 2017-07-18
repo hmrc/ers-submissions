@@ -21,7 +21,18 @@ import play.api.libs.json.Json
 case class ERSQuery(schemeType: Option[String],
                     startDate: Option[String],
                     endDate: Option[String],
-                    transferStatus:Option[String])
+                    transferStatus:Option[String],
+                    schemeRefsList:List[String])
 object ERSQuery {
   implicit val format = Json.format[ERSQuery]
+}
+
+case class ERSMetaDataResults(bundleRef:String,schemeRef:String,transferStatus:String,fileType:String, timestamp:String, taxYear:String )
+object ERSMetaDataResults {
+  implicit val format = Json.format[ERSMetaDataResults]
+}
+
+case class ERSDataResults(schemeRef: String,taxYear:String,timestamp:String, sheetName:String)
+object ERSDataResults {
+  implicit val format = Json.format[ERSDataResults]
 }

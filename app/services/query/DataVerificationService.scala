@@ -17,9 +17,10 @@
 package services.query
 
 import repositories.{DataVerificationMongoRepository, Repositories}
-import models.ERSQuery
+import models.{ERSDataResults, ERSQuery}
 import org.joda.time.DateTime
 import play.api.Logger
+
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -34,6 +35,7 @@ trait DataVerificationService extends DataVerificationConfig {
     Logger.info(s"Start DataVerification ${DateTime.now.toString}")
     getCountBySchemeTypeWithInDateRange
     getSchemeRefBySchemeTypeWithInDateRange
+    getSchemeRefsInfo
   }
 
   def getCountBySchemeTypeWithInDateRange():Future[Int] = {
@@ -47,6 +49,13 @@ trait DataVerificationService extends DataVerificationConfig {
     dataVerificationRepository.getSchemeRefBySchemeTypeWithInDateRange(ersQuery).map{ schemeRefsList =>
       Logger.warn(s"The total (SchemeRefs) of ${ersQuery.schemeType} Scheme Type available in the 'ers-presubmission' are => ${schemeRefsList}")
       schemeRefsList
+    }
+  }
+
+  def getSchemeRefsInfo():Future[List[ERSDataResults]] = {
+    dataVerificationRepository.getSchemeRefsInfo(ersQuery).map{ ersDataResults =>
+      Logger.warn(s" (SchemeRef,TaxYear,TimeStamp,SheetName) from 'ers-presubmission' => ${ersDataResults}")
+      ersDataResults
     }
   }
 

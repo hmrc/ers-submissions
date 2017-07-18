@@ -71,5 +71,4 @@ object ApplicationConfig extends ServicesConfig {
   lazy val ersQueryStartDate: String = Try(loadConfig(s"$env.ers-query.start-date")).getOrElse("2016-04-01")
   lazy val ersQueryEndDate: String = Try(loadConfig(s"$env.ers-query.end-date")).getOrElse("2016-04-01")
 
-
 }
