@@ -19,8 +19,8 @@ package fixtures
 import com.typesafe.config.Config
 import play.api.test._
 import play.api.test.Helpers._
-import uk.gov.hmrc.play.http.HeaderCarrier
 import utils.ConfigUtils
+import uk.gov.hmrc.http.HeaderCarrier
 
 object Common {
 

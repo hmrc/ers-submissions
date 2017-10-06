@@ -19,9 +19,9 @@ package utils.LoggingAndExceptions
 import fixtures.Fixtures
 import models.ADRTransferException
 import play.api.test.FakeRequest
-import uk.gov.hmrc.play.http.HeaderCarrier
 import uk.gov.hmrc.play.test.{UnitSpec, WithFakeApplication}
 import utils.LoggingAndRexceptions.ErsLoggingAndAuditing
+import uk.gov.hmrc.http.HeaderCarrier
 
 class ErsLoggingAndAuditingSpec extends UnitSpec with WithFakeApplication {
 

@@ -19,8 +19,8 @@ package utils
 import fixtures.Fixtures
 import models.ADRTransferException
 import play.api.test.FakeRequest
-import uk.gov.hmrc.play.http.HeaderCarrier
 import uk.gov.hmrc.play.test.{WithFakeApplication, UnitSpec}
+import uk.gov.hmrc.http.HeaderCarrier
 
 class ConfigUtilsSpec extends UnitSpec with WithFakeApplication {
 

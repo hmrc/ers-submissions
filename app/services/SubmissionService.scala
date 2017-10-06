@@ -27,12 +27,12 @@ import play.api.libs.json.JsObject
 import play.api.mvc.Request
 import repositories.{MetadataMongoRepository, Repositories}
 import services.audit.AuditEvents
-import uk.gov.hmrc.play.http.HeaderCarrier
 import utils.LoggingAndRexceptions.{ADRExceptionEmitter, ErsLoggingAndAuditing}
 import utils.{ADRSubmission, SubmissionCommon}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
+import uk.gov.hmrc.http.HeaderCarrier
 
 object SubmissionCommonService extends SubmissionCommonService {
   override val adrConnector: ADRConnector = ADRConnector

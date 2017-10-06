@@ -28,7 +28,6 @@ import play.api.libs.json.{Json, JsObject}
 import play.api.mvc.Request
 import play.api.test.FakeRequest
 import repositories.MetadataMongoRepository
-import uk.gov.hmrc.play.http.{HttpResponse, HeaderCarrier}
 import uk.gov.hmrc.play.test.{WithFakeApplication, UnitSpec}
 import utils.{SubmissionCommon, ADRSubmission}
 import utils.LoggingAndRexceptions.ErsLoggingAndAuditing
@@ -36,6 +35,7 @@ import scala.concurrent.Future
 import org.mockito.Mockito._
 import org.scalatest.mockito.MockitoSugar
 import org.mockito.ArgumentMatchers._
+import uk.gov.hmrc.http.{ HeaderCarrier, HttpResponse }
 
 class SubmissionCommonServiceSpec extends UnitSpec with MockitoSugar with BeforeAndAfterEach with WithFakeApplication {
   implicit val hc: HeaderCarrier = new HeaderCarrier()

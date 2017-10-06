@@ -21,18 +21,18 @@ import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
 import org.scalatest.mockito.MockitoSugar
 import play.api.libs.json.JsObject
-import uk.gov.hmrc.play.http.{HttpResponse, HttpPost, HeaderCarrier}
 import uk.gov.hmrc.play.test.UnitSpec
 import play.api.test.FakeApplication
 import play.api.test.Helpers._
 import scala.concurrent.Future
+import uk.gov.hmrc.http.{ HeaderCarrier, HttpPost, HttpResponse }
 
 class ADRConnectorSpec extends UnitSpec with MockitoSugar {
 
   def buildADRConnector(postResult: Option[Boolean] = None) = new ADRConnector {
 
     val mockPostHttp = mock[HttpPost]
-    when(mockPostHttp.POST[JsObject, HttpResponse](any(), any(), any())(any(), any(), any())).thenReturn(postResult match {
+    when(mockPostHttp.POST[JsObject, HttpResponse](any(), any(), any())(any(), any(), any(), any())).thenReturn(postResult match {
       case Some(true) => Future.successful(HttpResponse(200))
       case Some(false) => Future.successful(HttpResponse(500))
       case _ => Future.failed(new RuntimeException)

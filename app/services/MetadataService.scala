@@ -21,10 +21,10 @@ import play.api.Logger
 import play.api.mvc.Request
 import repositories.{Repositories, MetadataMongoRepository, MetadataRepository}
 import play.api.libs.json.{JsError, JsSuccess, JsObject}
-import uk.gov.hmrc.play.http.HeaderCarrier
 import utils.LoggingAndRexceptions.ErsLoggingAndAuditing
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
+import uk.gov.hmrc.http.HeaderCarrier
 
 object MetadataService extends MetadataService {
 

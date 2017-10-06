@@ -19,8 +19,8 @@ package utils
 import com.typesafe.config.{Config, ConfigFactory}
 import models.ErsSummary
 import play.api.mvc.Request
-import uk.gov.hmrc.play.http.HeaderCarrier
 import utils.LoggingAndRexceptions.ADRExceptionEmitter
+import uk.gov.hmrc.http.HeaderCarrier
 
 object ConfigUtils extends ConfigUtils
 

@@ -21,10 +21,10 @@ import models.ADRTransferException
 import play.Logger
 import play.api.libs.json.JsObject
 import uk.gov.hmrc.play.config.ServicesConfig
-import uk.gov.hmrc.play.http.logging.Authorization
-import uk.gov.hmrc.play.http.{HeaderCarrier, HttpPost, HttpResponse}
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
+import uk.gov.hmrc.http.{ HeaderCarrier, HttpPost, HttpResponse }
+import uk.gov.hmrc.http.logging.Authorization
 
 trait ADRConnector extends ServicesConfig {
   def http: HttpPost
