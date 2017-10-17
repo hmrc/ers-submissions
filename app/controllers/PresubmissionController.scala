@@ -24,7 +24,6 @@ import play.api.libs.json.JsObject
 import play.api.mvc._
 import services.audit.AuditEvents
 import services.{PresubmissionService, ValidationService}
-import uk.gov.hmrc.play.http.HeaderCarrier
 import uk.gov.hmrc.play.microservice.controller.BaseController
 import utils.LoggingAndRexceptions.ErsLoggingAndAuditing
 import scala.concurrent.ExecutionContext.Implicits.global

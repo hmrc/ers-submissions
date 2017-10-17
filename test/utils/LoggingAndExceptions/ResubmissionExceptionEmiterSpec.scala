@@ -18,9 +18,9 @@ package utils.LoggingAndExceptions
 
 import models.ResubmissionException
 import play.api.test.FakeRequest
-import uk.gov.hmrc.play.http.HeaderCarrier
 import uk.gov.hmrc.play.test.{UnitSpec, WithFakeApplication}
 import utils.LoggingAndRexceptions.ResubmissionExceptionEmiter
+import uk.gov.hmrc.http.HeaderCarrier
 
 class ResubmissionExceptionEmiterSpec extends UnitSpec with WithFakeApplication {
 

@@ -22,9 +22,9 @@ import org.joda.time.{DateTimeZone, DateTime}
 import org.scalatest.mockito.MockitoSugar
 import play.api.libs.json.{JsObject, Json}
 import reactivemongo.bson.BSONObjectID
-import uk.gov.hmrc.play.http.HttpResponse
 import uk.gov.hmrc.play.test.{WithFakeApplication, UnitSpec}
 import utils.SubmissionCommon._
+import uk.gov.hmrc.http.HttpResponse
 
 class SubmissionCommonSpec extends UnitSpec with MockitoSugar with WithFakeApplication {
 

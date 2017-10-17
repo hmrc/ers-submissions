@@ -23,11 +23,11 @@ import play.api.Logger
 import play.api.mvc.Request
 import play.libs.Akka
 import repositories.Repositories
-import uk.gov.hmrc.play.http.HeaderCarrier
 import utils.LoggingAndRexceptions.ErsLoggingAndAuditing
 import scala.concurrent.ExecutionContext.Implicits.global
 import concurrent.duration._
 import scala.concurrent.Future
+import uk.gov.hmrc.http.HeaderCarrier
 
 object SchedulerService extends SchedulerService {
 

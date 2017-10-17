@@ -20,6 +20,7 @@ import uk.gov.hmrc.mongo.MongoConnector
 import play.modules.reactivemongo.MongoDbConnection
 import uk.gov.hmrc.lock.LockRepository
 
+
 object Repositories extends MongoDbConnection{
 
   private implicit val connection = {

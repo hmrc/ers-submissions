@@ -29,6 +29,8 @@ import models._
 import config.ApplicationConfig
 import org.joda.time.DateTime
 
+
+
 trait MetadataRepository extends Repository[ErsSummary, BSONObjectID] {
 
   def storeErsSummary(ersSummary: ErsSummary): Future[Boolean]

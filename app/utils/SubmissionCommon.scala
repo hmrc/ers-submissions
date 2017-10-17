@@ -23,8 +23,8 @@ import play.api.Logger
 import play.api.libs.json.Json.JsValueWrapper
 import play.api.libs.json._
 import reactivemongo.bson.BSONObjectID
-import uk.gov.hmrc.play.http.HttpResponse
 import scala.collection.mutable.ListBuffer
+import uk.gov.hmrc.http.HttpResponse
 
 object SubmissionCommon extends SubmissionCommon
 

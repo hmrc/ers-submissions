@@ -19,7 +19,7 @@ package utils.LoggingAndRexceptions
 import models.{ADRTransferException, ErsMetaData}
 import play.api.mvc.Request
 import services.audit.AuditEvents
-import uk.gov.hmrc.play.http.HeaderCarrier
+import uk.gov.hmrc.http.HeaderCarrier
 
 object ADRExceptionEmitter extends ErsLogger {
   

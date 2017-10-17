@@ -12,12 +12,8 @@ private object AppDependencies {
   import play.sbt.PlayImport._
   import play.core.PlayVersion
 
-  private val microserviceBootstrapVersion = "5.13.0"
-  private val playAuthVersion = "4.3.0"
-  private val playHealthVersion = "2.1.0"
-  private val playJsonLoggerVersion = "3.1.0"
-  private val playConfigVersion = "4.2.0"
-  private val domainVersion = "4.1.0"
+  private val microserviceBootstrapVersion = "6.9.0"
+  private val domainVersion = "5.0.0"
   private val playReactivemongoVersion = "5.2.0"
   private val scalatestPlusPlayVersion = "1.2.0"
   private val hmrcTestVersion = "2.2.0"
@@ -33,10 +29,6 @@ private object AppDependencies {
     "uk.gov.hmrc" %% "play-reactivemongo" % playReactivemongoVersion,
     ws,
     "uk.gov.hmrc" %% "microservice-bootstrap" % microserviceBootstrapVersion,
-    "uk.gov.hmrc" %% "play-authorisation" % playAuthVersion,
-    "uk.gov.hmrc" %% "play-health" % playHealthVersion,
-    "uk.gov.hmrc" %% "play-config" % playConfigVersion,
-    "uk.gov.hmrc" %% "logback-json-logger" % playJsonLoggerVersion,
     "uk.gov.hmrc" %% "domain" % domainVersion,
     "uk.gov.hmrc" %% "reactivemongo-test" % reactivemongoTestVersion,
     "uk.gov.hmrc" %% "mongo-lock" % mongoLock,

@@ -26,10 +26,10 @@ import play.api.libs.json.{Json, JsObject}
 import play.api.mvc.Request
 import play.api.test.FakeRequest
 import services.PresubmissionService
-import uk.gov.hmrc.play.http.HeaderCarrier
 import uk.gov.hmrc.play.test.{WithFakeApplication, UnitSpec}
 import scala.collection.mutable.ListBuffer
 import scala.concurrent.Future
+import uk.gov.hmrc.http.HeaderCarrier
 
 class ADRSubmissionSpec extends UnitSpec with MockitoSugar with WithFakeApplication {
 

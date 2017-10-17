@@ -23,10 +23,10 @@ import org.mockito.Mockito._
 import org.scalatest.mockito.MockitoSugar
 import play.api.test.FakeRequest
 import repositories.MetadataMongoRepository
-import uk.gov.hmrc.play.http.HeaderCarrier
 import uk.gov.hmrc.play.test.UnitSpec
 import utils.LoggingAndRexceptions.ErsLoggingAndAuditing
 import scala.concurrent.Future
+import uk.gov.hmrc.http.HeaderCarrier
 
 class MetadataServiceSpec extends UnitSpec with MockitoSugar {
 

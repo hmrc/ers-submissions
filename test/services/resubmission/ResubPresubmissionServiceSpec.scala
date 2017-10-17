@@ -26,10 +26,10 @@ import play.api.mvc.Request
 import play.api.test.FakeRequest
 import repositories.MetadataMongoRepository
 import services.SubmissionCommonService
-import uk.gov.hmrc.play.http.HeaderCarrier
 import uk.gov.hmrc.play.test.{WithFakeApplication, UnitSpec}
 import utils.LoggingAndRexceptions.ErsLoggingAndAuditing
 import scala.concurrent.Future
+import uk.gov.hmrc.http.HeaderCarrier
 
 class ResubPresubmissionServiceSpec extends UnitSpec with MockitoSugar with BeforeAndAfterEach with WithFakeApplication {
   implicit val hc: HeaderCarrier = new HeaderCarrier()

@@ -21,10 +21,10 @@ import play.api.mvc.Request
 import repositories.{MetadataMongoRepository, Repositories}
 import services.SubmissionCommonService
 import services.audit.AuditEvents
-import uk.gov.hmrc.play.http.HeaderCarrier
 import utils.LoggingAndRexceptions.{ErsLoggingAndAuditing, ResubmissionExceptionEmiter}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
+import uk.gov.hmrc.http.HeaderCarrier
 
 object ResubPresubmissionService extends ResubPresubmissionService {
   override lazy val metadataRepository: MetadataMongoRepository = Repositories.metadataRepository

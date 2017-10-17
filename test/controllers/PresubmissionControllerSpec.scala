@@ -28,13 +28,13 @@ import play.api.test._
 import play.api.test.Helpers._
 import org.scalatest.mockito.MockitoSugar
 import services.{ValidationService, PresubmissionService}
-import uk.gov.hmrc.play.http.HeaderCarrier
 import uk.gov.hmrc.play.test.{WithFakeApplication, UnitSpec}
 import fixtures.Fixtures
 import utils.LoggingAndRexceptions.ErsLoggingAndAuditing
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import play.api.mvc._
+import uk.gov.hmrc.http.HeaderCarrier
 
 class PresubmissionControllerSpec extends UnitSpec with MockitoSugar with BeforeAndAfterEach with WithFakeApplication {
 

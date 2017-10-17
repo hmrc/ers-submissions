@@ -19,7 +19,7 @@ package services.audit
 import models.{ErsSummary, SchemeInfo}
 import org.apache.commons.lang3.exception.ExceptionUtils
 import play.api.mvc.Request
-import uk.gov.hmrc.play.http.HeaderCarrier
+import uk.gov.hmrc.http.HeaderCarrier
 
 object AuditEvents extends AuditEvents {
   override def auditService : AuditService = AuditService

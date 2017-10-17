@@ -27,7 +27,6 @@ import play.api.libs.json.JsObject
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import services._
-import uk.gov.hmrc.play.http.HeaderCarrier
 import uk.gov.hmrc.play.test.{WithFakeApplication, UnitSpec}
 import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
@@ -35,6 +34,7 @@ import utils.LoggingAndRexceptions.ErsLoggingAndAuditing
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import play.api.mvc._
+import uk.gov.hmrc.http.HeaderCarrier
 
 class SubmissionControllerSpec extends UnitSpec with MockitoSugar with BeforeAndAfterEach with WithFakeApplication {
 

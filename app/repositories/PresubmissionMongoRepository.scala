@@ -27,6 +27,7 @@ import reactivemongo.api.DB
 import reactivemongo.bson._
 import uk.gov.hmrc.mongo.json.ReactiveMongoFormats
 import uk.gov.hmrc.mongo.{ReactiveRepository, Repository}
+import reactivemongo.api.commands.WriteResult
 
 trait PresubmissionRepository extends Repository[SchemeData, BSONObjectID] {
 
