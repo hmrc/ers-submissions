@@ -1,9 +1,9 @@
 package uk.gov.hmrc
 
 import _root_.play.modules.reactivemongo.MongoDbConnection
-import uk.gov.hmrc.play.http.HeaderCarrier
+import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.http.ws.WSRequest
-import uk.gov.hmrc.play.it.{ServiceSpec, ExternalService, MicroServiceEmbeddedServer}
+import uk.gov.hmrc.play.it.{ExternalService, MicroServiceEmbeddedServer, ServiceSpec}
 
 class IntegrationServer(override val testName: String, extraConfig: Map[String, String]) extends MicroServiceEmbeddedServer {
 

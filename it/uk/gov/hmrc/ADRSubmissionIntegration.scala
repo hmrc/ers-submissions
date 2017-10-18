@@ -2,13 +2,17 @@ package uk.gov.hmrc
 
 import org.scalatest.BeforeAndAfterEach
 import repositories.{MetadataMongoRepository, PresubmissionMongoRepository}
+
 import scala.concurrent.ExecutionContext.Implicits.global
 import _root_.play.api.test.Helpers._
+import uk.gov.hmrc.http.HeaderCarrier
 
 class ADRSubmissionIntegration extends ISpec("ADRSubmissionIntegration", additionalConfig = Seq(
   ("Dev.microservice.services.ers-stub.host", "localhost"),
   ("Dev.microservice.services.ers-stub.port", "19339")
 )) with BeforeAndAfterEach with FakeErsStubService {
+
+  override def applicableHeaders(url: String)(implicit hc: HeaderCarrier): Seq[(String, String)] = Nil
 
   private lazy val presubmissionRepository = new PresubmissionMongoRepository()
   private lazy val metadataMongoRepository = new MetadataMongoRepository()
