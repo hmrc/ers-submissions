@@ -15,7 +15,6 @@ trait MicroService {
   import uk.gov.hmrc.SbtAutoBuildPlugin
   import play.sbt.routes.RoutesCompiler.autoImport._
   import play.sbt.routes.RoutesKeys.routesGenerator
-  import TestPhases._
 
   val appName: String
 
@@ -57,25 +56,7 @@ trait MicroService {
     .settings(inConfig(IntegrationTest)(Defaults.itSettings): _*)
     .settings(integrationTestSettings())
     .disablePlugins(sbt.plugins.JUnitXmlReportPlugin)
-    .settings(
-      resolvers += Resolver.bintrayRepo("hmrc", "releases"),
-      resolvers += Resolver.jcenterRepo
-    )
     .settings(evictionWarningOptions in update := EvictionWarningOptions.default.withWarnTransitiveEvictions(false).withWarnDirectEvictions(false).withWarnScalaVersionEviction(false))
-}
-
-private object TestPhases {
-
-  val allPhases = "tt->test;test->test;test->compile;compile->compile"
-  val allItPhases = "tit->it;it->it;it->compile;compile->compile"
-
-  lazy val TemplateTest = config("tt") extend Test
-  lazy val TemplateItTest = config("tit") extend IntegrationTest
-
-  def oneForkedJvmPerTest(tests: Seq[TestDefinition]) =
-    tests map {
-      test => new Group(test.name, Seq(test), SubProcess(ForkOptions(runJVMOptions = Seq("-Dtest.name=" + test.name))))
-    }
 }
 
 private object Repositories {
