@@ -16,7 +16,7 @@ private object AppDependencies {
   private val domainVersion = "5.0.0"
   private val playReactivemongoVersion = "5.2.0"
   private val scalatestPlusPlayVersion = "1.2.0"
-  private val hmrcTestVersion = "2.2.0"
+  private val hmrcTestVersion = "3.0.0"
   private val reactivemongoTestVersion = "2.0.0"
   private val scalatestVersion = "3.0.1"
   private val mongoLock = "4.1.0"
