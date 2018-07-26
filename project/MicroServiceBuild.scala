@@ -1,7 +1,6 @@
 import sbt._
 
 object MicroServiceBuild extends Build with MicroService {
-  import scala.util.Properties.envOrElse
 
   val appName = "ers-submissions"
 
@@ -9,8 +8,8 @@ object MicroServiceBuild extends Build with MicroService {
 }
 
 private object AppDependencies {
-  import play.sbt.PlayImport._
   import play.core.PlayVersion
+  import play.sbt.PlayImport._
 
   private val microserviceBootstrapVersion = "6.18.0"
   private val domainVersion = "5.0.0"
@@ -32,7 +31,8 @@ private object AppDependencies {
     "uk.gov.hmrc" %% "domain" % domainVersion,
     "uk.gov.hmrc" %% "reactivemongo-test" % reactivemongoTestVersion,
     "uk.gov.hmrc" %% "mongo-lock" % mongoLock,
-    "uk.gov.hmrc" %% "play-reactivemongo" % reactiveMongoVersion
+    "uk.gov.hmrc" %% "play-reactivemongo" % reactiveMongoVersion,
+    "xerces" % "xercesImpl" % "2.12.0"
 
   )
 
