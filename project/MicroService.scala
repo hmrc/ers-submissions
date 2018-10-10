@@ -11,15 +11,17 @@ trait MicroService {
 
   import uk.gov.hmrc._
   import DefaultBuildSettings._
-  import uk.gov.hmrc.{SbtBuildInfo, ShellPrompt}
   import uk.gov.hmrc.SbtAutoBuildPlugin
   import play.sbt.routes.RoutesCompiler.autoImport._
   import play.sbt.routes.RoutesKeys.routesGenerator
+  import uk.gov.hmrc.versioning.SbtGitVersioning.autoImport.majorVersion
+  import uk.gov.hmrc.versioning.SbtGitVersioning
+  import uk.gov.hmrc.SbtArtifactory
 
   val appName: String
 
   lazy val appDependencies : Seq[ModuleID] = ???
-  lazy val plugins : Seq[Plugins] = Seq(play.sbt.PlayScala)
+  lazy val plugins : Seq[Plugins] = Seq(play.sbt.PlayScala, SbtAutoBuildPlugin, SbtGitVersioning, SbtDistributablesPlugin, SbtArtifactory)
   lazy val playSettings : Seq[Setting[_]] = Seq.empty
 
   lazy val scoverageSettings = {
@@ -56,7 +58,12 @@ trait MicroService {
     .settings(inConfig(IntegrationTest)(Defaults.itSettings): _*)
     .settings(integrationTestSettings())
     .disablePlugins(sbt.plugins.JUnitXmlReportPlugin)
-    .settings(evictionWarningOptions in update := EvictionWarningOptions.default.withWarnTransitiveEvictions(false).withWarnDirectEvictions(false).withWarnScalaVersionEviction(false))
+    .settings(
+      evictionWarningOptions in update := EvictionWarningOptions.default.withWarnTransitiveEvictions(false)
+        .withWarnDirectEvictions(false)
+        .withWarnScalaVersionEviction(false)
+    )
+    .settings(majorVersion := 1)
 }
 
 private object Repositories {

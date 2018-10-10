@@ -20,7 +20,6 @@ package services.audit
 import org.joda.time.DateTime
 import play.api.mvc.{Request, Session}
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
-import uk.gov.hmrc.play.config.RunMode
 import uk.gov.hmrc.play.audit.model.DataEvent
 
 
@@ -32,8 +31,8 @@ trait AuditServiceConnector {
   def auditData(dataEvent : DataEvent)(implicit hc : HeaderCarrier) : Unit
 }
 
-object MicroserviceAuditConnector extends AuditConnector with RunMode {
-  override lazy val auditingConfig = LoadAuditingConfig(s"$env.auditing")
+object MicroserviceAuditConnector extends AuditConnector {
+  override lazy val auditingConfig = LoadAuditingConfig("auditing")
 }
 
 object AuditServiceConnector extends AuditServiceConnector {
@@ -67,13 +66,10 @@ trait AuditService {
       detail = details
     )
 
-
   private def generateTags(session: Session, hc: HeaderCarrier): Map[String, String] =
     hc.headers.toMap ++
       hc.headers.toMap ++
       Map("dateTime" ->  getDateTime.toString)
-
-
 
   private def getDateTime = new DateTime
 

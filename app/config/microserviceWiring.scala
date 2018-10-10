@@ -23,9 +23,8 @@ import uk.gov.hmrc.http._
 import uk.gov.hmrc.play.audit.http.HttpAuditing
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 import uk.gov.hmrc.play.auth.microservice.connectors.AuthConnector
-import uk.gov.hmrc.play.config.{AppName, RunMode, ServicesConfig}
+import uk.gov.hmrc.play.config.{AppName, ServicesConfig}
 import uk.gov.hmrc.play.http.ws._
-
 import scala.concurrent.Future
 import scala.concurrent.duration._
 import uk.gov.hmrc.play.microservice.config.LoadAuditingConfig
@@ -33,13 +32,13 @@ import uk.gov.hmrc.play.http._
 import scala.concurrent.ExecutionContext.Implicits.global
 
 
-trait WSHttp extends WSGet with HttpGet with HttpPatch with HttpPut with HttpDelete with HttpPost with WSPut with WSPost with WSDelete with WSPatch with AppName with RunMode with HttpAuditing {
+trait WSHttp extends WSGet with HttpGet with HttpPatch with HttpPut with HttpDelete with HttpPost with WSPut with WSPost with WSDelete with WSPatch with AppName with HttpAuditing {
   override val hooks = Seq(AuditingHook)
   override val auditConnector = MicroserviceAuditConnector
 }
 object WSHttp extends WSHttp
 
-object WSHttpWithCustomTimeOut extends WSHttp with AppName with RunMode with HttpAuditing {
+object WSHttpWithCustomTimeOut extends WSHttp with AppName with HttpAuditing {
   override val hooks = Seq(AuditingHook)
   override val auditConnector = MicroserviceAuditConnector
 
@@ -54,8 +53,8 @@ object WSHttpWithCustomTimeOut extends WSHttp with AppName with RunMode with Htt
   }
 }
 
-object MicroserviceAuditConnector extends AuditConnector with RunMode {
-  override lazy val auditingConfig = LoadAuditingConfig(s"$env.auditing")
+object MicroserviceAuditConnector extends AuditConnector {
+  override lazy val auditingConfig = LoadAuditingConfig("auditing")
 }
 
 object MicroserviceAuthConnector extends AuthConnector with ServicesConfig with WSHttp {
