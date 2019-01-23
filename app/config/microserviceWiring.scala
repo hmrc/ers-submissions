@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 HM Revenue & Customs
+ * Copyright 2019 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,9 @@
 
 package config
 
-import play.api.Play
+import akka.actor.ActorSystem
+import com.typesafe.config.Config
+import play.api.{Configuration, Play}
 import play.api.Play.current
 import play.api.libs.json.{Json, Writes}
 import uk.gov.hmrc.http._
@@ -25,10 +27,12 @@ import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 import uk.gov.hmrc.play.auth.microservice.connectors.AuthConnector
 import uk.gov.hmrc.play.config.{AppName, ServicesConfig}
 import uk.gov.hmrc.play.http.ws._
+
 import scala.concurrent.Future
 import scala.concurrent.duration._
 import uk.gov.hmrc.play.microservice.config.LoadAuditingConfig
 import uk.gov.hmrc.play.http._
+
 import scala.concurrent.ExecutionContext.Implicits.global
 
 
@@ -36,7 +40,13 @@ trait WSHttp extends WSGet with HttpGet with HttpPatch with HttpPut with HttpDel
   override val hooks = Seq(AuditingHook)
   override val auditConnector = MicroserviceAuditConnector
 }
-object WSHttp extends WSHttp
+object WSHttp extends WSHttp{
+
+  override protected def configuration: Option[Config] = Some(Play.current.configuration.underlying)
+  override protected def appNameConfiguration: Configuration = Play.current.configuration
+  override protected def actorSystem : ActorSystem =  akka.actor.ActorSystem()
+
+}
 
 object WSHttpWithCustomTimeOut extends WSHttp with AppName with HttpAuditing {
   override val hooks = Seq(AuditingHook)
