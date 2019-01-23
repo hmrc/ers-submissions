@@ -23,12 +23,14 @@ import org.scalatest.mockito.MockitoSugar
 import play.api.test.FakeApplication
 import play.api.test.Helpers.running
 import reactivemongo.api.DB
-import reactivemongo.json.collection.JSONCollection
+import reactivemongo.play.json.collection.JSONCollection
 import uk.gov.hmrc.play.test.UnitSpec
 
 import scala.concurrent.Future
 
 class MetaDataVerificationRepositorySpec extends UnitSpec with MockitoSugar {
+
+
 
   val sayeERSQuery: ERSQuery = ERSQuery (
     schemeType = Some("SAYE"),

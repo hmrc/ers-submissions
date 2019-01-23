@@ -14,13 +14,13 @@ private object AppDependencies {
   private val microserviceBootstrapVersion = "10.0.0"
   private val domainVersion = "5.3.0"
   private val playReactivemongoVersion = "6.2.0"
-  private val scalatestPlusPlayVersion = "2.0.1"
+  private val scalatestPlusPlayVersion = "3.0.1"
   private val hmrcTestVersion = "3.3.0"
   private val reactivemongoTestVersion = "3.1.0"
   private val scalatestVersion = "3.0.1"
-  private val mongoLock = "5.1.1"
+  private val mongoLock = "5.1.0"
   private val wiremockVersion = "2.4.1"
-  private val reactiveMongoVersion = "5.2.0"
+  private val reactiveMongoVersion = "6.2.0"
   private val mockitoVersion = "2.6.1"
 
 

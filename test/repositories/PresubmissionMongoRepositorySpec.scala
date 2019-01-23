@@ -25,7 +25,7 @@ import play.api.test.FakeApplication
 import play.api.test.Helpers._
 import reactivemongo.api.DB
 import reactivemongo.api.commands.{WriteError, DefaultWriteResult, WriteResult}
-import reactivemongo.json.collection.JSONCollection
+import reactivemongo.play.json.collection.JSONCollection
 import uk.gov.hmrc.play.test.{UnitSpec}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future

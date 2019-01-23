@@ -20,11 +20,11 @@ import config.ApplicationConfig
 import config.ApplicationConfig._
 import models.{ERSDataResults, ERSQuery, SchemeData}
 import org.joda.time.DateTime
-import uk.gov.hmrc.mongo.{ReactiveRepository, Repository}
 import reactivemongo.api.DB
 import reactivemongo.bson._
 import uk.gov.hmrc.mongo.json.ReactiveMongoFormats
-
+import uk.gov.hmrc.mongo.{ReactiveRepository, Repository}
+import reactivemongo.play.json.ImplicitBSONHandlers._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 

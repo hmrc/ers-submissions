@@ -18,16 +18,16 @@ package repositories
 
 import fixtures.Fixtures
 import models.ERSQuery
+import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
 import org.scalatest.mockito.MockitoSugar
-import reactivemongo.api.DB
-import reactivemongo.json.collection.JSONCollection
-import uk.gov.hmrc.play.test.UnitSpec
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
-import org.mockito.ArgumentMatchers._
 import play.api.test.FakeApplication
 import play.api.test.Helpers.running
+import reactivemongo.api.DB
+import reactivemongo.play.json.collection.JSONCollection
+import uk.gov.hmrc.play.test.UnitSpec
+
+import scala.concurrent.Future
 
 class DataVerificationRepositorySpec extends UnitSpec with MockitoSugar {
   val presubmissionJson = Fixtures.schemeDataJson

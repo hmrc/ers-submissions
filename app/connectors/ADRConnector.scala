@@ -17,14 +17,15 @@
 package connectors
 
 import config.{ApplicationConfig, WSHttpWithCustomTimeOut}
-import models.ADRTransferException
 import play.Logger
+import play.api.Play
 import play.api.libs.json.JsObject
-import uk.gov.hmrc.play.config.ServicesConfig
-import scala.concurrent.Future
-import scala.concurrent.ExecutionContext.Implicits.global
-import uk.gov.hmrc.http.{ HeaderCarrier, HttpPost, HttpResponse }
 import uk.gov.hmrc.http.logging.Authorization
+import uk.gov.hmrc.http.{HeaderCarrier, HttpPost, HttpResponse}
+import uk.gov.hmrc.play.config.ServicesConfig
+
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 
 trait ADRConnector extends ServicesConfig {
   def http: HttpPost
@@ -70,4 +71,6 @@ trait ADRConnector extends ServicesConfig {
 
 object ADRConnector extends ADRConnector {
   override def http: HttpPost = WSHttpWithCustomTimeOut
+  protected def mode: play.api.Mode.Mode = Play.current.mode
+  protected def runModeConfiguration: play.api.Configuration = Play.current.configuration
 }

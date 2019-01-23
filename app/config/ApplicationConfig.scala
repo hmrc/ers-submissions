@@ -25,7 +25,7 @@ import play.api.{Configuration, Play}
 
 object ApplicationConfig extends ServicesConfig {
 
-  protected def mode: play.api.Mode.Mode = Play.current.mode
+  override protected def mode: play.api.Mode.Mode = Play.current.mode
   protected def runModeConfiguration: play.api.Configuration = Play.current.configuration
 
 

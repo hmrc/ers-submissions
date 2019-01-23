@@ -18,18 +18,18 @@ package repositories
 
 import fixtures.Fixtures
 import models.ErsSummary
-import play.api.libs.json.JsObject
+import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
 import org.scalatest.mockito.MockitoSugar
+import play.api.libs.json.JsObject
 import reactivemongo.api.DB
-import reactivemongo.api.collections.GenericQueryBuilder
-import reactivemongo.api.commands.{UpdateWriteResult, WriteError, DefaultWriteResult, WriteResult}
+import reactivemongo.api.commands.{DefaultWriteResult, UpdateWriteResult, WriteError, WriteResult}
 import reactivemongo.bson._
-import reactivemongo.json.collection.JSONCollection
-import uk.gov.hmrc.play.test.{WithFakeApplication, UnitSpec}
+import reactivemongo.play.json.collection.JSONCollection
+import uk.gov.hmrc.play.test.{UnitSpec, WithFakeApplication}
+
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
-import org.mockito.ArgumentMatchers._
 
 class MetadataMongoRepositorySpec extends UnitSpec with MockitoSugar with WithFakeApplication {
 
