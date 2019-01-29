@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 HM Revenue & Customs
+ * Copyright 2019 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,8 @@ import uk.gov.hmrc.mongo.{ReactiveRepository, Repository}
 import models._
 import config.ApplicationConfig
 import org.joda.time.DateTime
+import reactivemongo.api.commands.WriteResult.Message
+import reactivemongo.play.json.ImplicitBSONHandlers._
 
 
 
@@ -55,8 +57,8 @@ class MetadataMongoRepository()(implicit mongo: () => DB)
 
   override def storeErsSummary(ersSummary: ErsSummary): Future[Boolean] = {
     collection.insert(ersSummary).map { res =>
-      if(res.hasErrors) {
-        Logger.error(s"Faling storing metadata. Error: ${res.errmsg.getOrElse("")} for ${ersSummary.metaData.schemeInfo}")
+      if(res.writeErrors.nonEmpty) {
+        Logger.error(s"Faling storing metadata. Error: ${Message.unapply(res).getOrElse("")} for ${ersSummary.metaData.schemeInfo}")
       }
       res.ok
     }
@@ -73,8 +75,8 @@ class MetadataMongoRepository()(implicit mongo: () => DB)
     val update = Json.obj("$set" -> Json.obj("transferStatus" ->  status))
 
     collection.update(selector, update).map { res =>
-      if (res.hasErrors) {
-        Logger.warn(s"Faling updating metadata status. Error: ${res.errmsg.getOrElse("")} for ${schemeInfo.toString}, status: ${status}")
+      if (res.writeErrors.nonEmpty) {
+        Logger.warn(s"Faling updating metadata status. Error: ${Message.unapply(res).getOrElse("")} for ${schemeInfo.toString}, status: ${status}")
       }
       res.ok
     }

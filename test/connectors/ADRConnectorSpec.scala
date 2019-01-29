@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 HM Revenue & Customs
+ * Copyright 2019 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,16 +20,21 @@ import fixtures.Fixtures
 import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
 import org.scalatest.mockito.MockitoSugar
+import play.api.Play
 import play.api.libs.json.JsObject
 import uk.gov.hmrc.play.test.UnitSpec
 import play.api.test.FakeApplication
 import play.api.test.Helpers._
+
 import scala.concurrent.Future
-import uk.gov.hmrc.http.{ HeaderCarrier, HttpPost, HttpResponse }
+import uk.gov.hmrc.http.{HeaderCarrier, HttpPost, HttpResponse}
 
 class ADRConnectorSpec extends UnitSpec with MockitoSugar {
 
   def buildADRConnector(postResult: Option[Boolean] = None) = new ADRConnector {
+
+    protected def mode: play.api.Mode.Mode = Play.current.mode
+    protected def runModeConfiguration: play.api.Configuration = Play.current.configuration
 
     val mockPostHttp = mock[HttpPost]
     when(mockPostHttp.POST[JsObject, HttpResponse](any(), any(), any())(any(), any(), any(), any())).thenReturn(postResult match {

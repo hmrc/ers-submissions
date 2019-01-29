@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 HM Revenue & Customs
+ * Copyright 2019 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,18 +16,18 @@
 
 package repositories
 
-import config.{ApplicationConfig}
-import models.{SchemeInfoContainer, SchemeData, SchemeInfo}
-import org.joda.time.DateTime
+import config.ApplicationConfig
+import models.{SchemeData, SchemeInfo}
 import play.api.Logger
-import play.api.libs.json.Json
-import scala.concurrent.Future
-import scala.concurrent.ExecutionContext.Implicits.global
 import reactivemongo.api.DB
+import reactivemongo.api.commands.WriteResult.Message
 import reactivemongo.bson._
+import reactivemongo.play.json.ImplicitBSONHandlers._
 import uk.gov.hmrc.mongo.json.ReactiveMongoFormats
 import uk.gov.hmrc.mongo.{ReactiveRepository, Repository}
-import reactivemongo.api.commands.WriteResult
+
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 
 trait PresubmissionRepository extends Repository[SchemeData, BSONObjectID] {
 
@@ -52,8 +52,8 @@ class PresubmissionMongoRepository()(implicit mongo: () => DB)
 
   override def storeJson(presubmissionData: SchemeData): Future[Boolean] = {
     collection.insert(presubmissionData).map { res =>
-      if(res.hasErrors) {
-        Logger.error(s"Faling storing presubmission data. Error: ${res.errmsg.getOrElse("")} for schemeInfo: ${presubmissionData.schemeInfo.toString}")
+      if(res.writeErrors.nonEmpty) {
+        Logger.error(s"Faling storing presubmission data. Error: ${Message.unapply(res).getOrElse("")} for schemeInfo: ${presubmissionData.schemeInfo.toString}")
       }
       res.ok
     }
@@ -77,8 +77,8 @@ class PresubmissionMongoRepository()(implicit mongo: () => DB)
   override def removeJson(schemeInfo: SchemeInfo): Future[Boolean] = {
     val selector = buildSelector(schemeInfo)
     collection.remove(selector).map { res =>
-      if(res.hasErrors) {
-        Logger.error(s"Deleting presubmission error message: ${res.errmsg} for schemeInfo: ${schemeInfo.toString}")
+      if(res.writeErrors.nonEmpty) {
+        Logger.error(s"Deleting presubmission error message: ${Message.unapply(res).getOrElse("")} for schemeInfo: ${schemeInfo.toString}")
       }
       res.ok
     }

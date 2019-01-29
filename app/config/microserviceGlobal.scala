@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 HM Revenue & Customs
+ * Copyright 2019 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +37,10 @@ object AuthParamsControllerConfiguration extends AuthParamsControllerConfig {
 }
 
 object MicroserviceAuditFilter extends AuditFilter with AppName with MicroserviceFilterSupport{
+  protected def appNameConfiguration: play.api.Configuration = Play.current.configuration
+  override def appName : String = AppName (Play.current.configuration).appName
+  protected def configuration: Option[Config] = Some(Play.current.configuration.underlying)
+
   override val auditConnector = MicroserviceAuditConnector
   override def controllerNeedsAuditing(controllerName: String): Boolean = ControllerConfiguration.paramsForController(controllerName).needsAuditing
 }
