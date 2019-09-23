@@ -44,7 +44,9 @@ trait WSHttp extends WSGet with HttpGet with HttpPatch with HttpPut with HttpDel
   override protected def appNameConfiguration: Configuration = Play.current.configuration
   override protected def actorSystem : ActorSystem =  akka.actor.ActorSystem()
 }
-object WSHttp extends WSHttp
+object WSHttp extends WSHttp{
+
+}
 
 object WSHttpWithCustomTimeOut extends WSHttp with AppName with HttpAuditing {
   override val hooks = Seq(AuditingHook)
