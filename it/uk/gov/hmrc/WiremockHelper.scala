@@ -27,7 +27,7 @@ trait FakeAuthService extends BeforeAndAfterAll with ScalaFutures {
     authServer.stop()
   }
 
-  authServer.stubFor(WireMock.get(urlMatching("/.*")).willReturn(WireMock.aResponse().withStatus(200)))
+  authServer.stubFor(WireMock.post(urlMatching("/auth/authorise")).willReturn(WireMock.aResponse().withStatus(200).withBody("""{}""")))
 }
 
 trait FakeErsStubService extends BeforeAndAfterAll with ScalaFutures {

@@ -11,7 +11,7 @@ private object AppDependencies {
   import play.core.PlayVersion
   import play.sbt.PlayImport._
 
-  private val microserviceBootstrapVersion = "10.6.0"
+  private val microserviceBootstrapVersion = "10.9.0"
   private val domainVersion = "5.3.0"
   private val playReactivemongoVersion = "6.2.0"
   private val scalatestPlusPlayVersion = "3.0.1"
@@ -29,11 +29,11 @@ private object AppDependencies {
     ws,
     "uk.gov.hmrc" %% "microservice-bootstrap" % microserviceBootstrapVersion,
     "uk.gov.hmrc" %% "domain" % domainVersion,
+    "uk.gov.hmrc" %% "auth-client" % "2.33.0-play-25",
     "uk.gov.hmrc" %% "reactivemongo-test" % reactivemongoTestVersion,
     "uk.gov.hmrc" %% "mongo-lock" % mongoLock,
     "uk.gov.hmrc" %% "play-reactivemongo" % reactiveMongoVersion,
     "xerces" % "xercesImpl" % "2.12.0"
-
   )
 
   trait TestDependencies {
