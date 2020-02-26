@@ -8,8 +8,8 @@ import _root_.play.api.test.Helpers._
 import uk.gov.hmrc.http.HeaderCarrier
 
 class ADRSubmissionIntegration extends ISpec("ADRSubmissionIntegration", additionalConfig = Seq(
-  ("Dev.microservice.services.ers-stub.host", "localhost"),
-  ("Dev.microservice.services.ers-stub.port", "19339")
+  ("microservice.services.ers-stub.host", "localhost"),
+  ("microservice.services.ers-stub.port", "19339")
 )) with BeforeAndAfterEach with FakeErsStubService {
 
   override def applicableHeaders(url: String)(implicit hc: HeaderCarrier): Seq[(String, String)] = Nil

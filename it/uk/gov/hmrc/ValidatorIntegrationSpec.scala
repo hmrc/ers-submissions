@@ -9,8 +9,8 @@ import _root_.play.api.test.Helpers._
 import uk.gov.hmrc.http.HeaderCarrier
 
 class ValidatorIntegrationSpec extends ISpec("ReceiverFromValidatorTest", additionalConfig = Seq(
-  ("Dev.microservice.services.auth.host", "localhost"),
-  ("Dev.microservice.services.auth.port", "18500")
+  ("microservice.services.auth.host", "localhost"),
+  ("microservice.services.auth.port", "18500")
 )) with BeforeAndAfterEach with FakeAuthService {
 
   override def applicableHeaders(url: String)(implicit hc: HeaderCarrier): Seq[(String, String)] = Nil

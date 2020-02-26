@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 HM Revenue & Customs
+ * Copyright 2020 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,8 @@
 
 package controllers
 
-import fixtures.Fixtures
+import controllers.auth.AuthAction
+import fixtures.{Fixtures, WithMockedAuthActions}
 import metrics.Metrics
 import models.SchemeData
 import org.mockito.ArgumentMatchers._
@@ -28,27 +29,30 @@ import org.scalatest.mockito.MockitoSugar
 import play.api.libs.json.JsObject
 import play.api.mvc.Request
 import play.api.test.FakeRequest
-import services.{ValidationService, PresubmissionService}
+import services.{PresubmissionService, ValidationService}
 import uk.gov.hmrc.play.test.{UnitSpec, WithFakeApplication}
 import utils.LoggingAndRexceptions.ErsLoggingAndAuditing
+
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 import uk.gov.hmrc.http.HeaderCarrier
 
-class ReceivePresubmissionControllerSpec extends UnitSpec with MockitoSugar with BeforeAndAfterEach with WithFakeApplication {
+class ReceivePresubmissionControllerSpec extends UnitSpec with MockitoSugar with BeforeAndAfterEach with WithFakeApplication with WithMockedAuthActions{
 
   val mockErsLoggingAndAuditing: ErsLoggingAndAuditing = mock[ErsLoggingAndAuditing]
+  val mockAuthAction: AuthAction = mock[AuthAction]
 
   val mockMetrics: Metrics = mock[Metrics]
   override def beforeEach() = {
     super.beforeEach()
-    reset(mockMetrics)
-    reset(mockErsLoggingAndAuditing)
+    reset(mockMetrics, mockErsLoggingAndAuditing, mockAuthAction)
   }
 
   "calling receivePresubmissionJson" should {
 
     def buildPresubmissionController(validationResult: Boolean = true, storeJsonResult: Boolean = true): ReceivePresubmissionController = new ReceivePresubmissionController {
+
+      mockJsValueAuthAction
 
       val mockPresubmissionService = mock[PresubmissionService]
       when(
@@ -74,6 +78,8 @@ class ReceivePresubmissionControllerSpec extends UnitSpec with MockitoSugar with
       override val metrics: Metrics = mockMetrics
 
       override val ersLoggingAndAuditing: ErsLoggingAndAuditing = mockErsLoggingAndAuditing
+
+      override def authorisedAction(empRef: String): AuthAction = mockAuthAction
     }
 
     "return BadRequest if invalid json is given" in {
