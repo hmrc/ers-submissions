@@ -25,21 +25,21 @@ import uk.gov.hmrc.play.test.{UnitSpec, WithFakeApplication}
 import org.mockito.ArgumentMatchers.{any, eq => eqTo}
 import play.api.Play
 import play.api.http.Status
-import play.api.mvc.Results
-import play.api.mvc.{Request, Result}
+import play.api.mvc.{AnyContent, BodyParser, PlayBodyParsers, Request, Result, Results}
 import play.api.test.FakeRequest
 import uk.gov.hmrc.auth.core.authorise.Predicate
 import uk.gov.hmrc.auth.core.retrieve.EmptyRetrieval
 import uk.gov.hmrc.domain.EmpRef
+import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.Try
 
-
-class AuthActionSpec extends UnitSpec with MockitoSugar with BeforeAndAfterEach with WithFakeApplication {
+class AuthActionSpec extends UnitSpec with MockitoSugar with BeforeAndAfterEach with GuiceOneAppPerSuite {
 
   val mockAuthConnector: AuthConnector = mock[AuthConnector]
+  val mockBodyPraser: PlayBodyParsers = mock[PlayBodyParsers]
   implicit def materializer: Materializer = Play.materializer(fakeApplication)
 
   override protected def beforeEach(): Unit = {
@@ -49,8 +49,9 @@ class AuthActionSpec extends UnitSpec with MockitoSugar with BeforeAndAfterEach 
 
   def authAction(empRef: String): AuthAction = new AuthAction {
     override val optionalEmpRef: Option[EmpRef] = Try(EmpRef.fromIdentifiers(empRef)).toOption
-    override implicit val ec: ExecutionContext = ExecutionContext.global
     override def authConnector: AuthConnector = mockAuthConnector
+    override implicit val executionContext: ExecutionContext = ExecutionContext.global
+    override def parser: BodyParser[AnyContent] = mockBodyPraser.default
   }
 
   def defaultAsyncBody: Request[_] => Result = _ => Results.Ok("Successful")

@@ -16,24 +16,28 @@
 
 package services.query
 
+import config.ApplicationConfig
 import models.ERSQuery
+import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.when
 import org.scalatest.mockito.MockitoSugar
-import repositories.DataVerificationMongoRepository
+import org.scalatestplus.play.guice.GuiceOneAppPerSuite
+import repositories.{DataVerificationMongoRepository, Repositories}
 import uk.gov.hmrc.play.test.UnitSpec
+
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class DataVerificationServiceSpec extends UnitSpec with MockitoSugar {
+class DataVerificationServiceSpec extends UnitSpec with MockitoSugar with GuiceOneAppPerSuite {
 
-  def buildDataVerificationService(): DataVerificationService = new DataVerificationService {
+  val mockApplicationConfig: ApplicationConfig = app.injector.instanceOf[ApplicationConfig]
+  val mockRepositories: Repositories = mock[Repositories]
+  val mockDataVerificationRepository: DataVerificationMongoRepository = mock[DataVerificationMongoRepository]
 
-    val mockERSQuery = mock[ERSQuery]
-    val mockDataVerificationMongoRepository: DataVerificationMongoRepository = mock[DataVerificationMongoRepository]
-    when(mockDataVerificationMongoRepository.getCountBySchemeTypeWithInDateRange(mockERSQuery)).thenReturn(Future(10))
-
-    override lazy val ersQuery = mockERSQuery
-    override lazy val dataVerificationRepository = mockDataVerificationMongoRepository
+  def buildDataVerificationService(): DataVerificationService = new DataVerificationService(mockApplicationConfig, mockRepositories) {
+    override lazy val dataVerificationRepository: DataVerificationMongoRepository = mockDataVerificationRepository
+    when(mockDataVerificationRepository.getCountBySchemeTypeWithInDateRange(any()))
+      .thenReturn(Future(10))
   }
 
   "Calling getCountBySchemeTypeWithInDateRange" should {

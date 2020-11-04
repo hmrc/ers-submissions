@@ -16,74 +16,79 @@
 
 package services.resubmission
 
+import config.ApplicationConfig
 import fixtures.Fixtures
 import models.{ADRTransferException, ErsSummary, ResubmissionException}
+import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.mockito.MockitoSugar
-import org.mockito.ArgumentMatchers._
+import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.mvc.Request
 import play.api.test.FakeRequest
 import repositories.MetadataMongoRepository
-import services.SubmissionCommonService
-import uk.gov.hmrc.play.test.{WithFakeApplication, UnitSpec}
-import utils.LoggingAndRexceptions.ErsLoggingAndAuditing
-import scala.concurrent.Future
+import services.SubmissionService
+import services.audit.AuditEvents
 import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.play.test.UnitSpec
+import utils.LoggingAndRexceptions.{ErsLoggingAndAuditing, ResubmissionExceptionEmiter}
 
-class ResubPresubmissionServiceSpec extends UnitSpec with MockitoSugar with BeforeAndAfterEach with WithFakeApplication {
+import scala.concurrent.Future
+
+class ResubPresubmissionServiceSpec extends UnitSpec with MockitoSugar with BeforeAndAfterEach with GuiceOneAppPerSuite {
   implicit val hc: HeaderCarrier = new HeaderCarrier()
   implicit val request: Request[_] = FakeRequest()
 
   val mockMetadataRepository: MetadataMongoRepository = mock[MetadataMongoRepository]
-  val mockSubmissionCommonService: SubmissionCommonService = mock[SubmissionCommonService]
   val mockSchedulerLoggingAndAuditing: ErsLoggingAndAuditing = mock[ErsLoggingAndAuditing]
+  val mockSubmissionService: SubmissionService = mock[SubmissionService]
+  val mockApplicationConfig: ApplicationConfig = app.injector.instanceOf[ApplicationConfig]
+  val mockAuditEvents: AuditEvents = mock[AuditEvents]
+  val mockResubmissionExceptionEmiter: ResubmissionExceptionEmiter = app.injector.instanceOf[ResubmissionExceptionEmiter]
 
-  override def beforeEach() = {
+  override def beforeEach(): Unit = {
     super.beforeEach()
     reset(mockMetadataRepository)
-    reset(mockSubmissionCommonService)
+    reset(mockSubmissionService)
     reset(mockSchedulerLoggingAndAuditing)
+    reset(mockAuditEvents)
   }
 
   "processFailedSubmissions" should {
 
-    val resubPresubmissionService: ResubPresubmissionService = new ResubPresubmissionService {
-      override lazy val metadataRepository: MetadataMongoRepository = mockMetadataRepository
-      override val submissionCommonService: SubmissionCommonService = mockSubmissionCommonService
-      override val schedulerLoggingAndAuditing: ErsLoggingAndAuditing = mockSchedulerLoggingAndAuditing
-
+    val resubPresubmissionService: ResubPresubmissionService = new ResubPresubmissionService(
+      mockMetadataRepository,
+      mockSchedulerLoggingAndAuditing,
+      mockSubmissionService,
+      mockApplicationConfig,
+      mockAuditEvents,
+      mockResubmissionExceptionEmiter
+    ) {
       override def startResubmission(ersSummary: ErsSummary)(implicit request: Request[_], hc: HeaderCarrier): Future[Boolean] = {
         Future.successful(false)
       }
     }
 
     "return the result of startResubmission if findAndUpdateByStatus is successful and returns a record" in {
-      when(
-        mockMetadataRepository.findAndUpdateByStatus(any[List[String]](), anyBoolean(), anyBoolean(),any[Option[List[String]]], any[Option[String]])
-      ).thenReturn(
-        Future.successful(Some(Fixtures.metadata))
-      )
+      when(mockMetadataRepository.findAndUpdateByStatus(any[List[String]](), anyBoolean(), anyBoolean(),any[Option[List[String]]], any[Option[String]]))
+        .thenReturn(Future.successful(Some(Fixtures.metadata)))
+
       val result = await(resubPresubmissionService.processFailedSubmissions())
       result shouldBe Some(false)
     }
 
     "return None if findAndUpdateByStatus is successful but returns None" in {
-      when(
-        mockMetadataRepository.findAndUpdateByStatus(any[List[String]](), anyBoolean(), anyBoolean(), any[Option[List[String]]], any[Option[String]])
-      ).thenReturn(
-        Future.successful(None)
-      )
+      when(mockMetadataRepository.findAndUpdateByStatus(any[List[String]](), anyBoolean(), anyBoolean(), any[Option[List[String]]], any[Option[String]]))
+        .thenReturn(Future.successful(None))
+
       val result = await(resubPresubmissionService.processFailedSubmissions())
       result shouldBe None
     }
 
     "rethrow ResubmissionException if such one occurs" in {
-      when(
-        mockMetadataRepository.findAndUpdateByStatus(any[List[String]](), anyBoolean(), anyBoolean(), any[Option[List[String]]], any[Option[String]])
-      ).thenReturn(
-        Future.failed(ResubmissionException("test message", "test context", Some(Fixtures.schemeInfo)))
-      )
+      when(mockMetadataRepository.findAndUpdateByStatus(any[List[String]](), anyBoolean(), anyBoolean(), any[Option[List[String]]], any[Option[String]]))
+        .thenReturn(Future.failed(ResubmissionException("test message", "test context", Some(Fixtures.schemeInfo))))
+
       val result = intercept[ResubmissionException] {
         await(resubPresubmissionService.processFailedSubmissions())
       }
@@ -93,11 +98,9 @@ class ResubPresubmissionServiceSpec extends UnitSpec with MockitoSugar with Befo
     }
 
     "throw ResubmissionException if Exception occurs" in {
-      when(
-        mockMetadataRepository.findAndUpdateByStatus(any[List[String]](), anyBoolean(), anyBoolean(), any[Option[List[String]]], any[Option[String]])
-      ).thenReturn(
-        Future.failed(new Exception("test message"))
-      )
+      when(mockMetadataRepository.findAndUpdateByStatus(any[List[String]](), anyBoolean(), anyBoolean(), any[Option[List[String]]], any[Option[String]]))
+        .thenReturn(Future.failed(new Exception("test message")))
+
       val result = intercept[ResubmissionException] {
         await(resubPresubmissionService.processFailedSubmissions())
       }
@@ -109,28 +112,27 @@ class ResubPresubmissionServiceSpec extends UnitSpec with MockitoSugar with Befo
   }
 
   "startResubmission" should {
-    val resubPresubmissionService: ResubPresubmissionService = new ResubPresubmissionService {
-      override lazy val metadataRepository: MetadataMongoRepository = mockMetadataRepository
-      override val submissionCommonService: SubmissionCommonService = mockSubmissionCommonService
-      override val schedulerLoggingAndAuditing: ErsLoggingAndAuditing = mockSchedulerLoggingAndAuditing
-    }
+    val resubPresubmissionService: ResubPresubmissionService = new ResubPresubmissionService(
+      mockMetadataRepository,
+      mockSchedulerLoggingAndAuditing,
+      mockSubmissionService,
+      mockApplicationConfig,
+      mockAuditEvents,
+      mockResubmissionExceptionEmiter
+    )
 
     "return the result of callProcessData if ErsSubmissions is successfully extracted" in {
-      when(
-        mockSubmissionCommonService.callProcessData(any[ErsSummary](), anyString(), anyString())(any(), any())
-      ).thenReturn(
-        Future.successful(true)
-      )
+      when(mockSubmissionService.callProcessData(any[ErsSummary](), anyString(), anyString())(any(), any()))
+        .thenReturn(Future.successful(true))
+
       val result = await(resubPresubmissionService.startResubmission(Fixtures.metadata))
       result shouldBe true
     }
 
     "audit failed submission if callProcessData throws exception" in {
-      when(
-        mockSubmissionCommonService.callProcessData(any[ErsSummary](), anyString(), anyString())(any(), any())
-      ).thenReturn(
-        Future.failed(new RuntimeException("test message"))
-      )
+      when(mockSubmissionService.callProcessData(any[ErsSummary](), anyString(), anyString())(any(), any()))
+        .thenReturn(Future.failed(new RuntimeException("test message")))
+
       val result = intercept[ResubmissionException] {
         await(resubPresubmissionService.startResubmission(Fixtures.metadata))
       }
@@ -140,11 +142,9 @@ class ResubPresubmissionServiceSpec extends UnitSpec with MockitoSugar with Befo
     }
 
     "throw ResubmissionException if ADRTransferException occurs" in {
-      when(
-        mockSubmissionCommonService.callProcessData(any[ErsSummary](), anyString(), anyString())(any(), any())
-      ).thenReturn(
-        Future.failed(ADRTransferException(Fixtures.EMIMetaData, "test message", "test context"))
-      )
+      when(mockSubmissionService.callProcessData(any[ErsSummary](), anyString(), anyString())(any(), any()))
+        .thenReturn(Future.failed(ADRTransferException(Fixtures.EMIMetaData, "test message", "test context")))
+
       val result = intercept[ResubmissionException] {
         await(resubPresubmissionService.startResubmission(Fixtures.metadata))
       }
@@ -154,11 +154,9 @@ class ResubPresubmissionServiceSpec extends UnitSpec with MockitoSugar with Befo
     }
 
     "throw ResubmissionException if Exception occurs" in {
-      when(
-        mockSubmissionCommonService.callProcessData(any[ErsSummary](), anyString(), anyString())(any(), any())
-      ).thenReturn(
-        Future.failed(new Exception("test message"))
-      )
+      when(mockSubmissionService.callProcessData(any[ErsSummary](), anyString(), anyString())(any(), any()))
+        .thenReturn(Future.failed(new Exception("test message")))
+
       val result = intercept[ResubmissionException] {
         await(resubPresubmissionService.startResubmission(Fixtures.metadata))
       }

@@ -16,61 +16,45 @@
 
 package connectors
 
-import config.{ApplicationConfig, WSHttpWithCustomTimeOut}
+import config.ApplicationConfig
+import javax.inject.Inject
 import play.Logger
-import play.api.Play
 import play.api.libs.json.JsObject
 import uk.gov.hmrc.http.logging.Authorization
-import uk.gov.hmrc.http.{HeaderCarrier, HttpPost, HttpResponse}
-import uk.gov.hmrc.play.config.ServicesConfig
+import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
+import uk.gov.hmrc.play.bootstrap.http.HttpClient
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-trait ADRConnector extends ServicesConfig {
-  def http: HttpPost
+class ADRConnector @Inject()(applicationConfig: ApplicationConfig,
+                             http: HttpClient) {
 
-  def buildEtmpPath(path: String): String = s"${ApplicationConfig.adrBaseURI}/${path}"
+  def buildEtmpPath(path: String): String = s"${applicationConfig.adrBaseURI}/${path}"
 
   private def createHeaderCarrier = HeaderCarrier(
-    extraHeaders = Seq(("Environment" -> ApplicationConfig.UrlHeaderEnvironment)),
-    authorization = Some(Authorization(ApplicationConfig.UrlHeaderAuthorization))
+    extraHeaders = Seq(("Environment" -> applicationConfig.UrlHeaderEnvironment)),
+    authorization = Some(Authorization(applicationConfig.UrlHeaderAuthorization))
   )
 
   def sendData(adrData: JsObject, schemeType: String)(implicit hc: HeaderCarrier): Future[HttpResponse] = {
-    implicit val hc = createHeaderCarrier
-    val url: String = buildEtmpPath(s"${ApplicationConfig.adrFullSubmissionURI}/${schemeType.toLowerCase()}")
+    implicit val hc: HeaderCarrier = createHeaderCarrier
+    val url: String = buildEtmpPath(s"${applicationConfig.adrFullSubmissionURI}/${schemeType.toLowerCase()}")
 
     Logger.debug("Sending data to ADR.\n" +
       s"hc - headers: ${hc.extraHeaders.toString()}, authorization: ${hc.authorization.toString}\n" +
-      s"url: ${url}")
+      s"url: $url")
 
-    try {
-      http.POST(url, adrData).map{ res =>
-        Logger.warn(s"ADR response: ${res.status}")
-        res
-      }.recover {
-        case ex: Exception => {
-          Logger.error("Exception in ADRConnector sending data to ADR" + ex.getMessage)
-          throw ex
-        }
-        case tex: Throwable => {
-          Logger.error("Throwable recovery in ADRConnector sending data to ADR" + tex.getMessage)
-          throw tex
-        }
-      }
-    }
-    catch {
-      case ex: Throwable => {
-        Logger.error("Throwable try/catch in ADRConnector sending data to ADR" + ex.getMessage)
+    http.POST(url, adrData).map { res =>
+      Logger.warn(s"ADR response: ${res.status}")
+      res
+    }.recover {
+      case ex: Exception =>
+        Logger.error("Exception in ADRConnector sending data to ADR" + ex.getMessage)
         throw ex
-      }
+      case tex: Throwable =>
+        Logger.error("Throwable recovery in ADRConnector sending data to ADR" + tex.getMessage)
+        throw tex
     }
   }
-}
-
-object ADRConnector extends ADRConnector {
-  override def http: HttpPost = WSHttpWithCustomTimeOut
-  protected def mode: play.api.Mode.Mode = Play.current.mode
-  protected def runModeConfiguration: play.api.Configuration = Play.current.configuration
 }

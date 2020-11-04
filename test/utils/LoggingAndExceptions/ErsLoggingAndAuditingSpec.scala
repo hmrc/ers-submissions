@@ -18,49 +18,53 @@ package utils.LoggingAndExceptions
 
 import fixtures.Fixtures
 import models.ADRTransferException
+import org.scalatest.mockito.MockitoSugar
 import play.api.test.FakeRequest
+import services.audit.AuditEvents
 import uk.gov.hmrc.play.test.{UnitSpec, WithFakeApplication}
 import utils.LoggingAndRexceptions.ErsLoggingAndAuditing
 import uk.gov.hmrc.http.HeaderCarrier
 
-class ErsLoggingAndAuditingSpec extends UnitSpec with WithFakeApplication {
+class ErsLoggingAndAuditingSpec extends UnitSpec with WithFakeApplication with MockitoSugar {
 
+  val mockAuditEvents: AuditEvents = mock[AuditEvents]
+  val mockErsLoggingAndAuditing: ErsLoggingAndAuditing = new ErsLoggingAndAuditing(mockAuditEvents)
   implicit val request = FakeRequest()
   implicit val hc = new HeaderCarrier()
 
   "calling handleException" should {
     "log error if exception is given" in {
-      val result = ErsLoggingAndAuditing.handleException(Fixtures.schemeInfo, new Exception("error message"), "")
+      val result = mockErsLoggingAndAuditing.handleException(Fixtures.schemeInfo, new Exception("error message"), "")
       result shouldBe (())
     }
 
     "log error and audit if ADRTransferException is given" in {
-      val result = ErsLoggingAndAuditing.handleException(Fixtures.schemeInfo, ADRTransferException(Fixtures.EMIMetaData, "error message", "error context"), "")
+      val result = mockErsLoggingAndAuditing.handleException(Fixtures.schemeInfo, ADRTransferException(Fixtures.EMIMetaData, "error message", "error context"), "")
       result shouldBe (())
     }
   }
 
   "calling handleFailure" should {
     "log error and audit if exception is given" in {
-      val result = ErsLoggingAndAuditing.handleFailure(Fixtures.schemeInfo, "")
+      val result = mockErsLoggingAndAuditing.handleFailure(Fixtures.schemeInfo, "")
       result shouldBe (())
     }
   }
 
   "calling handleSuccess" should {
     "log warning" in {
-      val result = ErsLoggingAndAuditing.handleFailure(Fixtures.schemeInfo, "")
+      val result = mockErsLoggingAndAuditing.handleFailure(Fixtures.schemeInfo, "")
       result shouldBe (())
     }
   }
 
   "calling handleResult" should {
     "log warnrning with success message if result is true" in {
-      val result = ErsLoggingAndAuditing.handleResult(Some(true), Some("Success message"), None, None)
+      val result = mockErsLoggingAndAuditing.handleResult(Some(true), Some("Success message"), None, None)
       result shouldBe (())
     }
     "log error with error message if result is false" in {
-      val result = ErsLoggingAndAuditing.handleResult(Some(false), None, Some("Error message"), None)
+      val result = mockErsLoggingAndAuditing.handleResult(Some(false), None, Some("Error message"), None)
       result shouldBe (())
     }
   }

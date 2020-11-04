@@ -16,6 +16,8 @@
 
 package services.query
 
+import config.ApplicationConfig
+import javax.inject.Inject
 import repositories.{MetaDataVerificationMongoRepository, Repositories}
 import models.{ERSMetaDataResults, ERSQuery}
 import org.joda.time.DateTime
@@ -24,14 +26,10 @@ import play.api.Logger
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 
-object MetaDataVerificationService extends MetaDataVerificationService {
-  override lazy val metaDataVerificationRepository: MetaDataVerificationMongoRepository = Repositories.metaDataVerificationRepository
-}
+class MetaDataVerificationService @Inject()(applicationConfig: ApplicationConfig, repositories: Repositories) {
+  lazy val metaDataVerificationRepository: MetaDataVerificationMongoRepository = repositories.metaDataVerificationRepository
 
-trait MetaDataVerificationService extends DataVerificationConfig {
-  lazy val metaDataVerificationRepository: MetaDataVerificationMongoRepository = ???
-
-  def start() = {
+  def start(): Future[List[ERSMetaDataResults]] = {
     Logger.warn(s"Start MetaData Verification ${DateTime.now.toString}")
     getCountBySchemeTypeWithInDateRange
     getBundleRefAndSchemeRefBySchemeTypeWithInDateRange
@@ -39,21 +37,21 @@ trait MetaDataVerificationService extends DataVerificationConfig {
   }
 
   def getCountBySchemeTypeWithInDateRange():Future[Int] = {
-    metaDataVerificationRepository.getCountBySchemeTypeWithInDateRange(ersQuery).map{ total=>
-      Logger.warn(s"The total number of ${ersQuery.schemeType} Scheme Type files available in the 'ers-metadata' is => ${total}")
+    metaDataVerificationRepository.getCountBySchemeTypeWithInDateRange(applicationConfig.ersQuery).map{ total=>
+      Logger.warn(s"The total number of ${applicationConfig.ersQuery.schemeType} Scheme Type files available in the 'ers-metadata' is => ${total}")
       total
     }
   }
 
   def getBundleRefAndSchemeRefBySchemeTypeWithInDateRange():Future[List[(String,String,String)]] = {
-    metaDataVerificationRepository.getBundleRefAndSchemeRefBySchemeTypeWithInDateRange(ersQuery).map{ schemeRefsList =>
-        Logger.warn(s"The total (BundleRefs,SchemeRefs,TransferStatus) of ${ersQuery.schemeType} Scheme Type available in the 'ers-metadata' are => ${schemeRefsList}")
+    metaDataVerificationRepository.getBundleRefAndSchemeRefBySchemeTypeWithInDateRange(applicationConfig.ersQuery).map{ schemeRefsList =>
+        Logger.warn(s"The total (BundleRefs,SchemeRefs,TransferStatus) of ${applicationConfig.ersQuery.schemeType} Scheme Type available in the 'ers-metadata' are => ${schemeRefsList}")
         schemeRefsList
       }
   }
 
   def getSchemeRefsInfo():Future[List[ERSMetaDataResults]] = {
-    metaDataVerificationRepository.getSchemeRefsInfo(ersQuery).map{ ersMetaDataResults =>
+    metaDataVerificationRepository.getSchemeRefsInfo(applicationConfig.ersQuery).map{ ersMetaDataResults =>
       Logger.warn(s"(BundleRefs,SchemeRefs,TransferStatus,FileType,Timestamp, TaxYear) from 'ers-metadata' => ${ersMetaDataResults}")
       ersMetaDataResults
     }

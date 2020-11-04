@@ -16,56 +16,46 @@
 
 package connectors
 
+import config.ApplicationConfig
 import fixtures.Fixtures
 import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
 import org.scalatest.mockito.MockitoSugar
-import play.api.Play
+import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.libs.json.JsObject
-import uk.gov.hmrc.play.test.UnitSpec
-import play.api.test.FakeApplication
 import play.api.test.Helpers._
+import uk.gov.hmrc.http.{HeaderCarrier, HttpClient, HttpResponse}
+import uk.gov.hmrc.play.test.UnitSpec
 
 import scala.concurrent.Future
-import uk.gov.hmrc.http.{HeaderCarrier, HttpPost, HttpResponse}
 
-class ADRConnectorSpec extends UnitSpec with MockitoSugar {
+class ADRConnectorSpec extends UnitSpec with MockitoSugar with GuiceOneAppPerSuite {
 
-  def buildADRConnector(postResult: Option[Boolean] = None) = new ADRConnector {
+  val mockAppConfig: ApplicationConfig = mock[ApplicationConfig]
+  val mockHttpClient: HttpClient = mock[HttpClient]
 
-    protected def mode: play.api.Mode.Mode = Play.current.mode
-    protected def runModeConfiguration: play.api.Configuration = Play.current.configuration
+  val mockConnector = new ADRConnector(mockAppConfig, mockHttpClient)
 
-    val mockPostHttp = mock[HttpPost]
-    when(mockPostHttp.POST[JsObject, HttpResponse](any(), any(), any())(any(), any(), any(), any())).thenReturn(postResult match {
-      case Some(true) => Future.successful(HttpResponse(200))
-      case Some(false) => Future.successful(HttpResponse(500))
-      case _ => Future.failed(new RuntimeException)
-    })
-
-    override def http: HttpPost = mockPostHttp
-  }
-
-  implicit val hc: HeaderCarrier = new HeaderCarrier()
+  implicit val hc: HeaderCarrier = HeaderCarrier()
 
   "calling sendData" should {
 
     "send data successfully" in {
-      running(FakeApplication()) {
-        val adrConnector = buildADRConnector(Some(true))
-        val result = await(adrConnector.sendData(Fixtures.schemeDataJson, Fixtures.schemeType))
-        result.status shouldBe OK
-      }
+      when(mockHttpClient.POST[JsObject, HttpResponse](any(), any(), any())(any(), any(), any(), any()))
+        .thenReturn(Future.successful(HttpResponse(OK)))
+
+      val result = await(mockConnector.sendData(Fixtures.schemeDataJson, Fixtures.schemeType))
+      result.status shouldBe OK
     }
 
     "fail sending data" in {
-      running(FakeApplication()) {
-        val adrConnector = buildADRConnector(Some(false))
-        val result = await(adrConnector.sendData(Fixtures.schemeDataJson, Fixtures.schemeType))
-        result.status shouldBe INTERNAL_SERVER_ERROR
-      }
-    }
 
+      when(mockHttpClient.POST[JsObject, HttpResponse](any(), any(), any())(any(), any(), any(), any()))
+        .thenReturn(Future.successful(HttpResponse(INTERNAL_SERVER_ERROR)))
+
+      val result = await(mockConnector.sendData(Fixtures.schemeDataJson, Fixtures.schemeType))
+      result.status shouldBe INTERNAL_SERVER_ERROR
+    }
   }
 
 }

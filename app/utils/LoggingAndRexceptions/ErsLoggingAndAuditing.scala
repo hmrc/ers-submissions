@@ -16,25 +16,24 @@
 
 package utils.LoggingAndRexceptions
 
+import javax.inject.Inject
 import models._
 import play.api.mvc.Request
 import services.audit.AuditEvents
 import uk.gov.hmrc.http.HeaderCarrier
 
-object ErsLoggingAndAuditing extends ErsLoggingAndAuditing
-
-trait ErsLoggingAndAuditing extends ErsLogger {
+class ErsLoggingAndAuditing @Inject()(auditEvents: AuditEvents) extends ErsLogger {
 
   def handleException(data: Object, ex: Exception, contextInfo: String)(implicit request: Request[_], hc: HeaderCarrier): Unit = {
     logException(data, ex)
     if(!ex.isInstanceOf[ResubmissionException] && !ex.isInstanceOf[ADRTransferException]) {
-      AuditEvents.auditRunTimeError(ex, contextInfo)
+      auditEvents.auditRunTimeError(ex, contextInfo)
     }
   }
 
   def handleFailure(schemeInfo: SchemeInfo, message: String)(implicit request: Request[_], hc: HeaderCarrier): Unit = {
     logError(message, Some(schemeInfo))
-    AuditEvents.auditADRTransferFailure(schemeInfo, Map.empty)
+    auditEvents.auditADRTransferFailure(schemeInfo, Map.empty)
   }
 
   def handleSuccess(data: Object, message: String): Unit = logWarn(message, Some(data))

@@ -17,35 +17,42 @@
 package utils.Schemes_ADRSubmissionSpec
 
 import com.typesafe.config.Config
-import fixtures.{Fixtures, Common, CSOP}
-import models.{SchemeInfo, SchemeData}
+import fixtures.{CSOP, Common, Fixtures}
+import models.{SchemeData, SchemeInfo}
 import org.mockito.Mockito._
 import org.scalatest.BeforeAndAfter
 import org.scalatest.mockito.MockitoSugar
 import org.mockito.ArgumentMatchers._
-import play.api.libs.json.Json
+import org.scalatestplus.play.guice.GuiceOneAppPerSuite
+import play.api.libs.json.{JsObject, Json}
 import play.api.mvc.Request
 import play.api.test.FakeRequest
 import services.PresubmissionService
-import uk.gov.hmrc.play.test.{WithFakeApplication, UnitSpec}
-import utils.{ConfigUtils, SubmissionCommon, ADRSubmission}
+import uk.gov.hmrc.play.test.{UnitSpec, WithFakeApplication}
+import utils.{ADRSubmission, ConfigUtils, SubmissionCommon}
+
 import scala.concurrent.Future
 import scala.collection.mutable.ListBuffer
 import uk.gov.hmrc.http.HeaderCarrier
+import utils.LoggingAndRexceptions.ADRExceptionEmitter
 
-class CSOP_ADRSubmissionSpec extends UnitSpec with MockitoSugar with BeforeAndAfter with WithFakeApplication  {
+class CSOP_ADRSubmissionSpec
+  extends UnitSpec with MockitoSugar with BeforeAndAfter with GuiceOneAppPerSuite {
 
-  implicit val hc: HeaderCarrier = new HeaderCarrier()
-  implicit val request = FakeRequest().withBody(Fixtures.metadataJson)
-
+  val mockSubmissionCommon: SubmissionCommon = app.injector.instanceOf[SubmissionCommon]
+  val mockAdrExceptionEmitter: ADRExceptionEmitter = mock[ADRExceptionEmitter]
+  val mockConfigUtils: ConfigUtils = app.injector.instanceOf[ConfigUtils]
   val mockPresubmissionService: PresubmissionService = mock[PresubmissionService]
 
-  val adrSubmission: ADRSubmission = new ADRSubmission {
-    override val presubmissionService: PresubmissionService = mockPresubmissionService
-    override val submissionCommon: SubmissionCommon = SubmissionCommon
-    override val configUtils: ConfigUtils = ConfigUtils
-  }
+  implicit val hc: HeaderCarrier = new HeaderCarrier()
+  implicit val request: FakeRequest[JsObject] = FakeRequest().withBody(Fixtures.metadataJson)
 
+  val adrSubmission: ADRSubmission = new ADRSubmission(
+    mockSubmissionCommon,
+    mockPresubmissionService,
+    mockAdrExceptionEmitter,
+    mockConfigUtils
+  )
   def before(fun : => scala.Any) = {
     super.before(())
     reset(mockPresubmissionService)
@@ -1294,7 +1301,7 @@ class CSOP_ADRSubmissionSpec extends UnitSpec with MockitoSugar with BeforeAndAf
   // CSOP_OptionsGranted_V3
   "calling generateJson for OptionsGranted_V3" should {
 
-    val configData: Config = Common.loadConfiguration(CSOP.schemeType, "CSOP_OptionsGranted_V3")
+    val configData: Config = Common.loadConfiguration(CSOP.schemeType, "CSOP_OptionsGranted_V3", mockConfigUtils)
 
     "create valid JSON with sharesListedOnSE = (\"yes\" or \"no\"), marketValueAgreedHMRC = \"yes\"" in {
 
@@ -1379,7 +1386,7 @@ class CSOP_ADRSubmissionSpec extends UnitSpec with MockitoSugar with BeforeAndAf
   // CSOP_OptionsRCL_V3
   "calling generateJson for OptionsRCL_V3" should {
 
-    val configData: Config = Common.loadConfiguration(CSOP.schemeType, "CSOP_OptionsRCL_V3")
+    val configData: Config = Common.loadConfiguration(CSOP.schemeType, "CSOP_OptionsRCL_V3", mockConfigUtils)
 
     "create valid JSON with withAllFields = (true or false), moneyExchanged = \"yes\"" in {
 
@@ -1472,7 +1479,7 @@ class CSOP_ADRSubmissionSpec extends UnitSpec with MockitoSugar with BeforeAndAf
   // CSOP_OptionsExercised_V3
   "calling generateJson for OptionsExercised_V3" should {
 
-    val configData: Config = Common.loadConfiguration(CSOP.schemeType, "CSOP_OptionsExercised_V3")
+    val configData: Config = Common.loadConfiguration(CSOP.schemeType, "CSOP_OptionsExercised_V3", mockConfigUtils)
 
     "create valid JSON with withAllFields = (true or false), sharesListedOnSE = \"yes\", marketValueAgreedHMRC = \"yes\", payeOperated = \"yes\"" in {
 

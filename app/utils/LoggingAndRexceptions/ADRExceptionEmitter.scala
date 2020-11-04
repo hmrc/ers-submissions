@@ -16,14 +16,15 @@
 
 package utils.LoggingAndRexceptions
 
+import javax.inject.Inject
 import models.{ADRTransferException, ErsMetaData}
 import play.api.mvc.Request
 import services.audit.AuditEvents
 import uk.gov.hmrc.http.HeaderCarrier
 
-object ADRExceptionEmitter extends ErsLogger {
+class ADRExceptionEmitter @Inject()(auditEvents: AuditEvents) extends ErsLogger {
   
-  def emitFrom(ersMetaData: ErsMetaData, data: Map[String, String], ex: Option[Exception] = None)(implicit request: Request[_], hc: HeaderCarrier) = {
+  def emitFrom(ersMetaData: ErsMetaData, data: Map[String, String], ex: Option[Exception] = None)(implicit request: Request[_], hc: HeaderCarrier): Nothing = {
     if(ex.isDefined) {
       logException(ersMetaData.schemeInfo, ex.get, Some(buildEmiterMessage(data)))
       auditAndThrowWithStackTrace(ersMetaData, data, ex.get)
@@ -34,21 +35,25 @@ object ADRExceptionEmitter extends ErsLogger {
     }
   }
   
-  def auditAndThrowWithStackTrace(ersMetaData: ErsMetaData, data: Map[String, String], ex: Exception)(implicit request: Request[_], hc: HeaderCarrier) = {
-    AuditEvents.auditRunTimeError(ex, data("context"))
+  def auditAndThrowWithStackTrace(ersMetaData: ErsMetaData,
+                                  data: Map[String, String],
+                                  ex: Exception)
+                                 (implicit request: Request[_],
+                                  hc: HeaderCarrier): Nothing = {
+    auditEvents.auditRunTimeError(ex, data("context"))
     throw createADRException(ersMetaData, data).initCause(ex)
   }
 
-  def auditAndThrow(ersMetaData: ErsMetaData, data: Map[String, String])(implicit request: Request[_], hc: HeaderCarrier) = {
-    AuditEvents.auditADRTransferFailure(ersMetaData.schemeInfo, data)
+  def auditAndThrow(ersMetaData: ErsMetaData, data: Map[String, String])(implicit request: Request[_], hc: HeaderCarrier): Nothing = {
+    auditEvents.auditADRTransferFailure(ersMetaData.schemeInfo, data)
     throw createADRException(ersMetaData, data)
   }
 
-  def createADRException(ersMetaData: ErsMetaData, data: Map[String, String]) = {
+  def createADRException(ersMetaData: ErsMetaData, data: Map[String, String]): ADRTransferException = {
     ADRTransferException(
       ersMetaData,
-      data.get("message").getOrElse("Undefined message"),
-      data.get("context").getOrElse("Undefined context")
+      data.getOrElse("message","Undefined message"),
+      data.getOrElse("context", "Undefined context")
     )
   }
 

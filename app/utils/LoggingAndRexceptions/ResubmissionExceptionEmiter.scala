@@ -16,12 +16,13 @@
 
 package utils.LoggingAndRexceptions
 
+import javax.inject.Inject
 import models.{ADRTransferException, ResubmissionException, SchemeInfo}
 import play.api.mvc.Request
 import services.audit.AuditEvents
 import uk.gov.hmrc.http.HeaderCarrier
 
-object ResubmissionExceptionEmiter extends ErsLogger {
+class ResubmissionExceptionEmiter @Inject()(auditEvents: AuditEvents) extends ErsLogger {
 
   def emitFrom(data: Map[String, String], ex: Option[Exception] = None, schemeInfo: Option[SchemeInfo])(implicit request: Request[_], hc: HeaderCarrier) = {
     val errorMessage = buildEmiterMessage(data)
@@ -43,7 +44,7 @@ object ResubmissionExceptionEmiter extends ErsLogger {
 
   def auditAndThrowWithStackTrace(data: Map[String, String], ex: Exception, schemeInfo: Option[SchemeInfo])(implicit request: Request[_], hc: HeaderCarrier) = {
     if(!ex.isInstanceOf[ADRTransferException]) {
-      AuditEvents.auditRunTimeError(ex, data("context"))
+      auditEvents.auditRunTimeError(ex, data("context"))
     }
     throw createResubmissionExceptionWithStackTrace(data, ex, schemeInfo)
   }

@@ -17,16 +17,18 @@
 package fixtures
 
 import com.typesafe.config.Config
+import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.test._
 import play.api.test.Helpers._
 import utils.ConfigUtils
 import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.play.test.UnitSpec
 
-object Common {
+object Common extends UnitSpec with GuiceOneAppPerSuite {
 
-  def loadConfiguration(schemeType: String, sheetName: String): Config = {
-    running(FakeApplication()) {
-      ConfigUtils.getConfigData(schemeType + "/" + sheetName, sheetName)(FakeRequest(), new HeaderCarrier(), Fixtures.EMISummaryDate)
+  def loadConfiguration(schemeType: String, sheetName: String, configUtils: ConfigUtils): Config = {
+    running(app) {
+      configUtils.getConfigData(schemeType + "/" + sheetName, sheetName)(FakeRequest(), new HeaderCarrier(), Fixtures.EMISummaryDate)
     }
   }
 

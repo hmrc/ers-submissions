@@ -16,7 +16,12 @@
 
 package services.resubmission
 
+import java.net.{InetAddress, URI}
+import java.security.cert.X509Certificate
+
 import play.api.libs.json.{JsObject, Json}
+import play.api.libs.typedmap.{TypedEntry, TypedKey, TypedMap}
+import play.api.mvc.request.{RemoteConnection, RequestTarget}
 import play.api.mvc.{Headers, Request}
 
 object ERSRequest {
@@ -25,17 +30,23 @@ object ERSRequest {
 
     new Request[JsObject] {
 
-      override def clientCertificateChain: Option[Seq[java.security.cert.X509Certificate]] = None
+       override def connection = new RemoteConnection {
+         override def secure: Boolean = false
+         override def clientCertificateChain: Option[Seq[X509Certificate]]  = None
+         override def remoteAddress: InetAddress = ???
+       }
+
+      override def target: RequestTarget = new RequestTarget {
+        override def uri: URI = new URI("ers-submissions")
+
+        override def uriString: String = "ers-submissions"
+
+        override def path: String = "ers-submissions"
+
+        override def queryMap: Map[String, Seq[String]] = Map()
+      }
 
       override def body: JsObject = Json.obj()
-
-      override def secure: Boolean = false
-
-      override def uri: String = "ers-submissions"
-
-      override def queryString: Map[String, Seq[String]] = Map()
-
-      override def remoteAddress: String = ""
 
       override def method: String = "POST"
 
@@ -43,13 +54,14 @@ object ERSRequest {
          protected val data: Seq[(String, Seq[String])] = Seq()
       }
 
-      override def path: String = "ers-submissions"
+      override def attrs: TypedMap = {
+        TypedMap(
+          TypedEntry(TypedKey("Id"), 1),
+          TypedEntry(TypedKey("Tags"), Map())
+        )
+      }
 
       override def version: String = ""
-
-      override def tags: Map[String, String] = Map()
-
-      override def id: Long = 1
     }
 
   }

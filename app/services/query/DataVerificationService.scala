@@ -16,6 +16,8 @@
 
 package services.query
 
+import config.ApplicationConfig
+import javax.inject.Inject
 import repositories.{DataVerificationMongoRepository, Repositories}
 import models.{ERSDataResults, ERSQuery}
 import org.joda.time.DateTime
@@ -24,12 +26,8 @@ import play.api.Logger
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 
-object DataVerificationService extends DataVerificationService {
-  override lazy val dataVerificationRepository: DataVerificationMongoRepository = Repositories.dataVerificationRepository
-}
-
-trait DataVerificationService extends DataVerificationConfig {
-  lazy val dataVerificationRepository: DataVerificationMongoRepository = ???
+class DataVerificationService @Inject()(applicationConfig: ApplicationConfig, repositories: Repositories) {
+  lazy val dataVerificationRepository: DataVerificationMongoRepository = repositories.dataVerificationRepository
 
   def start() = {
     Logger.info(s"Start DataVerification ${DateTime.now.toString}")
@@ -39,21 +37,21 @@ trait DataVerificationService extends DataVerificationConfig {
   }
 
   def getCountBySchemeTypeWithInDateRange():Future[Int] = {
-      dataVerificationRepository.getCountBySchemeTypeWithInDateRange(ersQuery).map{ total=>
-        Logger.warn(s"The total number of ${ersQuery.schemeType} Scheme Type files available in the 'ers-presubmission' is => ${total}")
+      dataVerificationRepository.getCountBySchemeTypeWithInDateRange(applicationConfig.ersQuery).map{ total=>
+        Logger.warn(s"The total number of ${applicationConfig.ersQuery.schemeType} Scheme Type files available in the 'ers-presubmission' is => ${total}")
         total
       }
   }
 
   def getSchemeRefBySchemeTypeWithInDateRange():Future[List[String]] = {
-    dataVerificationRepository.getSchemeRefBySchemeTypeWithInDateRange(ersQuery).map{ schemeRefsList =>
-      Logger.warn(s"The total (SchemeRefs) of ${ersQuery.schemeType} Scheme Type available in the 'ers-presubmission' are => ${schemeRefsList}")
+    dataVerificationRepository.getSchemeRefBySchemeTypeWithInDateRange(applicationConfig.ersQuery).map{ schemeRefsList =>
+      Logger.warn(s"The total (SchemeRefs) of ${applicationConfig.ersQuery.schemeType} Scheme Type available in the 'ers-presubmission' are => ${schemeRefsList}")
       schemeRefsList
     }
   }
 
   def getSchemeRefsInfo():Future[List[ERSDataResults]] = {
-    dataVerificationRepository.getSchemeRefsInfo(ersQuery).map{ ersDataResults =>
+    dataVerificationRepository.getSchemeRefsInfo(applicationConfig.ersQuery).map{ ersDataResults =>
       Logger.warn(s" (SchemeRef,TaxYear,TimeStamp,SheetName) from 'ers-presubmission' => ${ersDataResults}")
       ersDataResults
     }

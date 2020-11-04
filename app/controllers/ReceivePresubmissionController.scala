@@ -18,50 +18,40 @@ package controllers
 
 import java.util.concurrent.TimeUnit
 
+import javax.inject.Inject
 import controllers.auth.{AuthAction, AuthorisedAction}
 import metrics.Metrics
 import models.SchemeData
 import play.api.Logger
 import play.api.libs.json.{JsObject, JsValue}
-import play.api.mvc.{Action, Request, Result}
+import play.api.mvc.{Action, ControllerComponents, PlayBodyParsers, Request, Result}
 import services.{PresubmissionService, ValidationService}
 import services.audit.AuditEvents
-import uk.gov.hmrc.play.microservice.controller.BaseController
+import uk.gov.hmrc.auth.core.AuthConnector
 import utils.LoggingAndRexceptions.ErsLoggingAndAuditing
 
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
-object ReceivePresubmissionController extends ReceivePresubmissionController {
+class ReceivePresubmissionController @Inject()(presubmissionService: PresubmissionService,
+                                               validationService: ValidationService,
+                                               ersLoggingAndAuditing: ErsLoggingAndAuditing,
+                                               authConnector: AuthConnector,
+                                               auditEvents: AuditEvents,
+                                               metrics: Metrics,
+                                               cc: ControllerComponents,
+                                               bodyParser: PlayBodyParsers) extends BackendController(cc) {
 
-  override val presubmissionService: PresubmissionService = PresubmissionService
-  override val validationService: ValidationService = ValidationService
-  override val metrics: Metrics = Metrics
-  override val ersLoggingAndAuditing: ErsLoggingAndAuditing = ErsLoggingAndAuditing
-
-  override def authorisedAction(empRef: String): AuthAction = AuthorisedAction(empRef)
-
-}
-
-trait ReceivePresubmissionController extends BaseController {
-
-  val presubmissionService: PresubmissionService
-  val validationService: ValidationService
-  val metrics: Metrics
-  val ersLoggingAndAuditing: ErsLoggingAndAuditing
-  def authorisedAction(empRef: String): AuthAction
+  def authorisedAction(empRef: String): AuthAction = AuthorisedAction(empRef, authConnector, bodyParser)
 
   def receivePresubmissionJson(empRef: String): Action[JsValue] =
     authorisedAction(empRef).async(parse.json(maxLength = 1024 * 10000)) { implicit request =>
 
     validationService.validateSchemeData(request.body.as[JsObject]) match {
-      case schemeData: Some[SchemeData] => {
-        storePresubmission(schemeData.get)
-      }
-      case _ => Future {
-        BadRequest("Invalid json format.")
-      }
+      case schemeData: Some[SchemeData] => storePresubmission(schemeData.get)
+      case _ => Future.successful(BadRequest("Invalid json format."))
     }
   }
 
@@ -71,17 +61,15 @@ trait ReceivePresubmissionController extends BaseController {
     val startTime = System.currentTimeMillis()
 
     presubmissionService.storeJson(schemeData).map {
-      case true => {
+      case true =>
         metrics.storePresubmission(System.currentTimeMillis() - startTime, TimeUnit.MILLISECONDS)
-        AuditEvents.publicToProtectedEvent(schemeData.schemeInfo, schemeData.sheetName, schemeData.data.getOrElse(Seq()).length.toString)
+        auditEvents.publicToProtectedEvent(schemeData.schemeInfo, schemeData.sheetName, schemeData.data.getOrElse(Seq()).length.toString)
         ersLoggingAndAuditing.handleSuccess(schemeData.schemeInfo, s"Presubmission data for sheet ${schemeData.sheetName} is stored successfully")
         Ok("Presubmission data is stored successfully.")
-      }
-      case _ => {
+      case _ =>
         metrics.failedStorePresubmission()
         ersLoggingAndAuditing.handleFailure(schemeData.schemeInfo, s"Storing presubmission data for sheet ${schemeData.sheetName} failed")
         InternalServerError("Storing presubmission data failed.")
-      }
     }
   }
 }

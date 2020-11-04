@@ -16,8 +16,11 @@
 
 package models
 
+import com.github.nscala_time.time.Imports.DateTimeZone
 import org.joda.time.DateTime
-import play.api.libs.json.Json
+import play.api.libs.json.{Format, JsValue, Json, Reads, Writes, __}
+import uk.gov.hmrc.mongo.json.ReactiveMongoFormats
+
 /*
 case class ReturnServiceCache(
                                schemeId: String,
@@ -171,6 +174,17 @@ case class ErsMetaData(
                         )
 
 object ErsMetaData {
+
+  private val dateTimeRead: Reads[DateTime] =
+    (__).read[Long].map { dateTime =>
+      new DateTime(dateTime, DateTimeZone.UTC)
+    }
+
+  private val dateTimeWrite: Writes[DateTime] = new Writes[DateTime] {
+    def writes(dateTime: DateTime): JsValue = Json.toJson(dateTime.getMillis)
+  }
+
+  implicit val dateTimeFormats: Format[DateTime] = Format(dateTimeRead, dateTimeWrite)
   implicit val format = Json.format[ErsMetaData]
 }
 
@@ -273,5 +287,16 @@ case class ErsSummary(
                        transferStatus: Option[String]
                        )
 object ErsSummary {
+
+  private val dateTimeRead: Reads[DateTime] =
+    (__).read[Long].map { dateTime =>
+      new DateTime(dateTime, DateTimeZone.UTC)
+    }
+
+  private val dateTimeWrite: Writes[DateTime] = new Writes[DateTime] {
+    def writes(dateTime: DateTime): JsValue = Json.toJson(dateTime.getMillis)
+  }
+
+  implicit val dateTimeFormats: Format[DateTime] = Format(dateTimeRead, dateTimeWrite)
   implicit val format = Json.format[ErsSummary]
 }

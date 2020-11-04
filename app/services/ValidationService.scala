@@ -16,13 +16,11 @@
 
 package services
 
-import models.{SchemeInfo, SchemeData}
-import play.api.Logger
-import play.api.libs.json.{JsError, JsSuccess, JsObject}
+import javax.inject.Inject
+import models.{SchemeData, SchemeInfo}
+import play.api.libs.json.{JsError, JsObject, JsSuccess}
 
-object ValidationService extends ValidationService
-
-trait ValidationService {
+class ValidationService @Inject()() {
 
   def validateSchemeData(json: JsObject): Option[SchemeData] = {
     json.validate[SchemeData] match {

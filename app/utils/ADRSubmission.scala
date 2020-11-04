@@ -17,32 +17,24 @@
 package utils
 
 import com.typesafe.config.Config
+import javax.inject.Inject
 import models._
 import play.api.Logger
-import play.api.libs.json.{Json, JsObject}
-import SubmissionCommon._
+import play.api.libs.json.{JsObject, Json}
 import play.api.mvc.Request
 import services.PresubmissionService
 import utils.LoggingAndRexceptions.ADRExceptionEmitter
+
 import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 import scala.concurrent.Future
 import util.control.Breaks._
 import scala.concurrent.ExecutionContext.Implicits.global
 import uk.gov.hmrc.http.HeaderCarrier
 
-object ADRSubmission extends ADRSubmission {
-
-  override val presubmissionService: PresubmissionService = PresubmissionService
-  override val submissionCommon: SubmissionCommon = SubmissionCommon
-  override val configUtils: ConfigUtils = ConfigUtils
-
-}
-
-trait ADRSubmission {
-
-  val presubmissionService: PresubmissionService
-  val submissionCommon: SubmissionCommon
-  val configUtils: ConfigUtils
+class ADRSubmission @Inject()(submissionCommon: SubmissionCommon,
+                              presubmissionService: PresubmissionService,
+                              adrExceptionEmitter: ADRExceptionEmitter,
+                              configUtils: ConfigUtils) {
 
   def generateSubmission()(implicit request: Request[_], hc: HeaderCarrier, ersSummary: ErsSummary): Future[JsObject] = {
     Logger.debug("LFP -> 1. generateSubmission :START ")
@@ -77,7 +69,7 @@ trait ADRSubmission {
       }
       result
     }.recover {
-      case ex: Exception => ADRExceptionEmitter.emitFrom(
+      case ex: Exception => adrExceptionEmitter.emitFrom(
         ersSummary.metaData,
         Map(
           "message" -> "Exception during findAndUpdate presubmission data",
@@ -89,7 +81,7 @@ trait ADRSubmission {
   }
 
   def createRootJson(sheetsJson: JsObject)(implicit request: Request[_], hc: HeaderCarrier, ersSummary: ErsSummary, schemeType: String): JsObject = {
-    val rootConfigData: Config = getConfigData(s"${schemeType}/${schemeType}", schemeType)
+    val rootConfigData: Config = configUtils.getConfigData(s"${schemeType}/${schemeType}", schemeType)
     buildRoot(rootConfigData, ersSummary, sheetsJson)
   }
 
@@ -104,12 +96,12 @@ trait ADRSubmission {
       elem.getString("type") match {
         case "object" => {
           val elemVal = buildRoot(elem, metadata, sheetsJson)
-          json ++= addObjectValue(elem, elemVal)
+          json ++= submissionCommon.addObjectValue(elem, elemVal)
         }
         case "array" => {
           if (elem.hasPath("values")) {
             val elVal = for (el <- elem.getConfigList("values")) yield {
-              val ev = extractField(el, metadata)
+              val ev = configUtils.extractField(el, metadata)
               val valid_value = el.getString("valid_value")
               if (ev.toString == valid_value) {
                 val elName = el.getString("name")
@@ -130,22 +122,22 @@ trait ADRSubmission {
             }
           }
           else {
-            val arrayData = extractField(elem, metadata)
+            val arrayData = configUtils.extractField(elem, metadata)
             if (arrayData.isInstanceOf[List[Object @unchecked]]) {
               val elemVal = for (el <- arrayData.asInstanceOf[List[Object]]) yield buildRoot(elem, el, sheetsJson)
-              json ++= addArrayValue(elem, elemVal)
+              json ++= submissionCommon.addArrayValue(elem, elemVal)
             }
           }
         }
         case "common" => {
           val loadConfig: String = elem.getString("load")
-          val configData: Config = getConfigData(s"common/${loadConfig}", loadConfig)
+          val configData: Config = configUtils.getConfigData(s"common/${loadConfig}", loadConfig)
           json ++= buildRoot(configData, metadata, sheetsJson)
         }
         case "sheetData" => {
           json ++= sheetsJson
         }
-        case _ => json ++= getMetadataValue(elem, metadata)
+        case _ => json ++= submissionCommon.getMetadataValue(elem, metadata)
       }
     }
 
@@ -162,21 +154,21 @@ trait ADRSubmission {
       elem.getString("type") match {
         case "object" => {
           val elemVal = buildJson(elem, fileData, row)
-          json ++= addObjectValue(elem, elemVal)
+          json ++= submissionCommon.addObjectValue(elem, elemVal)
         }
         case "array" => {
           if (fileData.length > 0) {
             if(row.isEmpty) {
               val elemVal: List[JsObject] = for (row <- (0 to (fileData.length - 1)).toList) yield buildJson(elem, fileData, Some(row))
-              json ++= addArrayValue(elem, elemVal)
+              json ++= submissionCommon.addArrayValue(elem, elemVal)
             }
             else {
               val elemVal = buildJson(elem, fileData, row)
-              json ++= addArrayValue(elem, List(elemVal))
+              json ++= submissionCommon.addArrayValue(elem, List(elemVal))
             }
           }
         }
-        case _ => json ++= getFileDataValue(elem, fileData, row)
+        case _ => json ++= submissionCommon.getFileDataValue(elem, fileData, row)
       }
     }
     json

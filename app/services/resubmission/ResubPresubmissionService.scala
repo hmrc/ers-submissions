@@ -16,42 +16,46 @@
 
 package services.resubmission
 
+import config.ApplicationConfig
+import javax.inject.Inject
 import models._
 import play.api.mvc.Request
-import repositories.{MetadataMongoRepository, Repositories}
-import services.SubmissionCommonService
+import repositories.MetadataMongoRepository
+import services.SubmissionService
 import services.audit.AuditEvents
+import uk.gov.hmrc.http.HeaderCarrier
 import utils.LoggingAndRexceptions.{ErsLoggingAndAuditing, ResubmissionExceptionEmiter}
+
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
-import uk.gov.hmrc.http.HeaderCarrier
 
-object ResubPresubmissionService extends ResubPresubmissionService {
-  override lazy val metadataRepository: MetadataMongoRepository = Repositories.metadataRepository
-  override val schedulerLoggingAndAuditing: ErsLoggingAndAuditing = ErsLoggingAndAuditing
-  override val submissionCommonService: SubmissionCommonService = SubmissionCommonService
-}
-
-trait ResubPresubmissionService extends SchedulerConfig {
-  lazy val metadataRepository: MetadataMongoRepository = ???
-  val schedulerLoggingAndAuditing: ErsLoggingAndAuditing
-  val submissionCommonService: SubmissionCommonService
+class ResubPresubmissionService @Inject()(metadataRepository: MetadataMongoRepository,
+                                          val schedulerLoggingAndAuditing: ErsLoggingAndAuditing,
+                                          submissionCommonService: SubmissionService,
+                                          val applicationConfig: ApplicationConfig,
+                                          auditEvents: AuditEvents,
+                                          resubmissionExceptionEmiter: ResubmissionExceptionEmiter) extends SchedulerConfig {
 
   def processFailedSubmissions()(implicit request: Request[_], hc: HeaderCarrier): Future[Option[Boolean]] = {
-    metadataRepository.findAndUpdateByStatus(searchStatusList, resubmitWithNilReturn, isResubmitBeforeDate, schemeRefList, resubmitScheme).flatMap { ersSummary =>
+    metadataRepository.findAndUpdateByStatus(
+      searchStatusList,
+      resubmitWithNilReturn,
+      isResubmitBeforeDate,
+      schemeRefList,
+      resubmitScheme
+    ).flatMap { ersSummary =>
       if(ersSummary.isDefined) {
         startResubmission(ersSummary.get).map(res => {
-          AuditEvents.resubmissionResult(ersSummary.get.metaData.schemeInfo, res)
+          auditEvents.resubmissionResult(ersSummary.get.metaData.schemeInfo, res)
           Some(res)
         })
-      }
-      else {
+      } else {
         schedulerLoggingAndAuditing.logWarn("No data found for resubmission")
         Future(None)
       }
     }.recover {
       case rex: ResubmissionException => throw rex
-      case ex: Exception => ResubmissionExceptionEmiter.emitFrom(
+      case ex: Exception => resubmissionExceptionEmiter.emitFrom(
         Map(
           "message" -> "Searching for data to be resubmitted",
           "context" -> "ResubPresubmissionService.processFailedSubmissions.findAndUpdateByStatus"
@@ -64,9 +68,9 @@ trait ResubPresubmissionService extends SchedulerConfig {
 
   def startResubmission(ersSummary: ErsSummary)(implicit request: Request[_], hc: HeaderCarrier): Future[Boolean] = {
     submissionCommonService.callProcessData(ersSummary, failedStatus, resubmitSuccessStatus).map(res => res).recover {
-      case aex: ADRTransferException => {
-        AuditEvents.sendToAdrEvent("ErsTransferToAdrFailed", ersSummary, source = Some("scheduler"))
-        ResubmissionExceptionEmiter.emitFrom(
+      case aex: ADRTransferException =>
+        auditEvents.sendToAdrEvent("ErsTransferToAdrFailed", ersSummary, source = Some("scheduler"))
+        resubmissionExceptionEmiter.emitFrom(
           Map(
             "message" -> s"Resubmitting data to ADR - ADRTransferException: ${aex.message}",
             "context" -> s"${aex.context}"
@@ -74,10 +78,9 @@ trait ResubPresubmissionService extends SchedulerConfig {
           Some(aex),
           Some(ersSummary.metaData.schemeInfo)
         )
-      }
-      case ex: Exception => {
-        AuditEvents.sendToAdrEvent("ErsTransferToAdrFailed", ersSummary, source = Some("scheduler"))
-        ResubmissionExceptionEmiter.emitFrom(
+      case ex: Exception =>
+        auditEvents.sendToAdrEvent("ErsTransferToAdrFailed", ersSummary, source = Some("scheduler"))
+        resubmissionExceptionEmiter.emitFrom(
           Map(
             "message" -> s"Resubmitting data to ADR - Exception: ${ex.getMessage}",
             "context" -> "ResubPresubmissionService.startResubmission.callProcessData"
@@ -85,11 +88,9 @@ trait ResubPresubmissionService extends SchedulerConfig {
           Some(ex),
           Some(ersSummary.metaData.schemeInfo)
         )
-      }
-      case ex: Throwable => {
-        AuditEvents.sendToAdrEvent("ErsTransferToAdrFailed", ersSummary, source = Some("scheduler"))
+      case ex: Throwable =>
+        auditEvents.sendToAdrEvent("ErsTransferToAdrFailed", ersSummary, source = Some("scheduler"))
         throw ex
-      }
     }
   }
 }

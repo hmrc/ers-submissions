@@ -17,68 +17,59 @@
 package controllers
 
 import java.util.concurrent.TimeUnit
+
 import metrics.Metrics
 import models.SchemeInfo
 import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
 import org.mockito.internal.verification.VerificationModeFactory
 import org.scalatest.BeforeAndAfterEach
-import play.api.libs.json.{Json, JsObject}
+import play.api.libs.json.{JsObject, Json}
 import play.api.test._
 import play.api.test.Helpers._
 import org.scalatest.mockito.MockitoSugar
-import services.{ValidationService, PresubmissionService}
-import uk.gov.hmrc.play.test.{WithFakeApplication, UnitSpec}
+import services.{PresubmissionService, ValidationService}
+import uk.gov.hmrc.play.test.{UnitSpec, WithFakeApplication}
 import fixtures.Fixtures
+import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import utils.LoggingAndRexceptions.ErsLoggingAndAuditing
+
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import play.api.mvc._
 import uk.gov.hmrc.http.HeaderCarrier
 
-class PresubmissionControllerSpec extends UnitSpec with MockitoSugar with BeforeAndAfterEach with WithFakeApplication {
-
-  val mockErsLoggingAndAuditing: ErsLoggingAndAuditing = mock[ErsLoggingAndAuditing]
+class PresubmissionControllerSpec extends UnitSpec with MockitoSugar with BeforeAndAfterEach with GuiceOneAppPerSuite {
 
   val mockMetrics: Metrics = mock[Metrics]
-  override def beforeEach() = {
+  val mockPresubmissionService: PresubmissionService = mock[PresubmissionService]
+  val mockValidationService: ValidationService = mock[ValidationService]
+  val mockErsLoggingAndAuditing: ErsLoggingAndAuditing = mock[ErsLoggingAndAuditing]
+  val mockCc: ControllerComponents = stubControllerComponents()
+
+  override def beforeEach(): Unit = {
     super.beforeEach()
     reset(mockMetrics)
     reset(mockErsLoggingAndAuditing)
+    reset(mockPresubmissionService)
+    reset(mockValidationService)
   }
 
   val ersSchemeInfo: JsObject = Json.toJson(Fixtures.EMISchemeInfo).as[JsObject]
 
   "calling removePresubmissionJson" should {
 
-    def buildPresubmissionController(validationResult: Boolean = true, removeJsonResult: Boolean = true): PresubmissionController = new PresubmissionController {
-
-      val mockPresubmissionService = mock[PresubmissionService]
-      when(
-        mockPresubmissionService.removeJson(any[SchemeInfo])(any[Request[_]](), any[HeaderCarrier]())
-      ).thenReturn(
-        Future(removeJsonResult)
-      )
-
-      override val presubmissionService: PresubmissionService = mockPresubmissionService
-
-      val mockValidationService: ValidationService = mock[ValidationService]
-      when(
-        mockValidationService.validateSchemeInfo(any[JsObject])
-      ).thenReturn(
-        validationResult  match {
-          case true => Some(mock[SchemeInfo])
-          case false => None
-        }
-      )
-
-      override val validationService: ValidationService = mockValidationService
-      override val metrics: Metrics = mockMetrics
-      override val ersLoggingAndAuditing: ErsLoggingAndAuditing = mockErsLoggingAndAuditing
+    def buildPresubmissionController(validationResult: Boolean = true, removeJsonResult: Boolean = true): PresubmissionController = {
+      new PresubmissionController(mockPresubmissionService, mockValidationService, mockErsLoggingAndAuditing, mockMetrics, mockCc ) {
+        when(mockPresubmissionService.removeJson(any[SchemeInfo])(any[Request[_]](), any[HeaderCarrier]()))
+          .thenReturn(Future(removeJsonResult))
+        when(mockValidationService.validateSchemeInfo(any[JsObject]))
+          .thenReturn(if (validationResult) Some(mock[SchemeInfo]) else None)
+      }
     }
 
     "return BadRequest if invalid json is given" in {
-      val presubmissionController = buildPresubmissionController(false, true)
+      val presubmissionController = buildPresubmissionController(validationResult = false)
       val result = await(presubmissionController.removePresubmissionJson()(FakeRequest().withBody(ersSchemeInfo)))
       status(result) shouldBe BAD_REQUEST
       verify(mockMetrics, VerificationModeFactory.times(0)).removePresubmission(_, _)
@@ -86,7 +77,7 @@ class PresubmissionControllerSpec extends UnitSpec with MockitoSugar with Before
     }
 
     "return InvalidServerError if valid json is given but storage fails" in {
-      val presubmissionController = buildPresubmissionController(true, false)
+      val presubmissionController = buildPresubmissionController(removeJsonResult = false)
       val result = await(presubmissionController.removePresubmissionJson()(FakeRequest().withBody(ersSchemeInfo)))
       status(result) shouldBe INTERNAL_SERVER_ERROR
       verify(mockMetrics, VerificationModeFactory.times(0)).removePresubmission(_, _)
@@ -94,7 +85,7 @@ class PresubmissionControllerSpec extends UnitSpec with MockitoSugar with Before
     }
 
     "return OK if valid json is given and storage succeeds" in {
-      val presubmissionController = buildPresubmissionController(true, true)
+      val presubmissionController = buildPresubmissionController()
       val result = await(presubmissionController.removePresubmissionJson()(FakeRequest().withBody(ersSchemeInfo)))
       status(result) shouldBe OK
       verify(mockMetrics, VerificationModeFactory.times(1)).removePresubmission(_, _)
@@ -105,48 +96,30 @@ class PresubmissionControllerSpec extends UnitSpec with MockitoSugar with Before
 
   "calling checkForExistingPresubmission" should {
 
-    def buildPresubmissionController(validationResult: Boolean = true, checkResult: Boolean = true): PresubmissionController = new PresubmissionController {
-
-      val mockPresubmissionService = mock[PresubmissionService]
-      when(
-        mockPresubmissionService.compareSheetsNumber(anyInt(), any[SchemeInfo])(any[Request[_]](), any[HeaderCarrier]())
-      ).thenReturn(
-        Future(checkResult)
-      )
-
-      override val presubmissionService: PresubmissionService = mockPresubmissionService
-
-      val mockValidationService: ValidationService = mock[ValidationService]
-      when(
-        mockValidationService.validateSchemeInfo(any[JsObject])
-      ).thenReturn(
-        validationResult  match {
-          case true => Some(mock[SchemeInfo])
-          case false => None
-        }
-      )
-
-      override val validationService: ValidationService = mockValidationService
-      override val metrics: Metrics = mockMetrics
-      override val ersLoggingAndAuditing: ErsLoggingAndAuditing = mockErsLoggingAndAuditing
+    def buildPresubmissionController(validationResult: Boolean = true, checkResult: Boolean = true): PresubmissionController =
+      new PresubmissionController(mockPresubmissionService, mockValidationService, mockErsLoggingAndAuditing, mockMetrics, mockCc) {
+      when(mockPresubmissionService.compareSheetsNumber(anyInt(), any[SchemeInfo])(any[Request[_]](), any[HeaderCarrier]()))
+        .thenReturn(Future(checkResult))
+      when(mockValidationService.validateSchemeInfo(any[JsObject]))
+        .thenReturn(if (validationResult) Some(mock[SchemeInfo]) else None)
     }
 
     "return BadRequest if invalid json is given" in {
-      val presubmissionController = buildPresubmissionController(false, true)
+      val presubmissionController = buildPresubmissionController(validationResult = false)
       val result = await(presubmissionController.checkForExistingPresubmission(5)(FakeRequest().withBody(ersSchemeInfo)))
       status(result) shouldBe BAD_REQUEST
       verify(mockMetrics, VerificationModeFactory.times(0)).checkForPresubmission(anyLong(), any[TimeUnit]())
     }
 
     "return InvalidServerError if valid json is given but not all sheets are found" in {
-      val presubmissionController = buildPresubmissionController(true, false)
+      val presubmissionController = buildPresubmissionController(checkResult = false)
       val result = await(presubmissionController.checkForExistingPresubmission(5)(FakeRequest().withBody(ersSchemeInfo)))
       status(result) shouldBe INTERNAL_SERVER_ERROR
       verify(mockMetrics, VerificationModeFactory.times(0)).checkForPresubmission(anyLong(), any[TimeUnit]())
     }
 
     "return Ok if valid json is given and all sheets are found" in {
-      val presubmissionController = buildPresubmissionController(true, true)
+      val presubmissionController = buildPresubmissionController()
       val result = await(presubmissionController.checkForExistingPresubmission(5)(FakeRequest().withBody(ersSchemeInfo)))
       status(result) shouldBe OK
       verify(mockMetrics, VerificationModeFactory.times(1)).checkForPresubmission(anyLong(), any[TimeUnit]())

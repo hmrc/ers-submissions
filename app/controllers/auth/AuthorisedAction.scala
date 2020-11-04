@@ -16,11 +16,10 @@
 
 package controllers.auth
 
-import config.MicroserviceAuthConnector
 import play.api.Logger
 import play.api.mvc.Results.Unauthorized
-import play.api.mvc.{ActionBuilder, ActionFunction, Request, Result}
-import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisationException, AuthorisedFunctions, ConfidenceLevel, Enrolment}
+import play.api.mvc.{ActionBuilder, ActionFunction, AnyContent, BodyParser, PlayBodyParsers, Request, Result}
+import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.domain.EmpRef
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.HeaderCarrierConverter
@@ -28,14 +27,17 @@ import uk.gov.hmrc.play.HeaderCarrierConverter
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Try
 
-case class AuthorisedAction(slashSeperatedRef: String)(implicit val ec: ExecutionContext) extends AuthAction {
+case class AuthorisedAction(slashSeperatedRef: String, authConnector: AuthConnector, bodyParser: PlayBodyParsers)
+                           (implicit val executionContext: ExecutionContext)
+  extends AuthAction {
   override val optionalEmpRef: Option[EmpRef] = Try(EmpRef.fromIdentifiers(slashSeperatedRef)).toOption
-  override def authConnector: AuthConnector = MicroserviceAuthConnector
+  val parser: BodyParser[AnyContent] = bodyParser.default
 }
 
-trait AuthAction extends AuthorisedFunctions with ActionBuilder[Request] with ActionFunction[Request, Request] {
+trait AuthAction extends AuthorisedFunctions with ActionBuilder[Request, AnyContent] with ActionFunction[Request, Request] {
+
   val optionalEmpRef: Option[EmpRef]
-  implicit val ec: ExecutionContext
+  implicit val executionContext: ExecutionContext
 
   override def invokeBlock[A](request: Request[A], block: Request[A] => Future[Result]): Future[Result] = {
     implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromHeadersAndSessionAndRequest(request.headers, request = Some(request))

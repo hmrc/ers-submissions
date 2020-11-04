@@ -18,18 +18,19 @@ package utils.LoggingAndExceptions
 
 import fixtures.Fixtures
 import models.ADRTransferException
+import org.scalatest.mockito.MockitoSugar
 import play.api.test.FakeRequest
+import services.audit.AuditEvents
 import uk.gov.hmrc.play.test.{UnitSpec, WithFakeApplication}
 import utils.LoggingAndRexceptions.ADRExceptionEmitter
 import uk.gov.hmrc.http.HeaderCarrier
 
-class ADRExceptionEmitterSpec extends UnitSpec with WithFakeApplication {
+class ADRExceptionEmitterSpec extends UnitSpec with WithFakeApplication with MockitoSugar {
 
-  def FunctionWithException = 1/0
+  val mockAuditEvents: AuditEvents = mock[AuditEvents]
+  def FunctionWrapper: Int = 1/0
 
-  def FunctionWrapper = FunctionWithException
-
-  def FunctionWrapperWrapper = FunctionWrapper
+  val mockADRExceptionEmitter = new ADRExceptionEmitter(mockAuditEvents)
 
   "emitFrom" should {
 
@@ -42,7 +43,7 @@ class ADRExceptionEmitterSpec extends UnitSpec with WithFakeApplication {
           FunctionWrapper
         }
         catch {
-          case ex: Exception => ADRExceptionEmitter.emitFrom(
+          case ex: Exception => mockADRExceptionEmitter.emitFrom(
             Fixtures.EMIMetaData,
             Map(
               "message" -> "Error message",
@@ -62,7 +63,7 @@ class ADRExceptionEmitterSpec extends UnitSpec with WithFakeApplication {
           FunctionWrapper
         }
         catch {
-          case ex: Exception => ADRExceptionEmitter.emitFrom(
+          case ex: Exception => mockADRExceptionEmitter.emitFrom(
             Fixtures.EMIMetaData,
             Map(
               "message" -> "Error message",
