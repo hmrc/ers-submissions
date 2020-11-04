@@ -21,13 +21,14 @@ import models.{SchemeData, SchemeInfo}
 import play.api.Logger
 import reactivemongo.api.DB
 import reactivemongo.api.commands.WriteResult.Message
+import reactivemongo.api.indexes.{Index, IndexType}
 import reactivemongo.bson._
 import reactivemongo.play.json.ImplicitBSONHandlers._
 import uk.gov.hmrc.mongo.json.ReactiveMongoFormats
 import uk.gov.hmrc.mongo.{ReactiveRepository, Repository}
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
+import scala.concurrent.{Await, ExecutionContext, Future}
 
 trait PresubmissionRepository extends Repository[SchemeData, BSONObjectID] {
 
@@ -44,6 +45,26 @@ trait PresubmissionRepository extends Repository[SchemeData, BSONObjectID] {
 class PresubmissionMongoRepository()(implicit mongo: () => DB)
   extends ReactiveRepository[SchemeData, BSONObjectID](ApplicationConfig.presubmissionCollection, mongo, SchemeData.format, ReactiveMongoFormats.objectIdFormats)
   with PresubmissionRepository {
+
+  ensureIndexes(ExecutionContext.Implicits.global)
+
+  override def ensureIndexes(implicit ec: ExecutionContext): Future[Seq[Boolean]] = {
+    Await.result(collection.indexesManager(ec).list(), scala.concurrent.duration.Duration.Inf) //do this to make the connection to the DB for ensure indexes
+    super.ensureIndexes(ec)
+  }
+
+  override def indexes: Seq[Index] = {
+    Seq(
+      Index(
+        Seq(("schemeInfo.schemeRef", IndexType.Ascending)),
+        name = Some("schemeRef")
+      ),
+      Index(
+        Seq(("schemeInfo.timestamp", IndexType.Ascending)),
+        name = Some("timestamp")
+      )
+    )
+  }
 
   def buildSelector(schemeInfo: SchemeInfo): BSONDocument = BSONDocument(
     "schemeInfo.schemeRef" -> BSONString(schemeInfo.schemeRef),
