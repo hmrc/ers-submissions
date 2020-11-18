@@ -16,61 +16,34 @@
 
 package services.audit
 
-
+import javax.inject.Inject
 import org.joda.time.DateTime
-import play.api.mvc.{Request, Session}
+import play.api.mvc.Request
+import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 import uk.gov.hmrc.play.audit.model.DataEvent
 
-
 import scala.concurrent.ExecutionContext.Implicits.global
-import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.play.microservice.config.LoadAuditingConfig
 
-trait AuditServiceConnector {
-  def auditData(dataEvent : DataEvent)(implicit hc : HeaderCarrier) : Unit
-}
-
-object MicroserviceAuditConnector extends AuditConnector {
-  override lazy val auditingConfig = LoadAuditingConfig("auditing")
-}
-
-object AuditServiceConnector extends AuditServiceConnector {
-
-
-  lazy val auditConnector = MicroserviceAuditConnector
-
-  override def auditData(dataEvent : DataEvent)(implicit hc : HeaderCarrier) : Unit = {
-    auditConnector.sendEvent(dataEvent)
-  }
-
-}
-
-object AuditService extends AuditService {
-  override def auditConnector : AuditServiceConnector = AuditServiceConnector
-}
-
-trait AuditService {
+class AuditService @Inject()(auditConnector: AuditConnector) {
   val auditSource = "ers-submissions"
 
-  def auditConnector : AuditServiceConnector
+  def sendEvent(transactionName : String, details: Map[String, String])(implicit request: Request[_], hc: HeaderCarrier): Unit =
+    auditConnector.sendEvent(buildEvent(transactionName, details))
 
-  def sendEvent(transactionName : String, details: Map[String, String])(implicit request: Request[_], hc: HeaderCarrier) =
-    auditConnector.auditData(buildEvent(transactionName, details))
-
-  private def buildEvent( transactionName: String,  details: Map[String, String])(implicit request: Request[_], hc: HeaderCarrier) =
+  def buildEvent(transactionName: String,  details: Map[String, String])(implicit request: Request[_], hc: HeaderCarrier): DataEvent =
     DataEvent(
       auditSource = auditSource,
       auditType = transactionName,
-      tags = generateTags(request.session, hc),
+      tags = generateTags(hc),
       detail = details
     )
 
-  private def generateTags(session: Session, hc: HeaderCarrier): Map[String, String] =
+  def generateTags(hc: HeaderCarrier): Map[String, String] =
     hc.headers.toMap ++
       hc.headers.toMap ++
       Map("dateTime" ->  getDateTime.toString)
 
-  private def getDateTime = new DateTime
+  def getDateTime: DateTime = new DateTime
 
 }

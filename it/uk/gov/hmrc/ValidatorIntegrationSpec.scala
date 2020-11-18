@@ -6,16 +6,23 @@ import uk.gov.hmrc.{FakeAuthService, Fixtures, ISpec}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import _root_.play.api.test.Helpers._
+import config.ApplicationConfig
+import org.scalatestplus.play.guice.GuiceOneAppPerSuite
+import play.api.libs.ws.WSClient
 import uk.gov.hmrc.http.HeaderCarrier
 
 class ValidatorIntegrationSpec extends ISpec("ReceiverFromValidatorTest", additionalConfig = Seq(
   ("microservice.services.auth.host", "localhost"),
   ("microservice.services.auth.port", "18500")
-)) with BeforeAndAfterEach with FakeAuthService {
+)) with BeforeAndAfterEach with FakeAuthService with GuiceOneAppPerSuite {
 
   override def applicableHeaders(url: String)(implicit hc: HeaderCarrier): Seq[(String, String)] = Nil
 
-  private lazy val presubmissionRepository = new PresubmissionMongoRepository()
+  val appConfig: ApplicationConfig = app.injector.instanceOf[ApplicationConfig]
+
+  def wsClient: WSClient = app.injector.instanceOf[WSClient]
+
+  private lazy val presubmissionRepository = app.injector.instanceOf[PresubmissionMongoRepository]
 
   override protected def afterEach: Unit = {
     super.afterEach

@@ -17,84 +17,61 @@
 package controllers
 
 import java.util.concurrent.TimeUnit
+
+import javax.inject.Inject
 import metrics.Metrics
-import models.{SchemeData, SchemeInfo}
+import models.SchemeInfo
 import play.api.Logger
 import play.api.libs.json.JsObject
 import play.api.mvc._
-import services.audit.AuditEvents
 import services.{PresubmissionService, ValidationService}
-import uk.gov.hmrc.play.microservice.controller.BaseController
+import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import utils.LoggingAndRexceptions.ErsLoggingAndAuditing
+
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-object PresubmissionController extends PresubmissionController {
+class PresubmissionController @Inject()(presubmissionService: PresubmissionService,
+                                        validationService: ValidationService,
+                                        ersLoggingAndAuditing: ErsLoggingAndAuditing,
+                                        metrics: Metrics,
+                                        cc: ControllerComponents) extends BackendController(cc) {
 
-  override val presubmissionService: PresubmissionService = PresubmissionService
-  override val validationService: ValidationService = ValidationService
-  override val metrics: Metrics = Metrics
-  override val ersLoggingAndAuditing: ErsLoggingAndAuditing = ErsLoggingAndAuditing
 
-}
-
-trait PresubmissionController extends BaseController {
-
-  val presubmissionService: PresubmissionService
-  val validationService: ValidationService
-  val metrics: Metrics
-  val ersLoggingAndAuditing: ErsLoggingAndAuditing
-
-  def removePresubmissionJson = Action.async(parse.json[JsObject]) { implicit request =>
+  def removePresubmissionJson(): Action[JsObject] = Action.async(parse.json[JsObject]) { implicit request =>
     validationService.validateSchemeInfo(request.body) match {
-      case Some(schemeInfo) => {
+      case Some(schemeInfo) =>
         val startTime = System.currentTimeMillis()
-
         Logger.info(s"Start deleting presubmission data from external url for ${schemeInfo.toString}")
-        presubmissionService.removeJson(schemeInfo).map { res =>
-          res match {
-            case true => {
-              metrics.removePresubmission(System.currentTimeMillis() - startTime, TimeUnit.MILLISECONDS)
-              ersLoggingAndAuditing.handleSuccess(schemeInfo, "Old presubmission data is successfully deleted")
-              Ok("Old presubmission data is successfully deleted.")
-            }
-            case false => {
-              metrics.failedRemovePresubmission()
-              ersLoggingAndAuditing.handleFailure(schemeInfo, "Deleting old presubmission data failed")
-              InternalServerError("Deleting old presubmission data failed.")
-            }
-          }
-        }
-      }
-      case _ => Future {
-        BadRequest("Invalid json format.")
-      }
-    }
 
+        presubmissionService.removeJson(schemeInfo).map {
+          case true =>
+            metrics.removePresubmission(System.currentTimeMillis() - startTime, TimeUnit.MILLISECONDS)
+            ersLoggingAndAuditing.handleSuccess(schemeInfo, "Old presubmission data is successfully deleted")
+            Ok("Old presubmission data is successfully deleted.")
+          case false =>
+            metrics.failedRemovePresubmission()
+            ersLoggingAndAuditing.handleFailure(schemeInfo, "Deleting old presubmission data failed")
+            InternalServerError("Deleting old presubmission data failed.")
+        }
+      case _ => Future.successful(BadRequest("Invalid json format."))
+    }
   }
 
-  def checkForExistingPresubmission(validatedSheets: Int) = Action.async(parse.json[JsObject]) { implicit request =>
+  def checkForExistingPresubmission(validatedSheets: Int): Action[JsObject] = Action.async(parse.json[JsObject]) { implicit request =>
     validationService.validateSchemeInfo(request.body) match {
-      case Some(schemeInfo: SchemeInfo) => {
+      case Some(schemeInfo: SchemeInfo) =>
         val startTime = System.currentTimeMillis()
-        presubmissionService.compareSheetsNumber(validatedSheets, schemeInfo).map { res =>
-          res match {
-            case true => {
-              metrics.checkForPresubmission(System.currentTimeMillis() - startTime, TimeUnit.MILLISECONDS)
-              ersLoggingAndAuditing.handleSuccess(schemeInfo, "All presubmission records are found")
-              Ok("All presubmission records are found")
-            }
-            case false => {
-              ersLoggingAndAuditing.handleFailure(schemeInfo, s"Not all ${validatedSheets} presubmission records are found")
-              InternalServerError(s"Not all ${validatedSheets} records are found for ${schemeInfo.toString}.")
-            }
-          }
+        presubmissionService.compareSheetsNumber(validatedSheets, schemeInfo).map {
+          case true =>
+            metrics.checkForPresubmission(System.currentTimeMillis() - startTime, TimeUnit.MILLISECONDS)
+            ersLoggingAndAuditing.handleSuccess(schemeInfo, "All presubmission records are found")
+            Ok("All presubmission records are found")
+          case false =>
+            ersLoggingAndAuditing.handleFailure(schemeInfo, s"Not all $validatedSheets presubmission records are found")
+            InternalServerError(s"Not all $validatedSheets records are found for ${schemeInfo.toString}.")
         }
-      }
-      case _ => Future {
-        BadRequest("Invalid json.")
-      }
+      case _ => Future.successful(BadRequest("Invalid json."))
     }
-
   }
 }

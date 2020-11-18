@@ -17,28 +17,32 @@
 package utils.LoggingAndExceptions
 
 import models.ResubmissionException
+import org.scalatest.mockito.MockitoSugar
 import play.api.test.FakeRequest
+import services.audit.AuditEvents
+import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.test.{UnitSpec, WithFakeApplication}
 import utils.LoggingAndRexceptions.ResubmissionExceptionEmiter
-import uk.gov.hmrc.http.HeaderCarrier
 
-class ResubmissionExceptionEmiterSpec extends UnitSpec with WithFakeApplication {
+class ResubmissionExceptionEmiterSpec extends UnitSpec with WithFakeApplication with MockitoSugar {
 
   implicit val request = FakeRequest()
   implicit val hc = new HeaderCarrier()
+  val mockAuditEvents: AuditEvents = mock[AuditEvents]
+  val mockResubmissionExceptionEmiter: ResubmissionExceptionEmiter = new ResubmissionExceptionEmiter(mockAuditEvents)
 
   "calling emitFrom" should {
 
     "throw ResubmissionException exeption with stack trace if an exception is given" in {
       val result = intercept[ResubmissionException] {
-        ResubmissionExceptionEmiter.emitFrom(Map("message" -> "ex message", "context" -> "ex context"), Some(new Exception("original message")), None)
+        mockResubmissionExceptionEmiter.emitFrom(Map("message" -> "ex message", "context" -> "ex context"), Some(new Exception("original message")), None)
       }
       result.getCause.getMessage shouldBe "original message"
     }
 
     "throw ResubmissionException exeption without stack trace if an exception isn't given" in {
       val result = intercept[ResubmissionException] {
-        ResubmissionExceptionEmiter.emitFrom(Map("message" -> "ex message", "context" -> "ex context"), None, None)
+        mockResubmissionExceptionEmiter.emitFrom(Map("message" -> "ex message", "context" -> "ex context"), None, None)
       }
       result.getCause shouldBe null
     }

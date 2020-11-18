@@ -16,25 +16,20 @@
 
 package services
 
-import models.{SchemeInfo, SchemeData}
+import javax.inject.Inject
+import models.{SchemeData, SchemeInfo}
 import play.api.Logger
 import play.api.mvc.Request
 import repositories.{PresubmissionMongoRepository, Repositories}
 import utils.LoggingAndRexceptions.ErsLoggingAndAuditing
+
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 import uk.gov.hmrc.http.HeaderCarrier
 
-object PresubmissionService extends PresubmissionService {
+class PresubmissionService @Inject()(repositories: Repositories, ersLoggingAndAuditing: ErsLoggingAndAuditing) {
 
-  override lazy val presubmissionRepository: PresubmissionMongoRepository = Repositories.presubmissionRepository
-  override val ersLoggingAndAuditing: ErsLoggingAndAuditing = ErsLoggingAndAuditing
-}
-
-trait PresubmissionService {
-
-  lazy val presubmissionRepository: PresubmissionMongoRepository = ???
-  val ersLoggingAndAuditing: ErsLoggingAndAuditing
+  lazy val presubmissionRepository: PresubmissionMongoRepository = repositories.presubmissionRepository
 
   def storeJson(presubmissionData: SchemeData)(implicit request: Request[_], hc: HeaderCarrier): Future[Boolean] = {
 
@@ -50,11 +45,9 @@ trait PresubmissionService {
   def getJson(schemeInfo: SchemeInfo): Future[List[SchemeData]] = {
     Logger.debug("LFP -> 3. PresubmissionService.getJson () ")
     presubmissionRepository.getJson(schemeInfo)
-
   }
 
   def removeJson(schemeInfo: SchemeInfo)(implicit request: Request[_], hc: HeaderCarrier): Future[Boolean] = {
-
     presubmissionRepository.removeJson(schemeInfo).recover {
       case ex: Exception => {
         ersLoggingAndAuditing.handleException(schemeInfo, ex, "Exception during deleting presubmission data")
@@ -65,7 +58,6 @@ trait PresubmissionService {
   }
 
   def compareSheetsNumber(expectedSheets: Int, schemeInfo: SchemeInfo)(implicit request: Request[_], hc: HeaderCarrier): Future[Boolean] = {
-
     presubmissionRepository.count(schemeInfo).map { existingSheets =>
       existingSheets == expectedSheets
     }.recover {
@@ -78,9 +70,7 @@ trait PresubmissionService {
   }
 
   def findAndUpdate(schemeInfo: SchemeInfo)(implicit request: Request[_], hc: HeaderCarrier): Future[Option[SchemeData]] = {
-
     presubmissionRepository.findAndUpdate(schemeInfo)
-
   }
 
 }

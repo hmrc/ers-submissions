@@ -22,42 +22,58 @@ import connectors.ADRConnector
 import fixtures.Fixtures
 import metrics.Metrics
 import models._
+import org.mockito.ArgumentMatchers._
+import org.mockito.Mockito._
 import org.mockito.internal.verification.VerificationModeFactory
 import org.scalatest.BeforeAndAfterEach
-import play.api.libs.json.{Json, JsObject}
+import org.scalatest.mockito.MockitoSugar
+import org.scalatestplus.play.guice.GuiceOneAppPerSuite
+import play.api.libs.json.{JsObject, Json}
 import play.api.mvc.Request
 import play.api.test.FakeRequest
-import repositories.MetadataMongoRepository
-import uk.gov.hmrc.play.test.{WithFakeApplication, UnitSpec}
-import utils.{SubmissionCommon, ADRSubmission}
-import utils.LoggingAndRexceptions.ErsLoggingAndAuditing
-import scala.concurrent.Future
-import org.mockito.Mockito._
-import org.scalatest.mockito.MockitoSugar
-import org.mockito.ArgumentMatchers._
-import uk.gov.hmrc.http.{ HeaderCarrier, HttpResponse }
+import repositories.{MetadataMongoRepository, Repositories}
+import services.audit.AuditEvents
+import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
+import uk.gov.hmrc.play.test.{UnitSpec, WithFakeApplication}
+import utils.LoggingAndRexceptions.{ADRExceptionEmitter, ErsLoggingAndAuditing}
+import utils.{ADRSubmission, SubmissionCommon}
 
-class SubmissionCommonServiceSpec extends UnitSpec with MockitoSugar with BeforeAndAfterEach with WithFakeApplication {
+import scala.concurrent.Future
+
+class SubmissionCommonServiceSpec
+  extends UnitSpec with MockitoSugar with BeforeAndAfterEach with GuiceOneAppPerSuite {
   implicit val hc: HeaderCarrier = new HeaderCarrier()
   implicit val request: Request[_] = FakeRequest()
 
-  val mockErsLoggingAndAuditing: ErsLoggingAndAuditing = new ErsLoggingAndAuditing {
+  val mockErsLoggingAndAuditing: ErsLoggingAndAuditing = new ErsLoggingAndAuditing(auditEvents) {
     override val buildDataMessage: PartialFunction[Object, String] = {
       case _ => ""
     }
     override def handleFailure(schemeInfo: SchemeInfo, message: String)(implicit request: Request[_], hc: HeaderCarrier): Unit = {}
   }
+  val adrConnector: ADRConnector = mock[ADRConnector]
+  val adrSubmission: ADRSubmission = mock[ADRSubmission]
+  val submissionCommon: SubmissionCommon = mock[SubmissionCommon]
+  val metrics: Metrics = mock[Metrics]
+  val ersLoggingAndAuditing: ErsLoggingAndAuditing = mockErsLoggingAndAuditing
+  val mockMetadataRepository: MetadataMongoRepository = mock[MetadataMongoRepository]
+  val auditEvents: AuditEvents = mock[AuditEvents]
+  val repositories: Repositories = mock[Repositories]
+  val adrExceptionEmmiter: ADRExceptionEmitter = app.injector.instanceOf[ADRExceptionEmitter]
+
+  override def beforeEach(): Unit = {
+    super.beforeEach()
+    reset(metrics)
+    reset(adrSubmission)
+    reset(adrConnector)
+  }
 
   "callProcessData" should {
     "return the result of processData if there are no exceptions" in {
-      val submissionCommonService: SubmissionCommonService = new SubmissionCommonService {
-        val adrConnector: ADRConnector = mock[ADRConnector]
-        val adrSubmission: ADRSubmission = mock[ADRSubmission]
-        val submissionCommon: SubmissionCommon = mock[SubmissionCommon]
-        val metrics: Metrics = mock[Metrics]
-        val ersLoggingAndAuditing: ErsLoggingAndAuditing = mockErsLoggingAndAuditing
-        val metadataRepository: MetadataMongoRepository = mock[MetadataMongoRepository]
+      val submissionCommonService: SubmissionService =
+        new SubmissionService(repositories, adrConnector, adrSubmission, submissionCommon, ersLoggingAndAuditing, adrExceptionEmmiter, auditEvents, metrics) {
 
+        override lazy val metadataRepository: MetadataMongoRepository = mockMetadataRepository
         override def processData(ersSummary: ErsSummary, failedStatus: String, successStatus: String)(implicit request: Request[_], hc: HeaderCarrier): Future[Boolean] = {
           Future.successful(true)
         }
@@ -68,19 +84,12 @@ class SubmissionCommonServiceSpec extends UnitSpec with MockitoSugar with Before
     }
 
     "rethrows ADRTransferException" in {
-      val submissionCommonService: SubmissionCommonService = new SubmissionCommonService {
-        val mockMetadataRepository: MetadataMongoRepository = mock[MetadataMongoRepository]
-        when(
-          mockMetadataRepository.updateStatus( any[SchemeInfo](), anyString())
-        ).thenReturn(
-          Future.successful(true)
-        )
-        val adrConnector: ADRConnector = mock[ADRConnector]
-        val adrSubmission: ADRSubmission = mock[ADRSubmission]
-        val submissionCommon: SubmissionCommon = mock[SubmissionCommon]
-        val metrics: Metrics = mock[Metrics]
-        val ersLoggingAndAuditing: ErsLoggingAndAuditing = mockErsLoggingAndAuditing
-        val metadataRepository: MetadataMongoRepository = mockMetadataRepository
+      val submissionCommonService: SubmissionService =
+        new SubmissionService(repositories, adrConnector, adrSubmission, submissionCommon, ersLoggingAndAuditing, adrExceptionEmmiter, auditEvents, metrics) {
+
+        override lazy val metadataRepository: MetadataMongoRepository = mockMetadataRepository
+        when(mockMetadataRepository.updateStatus( any[SchemeInfo](), anyString()))
+          .thenReturn(Future.successful(true))
 
         override def processData(ersSummary: ErsSummary, failedStatus: String, successStatus: String)(implicit request: Request[_], hc: HeaderCarrier): Future[Boolean] = {
           Future.failed(ADRTransferException(Fixtures.EMIMetaData, "test message", "text context"))
@@ -96,19 +105,12 @@ class SubmissionCommonServiceSpec extends UnitSpec with MockitoSugar with Before
     }
 
     "throws ADRTransferException if Exception occurs" in {
-      val submissionCommonService: SubmissionCommonService = new SubmissionCommonService {
-        val mockMetadataRepository: MetadataMongoRepository = mock[MetadataMongoRepository]
-        when(
-          mockMetadataRepository.updateStatus( any[SchemeInfo](), anyString())
-        ).thenReturn(
-          Future.successful(true)
-        )
-        val adrConnector: ADRConnector = mock[ADRConnector]
-        val adrSubmission: ADRSubmission = mock[ADRSubmission]
-        val submissionCommon: SubmissionCommon = mock[SubmissionCommon]
-        val metrics: Metrics = mock[Metrics]
-        val ersLoggingAndAuditing: ErsLoggingAndAuditing = mockErsLoggingAndAuditing
-        val metadataRepository: MetadataMongoRepository = mockMetadataRepository
+      val submissionCommonService: SubmissionService =
+        new SubmissionService(repositories, adrConnector, adrSubmission, submissionCommon, ersLoggingAndAuditing, adrExceptionEmmiter, auditEvents, metrics) {
+
+          override lazy val metadataRepository: MetadataMongoRepository = mockMetadataRepository
+          when(mockMetadataRepository.updateStatus( any[SchemeInfo](), anyString()))
+            .thenReturn(Future.successful(true))
 
         override def processData(ersSummary: ErsSummary, failedStatus: String, successStatus: String)(implicit request: Request[_], hc: HeaderCarrier): Future[Boolean] = {
           Future.failed(new Exception("test message"))
@@ -125,13 +127,8 @@ class SubmissionCommonServiceSpec extends UnitSpec with MockitoSugar with Before
   }
 
   "processData" should {
-    val submissionCommonService: SubmissionCommonService = new SubmissionCommonService {
-      val adrConnector: ADRConnector = mock[ADRConnector]
-      val adrSubmission: ADRSubmission = mock[ADRSubmission]
-      val submissionCommon: SubmissionCommon = mock[SubmissionCommon]
-      val metrics: Metrics = mock[Metrics]
-      val ersLoggingAndAuditing: ErsLoggingAndAuditing = mockErsLoggingAndAuditing
-      val metadataRepository: MetadataMongoRepository = mock[MetadataMongoRepository]
+    val submissionCommonService: SubmissionService =
+    new SubmissionService(repositories, adrConnector, adrSubmission, submissionCommon, ersLoggingAndAuditing, adrExceptionEmmiter, auditEvents, metrics) {
 
       override def transformData(ersSummary: ErsSummary)(implicit request: Request[_], hc: HeaderCarrier): Future[JsObject] = {
         Future.successful(Json.obj())
@@ -148,192 +145,130 @@ class SubmissionCommonServiceSpec extends UnitSpec with MockitoSugar with Before
   }
 
   "transformData" should {
-    val mockMetrics: Metrics = mock[Metrics]
-    val mockADRSubmission: ADRSubmission = mock[ADRSubmission]
 
-    val submissionCommonService: SubmissionCommonService = new SubmissionCommonService {
-      val adrConnector: ADRConnector = mock[ADRConnector]
-      val adrSubmission: ADRSubmission = mockADRSubmission
-      val submissionCommon: SubmissionCommon = mock[SubmissionCommon]
-      val metrics: Metrics = mockMetrics
-      val ersLoggingAndAuditing: ErsLoggingAndAuditing = mockErsLoggingAndAuditing
-      val metadataRepository: MetadataMongoRepository = mock[MetadataMongoRepository]
+    val submissionCommonService: SubmissionService =
+      new SubmissionService(repositories, adrConnector, adrSubmission, submissionCommon, ersLoggingAndAuditing, adrExceptionEmmiter, auditEvents, metrics) {
     }
 
     "return json created by adrSubmission.generateSubmission" in {
-      reset(mockMetrics)
-      reset(mockADRSubmission)
-      when(
-        mockADRSubmission.generateSubmission()(any[Request[_]](), any[HeaderCarrier], any[ErsSummary]())
-      ).thenReturn(
-        Fixtures.schemeDataJson
-      )
+      when(adrSubmission.generateSubmission()(any[Request[_]](), any[HeaderCarrier], any[ErsSummary]()))
+        .thenReturn(Fixtures.schemeDataJson)
+
       val result = await(submissionCommonService.transformData(Fixtures.metadata))
       result shouldBe Fixtures.schemeDataJson
-      verify(mockMetrics, VerificationModeFactory.times(1)).generateJson(any[Long](), any[TimeUnit]())
+      verify(metrics, VerificationModeFactory.times(1)).generateJson(any[Long](), any[TimeUnit]())
     }
 
     "rethrows ADR exception" in {
-      reset(mockMetrics)
-      reset(mockADRSubmission)
-      when(
-        mockADRSubmission.generateSubmission()(any[Request[_]](), any[HeaderCarrier], any[ErsSummary]())
-      ).thenReturn(
-        Future.failed(ADRTransferException(mock[ErsMetaData], "ADRTransferException", ""))
-      )
+      when(adrSubmission.generateSubmission()(any[Request[_]](), any[HeaderCarrier], any[ErsSummary]()))
+        .thenReturn(Future.failed(ADRTransferException(mock[ErsMetaData], "ADRTransferException", "")))
+
       val result = intercept[ADRTransferException] {
         await(submissionCommonService.transformData(Fixtures.metadata))
       }
       result.getMessage shouldBe "ADRTransferException"
-      verify(mockMetrics, VerificationModeFactory.times(0)).generateJson(any[Long](), any[TimeUnit]())
+      verify(metrics, VerificationModeFactory.times(0)).generateJson(any[Long](), any[TimeUnit]())
     }
 
     "throws ADR exception" in {
-      reset(mockMetrics)
-      reset(mockADRSubmission)
-      when(
-        mockADRSubmission.generateSubmission()(any[Request[_]](), any[HeaderCarrier], any[ErsSummary]())
-      ).thenReturn(
-        Future.failed(new Exception("Exception"))
-      )
+      when(adrSubmission.generateSubmission()(any[Request[_]](), any[HeaderCarrier], any[ErsSummary]()))
+        .thenReturn(Future.failed(new Exception("Exception")))
+
       val result = intercept[Exception] {
         await(submissionCommonService.transformData(Fixtures.metadata))
       }
       result.getMessage shouldBe "Exception during transformData"
-      verify(mockMetrics, VerificationModeFactory.times(0)).generateJson(any[Long](), any[TimeUnit]())
+      verify(metrics, VerificationModeFactory.times(0)).generateJson(any[Long](), any[TimeUnit]())
     }
   }
 
   "sendToADRUpdatePostData" should {
-    val mockMetrics: Metrics = mock[Metrics]
-    val mockADRConnector: ADRConnector = mock[ADRConnector]
+    val submissionCommonService: SubmissionService =
+      new SubmissionService(repositories, adrConnector, adrSubmission, submissionCommon, ersLoggingAndAuditing, adrExceptionEmmiter, auditEvents, metrics) {
 
-    val submissionCommonService: SubmissionCommonService = new SubmissionCommonService {
-      val adrConnector: ADRConnector = mockADRConnector
-      val adrSubmission: ADRSubmission = mock[ADRSubmission]
-      val submissionCommon: SubmissionCommon = mock[SubmissionCommon]
-      val metrics: Metrics = mockMetrics
-      val ersLoggingAndAuditing: ErsLoggingAndAuditing = mockErsLoggingAndAuditing
-      val metadataRepository: MetadataMongoRepository = mock[MetadataMongoRepository]
       override def updatePostsubmission(adrSubmissionStatus: Int, status: String, ersSummary: ErsSummary)(implicit request: Request[_], hc: HeaderCarrier): Future[Boolean] = Future.successful(true)
     }
 
     "return result from updatePostsubmission if sending to ADR is successful" in {
-      reset(mockMetrics)
-      reset(mockADRConnector)
-      when(
-        mockADRConnector.sendData(any[JsObject](), anyString())(any[HeaderCarrier]())
-      ).thenReturn(
-        Future.successful(HttpResponse(202))
-      )
+      when(adrConnector.sendData(any[JsObject](), anyString())(any[HeaderCarrier]()))
+        .thenReturn(Future.successful(HttpResponse(202)))
 
       val result = await(submissionCommonService.sendToADRUpdatePostData(Fixtures.metadata, Fixtures.metadataJson, Statuses.Failed.toString, Statuses.Sent.toString))
       result shouldBe true
-      verify(mockMetrics, VerificationModeFactory.times(1)).sendToADR(any[Long](), any[TimeUnit]())
-      verify(mockMetrics, VerificationModeFactory.times(1)).successfulSendToADR()
-      verify(mockMetrics, VerificationModeFactory.times(0)).failedSendToADR()
+      verify(metrics, VerificationModeFactory.times(1)).sendToADR(any[Long](), any[TimeUnit]())
+      verify(metrics, VerificationModeFactory.times(1)).successfulSendToADR()
+      verify(metrics, VerificationModeFactory.times(0)).failedSendToADR()
     }
 
     "return result from updatePostsubmission if sending to ADR failed" in {
-      reset(mockMetrics)
-      reset(mockADRConnector)
-      when(
-        mockADRConnector.sendData(any[JsObject](), anyString())(any[HeaderCarrier]())
-      ).thenReturn(
-        Future.successful(HttpResponse(500))
-      )
+      when(adrConnector.sendData(any[JsObject](), anyString())(any[HeaderCarrier]()))
+        .thenReturn(Future.successful(HttpResponse(500)))
 
       val result = await(submissionCommonService.sendToADRUpdatePostData(Fixtures.metadata, Fixtures.metadataJson, Statuses.Failed.toString, Statuses.Sent.toString))
       result shouldBe true
-      verify(mockMetrics, VerificationModeFactory.times(0)).sendToADR(any[Long](), any[TimeUnit]())
-      verify(mockMetrics, VerificationModeFactory.times(0)).successfulSendToADR()
-      verify(mockMetrics, VerificationModeFactory.times(1)).failedSendToADR()
+      verify(metrics, VerificationModeFactory.times(0)).sendToADR(any[Long](), any[TimeUnit]())
+      verify(metrics, VerificationModeFactory.times(0)).successfulSendToADR()
+      verify(metrics, VerificationModeFactory.times(1)).failedSendToADR()
     }
 
     "re-throws ADRTransferException if sending to ADR or update throws ADRTransferException exception" in {
-      reset(mockMetrics)
-      reset(mockADRConnector)
-      when(
-        mockADRConnector.sendData(any[JsObject](), anyString())(any[HeaderCarrier]())
-      ).thenReturn(
-        Future.failed(new ADRTransferException(Fixtures.metadata.metaData, "errorMessage", "errorContext"))
-      )
+      when(adrConnector.sendData(any[JsObject](), anyString())(any[HeaderCarrier]()))
+        .thenReturn(Future.failed(new ADRTransferException(Fixtures.metadata.metaData, "errorMessage", "errorContext")))
+
       intercept[ADRTransferException] {
         await(submissionCommonService.sendToADRUpdatePostData(Fixtures.metadata, Fixtures.metadataJson, Statuses.Failed.toString, Statuses.Sent.toString))
       }
-      verify(mockMetrics, VerificationModeFactory.times(0)).sendToADR(any[Long](), any[TimeUnit]())
-      verify(mockMetrics, VerificationModeFactory.times(0)).successfulSendToADR()
-      verify(mockMetrics, VerificationModeFactory.times(0)).failedSendToADR()
+      verify(metrics, VerificationModeFactory.times(0)).sendToADR(any[Long](), any[TimeUnit]())
+      verify(metrics, VerificationModeFactory.times(0)).successfulSendToADR()
+      verify(metrics, VerificationModeFactory.times(0)).failedSendToADR()
     }
 
     "throws ADRTransferException if sending to ADR or update throws exception" in {
-      reset(mockMetrics)
-      reset(mockADRConnector)
-      when(
-        mockADRConnector.sendData(any[JsObject](), anyString())(any[HeaderCarrier]())
-      ).thenReturn(
-        Future.failed(new Exception("errorMessage"))
-      )
+      when(adrConnector.sendData(any[JsObject](), anyString())(any[HeaderCarrier]())).thenReturn(Future.failed(new Exception("errorMessage")))
+
       intercept[ADRTransferException] {
         await(submissionCommonService.sendToADRUpdatePostData(Fixtures.metadata, Fixtures.metadataJson, Statuses.Failed.toString, Statuses.Sent.toString))
       }
-      verify(mockMetrics, VerificationModeFactory.times(0)).sendToADR(any[Long](), any[TimeUnit]())
-      verify(mockMetrics, VerificationModeFactory.times(0)).successfulSendToADR()
-      verify(mockMetrics, VerificationModeFactory.times(0)).failedSendToADR()
+      verify(metrics, VerificationModeFactory.times(0)).sendToADR(any[Long](), any[TimeUnit]())
+      verify(metrics, VerificationModeFactory.times(0)).successfulSendToADR()
+      verify(metrics, VerificationModeFactory.times(0)).failedSendToADR()
     }
   }
 
   "updatePostsubmission" should {
-    val mockMetrics: Metrics = mock[Metrics]
-    val mockMetadataRepository: MetadataMongoRepository = mock[MetadataMongoRepository]
-    val submissionCommonService: SubmissionCommonService = new SubmissionCommonService {
-      val adrConnector: ADRConnector = mock[ADRConnector]
-      val adrSubmission: ADRSubmission = mock[ADRSubmission]
-      val submissionCommon: SubmissionCommon = mock[SubmissionCommon]
-      val metrics: Metrics = mockMetrics
-      val ersLoggingAndAuditing: ErsLoggingAndAuditing = mockErsLoggingAndAuditing
-      val metadataRepository: MetadataMongoRepository = mockMetadataRepository
-    }
+
+    val submissionCommonService: SubmissionService =
+      new SubmissionService(repositories, adrConnector, adrSubmission, submissionCommon, ersLoggingAndAuditing, adrExceptionEmmiter, auditEvents, metrics) {
+        override lazy val metadataRepository: MetadataMongoRepository = mockMetadataRepository
+      }
 
     "true if update is successful and sending to ADR returned 202" in {
-      reset(mockMetrics)
-      reset(mockMetadataRepository)
-      when(
-        mockMetadataRepository.updateStatus(any[SchemeInfo](), anyString())
-      ).thenReturn(
-        Future.successful(true)
-      )
+      when(mockMetadataRepository.updateStatus(any[SchemeInfo](), anyString()))
+        .thenReturn(Future.successful(true))
+
       val result = await(submissionCommonService.updatePostsubmission(202, "sent", Fixtures.metadata))
       result shouldBe true
-      verify(mockMetrics, VerificationModeFactory.times(1)).updatePostsubmissionStatus(any[Long](), any[TimeUnit]())
+      verify(metrics, VerificationModeFactory.times(1)).updatePostsubmissionStatus(any[Long](), any[TimeUnit]())
     }
 
     "throws ADRTransferException if update failed" in {
-      reset(mockMetrics)
-      reset(mockMetadataRepository)
-      when(
-        mockMetadataRepository.updateStatus(any[SchemeInfo](), anyString())
-      ).thenReturn(
-        Future.successful(false)
-      )
+      when(mockMetadataRepository.updateStatus(any[SchemeInfo](), anyString()))
+        .thenReturn(Future.successful(false))
+
       intercept[ADRTransferException] {
         await(submissionCommonService.updatePostsubmission(202, "sent", Fixtures.metadata))
       }
-      verify(mockMetrics, VerificationModeFactory.times(0)).updatePostsubmissionStatus(any[Long](), any[TimeUnit]())
+      verify(metrics, VerificationModeFactory.times(0)).updatePostsubmissionStatus(any[Long](), any[TimeUnit]())
     }
 
     "throws ADRTransferException if update is successful and sending to ADR returned 500" in {
-      reset(mockMetrics)
-      reset(mockMetadataRepository)
-      when(
-        mockMetadataRepository.updateStatus(any[SchemeInfo](), anyString())
-      ).thenReturn(
-        Future.successful(true)
-      )
+      when(mockMetadataRepository.updateStatus(any[SchemeInfo](), anyString()))
+        .thenReturn(Future.successful(true))
+
       intercept[ADRTransferException] {
         await(submissionCommonService.updatePostsubmission(500, "failed", Fixtures.metadata))
       }
-      verify(mockMetrics, VerificationModeFactory.times(1)).updatePostsubmissionStatus(any[Long](), any[TimeUnit]())
+      verify(metrics, VerificationModeFactory.times(1)).updatePostsubmissionStatus(any[Long](), any[TimeUnit]())
     }
   }
 }

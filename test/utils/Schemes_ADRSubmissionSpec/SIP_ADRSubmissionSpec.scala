@@ -17,35 +17,41 @@
 package utils.Schemes_ADRSubmissionSpec
 
 import com.typesafe.config.Config
-import fixtures.{Fixtures, Common, SIP}
-import models.{SchemeInfo, SchemeData}
+import fixtures.{Common, Fixtures, SIP}
+import models.{SchemeData, SchemeInfo}
 import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
 import org.scalatest.BeforeAndAfter
 import org.scalatest.mockito.MockitoSugar
+import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.libs.json.Json
 import play.api.mvc.Request
 import play.api.test.FakeRequest
 import services.PresubmissionService
-import uk.gov.hmrc.play.test.{WithFakeApplication, UnitSpec}
-import utils.{ConfigUtils, SubmissionCommon, ADRSubmission}
+import uk.gov.hmrc.play.test.{UnitSpec, WithFakeApplication}
+import utils.{ADRSubmission, ConfigUtils, SubmissionCommon}
+
 import scala.collection.mutable.ListBuffer
 import scala.concurrent.Future
 import uk.gov.hmrc.http.HeaderCarrier
+import utils.LoggingAndRexceptions.ADRExceptionEmitter
 
-class SIP_ADRSubmissionSpec extends UnitSpec with MockitoSugar with BeforeAndAfter with WithFakeApplication {
+class SIP_ADRSubmissionSpec extends UnitSpec with MockitoSugar with BeforeAndAfter with GuiceOneAppPerSuite {
 
   implicit val hc: HeaderCarrier = new HeaderCarrier()
   implicit val request = FakeRequest().withBody(Fixtures.metadataJson)
 
+  val mockSubmissionCommon: SubmissionCommon = app.injector.instanceOf[SubmissionCommon]
   val mockPresubmissionService: PresubmissionService = mock[PresubmissionService]
+  val mockAdrExceptionEmitter: ADRExceptionEmitter = mock[ADRExceptionEmitter]
+  val mockConfigUtils: ConfigUtils = app.injector.instanceOf[ConfigUtils]
 
-  val adrSubmission: ADRSubmission = new ADRSubmission {
-    override val presubmissionService: PresubmissionService = mockPresubmissionService
-    override val submissionCommon: SubmissionCommon = SubmissionCommon
-    override val configUtils: ConfigUtils = ConfigUtils
-  }
-
+  val mockAdrSubmission: ADRSubmission = new ADRSubmission(
+    mockSubmissionCommon,
+    mockPresubmissionService,
+    mockAdrExceptionEmitter,
+    mockConfigUtils
+  )
   def before(fun : => scala.Any) = {
     super.before(())
     reset(mockPresubmissionService)
@@ -61,7 +67,7 @@ class SIP_ADRSubmissionSpec extends UnitSpec with MockitoSugar with BeforeAndAft
         Future.successful(List())
       )
 
-      val result = await(adrSubmission.generateSubmission()(request, hc, SIP.metadataNilReturn))
+      val result = await(mockAdrSubmission.generateSubmission()(request, hc, SIP.metadataNilReturn))
       result - "acknowledgementReference" shouldBe Json.parse("""{
                                                                 |"regime":"ERS",
                                                                 |"schemeType":"SIP",
@@ -101,13 +107,9 @@ class SIP_ADRSubmissionSpec extends UnitSpec with MockitoSugar with BeforeAndAft
 
     "create valid NilReturn with some ammends" in {
 
-      when(
-        mockPresubmissionService.getJson(any[SchemeInfo]())
-      ).thenReturn(
-        Future.successful(List())
-      )
+      when(mockPresubmissionService.getJson(any[SchemeInfo]())).thenReturn(Future.successful(List()))
 
-      val result = await(adrSubmission.generateSubmission()(request, hc, SIP.metadataNilReturnWithSomeAltAmmends))
+      val result = await(mockAdrSubmission.generateSubmission()(request, hc, SIP.metadataNilReturnWithSomeAltAmmends))
       result - "acknowledgementReference" shouldBe Json.parse("""{
                                                                 |"regime":"ERS",
                                                                 |"schemeType":"SIP",
@@ -166,7 +168,7 @@ class SIP_ADRSubmissionSpec extends UnitSpec with MockitoSugar with BeforeAndAft
         Future.successful(List())
       )
 
-      val result = await(adrSubmission.generateSubmission()(request, hc, SIP.metadataNilReturnWithAllAltAmmends))
+      val result = await(mockAdrSubmission.generateSubmission()(request, hc, SIP.metadataNilReturnWithAllAltAmmends))
       result - "acknowledgementReference" shouldBe Json.parse("""{
                                                                 |"regime":"ERS",
                                                                 |"schemeType":"SIP",
@@ -231,7 +233,7 @@ class SIP_ADRSubmissionSpec extends UnitSpec with MockitoSugar with BeforeAndAft
         Future.successful(List())
       )
 
-      val result = await(adrSubmission.generateSubmission()(request, hc, SIP.metadata))
+      val result = await(mockAdrSubmission.generateSubmission()(request, hc, SIP.metadata))
       result - "acknowledgementReference" shouldBe Json.parse("""{
                                                                 |"regime":"ERS",
                                                                 |"schemeType":"SIP",
@@ -326,7 +328,7 @@ class SIP_ADRSubmissionSpec extends UnitSpec with MockitoSugar with BeforeAndAft
         )
       )
 
-      val result = await(adrSubmission.generateSubmission()(request, hc, SIP.metadata))
+      val result = await(mockAdrSubmission.generateSubmission()(request, hc, SIP.metadata))
       result - "acknowledgementReference" shouldBe Json.parse("""{
                                                                 |"regime":"ERS",
                                                                 |"schemeType":"SIP",
@@ -449,7 +451,7 @@ class SIP_ADRSubmissionSpec extends UnitSpec with MockitoSugar with BeforeAndAft
         )
       )
 
-      val result = await(adrSubmission.generateSubmission()(request, hc, SIP.metadata))
+      val result = await(mockAdrSubmission.generateSubmission()(request, hc, SIP.metadata))
       result - "acknowledgementReference" shouldBe Json.parse("""{
                                                                 |"regime":"ERS",
                                                                 |"schemeType":"SIP",
@@ -594,7 +596,7 @@ class SIP_ADRSubmissionSpec extends UnitSpec with MockitoSugar with BeforeAndAft
         )
       )
 
-      val result = await(adrSubmission.generateSubmission()(request, hc, SIP.metadata))
+      val result = await(mockAdrSubmission.generateSubmission()(request, hc, SIP.metadata))
       result - "acknowledgementReference" shouldBe Json.parse("""{
                                                                 |"regime":"ERS",
                                                                 |"schemeType":"SIP",
@@ -713,7 +715,7 @@ class SIP_ADRSubmissionSpec extends UnitSpec with MockitoSugar with BeforeAndAft
         )
       )
 
-      val result = await(adrSubmission.generateSubmission()(request, hc, SIP.metadata))
+      val result = await(mockAdrSubmission.generateSubmission()(request, hc, SIP.metadata))
       result - "acknowledgementReference" shouldBe Json.parse("""{
                                                                 |"regime":"ERS",
                                                                 |"schemeType":"SIP",
@@ -851,7 +853,7 @@ class SIP_ADRSubmissionSpec extends UnitSpec with MockitoSugar with BeforeAndAft
         )
       )
 
-      val result = await(adrSubmission.generateSubmission()(request, hc, SIP.metadata))
+      val result = await(mockAdrSubmission.generateSubmission()(request, hc, SIP.metadata))
       result - "acknowledgementReference" shouldBe Json.parse("""{
                                                                 |"regime":"ERS",
                                                                 |"schemeType":"SIP",
@@ -999,7 +1001,7 @@ class SIP_ADRSubmissionSpec extends UnitSpec with MockitoSugar with BeforeAndAft
         )
       )
 
-      val result = await(adrSubmission.generateSubmission()(request, hc, SIP.metadata))
+      val result = await(mockAdrSubmission.generateSubmission()(request, hc, SIP.metadata))
       result - "acknowledgementReference" shouldBe Json.parse("""{
                                                                 |"regime":"ERS",
                                                                 |"schemeType":"SIP",
@@ -1178,11 +1180,11 @@ class SIP_ADRSubmissionSpec extends UnitSpec with MockitoSugar with BeforeAndAft
 
   // SIP_Awards_V3
   "calling generateJson for Awards_V3" should {
-    val configData: Config = Common.loadConfiguration(SIP.schemeType, "SIP_Awards_V3")
+    val configData: Config = Common.loadConfiguration(SIP.schemeType, "SIP_Awards_V3", mockConfigUtils)
 
     "create valid JSON with withAllFields = (true or false), sharesListedOnSE = \"yes\", marketValueAgreedHMRC = \"yes\"" in {
 
-      val result = ADRSubmission.buildJson(
+      val result = mockAdrSubmission.buildJson(
         configData,
         ListBuffer(
           SIP.buildAwards(withAllFields = true, sharesListedOnSE = "yes", marketValueAgreedHMRC = "yes"),
@@ -1244,7 +1246,7 @@ class SIP_ADRSubmissionSpec extends UnitSpec with MockitoSugar with BeforeAndAft
 
     "create valid JSON with withAllFields = true, sharesListedOnSE = (\"yes\" or \"no\"), marketValueAgreedHMRC = \"yes\"" in {
 
-      val result = ADRSubmission.buildJson(
+      val result = mockAdrSubmission.buildJson(
         configData,
         ListBuffer(
           SIP.buildAwards(withAllFields = true, sharesListedOnSE = "yes", marketValueAgreedHMRC = "yes"),
@@ -1311,7 +1313,7 @@ class SIP_ADRSubmissionSpec extends UnitSpec with MockitoSugar with BeforeAndAft
 
     "create valid JSON with withAllFields = true, sharesListedOnSE = \"no\", marketValueAgreedHMRC = (\"yes\" or \"no\")" in {
 
-      val result = ADRSubmission.buildJson(
+      val result = mockAdrSubmission.buildJson(
         configData,
         ListBuffer(
           SIP.buildAwards(withAllFields = true, sharesListedOnSE = "no", marketValueAgreedHMRC = "yes"),
@@ -1381,11 +1383,11 @@ class SIP_ADRSubmissionSpec extends UnitSpec with MockitoSugar with BeforeAndAft
 
   // SIP_Out_V3
   "calling generateJson for Out_V3" should {
-    val configData: Config = Common.loadConfiguration(SIP.schemeType, "SIP_Out_V3")
+    val configData: Config = Common.loadConfiguration(SIP.schemeType, "SIP_Out_V3", mockConfigUtils)
 
     "create valid JSON with withAllFields = (true or false), sharesHeld = \"yes\", payeApplied = \"yes\"" in {
 
-      val result = ADRSubmission.buildJson(
+      val result = mockAdrSubmission.buildJson(
         configData,
         ListBuffer(
           SIP.buildOutOfPlan(withAllFields = true, sharesHeld = "yes", payeApplied = "yes"),
@@ -1441,7 +1443,7 @@ class SIP_ADRSubmissionSpec extends UnitSpec with MockitoSugar with BeforeAndAft
 
     "create valid JSON with withAllFields = true, sharesHeld = (\"yes\" or \"no\"), payeApplied = \"yes\"" in {
 
-      val result = ADRSubmission.buildJson(
+      val result = mockAdrSubmission.buildJson(
         configData,
         ListBuffer(
           SIP.buildOutOfPlan(withAllFields = true, sharesHeld = "yes", payeApplied = "yes"),
@@ -1500,7 +1502,7 @@ class SIP_ADRSubmissionSpec extends UnitSpec with MockitoSugar with BeforeAndAft
 
     "create valid JSON with withAllFields = true, sharesHeld = \"no\", payeApplied = (\"yes\" or \"no\")" in {
 
-      val result = ADRSubmission.buildJson(
+      val result = mockAdrSubmission.buildJson(
         configData,
         ListBuffer(
           SIP.buildOutOfPlan(withAllFields = true, sharesHeld = "no", payeApplied = "yes"),

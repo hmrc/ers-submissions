@@ -17,34 +17,41 @@
 package utils.Schemes_ADRSubmissionSpec
 
 import com.typesafe.config.Config
-import fixtures.{Fixtures, Common, EMI}
-import models.{SchemeInfo, SchemeData}
+import fixtures.{Common, EMI, Fixtures}
+import models.{SchemeData, SchemeInfo}
 import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
 import org.scalatest.BeforeAndAfter
 import org.scalatest.mockito.MockitoSugar
+import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.libs.json.Json
 import play.api.mvc.Request
 import play.api.test.FakeRequest
 import services.PresubmissionService
-import uk.gov.hmrc.play.test.{WithFakeApplication, UnitSpec}
-import utils.{ConfigUtils, SubmissionCommon, ADRSubmission}
+import uk.gov.hmrc.play.test.{UnitSpec, WithFakeApplication}
+import utils.{ADRSubmission, ConfigUtils, SubmissionCommon}
+
 import scala.collection.mutable.ListBuffer
 import scala.concurrent.Future
 import uk.gov.hmrc.http.HeaderCarrier
+import utils.LoggingAndRexceptions.ADRExceptionEmitter
 
-class EMI_ADRSubmissionSpec extends UnitSpec with MockitoSugar with BeforeAndAfter with WithFakeApplication  {
+class EMI_ADRSubmissionSpec extends UnitSpec with MockitoSugar with BeforeAndAfter with GuiceOneAppPerSuite {
 
   implicit val hc: HeaderCarrier = new HeaderCarrier()
   implicit val request = FakeRequest().withBody(Fixtures.metadataJson)
 
+  val mockSubmissionCommon: SubmissionCommon = app.injector.instanceOf[SubmissionCommon]
   val mockPresubmissionService: PresubmissionService = mock[PresubmissionService]
+  val mockAdrExceptionEmitter: ADRExceptionEmitter = mock[ADRExceptionEmitter]
+  val mockConfigUtils: ConfigUtils = app.injector.instanceOf[ConfigUtils]
 
-  val adrSubmission: ADRSubmission = new ADRSubmission {
-    override val presubmissionService: PresubmissionService = mockPresubmissionService
-    override val submissionCommon: SubmissionCommon = SubmissionCommon
-    override val configUtils: ConfigUtils = ConfigUtils
-  }
+  val mockAdrSubmission: ADRSubmission = new ADRSubmission(
+    mockSubmissionCommon,
+    mockPresubmissionService,
+    mockAdrExceptionEmitter,
+    mockConfigUtils
+  )
 
   def before(fun : => scala.Any) = {
     super.before(())
@@ -55,13 +62,10 @@ class EMI_ADRSubmissionSpec extends UnitSpec with MockitoSugar with BeforeAndAft
 
     "create valid json for NilReturn" in {
 
-      when(
-        mockPresubmissionService.getJson(any[SchemeInfo]())
-      ).thenReturn(
-        Future.successful(List())
-      )
+      when(mockPresubmissionService.getJson(any[SchemeInfo]()))
+        .thenReturn(Future.successful(List()))
 
-      val result = await(adrSubmission.generateSubmission()(request, hc, EMI.metadataNilReturn))
+      val result = await(mockAdrSubmission.generateSubmission()(request, hc, EMI.metadataNilReturn))
       result-("acknowledgementReference") shouldBe Json.parse("""{
                                                                 |"regime":"ERS",
                                                                 |"schemeType":"EMI",
@@ -106,7 +110,7 @@ class EMI_ADRSubmissionSpec extends UnitSpec with MockitoSugar with BeforeAndAft
         Future.successful(List())
       )
 
-      val result = await(adrSubmission.generateSubmission()(request, hc, EMI.metadata))
+      val result = await(mockAdrSubmission.generateSubmission()(request, hc, EMI.metadata))
       result-("acknowledgementReference") shouldBe Json.parse("""{
                                                                 |"regime":"ERS",
                                                                 |"schemeType":"EMI",
@@ -182,7 +186,7 @@ class EMI_ADRSubmissionSpec extends UnitSpec with MockitoSugar with BeforeAndAft
         )
       )
 
-      val result = await(adrSubmission.generateSubmission()(request, hc, EMI.metadata))
+      val result = await(mockAdrSubmission.generateSubmission()(request, hc, EMI.metadata))
       result-("acknowledgementReference") shouldBe Json.parse("""{
                                                                 |"regime":"ERS",
                                                                 |"schemeType":"EMI",
@@ -380,7 +384,7 @@ class EMI_ADRSubmissionSpec extends UnitSpec with MockitoSugar with BeforeAndAft
         )
       )
 
-      val result = await(adrSubmission.generateSubmission()(request, hc, EMI.metadata))
+      val result = await(mockAdrSubmission.generateSubmission()(request, hc, EMI.metadata))
       result-("acknowledgementReference") shouldBe Json.parse("""{
                                                                 |"regime":"ERS",
                                                                 |"schemeType":"EMI",
@@ -663,7 +667,7 @@ class EMI_ADRSubmissionSpec extends UnitSpec with MockitoSugar with BeforeAndAft
         )
       )
 
-      val result = await(adrSubmission.generateSubmission()(request, hc, EMI.metadata))
+      val result = await(mockAdrSubmission.generateSubmission()(request, hc, EMI.metadata))
       result-("acknowledgementReference") shouldBe Json.parse("""{
                                                                 |"regime":"ERS",
                                                                 |"schemeType":"EMI",
@@ -757,7 +761,7 @@ class EMI_ADRSubmissionSpec extends UnitSpec with MockitoSugar with BeforeAndAft
         )
       )
 
-      val result = await(adrSubmission.generateSubmission()(request, hc, EMI.metadata))
+      val result = await(mockAdrSubmission.generateSubmission()(request, hc, EMI.metadata))
       result-("acknowledgementReference") shouldBe Json.parse("""{
                                                                 |"regime":"ERS",
                                                                 |"schemeType":"EMI",
@@ -864,7 +868,7 @@ class EMI_ADRSubmissionSpec extends UnitSpec with MockitoSugar with BeforeAndAft
         )
       )
 
-      val result = await(adrSubmission.generateSubmission()(request, hc, EMI.metadata))
+      val result = await(mockAdrSubmission.generateSubmission()(request, hc, EMI.metadata))
       result-("acknowledgementReference") shouldBe Json.parse("""{
                                                                 |"regime":"ERS",
                                                                 |"schemeType":"EMI",
@@ -957,7 +961,7 @@ class EMI_ADRSubmissionSpec extends UnitSpec with MockitoSugar with BeforeAndAft
         )
       )
 
-      val result = await(adrSubmission.generateSubmission()(request, hc, EMI.metadata))
+      val result = await(mockAdrSubmission.generateSubmission()(request, hc, EMI.metadata))
       result-("acknowledgementReference") shouldBe Json.parse("""{
                                                                 |"regime":"ERS",
                                                                 |"schemeType":"EMI",
@@ -1065,7 +1069,7 @@ class EMI_ADRSubmissionSpec extends UnitSpec with MockitoSugar with BeforeAndAft
         )
       )
 
-      val result = await(adrSubmission.generateSubmission()(request, hc, EMI.metadata))
+      val result = await(mockAdrSubmission.generateSubmission()(request, hc, EMI.metadata))
       result-("acknowledgementReference") shouldBe Json.parse("""{
                                                                 |"regime":"ERS",
                                                                 |"schemeType":"EMI",
@@ -1158,7 +1162,7 @@ class EMI_ADRSubmissionSpec extends UnitSpec with MockitoSugar with BeforeAndAft
         )
       )
 
-      val result = await(adrSubmission.generateSubmission()(request, hc, EMI.metadata))
+      val result = await(mockAdrSubmission.generateSubmission()(request, hc, EMI.metadata))
       result-("acknowledgementReference") shouldBe Json.parse("""{
                                                                 |"regime":"ERS",
                                                                 |"schemeType":"EMI",
@@ -1266,7 +1270,7 @@ class EMI_ADRSubmissionSpec extends UnitSpec with MockitoSugar with BeforeAndAft
         )
       )
 
-      val result = await(adrSubmission.generateSubmission()(request, hc, EMI.metadata))
+      val result = await(mockAdrSubmission.generateSubmission()(request, hc, EMI.metadata))
       result-("acknowledgementReference") shouldBe Json.parse("""{
                                                                 |"regime":"ERS",
                                                                 |"schemeType":"EMI",
@@ -1360,7 +1364,7 @@ class EMI_ADRSubmissionSpec extends UnitSpec with MockitoSugar with BeforeAndAft
         )
       )
 
-      val result = await(adrSubmission.generateSubmission()(request, hc, EMI.metadata))
+      val result = await(mockAdrSubmission.generateSubmission()(request, hc, EMI.metadata))
       result-("acknowledgementReference") shouldBe Json.parse("""{
                                                                 |"regime":"ERS",
                                                                 |"schemeType":"EMI",
@@ -1470,7 +1474,7 @@ class EMI_ADRSubmissionSpec extends UnitSpec with MockitoSugar with BeforeAndAft
         )
       )
 
-      val result = await(adrSubmission.generateSubmission()(request, hc, EMI.metadata))
+      val result = await(mockAdrSubmission.generateSubmission()(request, hc, EMI.metadata))
       result-("acknowledgementReference") shouldBe Json.parse("""{
                                                                 |"regime":"ERS",
                                                                 |"schemeType":"EMI",
@@ -1569,7 +1573,7 @@ class EMI_ADRSubmissionSpec extends UnitSpec with MockitoSugar with BeforeAndAft
         )
       )
 
-      val result = await(adrSubmission.generateSubmission()(request, hc, EMI.metadata))
+      val result = await(mockAdrSubmission.generateSubmission()(request, hc, EMI.metadata))
       result-("acknowledgementReference") shouldBe Json.parse("""{
                                                                 |"regime":"ERS",
                                                                 |"schemeType":"EMI",
@@ -1681,11 +1685,11 @@ class EMI_ADRSubmissionSpec extends UnitSpec with MockitoSugar with BeforeAndAft
 
   "calling generateJson for Adjustments V3" should {
 
-    val configData: Config = Common.loadConfiguration(EMI.schemeType, "EMI40_Adjustments_V3")
+    val configData: Config = Common.loadConfiguration(EMI.schemeType, "EMI40_Adjustments_V3", mockConfigUtils)
 
     "create valid JSON with disqualifyingEvent = \"yes\"" in {
 
-      val result = ADRSubmission.buildJson(
+      val result = mockAdrSubmission.buildJson(
         configData,
         ListBuffer(
           EMI.buildAdjustmentsV3(withAllFields = true, disqualifyingEvent = "yes"),
@@ -1733,7 +1737,7 @@ class EMI_ADRSubmissionSpec extends UnitSpec with MockitoSugar with BeforeAndAft
 
     "create valid JSON with disqualifyingEvent = \"no\"" in {
 
-      val result = ADRSubmission.buildJson(
+      val result = mockAdrSubmission.buildJson(
         configData,
         ListBuffer(
           EMI.buildAdjustmentsV3(withAllFields = true, disqualifyingEvent = "no"),
@@ -1781,11 +1785,11 @@ class EMI_ADRSubmissionSpec extends UnitSpec with MockitoSugar with BeforeAndAft
 
   "calling generateJson for Replaced V3" should {
 
-    val configData: Config = Common.loadConfiguration(EMI.schemeType, "EMI40_Replaced_V3")
+    val configData: Config = Common.loadConfiguration(EMI.schemeType, "EMI40_Replaced_V3", mockConfigUtils)
 
     "create valid JSON" in {
 
-      val result = ADRSubmission.buildJson(
+      val result = mockAdrSubmission.buildJson(
         configData,
         ListBuffer(
           EMI.buildReplacedV3(withAllFields = true),
@@ -1850,11 +1854,11 @@ class EMI_ADRSubmissionSpec extends UnitSpec with MockitoSugar with BeforeAndAft
 
   "calling generateJson for RLC V3" should {
 
-    val configData: Config = Common.loadConfiguration(EMI.schemeType, "EMI40_RLC_V3")
+    val configData: Config = Common.loadConfiguration(EMI.schemeType, "EMI40_RLC_V3", mockConfigUtils)
 
     "create valid JSON for withAllFields = (true or false), disqualifyingEvent = \"yes\" and moneyValueReceived = \"yes\"" in {
 
-      val result = ADRSubmission.buildJson(
+      val result = mockAdrSubmission.buildJson(
         configData,
         ListBuffer(
           EMI.buildRLCV3(withAllFields = true, disqualifyingEvent = "yes", moneyValueReceived = "yes"),
@@ -1903,7 +1907,7 @@ class EMI_ADRSubmissionSpec extends UnitSpec with MockitoSugar with BeforeAndAft
 
     "create valid JSON for withAllFields = true, disqualifyingEvent = (\"yes\" or \"no\") and moneyValueReceived = \"yes\"" in {
 
-      val result = ADRSubmission.buildJson(
+      val result = mockAdrSubmission.buildJson(
         configData,
         ListBuffer(
           EMI.buildRLCV3(withAllFields = true, disqualifyingEvent = "yes", moneyValueReceived = "yes"),
@@ -1953,7 +1957,7 @@ class EMI_ADRSubmissionSpec extends UnitSpec with MockitoSugar with BeforeAndAft
 
     "create valid JSON for withAllFields = true, disqualifyingEvent = \"yes\" and moneyValueReceived = (\"yes\" or \"no\")" in {
 
-      val result = ADRSubmission.buildJson(
+      val result = mockAdrSubmission.buildJson(
         configData,
         ListBuffer(
           EMI.buildRLCV3(withAllFields = true, disqualifyingEvent = "yes", moneyValueReceived = "yes"),
@@ -2004,11 +2008,11 @@ class EMI_ADRSubmissionSpec extends UnitSpec with MockitoSugar with BeforeAndAft
 
   "calling generateJson for NonTaxable V3" should {
 
-    val configData: Config = Common.loadConfiguration(EMI.schemeType, "EMI40_NonTaxable_V3")
+    val configData: Config = Common.loadConfiguration(EMI.schemeType, "EMI40_NonTaxable_V3", mockConfigUtils)
 
     "create valid JSON for withAllFields = (true or false), sharesListedOnSE = \"yes\" and marketValueAgreedHMRC = \"yes\"" in {
 
-      val result = ADRSubmission.buildJson(
+      val result = mockAdrSubmission.buildJson(
         configData,
         ListBuffer(
           EMI.buildNonTaxableV3(withAllFields = true, sharesListedOnSE = "yes", marketValueAgreedHMRC = "yes"),
@@ -2058,7 +2062,7 @@ class EMI_ADRSubmissionSpec extends UnitSpec with MockitoSugar with BeforeAndAft
 
     "create valid JSON for withAllFields = true, sharesListedOnSE = (\"yes\" or \"no\") and marketValueAgreedHMRC = \"yes\"" in {
 
-      val result = ADRSubmission.buildJson(
+      val result = mockAdrSubmission.buildJson(
         configData,
         ListBuffer(
           EMI.buildNonTaxableV3(withAllFields = true, sharesListedOnSE = "yes", marketValueAgreedHMRC = "yes"),
@@ -2112,7 +2116,7 @@ class EMI_ADRSubmissionSpec extends UnitSpec with MockitoSugar with BeforeAndAft
 
     "create valid JSON for withAllFields = true, sharesListedOnSE = \"no\" and marketValueAgreedHMRC = (\"yes\" or \"no\")" in {
 
-      val result = ADRSubmission.buildJson(
+      val result = mockAdrSubmission.buildJson(
         configData,
         ListBuffer(
           EMI.buildNonTaxableV3(withAllFields = true, sharesListedOnSE = "no", marketValueAgreedHMRC = "yes"),
@@ -2168,11 +2172,11 @@ class EMI_ADRSubmissionSpec extends UnitSpec with MockitoSugar with BeforeAndAft
 
   "calling generateJson for Taxable V3" should {
 
-    val configData: Config = Common.loadConfiguration(EMI.schemeType, "EMI40_Taxable_V3")
+    val configData: Config = Common.loadConfiguration(EMI.schemeType, "EMI40_Taxable_V3", mockConfigUtils)
 
     "create valid JSON for withAllFields = (true or false), disqualifyingEvent = \"yes\", sharesListedOnSE = \"yes\" and marketValueAgreedHMRC = \"yes\"" in {
 
-      val result = ADRSubmission.buildJson(
+      val result = mockAdrSubmission.buildJson(
         configData,
         ListBuffer(
           EMI.buildTaxableV3(withAllFields = true, disqualifyingEvent = "yes", sharesListedOnSE = "yes", marketValueAgreedHMRC = "yes"),
@@ -2232,7 +2236,7 @@ class EMI_ADRSubmissionSpec extends UnitSpec with MockitoSugar with BeforeAndAft
 
     "create valid JSON for withAllFields = true, disqualifyingEvent = (\"yes\" or \"no\"), sharesListedOnSE = \"yes\" and marketValueAgreedHMRC = \"yes\"" in {
 
-      val result = ADRSubmission.buildJson(
+      val result = mockAdrSubmission.buildJson(
         configData,
         ListBuffer(
           EMI.buildTaxableV3(withAllFields = true, disqualifyingEvent = "yes", sharesListedOnSE = "yes", marketValueAgreedHMRC = "yes"),
@@ -2293,7 +2297,7 @@ class EMI_ADRSubmissionSpec extends UnitSpec with MockitoSugar with BeforeAndAft
 
     "create valid JSON for withAllFields = true, disqualifyingEvent = \"yes\", sharesListedOnSE = (\"yes\" or \"no\") and marketValueAgreedHMRC = \"yes\"" in {
 
-      val result = ADRSubmission.buildJson(
+      val result = mockAdrSubmission.buildJson(
         configData,
         ListBuffer(
           EMI.buildTaxableV3(withAllFields = true, disqualifyingEvent = "yes", sharesListedOnSE = "yes", marketValueAgreedHMRC = "yes"),
@@ -2357,7 +2361,7 @@ class EMI_ADRSubmissionSpec extends UnitSpec with MockitoSugar with BeforeAndAft
 
     "create valid JSON for withAllFields = true, disqualifyingEvent = \"yes\", sharesListedOnSE = \"no\" and marketValueAgreedHMRC = (\"yes\" or \"no\")" in {
 
-      val result = ADRSubmission.buildJson(
+      val result = mockAdrSubmission.buildJson(
         configData,
         ListBuffer(
           EMI.buildTaxableV3(withAllFields = true, disqualifyingEvent = "yes", sharesListedOnSE = "no", marketValueAgreedHMRC = "yes"),

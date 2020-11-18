@@ -17,34 +17,41 @@
 package utils.Schemes_ADRSubmissionSpec
 
 import com.typesafe.config.Config
-import fixtures.{Fixtures, Common, SAYE}
-import models.{SchemeInfo, SchemeData}
+import fixtures.{Common, Fixtures, SAYE}
+import models.{SchemeData, SchemeInfo}
 import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
 import org.scalatest.BeforeAndAfter
 import org.scalatest.mockito.MockitoSugar
+import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.libs.json.Json
 import play.api.mvc.Request
 import play.api.test.FakeRequest
 import services.PresubmissionService
-import uk.gov.hmrc.play.test.{WithFakeApplication, UnitSpec}
-import utils.{ConfigUtils, SubmissionCommon, ADRSubmission}
+import uk.gov.hmrc.play.test.{UnitSpec, WithFakeApplication}
+import utils.{ADRSubmission, ConfigUtils, SubmissionCommon}
+
 import scala.collection.mutable.ListBuffer
 import scala.concurrent.Future
 import uk.gov.hmrc.http.HeaderCarrier
+import utils.LoggingAndRexceptions.ADRExceptionEmitter
 
-class SAYE_ADRSubmissionSpec extends UnitSpec with MockitoSugar with BeforeAndAfter with WithFakeApplication {
+class SAYE_ADRSubmissionSpec extends UnitSpec with MockitoSugar with BeforeAndAfter with GuiceOneAppPerSuite {
 
   implicit val hc: HeaderCarrier = new HeaderCarrier()
   implicit val request = FakeRequest().withBody(Fixtures.metadataJson)
 
+  val mockSubmissionCommon: SubmissionCommon = app.injector.instanceOf[SubmissionCommon]
   val mockPresubmissionService: PresubmissionService = mock[PresubmissionService]
+  val mockAdrExceptionEmitter: ADRExceptionEmitter = mock[ADRExceptionEmitter]
+  val mockConfigUtils: ConfigUtils = app.injector.instanceOf[ConfigUtils]
 
-  val adrSubmission: ADRSubmission = new ADRSubmission {
-    override val presubmissionService: PresubmissionService = mockPresubmissionService
-    override val submissionCommon: SubmissionCommon = SubmissionCommon
-    override val configUtils: ConfigUtils = ConfigUtils
-  }
+  val mockAdrSubmission: ADRSubmission = new ADRSubmission(
+    mockSubmissionCommon,
+    mockPresubmissionService,
+    mockAdrExceptionEmitter,
+    mockConfigUtils
+  )
 
   def before(fun : => scala.Any) = {
     super.before(())
@@ -61,7 +68,7 @@ class SAYE_ADRSubmissionSpec extends UnitSpec with MockitoSugar with BeforeAndAf
         Future.successful(List())
       )
 
-      val result = await(adrSubmission.generateSubmission()(request, hc, SAYE.ersSummaryNilReturnWithoutAltAmmends))
+      val result = await(mockAdrSubmission.generateSubmission()(request, hc, SAYE.ersSummaryNilReturnWithoutAltAmmends))
       result - "acknowledgementReference" shouldBe Json.parse("""{
                                                                 |"regime":"ERS",
                                                                 |"schemeType":"SAYE",
@@ -114,7 +121,7 @@ class SAYE_ADRSubmissionSpec extends UnitSpec with MockitoSugar with BeforeAndAf
         Future.successful(List())
       )
 
-      val result = await(adrSubmission.generateSubmission()(request, hc, SAYE.ersSummaryNilReturnWithSomeAltAmmends))
+      val result = await(mockAdrSubmission.generateSubmission()(request, hc, SAYE.ersSummaryNilReturnWithSomeAltAmmends))
       result - "acknowledgementReference" shouldBe Json.parse("""{
                                                                 |"regime":"ERS",
                                                                 |"schemeType":"SAYE",
@@ -180,7 +187,7 @@ class SAYE_ADRSubmissionSpec extends UnitSpec with MockitoSugar with BeforeAndAf
         Future.successful(List())
       )
 
-      val result = await(adrSubmission.generateSubmission()(request, hc, SAYE.ersSummaryNilReturnWithAllAltAmmends))
+      val result = await(mockAdrSubmission.generateSubmission()(request, hc, SAYE.ersSummaryNilReturnWithAllAltAmmends))
       result - "acknowledgementReference" shouldBe Json.parse("""{
                                                                 |"regime":"ERS",
                                                                 |"schemeType":"SAYE",
@@ -252,7 +259,7 @@ class SAYE_ADRSubmissionSpec extends UnitSpec with MockitoSugar with BeforeAndAf
         Future.successful(List())
       )
 
-      val result = await(adrSubmission.generateSubmission()(request, hc, SAYE.ersSumarryWithAllAmmends))
+      val result = await(mockAdrSubmission.generateSubmission()(request, hc, SAYE.ersSumarryWithAllAmmends))
       result - "acknowledgementReference" shouldBe Json.parse("""{
                                                                 |"regime":"ERS",
                                                                 |"schemeType":"SAYE",
@@ -351,7 +358,7 @@ class SAYE_ADRSubmissionSpec extends UnitSpec with MockitoSugar with BeforeAndAf
         )
       )
 
-      val result = await(adrSubmission.generateSubmission()(request, hc, SAYE.ersSumarryWithAllAmmends))
+      val result = await(mockAdrSubmission.generateSubmission()(request, hc, SAYE.ersSumarryWithAllAmmends))
       result - "acknowledgementReference" shouldBe Json.parse("""{
                                                                 |"regime":"ERS",
                                                                 |"schemeType":"SAYE",
@@ -463,7 +470,7 @@ class SAYE_ADRSubmissionSpec extends UnitSpec with MockitoSugar with BeforeAndAf
         )
       )
 
-      val result = await(adrSubmission.generateSubmission()(request, hc, SAYE.ersSumarryWithAllAmmends))
+      val result = await(mockAdrSubmission.generateSubmission()(request, hc, SAYE.ersSumarryWithAllAmmends))
       result - "acknowledgementReference" shouldBe Json.parse("""{
                                                                 |"regime":"ERS",
                                                                 |"schemeType":"SAYE",
@@ -582,7 +589,7 @@ class SAYE_ADRSubmissionSpec extends UnitSpec with MockitoSugar with BeforeAndAf
         )
       )
 
-      val result = await(adrSubmission.generateSubmission()(request, hc, SAYE.ersSumarryWithAllAmmends))
+      val result = await(mockAdrSubmission.generateSubmission()(request, hc, SAYE.ersSumarryWithAllAmmends))
       result - "acknowledgementReference" shouldBe Json.parse("""{
                                                                 |"regime":"ERS",
                                                                 |"schemeType":"SAYE",
@@ -699,7 +706,7 @@ class SAYE_ADRSubmissionSpec extends UnitSpec with MockitoSugar with BeforeAndAf
         )
       )
 
-      val result = await(adrSubmission.generateSubmission()(request, hc, SAYE.ersSumarryWithAllAmmends))
+      val result = await(mockAdrSubmission.generateSubmission()(request, hc, SAYE.ersSumarryWithAllAmmends))
       result - "acknowledgementReference" shouldBe Json.parse("""{
                                                                 |"regime":"ERS",
                                                                 |"schemeType":"SAYE",
@@ -828,7 +835,7 @@ class SAYE_ADRSubmissionSpec extends UnitSpec with MockitoSugar with BeforeAndAf
         )
       )
 
-      val result = await(adrSubmission.generateSubmission()(request, hc, SAYE.ersSumarryWithAllAmmends))
+      val result = await(mockAdrSubmission.generateSubmission()(request, hc, SAYE.ersSumarryWithAllAmmends))
       result - "acknowledgementReference" shouldBe Json.parse("""{
                                                                 |"regime":"ERS",
                                                                 |"schemeType":"SAYE",
@@ -950,7 +957,7 @@ class SAYE_ADRSubmissionSpec extends UnitSpec with MockitoSugar with BeforeAndAf
         )
       )
 
-      val result = await(adrSubmission.generateSubmission()(request, hc, SAYE.ersSumarryWithAllAmmends))
+      val result = await(mockAdrSubmission.generateSubmission()(request, hc, SAYE.ersSumarryWithAllAmmends))
       result - "acknowledgementReference" shouldBe Json.parse("""{
                                                                 |"regime":"ERS",
                                                                 |"schemeType":"SAYE",
@@ -1091,7 +1098,7 @@ class SAYE_ADRSubmissionSpec extends UnitSpec with MockitoSugar with BeforeAndAf
         )
       )
 
-      val result = await(adrSubmission.generateSubmission()(request, hc, SAYE.ersSumarryWithAllAmmends))
+      val result = await(mockAdrSubmission.generateSubmission()(request, hc, SAYE.ersSumarryWithAllAmmends))
       result - "acknowledgementReference" shouldBe Json.parse("""{
                                                                 |"regime":"ERS",
                                                                 |"schemeType":"SAYE",
@@ -1246,7 +1253,7 @@ class SAYE_ADRSubmissionSpec extends UnitSpec with MockitoSugar with BeforeAndAf
         )
       )
 
-      val result = await(adrSubmission.generateSubmission()(request, hc, SAYE.ersSumarryWithAllAmmends))
+      val result = await(mockAdrSubmission.generateSubmission()(request, hc, SAYE.ersSumarryWithAllAmmends))
       result - "acknowledgementReference" shouldBe Json.parse("""{
                                                                 |"regime":"ERS",
                                                                 |"schemeType":"SAYE",
@@ -1427,10 +1434,10 @@ class SAYE_ADRSubmissionSpec extends UnitSpec with MockitoSugar with BeforeAndAf
   //SAYE_Exercised_V3
   "calling generateJson for Exercised_V3" should {
 
-    val configData: Config = Common.loadConfiguration(SAYE.sayeSchemeType, "SAYE_Exercised_V3")
+    val configData: Config = Common.loadConfiguration(SAYE.sayeSchemeType, "SAYE_Exercised_V3", mockConfigUtils)
 
     "create a valid JSON with allFields = (true or false), sharesListedOnSE = \"yes\", marketValueAgreedHMRC = \"yes\"" in {
-      val result = ADRSubmission.buildJson(
+      val result = mockAdrSubmission.buildJson(
       configData,
         ListBuffer(
           SAYE.buildExercisedV3(true, sharesListedOnSE = "yes", marketValueAgreedHMRC = "yes"),
@@ -1481,7 +1488,7 @@ class SAYE_ADRSubmissionSpec extends UnitSpec with MockitoSugar with BeforeAndAf
     }
 
     "create a valid JSON with allFields = true, sharesListedOnSE = (\"yes\" or \"no\"), marketValueAgreedHMRC = \"yes\"" in {
-      val result = ADRSubmission.buildJson(
+      val result = mockAdrSubmission.buildJson(
         configData,
         ListBuffer(
           SAYE.buildExercisedV3(true, sharesListedOnSE = "yes", marketValueAgreedHMRC = "yes"),
@@ -1536,7 +1543,7 @@ class SAYE_ADRSubmissionSpec extends UnitSpec with MockitoSugar with BeforeAndAf
     }
 
     "create a valid JSON with allFields = true, sharesListedOnSE = \"no\", marketValueAgreedHMRC = (\"yes\" or \"no\")" in {
-      val result = ADRSubmission.buildJson(
+      val result = mockAdrSubmission.buildJson(
         configData,
         ListBuffer(
           SAYE.buildExercisedV3(true, sharesListedOnSE = "no", marketValueAgreedHMRC = "yes"),
@@ -1595,11 +1602,11 @@ class SAYE_ADRSubmissionSpec extends UnitSpec with MockitoSugar with BeforeAndAf
   // SAYE_Granted_V3
   "calling generateJson for Granted_V3" should {
 
-    val configData: Config = Common.loadConfiguration(SAYE.sayeSchemeType, "SAYE_Granted_V3")
+    val configData: Config = Common.loadConfiguration(SAYE.sayeSchemeType, "SAYE_Granted_V3", mockConfigUtils)
 
     "create valid JSON with sharesListedOnSE = (\"yes\" or \"no\"), marketValueAgreedHMRC = \"yes\"" in {
 
-      val result = ADRSubmission.buildJson(
+      val result = mockAdrSubmission.buildJson(
         configData,
         ListBuffer(
           SAYE.buildGrantedV3(sharesListedOnSE = "yes", marketValueAgreedHMRC = "yes"),
@@ -1637,7 +1644,7 @@ class SAYE_ADRSubmissionSpec extends UnitSpec with MockitoSugar with BeforeAndAf
 
     "create valid JSON with sharesListedOnSE = \"no\", marketValueAgreedHMRC = (\"yes\" or \"no\")" in {
 
-      val result = ADRSubmission.buildJson(
+      val result = mockAdrSubmission.buildJson(
         configData,
         ListBuffer(
           SAYE.buildGrantedV3(sharesListedOnSE = "no", marketValueAgreedHMRC = "yes"),
@@ -1678,11 +1685,11 @@ class SAYE_ADRSubmissionSpec extends UnitSpec with MockitoSugar with BeforeAndAf
   // SAYE_RCL_V3
   "calling generateJson for RCL_V3" should {
 
-    val configData: Config = Common.loadConfiguration(SAYE.sayeSchemeType, "SAYE_RCL_V3")
+    val configData: Config = Common.loadConfiguration(SAYE.sayeSchemeType, "SAYE_RCL_V3", mockConfigUtils)
 
     "create valid JSON with wasMoneyOrValueGiven = \"yes\"" in {
 
-      val result = ADRSubmission.buildJson(configData,ListBuffer(
+      val result = mockAdrSubmission.buildJson(configData,ListBuffer(
         SAYE.buildRCLV3(wasMoneyOrValueGiven="yes")
       ))
 
@@ -1711,7 +1718,7 @@ class SAYE_ADRSubmissionSpec extends UnitSpec with MockitoSugar with BeforeAndAf
 
     "create valid JSON with wasMoneyOrValueGiven = \"no\"" in {
 
-      val result = ADRSubmission.buildJson(configData,ListBuffer(
+      val result = mockAdrSubmission.buildJson(configData,ListBuffer(
         SAYE.buildRCLV3(wasMoneyOrValueGiven="no")
       ))
 
@@ -1739,7 +1746,7 @@ class SAYE_ADRSubmissionSpec extends UnitSpec with MockitoSugar with BeforeAndAf
 
     "create valid JSON without a secondName" in {
 
-      val result = ADRSubmission.buildJson(configData,ListBuffer(
+      val result = mockAdrSubmission.buildJson(configData,ListBuffer(
         SAYE.buildRCLV3(secondName="")
       ))
 
@@ -1767,7 +1774,7 @@ class SAYE_ADRSubmissionSpec extends UnitSpec with MockitoSugar with BeforeAndAf
 
     "create valid JSON without a nino" in {
 
-      val result = ADRSubmission.buildJson(configData,ListBuffer(
+      val result = mockAdrSubmission.buildJson(configData,ListBuffer(
         SAYE.buildRCLV3(nino="")
       ))
 

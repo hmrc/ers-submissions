@@ -17,21 +17,27 @@
 package utils
 
 import fixtures.Fixtures
-import models.ADRTransferException
+import models.{ADRTransferException, ErsSummary}
+import org.scalatest.mockito.MockitoSugar
+import org.scalatestplus.play.guice.GuiceOneAppPerSuite
+import play.api.mvc.AnyContentAsEmpty
 import play.api.test.FakeRequest
-import uk.gov.hmrc.play.test.{WithFakeApplication, UnitSpec}
+import uk.gov.hmrc.play.test.{UnitSpec, WithFakeApplication}
 import uk.gov.hmrc.http.HeaderCarrier
+import utils.LoggingAndRexceptions.ADRExceptionEmitter
 
-class ConfigUtilsSpec extends UnitSpec with WithFakeApplication {
+class ConfigUtilsSpec extends UnitSpec with MockitoSugar with GuiceOneAppPerSuite {
+
+  val mockADRExceptionEmitter: ADRExceptionEmitter = app.injector.instanceOf[ADRExceptionEmitter]
+  val testConfigUtils = new ConfigUtils(mockADRExceptionEmitter)
+  implicit val request: FakeRequest[AnyContentAsEmpty.type] = FakeRequest()
+  implicit val hc = HeaderCarrier()
+  implicit val ersSummary: ErsSummary = Fixtures.EMISummaryDate
 
   "calling getConfigData" should {
 
     "return config object" in {
-      implicit val request = FakeRequest()
-      implicit val hc = new HeaderCarrier()
-      implicit val ersSummary = Fixtures.EMISummaryDate
-
-      val result = ConfigUtils.getConfigData("common/Root", "Root")
+      val result = testConfigUtils.getConfigData("common/Root", "Root")
       val firstField = result.getConfigList("fields").get(0)
       firstField.getString("name") shouldBe "regime"
       firstField.getString("type") shouldBe "string"
@@ -39,12 +45,8 @@ class ConfigUtilsSpec extends UnitSpec with WithFakeApplication {
     }
 
     "throws ADRException if unexisting file is loaded" in {
-      implicit val request = FakeRequest()
-      implicit val hc = new HeaderCarrier()
-      implicit val ersSummary = Fixtures.EMISummaryDate
-
       val result = intercept[ADRTransferException] {
-        ConfigUtils.getConfigData("unexisting path", "Root")
+        testConfigUtils.getConfigData("unexisting path", "Root")
       }
       result.message shouldBe "Trying to load invalid configuration. Path: unexisting path, value: Root"
       result.context shouldBe "ConfigUtils.getConfigData"
@@ -54,17 +56,17 @@ class ConfigUtilsSpec extends UnitSpec with WithFakeApplication {
   "calling getClearData" should {
 
     "return Object if Some(Object) is given" in {
-      val result = ConfigUtils.getClearData(Some("data"))
+      val result = testConfigUtils.getClearData(Some("data"))
       result shouldBe "data"
     }
 
     "return None if None is given" in {
-      val result = ConfigUtils.getClearData(None)
+      val result = testConfigUtils.getClearData(None)
       result shouldBe None
     }
 
     "return Object if Object is given" in {
-      val result = ConfigUtils.getClearData("data")
+      val result = testConfigUtils.getClearData("data")
       result shouldBe "data"
     }
   }

@@ -16,40 +16,39 @@
 
 package repositories
 
-import config.ApplicationConfig._
-import models.{ERSQuery, ErsSummary, ERSMetaDataResults}
+import config.ApplicationConfig
+import javax.inject.Inject
+import models.{ERSMetaDataResults, ERSQuery, ErsSummary}
 import org.joda.time.DateTime
-import uk.gov.hmrc.mongo.{ReactiveRepository, Repository}
-import reactivemongo.api.DB
+import play.api.libs.json.JsObject
+import play.modules.reactivemongo.ReactiveMongoComponent
+import reactivemongo.api.{Cursor, DB}
 import reactivemongo.bson._
-import uk.gov.hmrc.mongo.json.ReactiveMongoFormats
 import reactivemongo.play.json.ImplicitBSONHandlers._
+import uk.gov.hmrc.mongo.ReactiveRepository
+import uk.gov.hmrc.mongo.json.ReactiveMongoFormats
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-trait MetaDataVerificationRepository extends Repository[ErsSummary, BSONObjectID] {
-  def getCountBySchemeTypeWithInDateRange(ersQuery: ERSQuery): Future[Int]
-  def getBundleRefAndSchemeRefBySchemeTypeWithInDateRange(ersQuery: ERSQuery): Future[List[(String,String,String)]]
-  def getSchemeRefsInfo(ersQuery: ERSQuery): Future[List[ERSMetaDataResults]]
-}
+class MetaDataVerificationMongoRepository @Inject()(applicationConfig: ApplicationConfig, rmc: ReactiveMongoComponent)
+  extends ReactiveRepository[ErsSummary, BSONObjectID](applicationConfig.metadataCollection,
+    rmc.mongoConnector.db,
+    ErsSummary.format,
+    ReactiveMongoFormats.objectIdFormats) {
 
-class MetaDataVerificationMongoRepository()(implicit mongo: () => DB)
-  extends ReactiveRepository[ErsSummary, BSONObjectID](metadataCollection, mongo, ErsSummary.format, ReactiveMongoFormats.objectIdFormats)
-  with MetaDataVerificationRepository {
-
-  override def getCountBySchemeTypeWithInDateRange(ersQuery: ERSQuery): Future[Int] = {
+  def getCountBySchemeTypeWithInDateRange(ersQuery: ERSQuery): Future[Int] = {
 
     val dateRangeSelector: BSONDocument = BSONDocument(
       "metaData.schemeInfo.timestamp" -> BSONDocument(
-        "$gte" -> DateTime.parse(ersQuery.startDate.getOrElse(defaultScheduleStartDate)).getMillis,
-        "$lte" -> DateTime.parse(ersQuery.endDate.getOrElse(defaultScheduleStartDate)).getMillis
+        "$gte" -> DateTime.parse(ersQuery.startDate.getOrElse(applicationConfig.defaultScheduleStartDate)).getMillis,
+        "$lte" -> DateTime.parse(ersQuery.endDate.getOrElse(applicationConfig.defaultScheduleStartDate)).getMillis
       )
     )
 
     val schemeSelector: BSONDocument = if(ersQuery.schemeType.nonEmpty) {
       BSONDocument(
-        "metaData.schemeInfo.schemeType" -> BSONString(ersQuery.schemeType.getOrElse(ersQuerySchemeType))
+        "metaData.schemeInfo.schemeType" -> BSONString(ersQuery.schemeType.getOrElse(applicationConfig.ersQuerySchemeType))
       )
     }
     else {
@@ -59,17 +58,17 @@ class MetaDataVerificationMongoRepository()(implicit mongo: () => DB)
     collection.count(Option((schemeSelector ++ dateRangeSelector).as[collection.pack.Document]))
   }
 
-  override def getBundleRefAndSchemeRefBySchemeTypeWithInDateRange(ersQuery: ERSQuery): Future[List[(String,String,String)]] = {
+  def getBundleRefAndSchemeRefBySchemeTypeWithInDateRange(ersQuery: ERSQuery): Future[List[(String,String,String)]] = {
     val dateRangeSelector: BSONDocument = BSONDocument(
       "metaData.schemeInfo.timestamp" -> BSONDocument(
-        "$gte" -> DateTime.parse(ersQuery.startDate.getOrElse(defaultScheduleStartDate)).getMillis,
-        "$lte" -> DateTime.parse(ersQuery.endDate.getOrElse(defaultScheduleStartDate)).getMillis
+        "$gte" -> DateTime.parse(ersQuery.startDate.getOrElse(applicationConfig.defaultScheduleStartDate)).getMillis,
+        "$lte" -> DateTime.parse(ersQuery.endDate.getOrElse(applicationConfig.defaultScheduleStartDate)).getMillis
       )
     )
 
     val schemeSelector: BSONDocument = if (ersQuery.schemeType.nonEmpty) {
       BSONDocument(
-        "metaData.schemeInfo.schemeType" -> BSONString(ersQuery.schemeType.getOrElse(ersQuerySchemeType))
+        "metaData.schemeInfo.schemeType" -> BSONString(ersQuery.schemeType.getOrElse(applicationConfig.ersQuerySchemeType))
       )
     }
     else {
@@ -78,24 +77,24 @@ class MetaDataVerificationMongoRepository()(implicit mongo: () => DB)
 
     val selector = (schemeSelector ++ dateRangeSelector).as[collection.pack.Document]
 
-    collection.find(selector).cursor[ErsSummary]().collect[List]().map(
+    collection.find(selector).cursor[ErsSummary]().collect[List](Int.MaxValue, Cursor.FailOnError[List[ErsSummary]]()).map(
       _.map{ results =>
         (results.bundleRef,results.metaData.schemeInfo.schemeRef,results.transferStatus.getOrElse("Unknown"))
       }
     )
   }
 
-  override def getSchemeRefsInfo(ersQuery: ERSQuery): Future[List[ERSMetaDataResults]] = {
+  def getSchemeRefsInfo(ersQuery: ERSQuery): Future[List[ERSMetaDataResults]] = {
     val dateRangeSelector: BSONDocument = BSONDocument(
       "metaData.schemeInfo.timestamp" -> BSONDocument(
-        "$gte" -> DateTime.parse(ersQuery.startDate.getOrElse(defaultScheduleStartDate)).getMillis,
-        "$lte" -> DateTime.parse(ersQuery.endDate.getOrElse(defaultScheduleStartDate)).getMillis
+        "$gte" -> DateTime.parse(ersQuery.startDate.getOrElse(applicationConfig.defaultScheduleStartDate)).getMillis,
+        "$lte" -> DateTime.parse(ersQuery.endDate.getOrElse(applicationConfig.defaultScheduleStartDate)).getMillis
       )
     )
 
     val schemeSelector: BSONDocument = if (ersQuery.schemeType.nonEmpty) {
       BSONDocument(
-        "metaData.schemeInfo.schemeType" -> BSONString(ersQuery.schemeType.getOrElse(ersQuerySchemeType))
+        "metaData.schemeInfo.schemeType" -> BSONString(ersQuery.schemeType.getOrElse(applicationConfig.ersQuerySchemeType))
       )
     }
     else {
@@ -111,7 +110,7 @@ class MetaDataVerificationMongoRepository()(implicit mongo: () => DB)
 
     val selector = (schemeSelector ++ dateRangeSelector ++ schemeRefsSelector).as[collection.pack.Document]
 
-    collection.find(selector).cursor[ErsSummary]().collect[List]().map(
+    collection.find(selector).cursor[ErsSummary]().collect[List](Int.MaxValue, Cursor.FailOnError[List[ErsSummary]]()).map(
       _.map{results =>
         ERSMetaDataResults(results.bundleRef, results.metaData.schemeInfo.schemeRef,
           results.transferStatus.getOrElse("Unknown"),

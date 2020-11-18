@@ -16,65 +16,62 @@
 
 package config
 
-import play.api.Play._
-import uk.gov.hmrc.play.config.ServicesConfig
+import javax.inject.Inject
+import models.ERSQuery
+import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
+
 import scala.util.Try
-import scala.collection.JavaConversions._
-import play.api.Mode.Mode
-import play.api.{Configuration, Play}
 
-object ApplicationConfig extends ServicesConfig {
-
-  override protected def mode: play.api.Mode.Mode = Play.current.mode
-  protected def runModeConfiguration: play.api.Configuration = Play.current.configuration
+class ApplicationConfig @Inject()(serviceConfig: ServicesConfig) {
 
 
-  private def loadConfig(key: String) = configuration.getString(key).getOrElse(throw new Exception(s"Missing key: $key"))
+  lazy val presubmissionCollection: String = serviceConfig.getString("settings.presubmission-collection")
+  lazy val metadataCollection: String = serviceConfig.getString("settings.metadata-collection")
 
-  lazy val presubmissionCollection = Try(loadConfig("settings.presubmission-collection")).getOrElse("")
-  lazy val metadataCollection = Try(loadConfig("settings.metadata-collection")).getOrElse("")
+  lazy val adrBaseURI: String = serviceConfig.baseUrl("ers-stub")
+  lazy val adrFullSubmissionURI: String = serviceConfig.getString("microservice.services.ers-stub.full-submission-url")
+  lazy val UrlHeaderEnvironment: String = serviceConfig.getString("microservice.services.ers-stub.environment")
+  lazy val UrlHeaderAuthorization: String = s"Bearer ${serviceConfig.getString("microservice.services.ers-stub.authorization-token")}"
 
-  lazy val adrBaseURI: String = baseUrl("ers-stub")
-  lazy val adrFullSubmissionURI: String = config("ers-stub").getString("full-submission-url").get
-  lazy val UrlHeaderEnvironment: String = config("ers-stub").getString("environment").get
-  lazy val UrlHeaderAuthorization: String = s"Bearer ${config("ers-stub").getString("authorization-token").get}"
+  lazy val isSchedulerEnabled: Boolean = serviceConfig.getBoolean("scheduling.enabled")
+  lazy val schedulerStatuses: List[String] = Try(serviceConfig.getString("scheduling.statuses").split(",").toList).getOrElse(List())
+  lazy val schedulerRepeatIntervalInSeconds: Int = serviceConfig.getInt("scheduling.repeat-interval-sec")
+  lazy val schedulerMaxRepeatIntervalInSeconds: Int = serviceConfig.getInt("scheduling.max-repeat-interval-sec")
+  lazy val schedulerInitialDelayInMilliseconds: Int = serviceConfig.getInt("scheduling.initial-delay-ms")
+  lazy val schedulerMaxDelayInMilliseconds: Int = serviceConfig.getInt("scheduling.max-delay-ms")
+  lazy val schedulerStartHour: Int = serviceConfig.getInt("scheduling.start-hour")
+  lazy val schedulerStartMinute: Int = serviceConfig.getInt("scheduling.start-minute")
+  lazy val schedulerEndHour: Int = serviceConfig.getInt("scheduling.end-hour")
+  lazy val schedulerEndMinute: Int = serviceConfig.getInt("scheduling.end-minute")
+  lazy val schedulerLockExpireMin: Int = serviceConfig.getInt("scheduling.lock-expire-min")
+  lazy val schedulerLockName: String = serviceConfig.getString("scheduling.lock-name")
 
-  lazy val isSchedulerEnabled = Try(loadConfig("scheduling.enabled").toBoolean).getOrElse(false)
-  lazy val schedulerStatuses = Try(loadConfig("scheduling.statuses").split(",").toList).getOrElse(List())
-  lazy val schedulerRepeatIntervalInSeconds = Try(loadConfig("scheduling.repeat-interval-sec").toInt).getOrElse(60)
-  lazy val schedulerMaxRepeatIntervalInSeconds = Try(loadConfig("scheduling.max-repeat-interval-sec").toInt).getOrElse(60)
-  lazy val schedulerInitialDelayInMilliseconds = Try(loadConfig("scheduling.initial-delay-ms").toInt).getOrElse(10000)
-  lazy val schedulerMaxDelayInMilliseconds = Try(loadConfig("scheduling.max-delay-ms").toInt).getOrElse(10000)
-  lazy val schedulerStartHour = Try(loadConfig("scheduling.start-hour").toInt).getOrElse(0)
-  lazy val schedulerStartMinute = Try(loadConfig("scheduling.start-minute").toInt).getOrElse(0)
-  lazy val schedulerEndHour = Try(loadConfig("scheduling.end-hour").toInt).getOrElse(0)
-  lazy val schedulerEndMinute = Try(loadConfig("scheduling.end-minute").toInt).getOrElse(0)
-  lazy val schedulerLockExpireMin = Try(loadConfig("scheduling.lock-expire-min").toInt).getOrElse(15)
-  lazy val schedulerLockName = Try(loadConfig("scheduling.lock-name")).getOrElse("ers-resubmission")
+  lazy val schedulerSchemeRefListEnabled: Boolean = serviceConfig.getBoolean("scheduling.resubmit-list-enable")
+  lazy val schedulerSchemeRefList: List[String] = Try(serviceConfig.getString("scheduling.resubmit-list-schemeRefs").split(",").toList).getOrElse(List())
+  lazy val schedulerSchemeRefStatusList: List[String] = Try(serviceConfig.getString("scheduling.resubmit-list-statuses").split(",").toList).getOrElse(List())
+  lazy val schedulerSchemeRefFailStatus: String = serviceConfig.getConfString("scheduling.resubmit-list-failStatus", "failedScheduler")
 
-  lazy val schedulerSchemeRefListEnabled = Try(loadConfig("scheduling.resubmit-list-enable").toBoolean).getOrElse(false)
-  lazy val schedulerSchemeRefList: List[String] = Try(loadConfig("scheduling.resubmit-list-schemeRefs").split(",").toList).getOrElse(List())
-  lazy val schedulerSchemeRefStatusList: List[String] = Try(loadConfig("scheduling.resubmit-list-statuses").split(",").toList).getOrElse(List())
-  lazy val schedulerSchemeRefFailStatus: String = Try(loadConfig("scheduling.resubmit-list-failStatus")).getOrElse("failedScheduler")
+  lazy val schedulerEnableResubmitByScheme: Boolean = serviceConfig.getBoolean("scheduling.resubmit-scheme-enable")
+  lazy val schedulerResubmitScheme: String = serviceConfig.getString("scheduling.resubmit-scheme")
+  lazy val schedulerSuccessStatus: String = serviceConfig.getString("scheduling.resubmit-successful-status")
+  lazy val schedulerResubmitWithNilReturn: Boolean = serviceConfig.getBoolean("scheduling.resubmit-scheme-with-nil-returns")
+  lazy val isSchedulerResubmitBeforeDate: Boolean = serviceConfig.getBoolean("scheduling.resubmit-scheme-before-date")
 
-  lazy val schedulerEnableResubmitByScheme: Boolean = Try(loadConfig("scheduling.resubmit-scheme-enable").toBoolean).getOrElse(true)
-  lazy val schedulerResubmitScheme: String = Try(loadConfig("scheduling.resubmit-scheme")).getOrElse("SAYE")
-  lazy val schedulerSuccessStatus: String = Try(loadConfig("scheduling.resubmit-successful-status")).getOrElse("successResubmit")
-  lazy val schedulerResubmitWithNilReturn: Boolean = Try(loadConfig("scheduling.resubmit-scheme-with-nil-returns").toBoolean).getOrElse(false)
-  lazy val isSchedulerResubmitBeforeDate: Boolean = Try(loadConfig("scheduling.resubmit-scheme-before-date").toBoolean).getOrElse(true)
-
-  lazy val defaultScheduleStartDate: String = Try(loadConfig("scheduling.default-resubmit-start-date")).getOrElse("2016-04-01")
-  lazy val rescheduleStartDate: String = Try(loadConfig("scheduling.resubmit-start-date")).getOrElse("2016-04-01")
-  lazy val scheduleEndDate: String = Try(loadConfig("scheduling.resubmit-end-date")).getOrElse("2016-04-01")
-  lazy val scheduleStartDate:String = if(ApplicationConfig.isSchedulerResubmitBeforeDate){
-    ApplicationConfig.defaultScheduleStartDate
+  lazy val defaultScheduleStartDate: String = serviceConfig.getString("scheduling.default-resubmit-start-date")
+  lazy val rescheduleStartDate: String = serviceConfig.getString("scheduling.resubmit-start-date")
+  lazy val scheduleEndDate: String = serviceConfig.getString("scheduling.resubmit-end-date")
+  lazy val scheduleStartDate:String = if(isSchedulerResubmitBeforeDate){
+    defaultScheduleStartDate
   } else {
-    ApplicationConfig.rescheduleStartDate
+    rescheduleStartDate
   }
 
-  lazy val isErsQueryEnabled: Boolean = Try(loadConfig("ers-query.enabled").toBoolean).getOrElse(false)
-  lazy val ersQuerySchemeType: String = Try(loadConfig("ers-query.schemetype")).getOrElse("SAYE")
-  lazy val ersQueryStartDate: String = Try(loadConfig("ers-query.start-date")).getOrElse("2016-04-01")
-  lazy val ersQueryEndDate: String = Try(loadConfig("ers-query.end-date")).getOrElse("2016-04-01")
+  lazy val isErsQueryEnabled: Boolean = serviceConfig.getBoolean("ers-query.enabled")
+  lazy val ersQuerySchemeType: String = serviceConfig.getString("ers-query.schemetype")
+  lazy val ersQueryStartDate: String = serviceConfig.getString("ers-query.start-date")
+  lazy val ersQueryEndDate: String = serviceConfig.getString("ers-query.end-date")
 
+  def ersQuery: ERSQuery = {
+    ERSQuery(Some(ersQuerySchemeType),Some(ersQueryStartDate),Some(ersQueryEndDate),None,schedulerSchemeRefList)
+  }
 }

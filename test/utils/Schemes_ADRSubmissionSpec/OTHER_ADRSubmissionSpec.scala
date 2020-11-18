@@ -18,35 +18,39 @@ package utils.Schemes_ADRSubmissionSpec
 
 import com.typesafe.config.Config
 import fixtures.{Common, Fixtures, OTHER}
-import models.{SchemeInfo, SchemeData}
+import models.{SchemeData, SchemeInfo}
 import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
 import org.scalatest.BeforeAndAfter
 import org.scalatest.mockito.MockitoSugar
+import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.libs.json._
-import play.api.mvc.Request
 import play.api.test.FakeRequest
 import services.PresubmissionService
-import uk.gov.hmrc.play.test.{WithFakeApplication, UnitSpec}
-import utils.{ConfigUtils, SubmissionCommon, ADRSubmission}
-import utils.SubmissionCommon._
+import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.play.test.UnitSpec
+import utils.LoggingAndRexceptions.ADRExceptionEmitter
+import utils.{ADRSubmission, ConfigUtils, SubmissionCommon}
+
 import scala.collection.mutable.ListBuffer
 import scala.concurrent.Future
-import uk.gov.hmrc.http.HeaderCarrier
 
-class OTHER_ADRSubmissionSpec extends UnitSpec with MockitoSugar with BeforeAndAfter {
+class OTHER_ADRSubmissionSpec extends UnitSpec with MockitoSugar with BeforeAndAfter with GuiceOneAppPerSuite {
 
   implicit val hc: HeaderCarrier = new HeaderCarrier()
   implicit val request = FakeRequest().withBody(Fixtures.metadataJson)
 
+  val mockSubmissionCommon: SubmissionCommon = app.injector.instanceOf[SubmissionCommon]
   val mockPresubmissionService: PresubmissionService = mock[PresubmissionService]
+  val mockAdrExceptionEmitter: ADRExceptionEmitter = mock[ADRExceptionEmitter]
+  val mockConfigUtils: ConfigUtils = app.injector.instanceOf[ConfigUtils]
 
-  val adrSubmission: ADRSubmission = new ADRSubmission {
-    override val presubmissionService: PresubmissionService = mockPresubmissionService
-    override val submissionCommon: SubmissionCommon = SubmissionCommon
-    override val configUtils: ConfigUtils = ConfigUtils
-  }
-
+  val mockAdrSubmission: ADRSubmission = new ADRSubmission(
+    mockSubmissionCommon,
+    mockPresubmissionService,
+    mockAdrExceptionEmitter,
+    mockConfigUtils
+  )
   def before(fun : => scala.Any) = {
     super.before(())
     reset(mockPresubmissionService)
@@ -62,7 +66,7 @@ class OTHER_ADRSubmissionSpec extends UnitSpec with MockitoSugar with BeforeAndA
         Future.successful(List())
       )
 
-      val result = await(adrSubmission.generateSubmission()(request, hc, OTHER.metadataNilReturn))
+      val result = await(mockAdrSubmission.generateSubmission()(request, hc, OTHER.metadataNilReturn))
       result-("acknowledgementReference") shouldBe Json.parse("""{
                                                                 |"regime":"ERS",
                                                                 |"schemeType":"OTHER",
@@ -104,7 +108,7 @@ class OTHER_ADRSubmissionSpec extends UnitSpec with MockitoSugar with BeforeAndA
         Future.successful(List())
       )
 
-      val result = await(adrSubmission.generateSubmission()(request, hc, OTHER.metadata))
+      val result = await(mockAdrSubmission.generateSubmission()(request, hc, OTHER.metadata))
       result-("acknowledgementReference") shouldBe Json.parse("""{
                                                                 |"regime":"ERS",
                                                                 |"schemeType":"OTHER",
@@ -181,7 +185,7 @@ class OTHER_ADRSubmissionSpec extends UnitSpec with MockitoSugar with BeforeAndA
         )
       )
 
-      val result = await(adrSubmission.generateSubmission()(request, hc, OTHER.metadata))
+      val result = await(mockAdrSubmission.generateSubmission()(request, hc, OTHER.metadata))
       result-("acknowledgementReference") shouldBe Json.parse("""{
                                                                  |"regime":"ERS",
                                                                  |"schemeType":"OTHER",
@@ -515,7 +519,7 @@ class OTHER_ADRSubmissionSpec extends UnitSpec with MockitoSugar with BeforeAndA
         )
       )
 
-      val result = await(adrSubmission.generateSubmission()(request, hc, OTHER.metadata))
+      val result = await(mockAdrSubmission.generateSubmission()(request, hc, OTHER.metadata))
       result-("acknowledgementReference") shouldBe Json.parse("""{
                                                                 |"regime":"ERS",
                                                                 |"schemeType":"OTHER",
@@ -1042,9 +1046,9 @@ class OTHER_ADRSubmissionSpec extends UnitSpec with MockitoSugar with BeforeAndA
     "create valid JSON for empty Granted V3" in {
 
       val sheetName: String = "Other_Grants_V3"
-      val configData: Config = Common.loadConfiguration(OTHER.otherSchemeType, sheetName)
+      val configData: Config = Common.loadConfiguration(OTHER.otherSchemeType, sheetName, mockConfigUtils)
 
-      val result = ADRSubmission.buildJson(
+      val result = mockAdrSubmission.buildJson(
         configData,
         ListBuffer(
           OTHER.buildGrantedV3Empty()
@@ -1058,9 +1062,9 @@ class OTHER_ADRSubmissionSpec extends UnitSpec with MockitoSugar with BeforeAndA
     "create valid JSON for Granted V3" in {
 
       val sheetName: String = "Other_Grants_V3"
-      val configData: Config = Common.loadConfiguration(OTHER.otherSchemeType, sheetName)
+      val configData: Config = Common.loadConfiguration(OTHER.otherSchemeType, sheetName, mockConfigUtils)
 
-      val result = ADRSubmission.buildJson(
+      val result = mockAdrSubmission.buildJson(
         configData,
         ListBuffer(
           OTHER.buildGrantedV3()
@@ -1087,9 +1091,9 @@ class OTHER_ADRSubmissionSpec extends UnitSpec with MockitoSugar with BeforeAndA
     "create valid JSON for Options V3 with given TaxAvoidance = yes, optionsExercised = yes, sharesListedOnSE = yes, agreedHMRC = yes, valueReceivedOnRACL = yes" in {
 
       val sheetName: String = "Other_Options_V3"
-      val configData: Config = Common.loadConfiguration(OTHER.otherSchemeType, sheetName)
+      val configData: Config = Common.loadConfiguration(OTHER.otherSchemeType, sheetName, mockConfigUtils)
 
-      val result = ADRSubmission.buildJson(
+      val result = mockAdrSubmission.buildJson(
         configData,
         ListBuffer(
           OTHER.buildOptionV3(
@@ -1159,9 +1163,9 @@ class OTHER_ADRSubmissionSpec extends UnitSpec with MockitoSugar with BeforeAndA
     "create valid JSON for Options V3 with given TaxAvoidance = no, optionsExercised = yes, sharesListedOnSE = yes, agreedHMRC = yes, valueReceivedOnRACL = yes" in {
 
       val sheetName: String = "Other_Options_V3"
-      val configData: Config = Common.loadConfiguration(OTHER.otherSchemeType, sheetName)
+      val configData: Config = Common.loadConfiguration(OTHER.otherSchemeType, sheetName, mockConfigUtils)
 
-      val result = ADRSubmission.buildJson(
+      val result = mockAdrSubmission.buildJson(
         configData,
         ListBuffer(
           OTHER.buildOptionV3(
@@ -1230,9 +1234,9 @@ class OTHER_ADRSubmissionSpec extends UnitSpec with MockitoSugar with BeforeAndA
     "create valid JSON for Options V3 with given TaxAvoidance = no, optionsExercised = yes, sharesListedOnSE = no, agreedHMRC = yes, valueReceivedOnRACL = yes" in {
 
       val sheetName: String = "Other_Options_V3"
-      val configData: Config = Common.loadConfiguration(OTHER.otherSchemeType, sheetName)
+      val configData: Config = Common.loadConfiguration(OTHER.otherSchemeType, sheetName, mockConfigUtils)
 
-      val result = ADRSubmission.buildJson(
+      val result = mockAdrSubmission.buildJson(
         configData,
         ListBuffer(
           OTHER.buildOptionV3(
@@ -1303,9 +1307,9 @@ class OTHER_ADRSubmissionSpec extends UnitSpec with MockitoSugar with BeforeAndA
     "create valid JSON for Options V3 with given TaxAvoidance = no, optionsExercised = yes, sharesListedOnSE = no, agreedHMRC = no, valueReceivedOnRACL = yes" in {
 
       val sheetName: String = "Other_Options_V3"
-      val configData: Config = Common.loadConfiguration(OTHER.otherSchemeType, sheetName)
+      val configData: Config = Common.loadConfiguration(OTHER.otherSchemeType, sheetName, mockConfigUtils)
 
-      val result = ADRSubmission.buildJson(
+      val result = mockAdrSubmission.buildJson(
         configData,
         ListBuffer(
           OTHER.buildOptionV3(
@@ -1375,9 +1379,9 @@ class OTHER_ADRSubmissionSpec extends UnitSpec with MockitoSugar with BeforeAndA
     "create valid JSON for Options V3 with given TaxAvoidance = no, optionsExercised = yes, sharesListedOnSE = no, agreedHMRC = no, valueReceivedOnRACL = no" in {
 
       val sheetName: String = "Other_Options_V3"
-      val configData: Config = Common.loadConfiguration(OTHER.otherSchemeType, sheetName)
+      val configData: Config = Common.loadConfiguration(OTHER.otherSchemeType, sheetName, mockConfigUtils)
 
-      val result = ADRSubmission.buildJson(
+      val result = mockAdrSubmission.buildJson(
         configData,
         ListBuffer(
           OTHER.buildOptionV3(
@@ -1447,9 +1451,9 @@ class OTHER_ADRSubmissionSpec extends UnitSpec with MockitoSugar with BeforeAndA
     "create valid JSON for Options V3 with given TaxAvoidance = no, optionsExercised = no, sharesListedOnSE = no, agreedHMRC = no, valueReceivedOnRACL = yes" in {
 
       val sheetName: String = "Other_Options_V3"
-      val configData: Config = Common.loadConfiguration(OTHER.otherSchemeType, sheetName)
+      val configData: Config = Common.loadConfiguration(OTHER.otherSchemeType, sheetName, mockConfigUtils)
 
-      val result = ADRSubmission.buildJson(
+      val result = mockAdrSubmission.buildJson(
         configData,
         ListBuffer(
           OTHER.buildOptionV3(
@@ -1515,9 +1519,9 @@ class OTHER_ADRSubmissionSpec extends UnitSpec with MockitoSugar with BeforeAndA
     "create valid JSON for Options V3 with given TaxAvoidance = no, optionsExercised = no, sharesListedOnSE = no, agreedHMRC = no, valueReceivedOnRACL = no" in {
 
       val sheetName: String = "Other_Options_V3"
-      val configData: Config = Common.loadConfiguration(OTHER.otherSchemeType, sheetName)
+      val configData: Config = Common.loadConfiguration(OTHER.otherSchemeType, sheetName, mockConfigUtils)
 
-      val result = ADRSubmission.buildJson(
+      val result = mockAdrSubmission.buildJson(
         configData,
         ListBuffer(
           OTHER.buildOptionV3(
@@ -1584,9 +1588,9 @@ class OTHER_ADRSubmissionSpec extends UnitSpec with MockitoSugar with BeforeAndA
     "create valid JSON for Aquisition V3 when given taxAvoidance = yes, sharesPartOfLargestClass = yes, sharesListedOnSE = yes, marketValueAgreedHMRC = yes, hasAnElectionBeenMadeToDisregardRestrictions = yes, artificialReductionInValueOnAcquisition = yes, sharesIssuedUnderAnEmployeeShareholderArrangement = yes" in {
 
       val sheetName: String = "Other_Acquisition_V3"
-      val configData: Config = Common.loadConfiguration(OTHER.otherSchemeType, sheetName)
+      val configData: Config = Common.loadConfiguration(OTHER.otherSchemeType, sheetName, mockConfigUtils)
 
-      val result = ADRSubmission.buildJson(
+      val result = mockAdrSubmission.buildJson(
         configData,
         ListBuffer(
           OTHER.buildAquisitionV3(
@@ -1652,9 +1656,9 @@ class OTHER_ADRSubmissionSpec extends UnitSpec with MockitoSugar with BeforeAndA
     "create valid JSON for Aquisition V3 when given taxAvoidance = no, sharesPartOfLargestClass = yes, sharesListedOnSE = yes, marketValueAgreedHMRC = yes, hasAnElectionBeenMadeToDisregardRestrictions = yes, artificialReductionInValueOnAcquisition = yes, sharesIssuedUnderAnEmployeeShareholderArrangement = yes" in {
 
       val sheetName: String = "Other_Acquisition_V3"
-      val configData: Config = Common.loadConfiguration(OTHER.otherSchemeType, sheetName)
+      val configData: Config = Common.loadConfiguration(OTHER.otherSchemeType, sheetName, mockConfigUtils)
 
-      val result = ADRSubmission.buildJson(
+      val result = mockAdrSubmission.buildJson(
         configData,
         ListBuffer(
           OTHER.buildAquisitionV3(
@@ -1719,9 +1723,9 @@ class OTHER_ADRSubmissionSpec extends UnitSpec with MockitoSugar with BeforeAndA
     "create valid JSON for Aquisition V3 when given taxAvoidance = no, sharesPartOfLargestClass = yes, sharesListedOnSE = no, marketValueAgreedHMRC = yes, hasAnElectionBeenMadeToDisregardRestrictions = yes, artificialReductionInValueOnAcquisition = yes, sharesIssuedUnderAnEmployeeShareholderArrangement = yes" in {
 
       val sheetName: String = "Other_Acquisition_V3"
-      val configData: Config = Common.loadConfiguration(OTHER.otherSchemeType, sheetName)
+      val configData: Config = Common.loadConfiguration(OTHER.otherSchemeType, sheetName, mockConfigUtils)
 
-      val result = ADRSubmission.buildJson(
+      val result = mockAdrSubmission.buildJson(
         configData,
         ListBuffer(
           OTHER.buildAquisitionV3(
@@ -1788,9 +1792,9 @@ class OTHER_ADRSubmissionSpec extends UnitSpec with MockitoSugar with BeforeAndA
     "create valid JSON for Aquisition V3 when given taxAvoidance = no, sharesPartOfLargestClass = yes, sharesListedOnSE = no, marketValueAgreedHMRC = no, hasAnElectionBeenMadeToDisregardRestrictions = yes, artificialReductionInValueOnAcquisition = yes, sharesIssuedUnderAnEmployeeShareholderArrangement = yes" in {
 
       val sheetName: String = "Other_Acquisition_V3"
-      val configData: Config = Common.loadConfiguration(OTHER.otherSchemeType, sheetName)
+      val configData: Config = Common.loadConfiguration(OTHER.otherSchemeType, sheetName, mockConfigUtils)
 
-      val result = ADRSubmission.buildJson(
+      val result = mockAdrSubmission.buildJson(
         configData,
         ListBuffer(
           OTHER.buildAquisitionV3(
@@ -1856,9 +1860,9 @@ class OTHER_ADRSubmissionSpec extends UnitSpec with MockitoSugar with BeforeAndA
     "create valid JSON for Aquisition V3 when given taxAvoidance = no, sharesPartOfLargestClass = no, sharesListedOnSE = no, marketValueAgreedHMRC = no, hasAnElectionBeenMadeToDisregardRestrictions = yes, artificialReductionInValueOnAcquisition = yes, sharesIssuedUnderAnEmployeeShareholderArrangement = yes" in {
 
       val sheetName: String = "Other_Acquisition_V3"
-      val configData: Config = Common.loadConfiguration(OTHER.otherSchemeType, sheetName)
+      val configData: Config = Common.loadConfiguration(OTHER.otherSchemeType, sheetName, mockConfigUtils)
 
-      val result = ADRSubmission.buildJson(
+      val result = mockAdrSubmission.buildJson(
         configData,
         ListBuffer(
           OTHER.buildAquisitionV3(
@@ -1922,9 +1926,9 @@ class OTHER_ADRSubmissionSpec extends UnitSpec with MockitoSugar with BeforeAndA
     "create valid JSON for Aquisition V3 when given taxAvoidance = no, sharesPartOfLargestClass = no, sharesListedOnSE = no, marketValueAgreedHMRC = no, hasAnElectionBeenMadeToDisregardRestrictions = no, artificialReductionInValueOnAcquisition = yes, sharesIssuedUnderAnEmployeeShareholderArrangement = yes" in {
 
       val sheetName: String = "Other_Acquisition_V3"
-      val configData: Config = Common.loadConfiguration(OTHER.otherSchemeType, sheetName)
+      val configData: Config = Common.loadConfiguration(OTHER.otherSchemeType, sheetName, mockConfigUtils)
 
-      val result = ADRSubmission.buildJson(
+      val result = mockAdrSubmission.buildJson(
         configData,
         ListBuffer(
           OTHER.buildAquisitionV3(
@@ -1987,9 +1991,9 @@ class OTHER_ADRSubmissionSpec extends UnitSpec with MockitoSugar with BeforeAndA
     "create valid JSON for Aquisition V3 when given taxAvoidance = no, sharesPartOfLargestClass = no, sharesListedOnSE = no, marketValueAgreedHMRC = no, hasAnElectionBeenMadeToDisregardRestrictions = no, artificialReductionInValueOnAcquisition = no, sharesIssuedUnderAnEmployeeShareholderArrangement = yes" in {
 
       val sheetName: String = "Other_Acquisition_V3"
-      val configData: Config = Common.loadConfiguration(OTHER.otherSchemeType, sheetName)
+      val configData: Config = Common.loadConfiguration(OTHER.otherSchemeType, sheetName, mockConfigUtils)
 
-      val result = ADRSubmission.buildJson(
+      val result = mockAdrSubmission.buildJson(
         configData,
         ListBuffer(
           OTHER.buildAquisitionV3(
@@ -2051,9 +2055,9 @@ class OTHER_ADRSubmissionSpec extends UnitSpec with MockitoSugar with BeforeAndA
     "create valid JSON for Aquisition V3 when given taxAvoidance = no, sharesPartOfLargestClass = no, sharesListedOnSE = no, marketValueAgreedHMRC = no, hasAnElectionBeenMadeToDisregardRestrictions = no, artificialReductionInValueOnAcquisition = no, sharesIssuedUnderAnEmployeeShareholderArrangement = no" in {
 
       val sheetName: String = "Other_Acquisition_V3"
-      val configData: Config = Common.loadConfiguration(OTHER.otherSchemeType, sheetName)
+      val configData: Config = Common.loadConfiguration(OTHER.otherSchemeType, sheetName, mockConfigUtils)
 
-      val result = ADRSubmission.buildJson(
+      val result = mockAdrSubmission.buildJson(
         configData,
         ListBuffer(
           OTHER.buildAquisitionV3(
@@ -2116,9 +2120,9 @@ class OTHER_ADRSubmissionSpec extends UnitSpec with MockitoSugar with BeforeAndA
     "create valid JSON for Restricted Securities V3 if TaxAvoidance and SE are given and Agreed HMRC is not" in {
 
       val sheetName: String = "Other_RestrictedSecurities_V3"
-      val configData: Config = Common.loadConfiguration(OTHER.otherSchemeType, sheetName)
+      val configData: Config = Common.loadConfiguration(OTHER.otherSchemeType, sheetName, mockConfigUtils)
 
-      val result = ADRSubmission.buildJson(
+      val result = mockAdrSubmission.buildJson(
         configData,
         ListBuffer(
           OTHER.buildRestrictedSecuritiesV3(
@@ -2160,9 +2164,9 @@ class OTHER_ADRSubmissionSpec extends UnitSpec with MockitoSugar with BeforeAndA
     "create valid JSON for Restricted Securities V3 if TaxAvoidance and SE are not given and Agreed HMRC is given" in {
 
       val sheetName: String = "Other_RestrictedSecurities_V3"
-      val configData: Config = Common.loadConfiguration(OTHER.otherSchemeType, sheetName)
+      val configData: Config = Common.loadConfiguration(OTHER.otherSchemeType, sheetName, mockConfigUtils)
 
-      val result = ADRSubmission.buildJson(
+      val result = mockAdrSubmission.buildJson(
         configData,
         ListBuffer(
           OTHER.buildRestrictedSecuritiesV3(
@@ -2205,9 +2209,9 @@ class OTHER_ADRSubmissionSpec extends UnitSpec with MockitoSugar with BeforeAndA
     "create valid JSON for Restricted Securities V3 if TaxAvoidance is given and SE and Agreed HMRC are not" in {
 
       val sheetName: String = "Other_RestrictedSecurities_V3"
-      val configData: Config = Common.loadConfiguration(OTHER.otherSchemeType, sheetName)
+      val configData: Config = Common.loadConfiguration(OTHER.otherSchemeType, sheetName, mockConfigUtils)
 
-      val result = ADRSubmission.buildJson(
+      val result = mockAdrSubmission.buildJson(
         configData,
         ListBuffer(
           OTHER.buildRestrictedSecuritiesV3(
@@ -2250,9 +2254,9 @@ class OTHER_ADRSubmissionSpec extends UnitSpec with MockitoSugar with BeforeAndA
     "create valid JSON for Restricted Securities V3 with different values" in {
 
       val sheetName: String = "Other_RestrictedSecurities_V3"
-      val configData: Config = Common.loadConfiguration(OTHER.otherSchemeType, sheetName)
+      val configData: Config = Common.loadConfiguration(OTHER.otherSchemeType, sheetName, mockConfigUtils)
 
-      val result = ADRSubmission.buildJson(
+      val result = mockAdrSubmission.buildJson(
         configData,
         ListBuffer(
           OTHER.buildRestrictedSecuritiesV3("yes", "yes", "no"),
@@ -2342,9 +2346,9 @@ class OTHER_ADRSubmissionSpec extends UnitSpec with MockitoSugar with BeforeAndA
     "create valid JSON for Benefits V3 if TaxAvoidance = yes" in {
 
       val sheetName: String = "Other_OtherBenefits_V3"
-      val configData: Config = Common.loadConfiguration(OTHER.otherSchemeType, sheetName)
+      val configData: Config = Common.loadConfiguration(OTHER.otherSchemeType, sheetName, mockConfigUtils)
 
-      val result = ADRSubmission.buildJson(
+      val result = mockAdrSubmission.buildJson(
         configData,
         ListBuffer(
           OTHER.buildBenefitsV3("yes")
@@ -2380,9 +2384,9 @@ class OTHER_ADRSubmissionSpec extends UnitSpec with MockitoSugar with BeforeAndA
     "create valid JSON for Benefits V3 if TaxAvoidance = no" in {
 
       val sheetName: String = "Other_OtherBenefits_V3"
-      val configData: Config = Common.loadConfiguration(OTHER.otherSchemeType, sheetName)
+      val configData: Config = Common.loadConfiguration(OTHER.otherSchemeType, sheetName, mockConfigUtils)
 
-      val result = ADRSubmission.buildJson(
+      val result = mockAdrSubmission.buildJson(
         configData,
         ListBuffer(
           OTHER.buildBenefitsV3("no")
@@ -2419,9 +2423,9 @@ class OTHER_ADRSubmissionSpec extends UnitSpec with MockitoSugar with BeforeAndA
     "create valid JSON for Convertable V3 if TaxAvoidance = yes" in {
 
       val sheetName: String = "Other_Convertible_V3"
-      val configData: Config = Common.loadConfiguration(OTHER.otherSchemeType, sheetName)
+      val configData: Config = Common.loadConfiguration(OTHER.otherSchemeType, sheetName, mockConfigUtils)
 
-      val result = ADRSubmission.buildJson(
+      val result = mockAdrSubmission.buildJson(
         configData,
         ListBuffer(
           OTHER.buildConvertableV3("yes")
@@ -2459,9 +2463,9 @@ class OTHER_ADRSubmissionSpec extends UnitSpec with MockitoSugar with BeforeAndA
     "create valid JSON for Convertable V3 if TaxAvoidance = no" in {
 
       val sheetName: String = "Other_Convertible_V3"
-      val configData: Config = Common.loadConfiguration(OTHER.otherSchemeType, sheetName)
+      val configData: Config = Common.loadConfiguration(OTHER.otherSchemeType, sheetName, mockConfigUtils)
 
-      val result = ADRSubmission.buildJson(
+      val result = mockAdrSubmission.buildJson(
         configData,
         ListBuffer(
           OTHER.buildConvertableV3("no")
@@ -2500,9 +2504,9 @@ class OTHER_ADRSubmissionSpec extends UnitSpec with MockitoSugar with BeforeAndA
     "create valid JSON for Notional V3 if TaxAvoidance = yes" in {
 
       val sheetName: String = "Other_Notional_V3"
-      val configData: Config = Common.loadConfiguration(OTHER.otherSchemeType, sheetName)
+      val configData: Config = Common.loadConfiguration(OTHER.otherSchemeType, sheetName, mockConfigUtils)
 
-      val result = ADRSubmission.buildJson(
+      val result = mockAdrSubmission.buildJson(
         configData,
         ListBuffer(
           OTHER.buildNotionalV3("yes")
@@ -2538,9 +2542,9 @@ class OTHER_ADRSubmissionSpec extends UnitSpec with MockitoSugar with BeforeAndA
     "create valid JSON for Notional V3 if TaxAvoidance = no" in {
 
       val sheetName: String = "Other_Notional_V3"
-      val configData: Config = Common.loadConfiguration(OTHER.otherSchemeType, sheetName)
+      val configData: Config = Common.loadConfiguration(OTHER.otherSchemeType, sheetName, mockConfigUtils)
 
-      val result = ADRSubmission.buildJson(
+      val result = mockAdrSubmission.buildJson(
         configData,
         ListBuffer(
           OTHER.buildNotionalV3("no")
@@ -2577,9 +2581,9 @@ class OTHER_ADRSubmissionSpec extends UnitSpec with MockitoSugar with BeforeAndA
     "create valid JSON for Enchancement V3 if TaxAvoidance = yes" in {
 
       val sheetName: String = "Other_Enhancement_V3"
-      val configData: Config = Common.loadConfiguration(OTHER.otherSchemeType, sheetName)
+      val configData: Config = Common.loadConfiguration(OTHER.otherSchemeType, sheetName, mockConfigUtils)
 
-      val result = ADRSubmission.buildJson(
+      val result = mockAdrSubmission.buildJson(
         configData,
         ListBuffer(
           OTHER.buildEnchancementV3("yes")
@@ -2616,9 +2620,9 @@ class OTHER_ADRSubmissionSpec extends UnitSpec with MockitoSugar with BeforeAndA
     "create valid JSON for Enchancement V3 if TaxAvoidance = no" in {
 
       val sheetName: String = "Other_Enhancement_V3"
-      val configData: Config = Common.loadConfiguration(OTHER.otherSchemeType, sheetName)
+      val configData: Config = Common.loadConfiguration(OTHER.otherSchemeType, sheetName, mockConfigUtils)
 
-      val result = ADRSubmission.buildJson(
+      val result = mockAdrSubmission.buildJson(
         configData,
         ListBuffer(
           OTHER.buildEnchancementV3("no")
@@ -2656,9 +2660,9 @@ class OTHER_ADRSubmissionSpec extends UnitSpec with MockitoSugar with BeforeAndA
     "create valid JSON for Sold V3 if TaxAvoidance = yes" in {
 
       val sheetName: String = "Other_Sold_V3"
-      val configData: Config = Common.loadConfiguration(OTHER.otherSchemeType, sheetName)
+      val configData: Config = Common.loadConfiguration(OTHER.otherSchemeType, sheetName, mockConfigUtils)
 
-      val result = ADRSubmission.buildJson(
+      val result = mockAdrSubmission.buildJson(
         configData,
         ListBuffer(
           OTHER.buildSoldV3("yes")
@@ -2695,9 +2699,9 @@ class OTHER_ADRSubmissionSpec extends UnitSpec with MockitoSugar with BeforeAndA
     "create valid JSON for Sold V3 if TaxAvoidance = no" in {
 
       val sheetName: String = "Other_Sold_V3"
-      val configData: Config = Common.loadConfiguration(OTHER.otherSchemeType, sheetName)
+      val configData: Config = Common.loadConfiguration(OTHER.otherSchemeType, sheetName, mockConfigUtils)
 
-      val result = ADRSubmission.buildJson(
+      val result = mockAdrSubmission.buildJson(
         configData,
         ListBuffer(
           OTHER.buildSoldV3("no")

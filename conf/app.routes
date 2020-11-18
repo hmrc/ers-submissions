@@ -1,13 +1,13 @@
 # microservice specific routes
 
-GET         /assets/*file                                       controllers.Assets.at(path="/public", file)
+GET         /assets/*file                                       @controllers.Assets.at(path="/public", file)
 
-POST        /:empRef/submit-presubmission                       controllers.ReceivePresubmissionController.receivePresubmissionJson(empRef: String)
+POST        /:empRef/submit-presubmission                       @controllers.ReceivePresubmissionController.receivePresubmissionJson(empRef: String)
 
-POST        /submit-metadata                                    controllers.SubmissionController.receiveMetadataJson
+POST        /submit-metadata                                    @controllers.SubmissionController.receiveMetadataJson
 
-POST        /remove-presubmission                               controllers.PresubmissionController.removePresubmissionJson
+POST        /remove-presubmission                               @controllers.PresubmissionController.removePresubmissionJson
 
-POST        /save-metadata                                      controllers.SubmissionController.saveMetadata
+POST        /save-metadata                                      @controllers.SubmissionController.saveMetadata
 
-POST        /check-for-presubmission/:validatedSheets           controllers.PresubmissionController.checkForExistingPresubmission(validatedSheets: Int)
+POST        /check-for-presubmission/:validatedSheets           @controllers.PresubmissionController.checkForExistingPresubmission(validatedSheets: Int)

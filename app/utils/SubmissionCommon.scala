@@ -17,18 +17,19 @@
 package utils
 
 import java.text.SimpleDateFormat
+
 import com.typesafe.config.Config
+import javax.inject.Inject
 import org.joda.time.DateTime
 import play.api.Logger
 import play.api.libs.json.Json.JsValueWrapper
 import play.api.libs.json._
 import reactivemongo.bson.BSONObjectID
+
 import scala.collection.mutable.ListBuffer
 import uk.gov.hmrc.http.HttpResponse
 
-object SubmissionCommon extends SubmissionCommon
-
-trait SubmissionCommon extends ConfigUtils {
+class SubmissionCommon @Inject()(configUtils: ConfigUtils) {
 
   def getCorrelationID(response: HttpResponse): String = {
     val correlationIdRegEx = "CorrelationId -> Buffer\\((\\w+-\\w+-\\w+-\\w+-\\w+)".r
@@ -146,7 +147,7 @@ trait SubmissionCommon extends ConfigUtils {
       getNewField(configElem, elemVal)
     }
     else {
-      val value = extractField(configElem, metadata)
+      val value = configUtils.extractField(configElem, metadata)
       if (value.isInstanceOf[Option[_]] && !value.asInstanceOf[Option[_]].isDefined) {
         if (configElem.hasPath("default_value")) {
           val elemType: String = configElem.getString("type")

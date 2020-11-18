@@ -16,41 +16,48 @@
 
 package services
 
+import org.mockito.ArgumentMatchers.any
+import org.mockito.Mockito.verify
+import org.mockito.internal.verification.VerificationModeFactory
+import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{Matchers, WordSpec}
+import play.api.mvc.AnyContentAsEmpty
 import play.api.test.FakeRequest
-import services.audit.{AuditService, AuditServiceConnector}
-import uk.gov.hmrc.play.audit.model.DataEvent
+import services.audit.AuditService
 import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.play.audit.http.connector.AuditConnector
+import uk.gov.hmrc.play.audit.model.DataEvent
 
-class AuditServiceTest   extends WordSpec with Matchers {
+class AuditServiceTest extends WordSpec with Matchers with MockitoSugar {
+
+  implicit val request: FakeRequest[AnyContentAsEmpty.type] = FakeRequest()
+  implicit val hc: HeaderCarrier = new HeaderCarrier
+
+  val mockAuditConnector: AuditConnector = mock[AuditConnector]
+  val auditTest: AuditService = new AuditService(mockAuditConnector) {
+    override def generateTags(hc: HeaderCarrier): Map[String, String] = Map("tags" -> "someTags")
+  }
+
   "auditer should send message" in {
-
-    implicit val request = FakeRequest()
-
-    implicit var hc = new HeaderCarrier
-
-    val auditConnectorObj = new AuditServiceConnector  {
-      var lastDataEvent : Option[DataEvent]  = None
-      override def auditData(dataEvent : DataEvent)(implicit hc : HeaderCarrier) : Unit = {
-        lastDataEvent = Some(dataEvent)
-      }
-    }
-
-    val auditTest = new AuditService {
-      override def auditConnector = auditConnectorObj
-    }
-
     auditTest.sendEvent("source",  Map("details1" -> "randomDetail"))
 
-    val dataEvent : DataEvent = auditConnectorObj.lastDataEvent.get
-    dataEvent should not equal(Nil)
-    dataEvent.auditSource should equal("ers-submissions")
-    dataEvent.auditType should equal("source")
+    verify(mockAuditConnector, VerificationModeFactory.times(1))
+      .sendEvent(any())(any(), any())
+  }
 
-    val tags = dataEvent.tags
-    tags("dateTime") should not equal(Nil)
+  "buildEvent should build a data event" in {
+    val testDataEvent = DataEvent(
+      auditSource = "ers-submissions",
+      auditType = "source",
+      detail = Map("details1" -> "randomDetail"),
+      tags = Map("tags" -> "someTags")
+    )
 
-    val details = dataEvent.detail
-    details("details1") should equal("randomDetail")
+    val result = auditTest.buildEvent("source", Map("details1" -> "randomDetail"))
+
+    result.auditSource shouldBe testDataEvent.auditSource
+    result.auditType   shouldBe testDataEvent.auditType
+    result.detail      shouldBe testDataEvent.detail
+    result.tags        shouldBe testDataEvent.tags
   }
 }

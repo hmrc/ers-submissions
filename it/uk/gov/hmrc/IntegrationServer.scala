@@ -21,7 +21,7 @@ abstract class ISpec(testName:String, additionalConfig: Seq[(String, String)] = 
   protected lazy val mongoConnection = new MongoDbConnection {}
   protected implicit lazy val db = mongoConnection.db
 
-  def request(url: String) = buildRequest(resource(url))
   implicit val headerCarrier = HeaderCarrier()
+  def request(url: String) = buildRequest(resource(url))
 
 }

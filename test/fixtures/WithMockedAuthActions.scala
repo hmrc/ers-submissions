@@ -24,7 +24,7 @@ import org.mockito.stubbing.{Answer, OngoingStubbing}
 import play.api.libs.json.JsValue
 import play.api.mvc.{Action, AnyContent, BodyParser, BodyParsers, Request, Result}
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 trait WithMockedAuthActions {
 
@@ -39,6 +39,7 @@ trait WithMockedAuthActions {
           new Action[JsValue]{
             override def parser: BodyParser[JsValue] = passedInBodyParser
             override def apply(request: Request[JsValue]): Future[Result] = passedInBlock(request)
+            override def executionContext: ExecutionContext = ExecutionContext.global
           }
         }
       })

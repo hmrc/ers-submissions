@@ -1,11 +1,8 @@
 import sbt.Keys._
-import sbt.Tests.{SubProcess, Group}
-import sbt._
-import uk.gov.hmrc.sbtdistributables.SbtDistributablesPlugin._
+import sbt.{ModuleID, _}
 import scoverage.ScoverageKeys
 import uk.gov.hmrc.sbtdistributables.SbtDistributablesPlugin
 import uk.gov.hmrc.sbtdistributables.SbtDistributablesPlugin._
-import uk.gov.hmrc.versioning.SbtGitVersioning
 
 trait MicroService {
 
@@ -20,9 +17,10 @@ trait MicroService {
 
   val appName: String
 
-  lazy val appDependencies : Seq[ModuleID] = ???
-  lazy val plugins : Seq[Plugins] = Seq(play.sbt.PlayScala, SbtAutoBuildPlugin, SbtGitVersioning, SbtDistributablesPlugin, SbtArtifactory)
-  lazy val playSettings : Seq[Setting[_]] = Seq.empty
+  lazy val appDependencies: Seq[ModuleID] = ???
+  lazy val appOverrides: Set[ModuleID] = AppDependencies.overrideDependencies
+  lazy val plugins: Seq[Plugins] = Seq(play.sbt.PlayScala, SbtAutoBuildPlugin, SbtGitVersioning, SbtDistributablesPlugin, SbtArtifactory)
+  lazy val playSettings: Seq[Setting[_]] = Seq.empty
 
   lazy val scoverageSettings = {
     import scoverage.ScoverageSbtPlugin._
@@ -48,10 +46,11 @@ trait MicroService {
       targetJvm := "jvm-1.8",
       scalaVersion := "2.11.12",
       libraryDependencies ++= appDependencies,
+      dependencyOverrides ++= appOverrides,
       parallelExecution in Test := false,
       fork in Test := false,
       retrieveManaged := true,
-      routesGenerator := StaticRoutesGenerator
+      routesGenerator := InjectedRoutesGenerator
     )
     .settings(resolvers ++= Seq(
       Resolver.bintrayRepo("hmrc", "releases"),
@@ -68,6 +67,7 @@ trait MicroService {
         .withWarnScalaVersionEviction(false)
     )
     .settings(majorVersion := 1)
+    .settings(resolvers += Resolver.jcenterRepo)
 }
 
 private object Repositories {

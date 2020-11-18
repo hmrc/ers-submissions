@@ -16,46 +16,36 @@
 
 package repositories
 
+import config.ApplicationConfig
+import javax.inject.Inject
+import models._
+import org.joda.time.DateTime
 import play.api.Logger
-import play.api.libs.json.Json
+import play.api.libs.json.Format.GenericFormat
+import play.api.libs.json.{JsObject, JsString, JsValue, Json}
+import play.modules.reactivemongo.ReactiveMongoComponent
+import reactivemongo.api.Cursor
+import reactivemongo.api.commands.WriteResult.Message
+import reactivemongo.bson._
+import reactivemongo.play.json.ImplicitBSONHandlers._
+import uk.gov.hmrc.mongo.ReactiveRepository
+import uk.gov.hmrc.mongo.json.ReactiveMongoFormats
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
-import reactivemongo.api.DB
-import reactivemongo.bson._
-import uk.gov.hmrc.mongo.json.ReactiveMongoFormats
-import uk.gov.hmrc.mongo.{ReactiveRepository, Repository}
-import models._
-import config.ApplicationConfig
-import org.joda.time.DateTime
-import reactivemongo.api.commands.WriteResult.Message
-import reactivemongo.play.json.ImplicitBSONHandlers._
 
-
-
-trait MetadataRepository extends Repository[ErsSummary, BSONObjectID] {
-
-  def storeErsSummary(ersSummary: ErsSummary): Future[Boolean]
-
-  def getJson(schemeInfo: SchemeInfo): Future[List[ErsSummary]]
-
-  def updateStatus(schemeInfo: SchemeInfo, status: String): Future[Boolean]
-
-  def findAndUpdateByStatus(statusList: List[String], resubmitWithNilReturn: Boolean, resubmitBeforeDate:Boolean = true, schemeRefList: Option[List[String]], schemeType: Option[String]): Future[Option[ErsSummary]]
-
-  def findAndUpdateBySchemeType(statusList: List[String], schemeType: String): Future[Option[ErsSummary]]
-}
-
-class MetadataMongoRepository()(implicit mongo: () => DB)
-  extends ReactiveRepository[ErsSummary, BSONObjectID](ApplicationConfig.metadataCollection, mongo, ErsSummary.format, ReactiveMongoFormats.objectIdFormats)
-  with MetadataRepository {
+class MetadataMongoRepository @Inject()(applicationConfig: ApplicationConfig, rmc: ReactiveMongoComponent)
+  extends ReactiveRepository[ErsSummary, BSONObjectID](applicationConfig.metadataCollection,
+    rmc.mongoConnector.db,
+    ErsSummary.format,
+    ReactiveMongoFormats.objectIdFormats) {
 
   def buildSelector(schemeInfo: SchemeInfo): BSONDocument = BSONDocument(
     "metaData.schemeInfo.schemeRef" -> BSONString(schemeInfo.schemeRef),
     "metaData.schemeInfo.timestamp" -> BSONLong(schemeInfo.timestamp.getMillis)
   )
 
-  override def storeErsSummary(ersSummary: ErsSummary): Future[Boolean] = {
+  def storeErsSummary(ersSummary: ErsSummary): Future[Boolean] = {
     collection.insert(ersSummary).map { res =>
       if(res.writeErrors.nonEmpty) {
         Logger.error(s"Faling storing metadata. Error: ${Message.unapply(res).getOrElse("")} for ${ersSummary.metaData.schemeInfo}")
@@ -64,15 +54,15 @@ class MetadataMongoRepository()(implicit mongo: () => DB)
     }
   }
 
-  override def getJson(schemeInfo: SchemeInfo): Future[List[ErsSummary]] = {
+  def getJson(schemeInfo: SchemeInfo): Future[List[ErsSummary]] = {
     collection.find(
       buildSelector(schemeInfo)
-    ).cursor[ErsSummary]().collect[List]()
+    ).cursor[ErsSummary]().collect[List](Int.MaxValue, Cursor.FailOnError[List[ErsSummary]]())
   }
 
-  override def updateStatus(schemeInfo: SchemeInfo, status: String): Future[Boolean] = {
+  def updateStatus(schemeInfo: SchemeInfo, status: String): Future[Boolean] = {
     val selector = buildSelector(schemeInfo)
-    val update = Json.obj("$set" -> Json.obj("transferStatus" ->  status))
+    val update = BSONDocument("$set" -> BSONDocument("transferStatus" ->  status))
 
     collection.update(selector, update).map { res =>
       if (res.writeErrors.nonEmpty) {
@@ -82,7 +72,7 @@ class MetadataMongoRepository()(implicit mongo: () => DB)
     }
   }
 
-  override def findAndUpdateByStatus(statusList: List[String], resubmitWithNilReturn: Boolean =  true, isResubmitBeforeDate:Boolean = true, schemeRefList: Option[List[String]], schemeType: Option[String]): Future[Option[ErsSummary]] = {
+  def findAndUpdateByStatus(statusList: List[String], resubmitWithNilReturn: Boolean =  true, isResubmitBeforeDate:Boolean = true, schemeRefList: Option[List[String]], schemeType: Option[String]): Future[Option[ErsSummary]] = {
     val baseSelector: BSONDocument = BSONDocument(
       "transferStatus" -> BSONDocument(
         "$in" -> statusList
@@ -117,8 +107,8 @@ class MetadataMongoRepository()(implicit mongo: () => DB)
     val dateRangeSelector: BSONDocument = if(isResubmitBeforeDate){
       BSONDocument(
         "metaData.schemeInfo.timestamp" -> BSONDocument(
-          "$gte" -> DateTime.parse(ApplicationConfig.scheduleStartDate).getMillis,
-          "$lte" -> DateTime.parse(ApplicationConfig.scheduleEndDate).getMillis
+          "$gte" -> DateTime.parse(applicationConfig.scheduleStartDate).getMillis,
+          "$lte" -> DateTime.parse(applicationConfig.scheduleEndDate).getMillis
         )
       )
     } else {
@@ -158,7 +148,7 @@ class MetadataMongoRepository()(implicit mongo: () => DB)
     }
   }
 
-  override def findAndUpdateBySchemeType(statusList: List[String], schemeType: String): Future[Option[ErsSummary]] = {
+  def findAndUpdateBySchemeType(statusList: List[String], schemeType: String): Future[Option[ErsSummary]] = {
     val baseSelector: BSONDocument = BSONDocument(
       "transferStatus" -> BSONDocument(
         "$in" -> statusList

@@ -16,27 +16,22 @@
 
 package services
 
+import javax.inject.Inject
 import models.ErsSummary
 import play.api.Logger
+import play.api.libs.json.{JsError, JsObject, JsSuccess}
 import play.api.mvc.Request
-import repositories.{Repositories, MetadataMongoRepository, MetadataRepository}
-import play.api.libs.json.{JsError, JsSuccess, JsObject}
-import utils.LoggingAndRexceptions.ErsLoggingAndAuditing
-import scala.concurrent.Future
-import scala.concurrent.ExecutionContext.Implicits.global
+import repositories.Repositories
 import uk.gov.hmrc.http.HeaderCarrier
+import utils.LoggingAndRexceptions.ErsLoggingAndAuditing
+import repositories.MetadataMongoRepository
 
-object MetadataService extends MetadataService {
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 
-  override lazy val metadataRepository: MetadataMongoRepository = Repositories.metadataRepository
-  override val ersLoggingAndAuditing: ErsLoggingAndAuditing = ErsLoggingAndAuditing
+class MetadataService @Inject()(metadataMongoRepository: MetadataMongoRepository, ersLoggingAndAuditing: ErsLoggingAndAuditing) {
 
-}
-
-trait MetadataService {
-
-  lazy val metadataRepository: MetadataRepository = ???
-  val ersLoggingAndAuditing: ErsLoggingAndAuditing
+  lazy val metadataRepository: MetadataMongoRepository = metadataMongoRepository
 
   def storeErsSummary(ersSummary: ErsSummary)(implicit request: Request[_], hc: HeaderCarrier): Future[Boolean] = {
     metadataRepository.storeErsSummary(ersSummary).recover {
@@ -60,7 +55,7 @@ trait MetadataService {
         }
       }
       case e: JsError => {
-        Logger.info("Invalid request. Json: " + json.toString() + ", errors: " + JsError.toFlatJson(e).toString())
+        Logger.info("Invalid request. Json: " + json.toString() + ", errors: " + JsError.toJson(e).toString())
         None
       }
     }

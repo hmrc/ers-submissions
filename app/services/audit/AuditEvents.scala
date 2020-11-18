@@ -16,17 +16,13 @@
 
 package services.audit
 
+import javax.inject.Inject
 import models.{ErsSummary, SchemeInfo}
 import org.apache.commons.lang3.exception.ExceptionUtils
 import play.api.mvc.Request
 import uk.gov.hmrc.http.HeaderCarrier
 
-object AuditEvents extends AuditEvents {
-  override def auditService : AuditService = AuditService
-}
-
-trait AuditEvents {
-  def auditService: AuditService
+class AuditEvents @Inject()(auditService: AuditService) {
 
   def auditRunTimeError(exception: Throwable, contextInfo: String) (implicit request: Request[_], hc: HeaderCarrier): Unit = {
     auditService.sendEvent(
@@ -52,7 +48,8 @@ trait AuditEvents {
     true
   }
 
-  def sendToAdrEvent(context : String, ersSummaryData: ErsSummary, correlationId: Option[String] = None, source: Option[String] = None)(implicit request: Request[_], hc: HeaderCarrier): Boolean = {
+  def sendToAdrEvent(context : String, ersSummaryData: ErsSummary, correlationId: Option[String] = None, source: Option[String] = None)
+                    (implicit request: Request[_], hc: HeaderCarrier): Boolean = {
     val additionalData: Map[String, String] = Map(
       "sapNumber" -> ersSummaryData.metaData.sapNumber.getOrElse(""),
       "ipRef" -> ersSummaryData.metaData.ipRef,

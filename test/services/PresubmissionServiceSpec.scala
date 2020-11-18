@@ -16,89 +16,73 @@
 
 package services
 
-import models.{SchemeInfo, SchemeData}
+import fixtures.Fixtures
+import models.{SchemeData, SchemeInfo}
 import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
-import play.api.test.Helpers._
-import play.api.test.{FakeRequest, FakeApplication}
 import org.scalatest.mockito.MockitoSugar
-import repositories.PresubmissionMongoRepository
-import uk.gov.hmrc.play.test.{WithFakeApplication, UnitSpec}
-import fixtures.Fixtures
-import utils.LoggingAndRexceptions.ErsLoggingAndAuditing
-import scala.concurrent.Future
-import scala.concurrent.ExecutionContext.Implicits.global
+import play.api.test.FakeRequest
+import repositories.{PresubmissionMongoRepository, Repositories}
 import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.play.test.{UnitSpec, WithFakeApplication}
+import utils.LoggingAndRexceptions.ErsLoggingAndAuditing
+
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 
 class PresubmissionServiceSpec extends UnitSpec with MockitoSugar with WithFakeApplication {
 
   implicit val hc: HeaderCarrier = new HeaderCarrier()
   implicit val request = FakeRequest().withBody(Fixtures.metadataJson)
+  val mockRepositories: Repositories = mock[Repositories]
+  val mockErsLoggingAndAuditing: ErsLoggingAndAuditing = mock[ErsLoggingAndAuditing]
+  val mockPresubmissionRepository: PresubmissionMongoRepository = mock[PresubmissionMongoRepository]
 
-  def buildPresubmissionService(storeJsonResult: Option[Boolean] = Some(true), getJsonResult: Boolean = true, removeJsonResult: Option[Boolean] = Some(true)): PresubmissionService = new PresubmissionService {
+  def buildPresubmissionService(storeJsonResult: Option[Boolean] = Some(true),
+                                getJsonResult: Boolean = true,
+                                removeJsonResult: Option[Boolean] = Some(true)): PresubmissionService =
+    new PresubmissionService(mockRepositories, mockErsLoggingAndAuditing) {
 
-    val mockPresubmissionRepository: PresubmissionMongoRepository = mock[PresubmissionMongoRepository]
-    when(
-      mockPresubmissionRepository.storeJson(any[SchemeData])
-    ).thenReturn(
-      if(storeJsonResult.isDefined) {
-        Future(storeJsonResult.get)
-      }
-      else {
-        Future.failed(new RuntimeException)
-      }
-    )
-    when(mockPresubmissionRepository.getJson(any[SchemeInfo])).thenReturn(Future(getJsonResult match {
-      case true => List(Fixtures.schemeData)
-      case _ => List()
-    }))
-    when(
-      mockPresubmissionRepository.removeJson(any[SchemeInfo])
-    ).thenReturn(
-      if(removeJsonResult.isDefined) {
-        Future(removeJsonResult.get)
-      }
-      else {
-        Future.failed(new RuntimeException)
-      }
-    )
-
-    override lazy val presubmissionRepository = mockPresubmissionRepository
-    override val ersLoggingAndAuditing: ErsLoggingAndAuditing = mock[ErsLoggingAndAuditing]
+      override lazy val presubmissionRepository = mockPresubmissionRepository
+    when(mockPresubmissionRepository.storeJson(any[SchemeData])).thenReturn(
+      if(storeJsonResult.isDefined) Future(storeJsonResult.get) else Future.failed(new RuntimeException))
+    when(mockPresubmissionRepository.getJson(any[SchemeInfo]))
+      .thenReturn(Future(if (getJsonResult) List(Fixtures.schemeData) else List()))
+    when(mockPresubmissionRepository.removeJson(any[SchemeInfo]))
+      .thenReturn(if(removeJsonResult.isDefined) Future(removeJsonResult.get) else Future.failed(new RuntimeException))
   }
 
   "calling storeJson" should {
 
     "return true if storage is sussessful" in {
-      val presubmissionService = buildPresubmissionService(Some(true), true)
+      val presubmissionService = buildPresubmissionService(Some(true))
       val result = await(presubmissionService.storeJson(Fixtures.schemeData))
       result shouldBe true
     }
 
     "return false if storage fails" in {
-      val presubmissionService = buildPresubmissionService(Some(false), true)
+      val presubmissionService = buildPresubmissionService(Some(false))
       val result = await(presubmissionService.storeJson(Fixtures.schemeData))
       result shouldBe false
     }
 
     "return false if exception" in {
-      val presubmissionService = buildPresubmissionService(None, true)
+      val presubmissionService = buildPresubmissionService(None)
       val result = await(presubmissionService.storeJson(Fixtures.schemeData))
       result shouldBe false
     }
-
   }
 
   "calling getJson" should {
 
     "return List[SchemeData] if finding succeeds" in {
-      val presubmissionService = buildPresubmissionService(Some(true), true)
+      val presubmissionService = buildPresubmissionService(Some(true))
       val result = await(presubmissionService.getJson(Fixtures.EMISchemeInfo))
       result.isEmpty shouldBe false
     }
 
     "return empty list if finding fails" in {
-      val presubmissionService = buildPresubmissionService(Some(true), false)
+      val presubmissionService = buildPresubmissionService(Some(true), getJsonResult = false)
       val result = await(presubmissionService.getJson(Fixtures.EMISchemeInfo))
       result.isEmpty shouldBe true
     }
@@ -107,87 +91,62 @@ class PresubmissionServiceSpec extends UnitSpec with MockitoSugar with WithFakeA
   "calling removeJson" should {
 
     "return true if removing is sussessful" in {
-      val presubmissionService = buildPresubmissionService(Some(true), true, Some(true))
+      val presubmissionService = buildPresubmissionService(Some(true), getJsonResult = true, Some(true))
       val result = await(presubmissionService.removeJson(Fixtures.EMISchemeInfo))
       result shouldBe true
     }
 
     "return false if removing fails" in {
-      val presubmissionService = buildPresubmissionService(Some(true), true, Some(false))
+      val presubmissionService = buildPresubmissionService(Some(true), getJsonResult = true, Some(false))
       val result = await(presubmissionService.removeJson(Fixtures.EMISchemeInfo))
       result shouldBe false
     }
 
     "return false if exception" in {
-      val presubmissionService = buildPresubmissionService(Some(true), true, None)
+      val presubmissionService = buildPresubmissionService(Some(true), getJsonResult = true, None)
       val result = await(presubmissionService.removeJson(Fixtures.EMISchemeInfo))
       result shouldBe false
     }
-
   }
 
   "calling compareSheetsNumber" should {
 
-    def buildPresubmissionService(foundSheets: Option[Int]): PresubmissionService = new PresubmissionService {
-
-      val mockPresubmissionRepository: PresubmissionMongoRepository = mock[PresubmissionMongoRepository]
-
-      when(
-        mockPresubmissionRepository.count(any[SchemeInfo]())
-      ).thenReturn(
-        if(foundSheets.isDefined) {
-          Future.successful(foundSheets.get)
-        }
-        else {
-          Future.failed(new RuntimeException)
-        }
-      )
-
+    def buildPresubmissionService(foundSheets: Option[Int]): PresubmissionService = new PresubmissionService(mockRepositories, mockErsLoggingAndAuditing) {
       override lazy val presubmissionRepository = mockPresubmissionRepository
-      override val ersLoggingAndAuditing: ErsLoggingAndAuditing = mock[ErsLoggingAndAuditing]
+      when(mockPresubmissionRepository.count(any[SchemeInfo]()))
+        .thenReturn(if(foundSheets.isDefined) Future.successful(foundSheets.get) else Future.failed(new RuntimeException))
     }
 
     "return true if expected number of sheets is equal to found ones" in {
       val presubmissionService = buildPresubmissionService(Some(1))
-      val result = await(presubmissionService.compareSheetsNumber(1, Fixtures.EMISchemeInfo))
+      val result = await(presubmissionService.compareSheetsNumber(expectedSheets = 1, schemeInfo = Fixtures.EMISchemeInfo))
       result shouldBe true
     }
 
     "return false if expected number of sheets is not equal to found ones" in {
       val presubmissionService = buildPresubmissionService(Some(-1))
-      val result = await(presubmissionService.compareSheetsNumber(1, Fixtures.EMISchemeInfo))
+      val result = await(presubmissionService.compareSheetsNumber(expectedSheets = 1, schemeInfo = Fixtures.EMISchemeInfo))
       result shouldBe false
     }
 
     "return false if exception is thrown" in {
       val presubmissionService = buildPresubmissionService(None)
-      val result = await(presubmissionService.compareSheetsNumber(1, Fixtures.EMISchemeInfo))
+      val result = await(presubmissionService.compareSheetsNumber(expectedSheets = 1, schemeInfo = Fixtures.EMISchemeInfo))
       result shouldBe false
     }
-
   }
 
   "calling findAndUpdate" should {
-
-    val  presubmissionService: PresubmissionService = new PresubmissionService {
-
-      val mockPresubmissionRepository: PresubmissionMongoRepository = mock[PresubmissionMongoRepository]
-
-      when(
-        mockPresubmissionRepository.findAndUpdate(any[SchemeInfo]())
-      ).thenReturn(
-        Future.successful(Some(Fixtures.schemeData))
-      )
-
+    val  presubmissionService: PresubmissionService = new PresubmissionService(mockRepositories, mockErsLoggingAndAuditing) {
       override lazy val presubmissionRepository = mockPresubmissionRepository
-      override val ersLoggingAndAuditing: ErsLoggingAndAuditing = mock[ErsLoggingAndAuditing]
+      when(mockPresubmissionRepository.findAndUpdate(any[SchemeInfo]()))
+        .thenReturn(Future.successful(Some(Fixtures.schemeData)))
     }
 
     "return the result of repository findAndUpdate" in {
       val result = await(presubmissionService.findAndUpdate(Fixtures.EMISchemeInfo))
       result.get shouldBe Fixtures.schemeData
     }
-
   }
 
 }

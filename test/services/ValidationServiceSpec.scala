@@ -23,15 +23,17 @@ import uk.gov.hmrc.play.test.UnitSpec
 
 class ValidationServiceSpec extends UnitSpec {
 
+  val service = new ValidationService
+
   "calling validateSchemeData" should {
 
     "return None if invalid json is given" in {
-      val result = ValidationService.validateSchemeData(Fixtures.invalidJson)
+      val result = service.validateSchemeData(Fixtures.invalidJson)
       result shouldBe None
     }
 
     "return valid SchemeData if correct json is given" in {
-      val result = ValidationService.validateSchemeData(Fixtures.schemeDataJson)
+      val result = service.validateSchemeData(Fixtures.schemeDataJson)
       result.get.isInstanceOf[SchemeData] shouldBe true
      // result.get shouldBe Fixtures.schemeData
     }
@@ -41,12 +43,12 @@ class ValidationServiceSpec extends UnitSpec {
   "calling validateSchemeInfo" should {
 
     "return None if json is not of type SchemeInfo" in {
-      val result = ValidationService.validateSchemeInfo(Fixtures.invalidJson)
+      val result = service.validateSchemeInfo(Fixtures.invalidJson)
       result shouldBe None
     }
 
     "return Some(ErsDataRef) if json is valid SchemeInfo" in {
-      val result = ValidationService.validateSchemeInfo(Json.toJson(Fixtures.EMISchemeInfo).as[JsObject])
+      val result = service.validateSchemeInfo(Json.toJson(Fixtures.EMISchemeInfo).as[JsObject])
       result.get.isInstanceOf[SchemeInfo] shouldBe true
       // result.get shouldBe Fixtures.ersDataRef
     }

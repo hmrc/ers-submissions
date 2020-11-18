@@ -18,55 +18,53 @@ package services.resubmission
 
 import config.ApplicationConfig
 import models.Statuses
-import org.joda.time.{DateTimeZone, DateTime}
+import org.joda.time.{DateTime, DateTimeZone}
+
+import scala.util.Random
 
 trait SchedulerConfig {
+  val applicationConfig: ApplicationConfig
 
-  val failedStatus: String = if(ApplicationConfig.schedulerSchemeRefListEnabled) {
-    ApplicationConfig.schedulerSchemeRefFailStatus
-  }
-  else {
+  val failedStatus: String = if(applicationConfig.schedulerSchemeRefListEnabled) {
+    applicationConfig.schedulerSchemeRefFailStatus
+  } else {
     Statuses.FailedScheduler.toString
   }
 
-  val searchStatusList = if(ApplicationConfig.schedulerSchemeRefListEnabled) {
-    ApplicationConfig.schedulerSchemeRefStatusList
-  }
-  else {
-    ApplicationConfig.schedulerStatuses
+  val searchStatusList: List[String] = if(applicationConfig.schedulerSchemeRefListEnabled) {
+    applicationConfig.schedulerSchemeRefStatusList
+  } else {
+    applicationConfig.schedulerStatuses
   }
 
-  val schemeRefList = if(ApplicationConfig.schedulerSchemeRefListEnabled) {
-    Some(ApplicationConfig.schedulerSchemeRefList)
-  }
-  else {
+  val schemeRefList: Option[List[String]] = if(applicationConfig.schedulerSchemeRefListEnabled) {
+    Some(applicationConfig.schedulerSchemeRefList)
+  } else {
     None
   }
 
-  val resubmitBySchemeEnabled: Boolean = ApplicationConfig.schedulerEnableResubmitByScheme
+  val resubmitBySchemeEnabled: Boolean = applicationConfig.schedulerEnableResubmitByScheme
   val resubmitScheme: Option[String] = if(resubmitBySchemeEnabled) {
-    Some(ApplicationConfig.schedulerResubmitScheme)
-  }
-  else {
+    Some(applicationConfig.schedulerResubmitScheme)
+  } else {
     None
   }
 
-  val resubmitSuccessStatus: String = ApplicationConfig.schedulerSuccessStatus
-  val resubmitWithNilReturn: Boolean = ApplicationConfig.schedulerResubmitWithNilReturn
-  val isResubmitBeforeDate: Boolean = ApplicationConfig.isSchedulerResubmitBeforeDate
+  val resubmitSuccessStatus: String = applicationConfig.schedulerSuccessStatus
+  val resubmitWithNilReturn: Boolean = applicationConfig.schedulerResubmitWithNilReturn
+  val isResubmitBeforeDate: Boolean = applicationConfig.isSchedulerResubmitBeforeDate
 
-  val r = scala.util.Random
-  val delay = r.nextInt(ApplicationConfig.schedulerMaxDelayInMilliseconds) + ApplicationConfig.schedulerInitialDelayInMilliseconds
-  val repeat = r.nextInt(ApplicationConfig.schedulerMaxRepeatIntervalInSeconds) + ApplicationConfig.schedulerRepeatIntervalInSeconds
+  val r: Random.type = scala.util.Random
+  val delay: Int = r.nextInt(applicationConfig.schedulerMaxDelayInMilliseconds) + applicationConfig.schedulerInitialDelayInMilliseconds
+  val repeat: Int = r.nextInt(applicationConfig.schedulerMaxRepeatIntervalInSeconds) + applicationConfig.schedulerRepeatIntervalInSeconds
 
-  def schedulerStartTime: DateTime = getTime(ApplicationConfig.schedulerStartHour, ApplicationConfig.schedulerStartMinute)
+  def schedulerStartTime: DateTime = getTime(applicationConfig.schedulerStartHour, applicationConfig.schedulerStartMinute)
 
   def schedulerEndTime: DateTime = {
-    val endTime = getTime(ApplicationConfig.schedulerEndHour, ApplicationConfig.schedulerEndMinute)
-    if (ApplicationConfig.schedulerStartHour > ApplicationConfig.schedulerEndHour) {
+    val endTime = getTime(applicationConfig.schedulerEndHour, applicationConfig.schedulerEndMinute)
+    if (applicationConfig.schedulerStartHour > applicationConfig.schedulerEndHour) {
       endTime.plusDays(1)
-    }
-    else {
+    } else {
       endTime
     }
   }

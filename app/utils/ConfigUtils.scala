@@ -17,14 +17,13 @@
 package utils
 
 import com.typesafe.config.{Config, ConfigFactory}
+import javax.inject.Inject
 import models.ErsSummary
 import play.api.mvc.Request
-import utils.LoggingAndRexceptions.ADRExceptionEmitter
 import uk.gov.hmrc.http.HeaderCarrier
+import utils.LoggingAndRexceptions.ADRExceptionEmitter
 
-object ConfigUtils extends ConfigUtils
-
-trait ConfigUtils {
+class ConfigUtils @Inject()(adrExceptionEmitter: ADRExceptionEmitter) {
 
   def getConfigData(configPath: String, configValue: String)(implicit request: Request[_], hc: HeaderCarrier, ersSummary: ErsSummary): Config = {
     try {
@@ -32,7 +31,7 @@ trait ConfigUtils {
     }
     catch {
       case ex: Exception => {
-        ADRExceptionEmitter.emitFrom(
+        adrExceptionEmitter.emitFrom(
           ersSummary.metaData,
           Map(
             "message" -> s"Trying to load invalid configuration. Path: ${configPath}, value: ${configValue}",

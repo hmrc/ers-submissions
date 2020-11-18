@@ -16,34 +16,39 @@
 
 package services.resubmission
 
+import akka.actor.{ActorSystem, Cancellable}
+import akka.actor.TypedActor.context
 import config.ApplicationConfig
+import javax.inject.Inject
 import models.ResubmissionLock
-import org.joda.time.{Duration, DateTime}
+import org.joda.time.{DateTime, Duration}
 import play.api.Logger
+import play.api.libs.json.JsObject
 import play.api.mvc.Request
-import play.libs.Akka
 import repositories.Repositories
-import utils.LoggingAndRexceptions.ErsLoggingAndAuditing
+
 import scala.concurrent.ExecutionContext.Implicits.global
 import concurrent.duration._
 import scala.concurrent.Future
 import uk.gov.hmrc.http.HeaderCarrier
+import utils.LoggingAndRexceptions.ErsLoggingAndAuditing
 
-object SchedulerService extends SchedulerService {
+class SchedulerService @Inject()(val applicationConfig: ApplicationConfig,
+                                 repositories: Repositories,
+                                 resubPresubmissionService: ResubPresubmissionService,
+                                 schedulerLoggingAndAuditing: ErsLoggingAndAuditing,
+                                 actorSystem: ActorSystem) extends SchedulerConfig {
 
-  override val resubPresubmissionService: ResubPresubmissionService = ResubPresubmissionService
-  override val schedulerLoggingAndAuditing: ErsLoggingAndAuditing = ErsLoggingAndAuditing
-}
+  val request: Request[JsObject] = ERSRequest.createERSRequest()
+  val hc: HeaderCarrier = HeaderCarrier()
 
-trait SchedulerService extends SchedulerConfig {
-  val resubPresubmissionService: ResubPresubmissionService
-  val schedulerLoggingAndAuditing: ErsLoggingAndAuditing
-  val request = ERSRequest.createERSRequest()
-  val hc: HeaderCarrier = new HeaderCarrier()
-
-  def run() = {
-    val lock = ResubmissionLock(ApplicationConfig.schedulerLockName, new Duration(ApplicationConfig.schedulerLockExpireMin * 60000), Repositories.lockRepository)
-    Akka.system.scheduler.schedule(delay milliseconds, repeat seconds) {
+  def run(): Cancellable = {
+    val lock = ResubmissionLock(
+      applicationConfig.schedulerLockName,
+      new Duration(applicationConfig.schedulerLockExpireMin * 60000),
+      repositories.lockRepository
+    )
+    actorSystem.scheduler.schedule(delay milliseconds, repeat seconds) {
       if ((schedulerStartTime.isEqualNow || schedulerStartTime.isBeforeNow) && schedulerEndTime.isAfterNow) {
         lock.tryToAcquireOrRenewLock {
           Logger.info(s"Start scheduling ${DateTime.now.toString}")
@@ -58,10 +63,9 @@ trait SchedulerService extends SchedulerConfig {
       schedulerLoggingAndAuditing.handleResult(result, Some("Resubmission was successful"), Some("Resubmission failed"))
       result
     }.recover {
-      case ex: Exception => {
-        schedulerLoggingAndAuditing.handleException("Resubmission failed with Exception", ex, "SchedulerService.resubmit")
+      case ex: Exception =>
+       schedulerLoggingAndAuditing.handleException("Resubmission failed with Exception", ex, "SchedulerService.resubmit")
         Some(false)
-      }
     }
   }
 

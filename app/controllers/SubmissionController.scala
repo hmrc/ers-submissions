@@ -17,41 +17,33 @@
 package controllers
 
 import java.util.concurrent.TimeUnit
+
+import javax.inject.Inject
 import metrics.Metrics
 import models._
 import org.joda.time.DateTime
 import play.api.libs.json._
 import play.api.mvc._
-import services.audit.AuditEvents
 import services._
-import uk.gov.hmrc.play.microservice.controller.BaseController
+import services.audit.AuditEvents
+import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import utils.LoggingAndRexceptions.ErsLoggingAndAuditing
+
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-object SubmissionController extends SubmissionController {
+class SubmissionController @Inject()(submissionCommonService: SubmissionService,
+                                     metadataService: MetadataService,
+                                     metrics: Metrics,
+                                     ersLoggingAndAuditing: ErsLoggingAndAuditing,
+                                     auditEvents: AuditEvents,
+                                     cc: ControllerComponents) extends BackendController(cc) {
 
-  override val submissionCommonService: SubmissionCommonService = SubmissionCommonService
-  override val metadataService: MetadataService = MetadataService
-  override val metrics: Metrics = Metrics
-  override val ersLoggingAndAuditing: ErsLoggingAndAuditing = ErsLoggingAndAuditing
-  override val validationService: ValidationService = ValidationService
-
-}
-
-trait SubmissionController extends BaseController {
-
-  val submissionCommonService: SubmissionCommonService
-  val metadataService: MetadataService
-  val metrics: Metrics
-  val ersLoggingAndAuditing: ErsLoggingAndAuditing
-  val validationService: ValidationService
-
-  def receiveMetadataJson = Action.async(parse.json[JsObject]) { implicit request =>
+  def receiveMetadataJson(): Action[JsObject] = Action.async(parse.json[JsObject]) { implicit request =>
     ersLoggingAndAuditing.logWarn(s"Submission journey 1. received request: ${DateTime.now}")
 
     metadataService.validateErsSummaryFromJson(request.body) match {
-      case Some(ersSummary: ErsSummary) => {
+      case Some(ersSummary: ErsSummary) =>
         ersLoggingAndAuditing.logWarn(s"Submission journey 2. validated request: ${DateTime.now}", Some(ersSummary))
 
         try {
@@ -59,50 +51,37 @@ trait SubmissionController extends BaseController {
             ersLoggingAndAuditing.handleSuccess(ersSummary.metaData.schemeInfo, "Submission is successfully completed")
             Ok
           }.recover {
-            case ex: Exception => {
-              AuditEvents.sendToAdrEvent("ErsTransferToAdrFailed", ersSummary)
+            case ex: Exception =>
+              auditEvents.sendToAdrEvent("ErsTransferToAdrFailed", ersSummary)
               ersLoggingAndAuditing.handleException(ersSummary, ex, "Processing data for ADR exception")
               InternalServerError(s"Exception: ${ex.getMessage}.")
-            }
           }
-        }
-        catch {
-          case ex: Exception => {
+        } catch {
+          case ex: Exception =>
             Future {
-              AuditEvents.sendToAdrEvent("ErsTransferToAdrFailed", ersSummary)
+              auditEvents.sendToAdrEvent("ErsTransferToAdrFailed", ersSummary)
               ersLoggingAndAuditing.handleException(ersSummary, ex, "Processing data for ADR exception")
               InternalServerError(s"Exception: ${ex.getMessage}.")
             }
-          }
         }
-      }
-      case _ => Future {
-        BadRequest("Invalid json.")
-      }
+      case _ => Future.successful(BadRequest("Invalid json."))
     }
   }
 
-  def saveMetadata = Action.async(parse.json[JsObject]) { implicit request =>
+  def saveMetadata(): Action[JsObject] = Action.async(parse.json[JsObject]) { implicit request =>
     metadataService.validateErsSummaryFromJson(request.body) match {
-      case Some(ersSummary: ErsSummary) => {
+      case Some(ersSummary: ErsSummary) =>
         val startTime = System.currentTimeMillis()
-        metadataService.storeErsSummary(ersSummary).map { result =>
-          result match {
-            case true => {
-              metrics.saveMetadata(System.currentTimeMillis() - startTime, TimeUnit.MILLISECONDS)
-              ersLoggingAndAuditing.handleSuccess(ersSummary.metaData.schemeInfo, s"ErsSummary is successfully saved, bundleRef: ${ersSummary.bundleRef}")
-              Ok("Metadata is successfully stored.")
-            }
-            case false => {
-              ersLoggingAndAuditing.handleFailure(ersSummary.metaData.schemeInfo, s"Saving ErsSummary failed, bundleRef: ${ersSummary.bundleRef}")
-              InternalServerError("Storing metadata failed.")
-            }
-          }
+        metadataService.storeErsSummary(ersSummary).map {
+          case true =>
+            metrics.saveMetadata(System.currentTimeMillis() - startTime, TimeUnit.MILLISECONDS)
+            ersLoggingAndAuditing.handleSuccess(ersSummary.metaData.schemeInfo, s"ErsSummary is successfully saved, bundleRef: ${ersSummary.bundleRef}")
+            Ok("Metadata is successfully stored.")
+          case false =>
+            ersLoggingAndAuditing.handleFailure(ersSummary.metaData.schemeInfo, s"Saving ErsSummary failed, bundleRef: ${ersSummary.bundleRef}")
+            InternalServerError("Storing metadata failed.")
         }
-      }
-      case _ => Future {
-        BadRequest("Invalid json.")
-      }
+      case _ => Future.successful(BadRequest("Invalid json."))
     }
   }
 }

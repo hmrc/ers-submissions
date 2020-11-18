@@ -15,9 +15,14 @@
  */
 
 package models
-
+import com.github.nscala_time.time.Imports.DateTimeZone
 import org.joda.time.DateTime
-import play.api.libs.json.{JsObject, Json}
+import play.api.libs.functional.syntax.toFunctionalBuilderOps
+import play.api.libs.json.{Format, JsValue, Json, OFormat, Reads, Writes, __}
+import play.api.libs.json.JodaReads._
+import play.api.libs.json.JodaWrites._
+import uk.gov.hmrc.mongo.json.ReactiveMongoFormats
+
 import scala.collection.mutable.ListBuffer
 
 case class SchemeInfo (
@@ -30,7 +35,19 @@ case class SchemeInfo (
                         )
 
 object SchemeInfo {
-  implicit val format = Json.format[SchemeInfo]
+
+  private val dateTimeRead: Reads[DateTime] =
+    (__).read[Long].map { dateTime =>
+      new DateTime(dateTime, DateTimeZone.UTC)
+    }
+
+  private val dateTimeWrite: Writes[DateTime] = new Writes[DateTime] {
+    def writes(dateTime: DateTime): JsValue = Json.toJson(dateTime.getMillis)
+  }
+
+  implicit val dateTimeFormats: Format[DateTime] = Format(dateTimeRead, dateTimeWrite)
+  implicit val format: OFormat[SchemeInfo] = Json.format[SchemeInfo]
+
 }
 
 case class SchemeData(
@@ -40,29 +57,29 @@ case class SchemeData(
                        data: Option[ListBuffer[Seq[String]]]
                        )
 object SchemeData {
-  implicit val format = Json.format[SchemeData]
+  implicit val format: OFormat[SchemeData] = Json.format[SchemeData]
 }
 
 case class SchemeRefContainer(schemeRef: String)
 object SchemeRefContainer {
-  implicit val format = Json.format[SchemeRefContainer]
+  implicit val format: OFormat[SchemeRefContainer] = Json.format[SchemeRefContainer]
 }
 case class SchemeInfoContainer(schemeInfo: SchemeRefContainer)
 object SchemeInfoContainer {
-  implicit val format = Json.format[SchemeInfoContainer]
+  implicit val format: OFormat[SchemeInfoContainer] = Json.format[SchemeInfoContainer]
 }
 
 case class FullSchemeInfoContainer(schemeInfo: SchemeInfo)
 object FullSchemeInfoContainer {
-  implicit val format = Json.format[FullSchemeInfoContainer]
+  implicit val format: OFormat[FullSchemeInfoContainer] = Json.format[FullSchemeInfoContainer]
 }
 
 case class MetaDataContainer(metaData: SchemeInfoContainer)
 object MetaDataContainer {
-  implicit val format = Json.format[MetaDataContainer]
+  implicit val format: OFormat[MetaDataContainer] = Json.format[MetaDataContainer]
 }
 
 case class FullMetaDataContainer(metaData: FullSchemeInfoContainer)
 object FullMetaDataContainer {
-  implicit val format = Json.format[FullMetaDataContainer]
+  implicit val format: OFormat[FullMetaDataContainer] = Json.format[FullMetaDataContainer]
 }
