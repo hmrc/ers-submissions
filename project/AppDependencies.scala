@@ -1,13 +1,6 @@
 import sbt._
 
-object MicroServiceBuild extends Build with MicroService {
-
-  val appName = "ers-submissions"
-
-  override lazy val appDependencies: Seq[ModuleID] = AppDependencies()
-}
-
-private object AppDependencies {
+object AppDependencies {
   import play.core.PlayVersion
   import play.sbt.PlayImport._
 
@@ -17,8 +10,6 @@ private object AppDependencies {
   private val scalatestVersion = "3.0.9"
   private val pegdownVersion = "1.6.0"
   private val jsoupVersion = "1.13.1"
-  private val akkaVersion = "2.5.23"
-  val akkaHttpVersion = "10.0.15"
 
   val compile = Seq(
     ws,
@@ -30,14 +21,6 @@ private object AppDependencies {
     "com.typesafe.play" %% "play-json-joda"            % "2.7.4",
     "xerces"             % "xercesImpl"                % "2.12.0",
     "io.netty"                % "netty-transport-native-epoll"    % "4.0.17.Final"
-  )
-
-  val overrideDependencies = Set(
-    "com.typesafe.akka" %% "akka-stream"    % akkaVersion,
-    "com.typesafe.akka" %% "akka-protobuf"  % akkaVersion,
-    "com.typesafe.akka" %% "akka-slf4j"     % akkaVersion,
-    "com.typesafe.akka" %% "akka-actor"     % akkaVersion,
-    "com.typesafe.akka" %% "akka-http-core" % akkaHttpVersion
   )
 
   trait TestDependencies {
