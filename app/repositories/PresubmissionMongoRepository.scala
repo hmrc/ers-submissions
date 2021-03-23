@@ -34,9 +34,9 @@ package repositories
 
 import config.ApplicationConfig
 import javax.inject.Inject
-import models.{SchemeData, SchemeInfo}
+import models.{SchemeData, SchemeInfo, SubmissionsSchemeData}
 import play.api.Logger
-import play.api.libs.json.JsObject
+import play.api.libs.json.{JsObject, JsValue}
 import play.modules.reactivemongo.ReactiveMongoComponent
 import reactivemongo.api.{Cursor, DB}
 import reactivemongo.api.commands.WriteResult.Message
@@ -84,6 +84,15 @@ class PresubmissionMongoRepository @Inject()(applicationConfig: ApplicationConfi
     collection.insert(presubmissionData).map { res =>
       if(res.writeErrors.nonEmpty) {
         Logger.error(s"Faling storing presubmission data. Error: ${Message.unapply(res).getOrElse("")} for schemeInfo: ${presubmissionData.schemeInfo.toString}")
+      }
+      res.ok
+    }
+  }
+
+  def storeJson(presubmissionData: JsObject, schemeInfo: String): Future[Boolean] = {
+    collection.insert(ordered = false).one(presubmissionData).map { res =>
+      if(res.writeErrors.nonEmpty) {
+        Logger.error(s"Faling storing presubmission data. Error: ${Message.unapply(res).getOrElse("")} for schemeInfo: ${schemeInfo}")
       }
       res.ok
     }

@@ -10,6 +10,7 @@ object AppDependencies {
   private val scalatestVersion = "3.0.9"
   private val pegdownVersion = "1.6.0"
   private val jsoupVersion = "1.13.1"
+  private val silencerVersion = "1.7.1"
 
   val compile = Seq(
     ws,
@@ -20,7 +21,14 @@ object AppDependencies {
     "uk.gov.hmrc"       %% "simple-reactivemongo"      % "7.30.0-play-26",
     "com.typesafe.play" %% "play-json-joda"            % "2.7.4",
     "xerces"             % "xercesImpl"                % "2.12.0",
-    "io.netty"                % "netty-transport-native-epoll"    % "4.0.17.Final"
+    "io.netty"           % "netty-transport-native-epoll"    % "4.0.17.Final",
+    "com.lightbend.akka" %% "akka-stream-alpakka-csv" % "2.0.2",
+    "com.typesafe.akka" %% "akka-stream" % "2.6.12",
+    "com.typesafe.akka" %% "akka-slf4j" % "2.6.12",
+    "com.typesafe.akka" %% "akka-protobuf" % "2.6.12",
+    "com.typesafe.akka" %% "akka-http-spray-json" % "10.1.12",
+    compilerPlugin("com.github.ghik" % "silencer-plugin" % silencerVersion cross CrossVersion.full),
+    "com.github.ghik" % "silencer-lib" % silencerVersion % Provided cross CrossVersion.full
   )
 
   trait TestDependencies {

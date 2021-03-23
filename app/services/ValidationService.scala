@@ -17,7 +17,7 @@
 package services
 
 import javax.inject.Inject
-import models.{SchemeData, SchemeInfo}
+import models.{SchemeData, SchemeInfo, SubmissionsSchemeData}
 import play.api.libs.json.{JsError, JsObject, JsSuccess}
 
 class ValidationService @Inject()() {
@@ -25,6 +25,15 @@ class ValidationService @Inject()() {
   def validateSchemeData(json: JsObject): Option[SchemeData] = {
     json.validate[SchemeData] match {
       case schemeData: JsSuccess[SchemeData] => Some(schemeData.value)
+      case e: JsError => {
+        None
+      }
+    }
+  }
+
+  def validateSubmissionsSchemeData(json: JsObject): Option[SubmissionsSchemeData] = {
+    json.validate[SubmissionsSchemeData] match {
+      case schemeData: JsSuccess[SubmissionsSchemeData] => Some(schemeData.value)
       case e: JsError => {
         None
       }

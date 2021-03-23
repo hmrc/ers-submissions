@@ -50,6 +50,21 @@ object SchemeInfo {
 
 }
 
+/*
+{
+  "schemeInfo": {
+    "schemeRef": "string",
+    "timestamp": "dateTime",
+    "schemeId": "string",
+    "taxYear": "string",
+    "schemeName": "string",
+    "schemeType": "string"
+  },
+  "sheetName": "string",
+  "numberOfParts": 1
+}
+ */
+
 case class SchemeData(
                        schemeInfo: SchemeInfo,
                        sheetName: String,
@@ -58,6 +73,16 @@ case class SchemeData(
                        )
 object SchemeData {
   implicit val format: OFormat[SchemeData] = Json.format[SchemeData]
+}
+
+case class SubmissionsSchemeData(
+                       schemeInfo: SchemeInfo,
+                       sheetName: String,
+                       data: UpscanCallback
+                       )
+
+object SubmissionsSchemeData {
+  implicit val format: OFormat[SubmissionsSchemeData] = Json.format[SubmissionsSchemeData]
 }
 
 case class SchemeRefContainer(schemeRef: String)
