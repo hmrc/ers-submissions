@@ -47,6 +47,7 @@ class PresubmissionService @Inject()(repositories: Repositories, ersLoggingAndAu
 
     presubmissionRepository.storeJson(jsObject, presubmissionData.schemeInfo.toString).recover {
       case ex: Exception => {
+        Logger.error("our issue is " + ex)
         ersLoggingAndAuditing.handleException(presubmissionData.schemeInfo, ex, "Exception during storing presubmission data")
         false
       }

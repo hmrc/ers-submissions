@@ -46,18 +46,18 @@ class FileDownloadService @Inject()(
     }
   }
 
-  def extractBodyOfRequest: Source[HttpResponse, _] => Source[Either[Throwable, List[String]], _] =
+  def extractBodyOfRequest: Source[HttpResponse, _] => Source[Either[Throwable, List[ByteString]], _] =
     _.flatMapConcat(extractEntityData)
       .via(CsvParsing.lineScanner())
-      .via(Flow.fromFunction(bytestrings => Right(bytestrings.map(_.utf8String))))
+      .via(Flow.fromFunction(Right(_)))
       .recover {
         case e => Left(e)
       }
 
-  def fileToSequenceOfEithers(schemeData: SubmissionsSchemeData): Future[Seq[Either[Throwable, Seq[String]]]] = {
+  def fileToSequenceOfEithers(schemeData: SubmissionsSchemeData): Future[Seq[Either[Throwable, Seq[ByteString]]]] = {
     extractBodyOfRequest(streamFile(schemeData.data.downloadUrl))
       .takeWhile(_.isRight, inclusive = true)
-      .runWith(Sink.seq[Either[Throwable, Seq[String]]])
+      .runWith(Sink.seq[Either[Throwable, Seq[ByteString]]])
   }
 
   private[services] def streamFile(downloadUrl: String): Source[HttpResponse, _] = {

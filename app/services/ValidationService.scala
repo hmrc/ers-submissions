@@ -18,6 +18,7 @@ package services
 
 import javax.inject.Inject
 import models.{SchemeData, SchemeInfo, SubmissionsSchemeData}
+import play.api.Logger
 import play.api.libs.json.{JsError, JsObject, JsSuccess}
 
 class ValidationService @Inject()() {
@@ -35,6 +36,7 @@ class ValidationService @Inject()() {
     json.validate[SubmissionsSchemeData] match {
       case schemeData: JsSuccess[SubmissionsSchemeData] => Some(schemeData.value)
       case e: JsError => {
+        Logger.error("jsError is " + e)
         None
       }
     }

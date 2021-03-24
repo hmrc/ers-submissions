@@ -94,7 +94,12 @@ class PresubmissionMongoRepository @Inject()(applicationConfig: ApplicationConfi
       if(res.writeErrors.nonEmpty) {
         Logger.error(s"Faling storing presubmission data. Error: ${Message.unapply(res).getOrElse("")} for schemeInfo: ${schemeInfo}")
       }
+      Logger.error("!!!!!!! FINISHED STORING PRESUBMISSION DATA - " + res.code)
       res.ok
+    }.recover {
+      case e: Throwable =>
+        Logger.error("found exception, it's " + e)
+        throw e
     }
   }
 

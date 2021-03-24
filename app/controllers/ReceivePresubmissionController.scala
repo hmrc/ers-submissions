@@ -67,7 +67,8 @@ class ReceivePresubmissionController @Inject()(presubmissionService: Presubmissi
     authorisedAction(empRef).async(parse.json) { implicit request =>
 
     validationService.validateSubmissionsSchemeData(request.body.as[JsObject]) match {
-      case schemeData: Some[SubmissionsSchemeData] => storePresubmission(schemeData.get)
+      case schemeData: Some[SubmissionsSchemeData] =>
+        storePresubmission(schemeData.get)
       case somethingElse =>
         Logger.error("requestBody was actually" + request.body)
         Future.successful(BadRequest("Invalid json format."))
@@ -83,7 +84,7 @@ class ReceivePresubmissionController @Inject()(presubmissionService: Presubmissi
       case Left(x) => x
     } match {
       case Some(issue) => Left(issue)
-      case _ => Right(sequence.map(_.right.get))
+      case _ => Right(sequence.map(_.right.get.map(_.utf8String)))
     }}
 
     val schemeData2: JsObject = Json.toJson(SchemeData(schemeData.schemeInfo, schemeData.sheetName, None, None)).as[JsObject]
@@ -96,14 +97,18 @@ class ReceivePresubmissionController @Inject()(presubmissionService: Presubmissi
 //            auditEvents.publicToProtectedEvent(schemeData.schemeInfo, schemeData.sheetName, schemeData.data.getOrElse(Seq()).length.toString)
             ersLoggingAndAuditing.handleSuccess(schemeData.schemeInfo, s"Presubmission data for sheet ${schemeData.sheetName} is stored successfully")
             Ok("Presubmission data is stored successfully.")
+          case _ =>
+            Logger.error("we got a false from storing presubmission")
+            metrics.failedStorePresubmission()
+            ersLoggingAndAuditing.handleFailure(schemeData.schemeInfo, s"Storing presubmission data for sheet ${schemeData.sheetName} failed")
+            InternalServerError("Storing presubmission data failed.")
         }
       case Left(_) =>
+        Logger.error("it didn't extract file correctly")
         metrics.failedStorePresubmission()
         ersLoggingAndAuditing.handleFailure(schemeData.schemeInfo, s"Storing presubmission data for sheet ${schemeData.sheetName} failed")
         Future.successful(InternalServerError("Storing presubmission data failed."))
     }
-
-    Future.successful(Ok)
   }
 
   def storePresubmission(schemeData: SchemeData)(implicit request: Request[_], hc: HeaderCarrier): Future[Result] = {
