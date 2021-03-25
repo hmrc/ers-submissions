@@ -19,7 +19,7 @@ package repositories
 import config.ApplicationConfig
 import models.{SchemeData, SchemeInfo}
 import play.api.Logger
-import play.api.libs.json.JsObject
+import play.api.libs.json.{JsObject, Json}
 import play.modules.reactivemongo.ReactiveMongoComponent
 import reactivemongo.api.Cursor
 import reactivemongo.api.commands.WriteResult.Message
@@ -28,8 +28,8 @@ import reactivemongo.bson._
 import reactivemongo.play.json.ImplicitBSONHandlers._
 import uk.gov.hmrc.mongo.ReactiveRepository
 import uk.gov.hmrc.mongo.json.ReactiveMongoFormats
-
 import javax.inject.Inject
+
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{Await, ExecutionContext, Future}
 
@@ -80,7 +80,7 @@ class PresubmissionMongoRepository @Inject()(applicationConfig: ApplicationConfi
     val startTime: Long = System.currentTimeMillis()
     collection.insert(presubmissionData).map { res =>
       if(res.writeErrors.nonEmpty) {
-        Logger.error(s"Faling storing presubmission data. Error: ${Message.unapply(res).getOrElse("")} for schemeInfo: ${schemeInfo}")
+        Logger.error(s"Failed storing presubmission data. Error: ${Message.unapply(res).getOrElse("")} for schemeInfo: ${schemeInfo}")
       }
       Logger.debug("!!!!!! TIME TAKEN " + (System.currentTimeMillis - startTime))
       res.ok

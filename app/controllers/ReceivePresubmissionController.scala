@@ -17,16 +17,16 @@
 package controllers
 
 import java.util.concurrent.TimeUnit
+
 import akka.actor.ActorSystem
 import akka.stream.scaladsl.{Sink, Source}
 import akka.util.ByteString
-
 import javax.inject.Inject
 import controllers.auth.{AuthAction, AuthorisedAction}
 import metrics.Metrics
 import models.{SchemeData, SubmissionsSchemeData}
 import play.api.Logger
-import play.api.libs.json.{JsObject, JsValue, Json}
+import play.api.libs.json.{JsArray, JsObject, JsValue, Json}
 import play.api.mvc.{Action, ControllerComponents, PlayBodyParsers, Request, Result}
 import services.{FileDownloadService, PresubmissionService, ValidationService}
 import services.audit.AuditEvents
@@ -96,7 +96,7 @@ class ReceivePresubmissionController @Inject()(presubmissionService: Presubmissi
       case (true, _) =>
         metrics.storePresubmission(System.currentTimeMillis() - startTime, TimeUnit.MILLISECONDS)
         Logger.debug("total running time was " + (System.currentTimeMillis() - startTime))
-        //auditEvents.publicToProtectedEvent(submissionsSchemeData.schemeInfo, submissionsSchemeData.sheetName, submissionsSchemeData.data.getOrElse(Seq()).length.toString)
+        auditEvents.publicToProtectedEvent(submissionsSchemeData.schemeInfo, submissionsSchemeData.sheetName, submissionsSchemeData.numberOfRows.toString)
         ersLoggingAndAuditing.handleSuccess(
           submissionsSchemeData.schemeInfo, s"Presubmission data for sheet ${submissionsSchemeData.sheetName} was stored successfully"
         )

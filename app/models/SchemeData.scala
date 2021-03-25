@@ -78,7 +78,8 @@ object SchemeData {
 case class SubmissionsSchemeData(
                        schemeInfo: SchemeInfo,
                        sheetName: String,
-                       data: UpscanCallback
+                       data: UpscanCallback,
+                       numberOfRows: Int
                        )
 
 object SubmissionsSchemeData {

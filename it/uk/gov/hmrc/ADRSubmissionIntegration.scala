@@ -16,6 +16,7 @@
 
 package uk.gov.hmrc
 
+import _root_.play.api.libs.json.{Json, JsObject}
 import org.scalatest.BeforeAndAfterEach
 import repositories.{MetadataMongoRepository, PresubmissionMongoRepository}
 
@@ -24,6 +25,7 @@ import _root_.play.api.test.Helpers._
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import uk.gov.hmrc.http.HeaderCarrier
 import _root_.play.api.libs.ws.WSClient
+
 
 class ADRSubmissionIntegration extends ISpec("ADRSubmissionIntegration", additionalConfig = Seq(
   ("microservice.services.ers-stub.host", "localhost"),
@@ -39,8 +41,8 @@ class ADRSubmissionIntegration extends ISpec("ADRSubmissionIntegration", additio
 
   override protected def beforeEach: Unit = {
     super.beforeEach()
-    //await(presubmissionRepository.storeJson(Fixtures.schemeData))
-    await(presubmissionRepository.storeJson(Fixtures.submissionsSchemeDataJson, Fixtures.submissionsSchemeData.schemeInfo.toString))
+    await(presubmissionRepository.storeJson(Fixtures.schemeData))
+    //await(presubmissionRepository.storeJson(Json.toJson(Fixtures.schemeData).as[JsObject], Fixtures.submissionsSchemeData.schemeInfo.toString))
   }
 
   override protected def afterEach: Unit = {
@@ -69,9 +71,7 @@ class ADRSubmissionIntegration extends ISpec("ADRSubmissionIntegration", additio
       metadata.length shouldBe 1
       metadata.head.transferStatus.get shouldBe "sent"
     }
-  }
-}
-/*
+
     "return OK if valid metadata is received for nil return and it's successfully sent to ADR" in {
       val data = Fixtures.buildErsSummaryPayload(true)
 
@@ -113,7 +113,3 @@ class ADRSubmissionIntegration extends ISpec("ADRSubmissionIntegration", additio
   }
 
 }
-
-
- */
-
