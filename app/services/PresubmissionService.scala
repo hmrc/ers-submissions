@@ -45,8 +45,6 @@ class PresubmissionService @Inject()(repositories: Repositories, ersLoggingAndAu
 
   def storeJson(presubmissionData: SubmissionsSchemeData, jsObject: JsObject)(implicit request: Request[_], hc: HeaderCarrier): Future[Boolean] = {
 
-    Logger.error("jsObject we're storing has size " + jsObject.toString.length)
-//    Logger.error("jsObject is " + jsObject.toString())
     presubmissionRepository.storeJson(jsObject, presubmissionData.schemeInfo.toString).recover {
       case ex: Exception => {
         Logger.error("our issue is " + ex)

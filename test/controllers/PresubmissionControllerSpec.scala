@@ -27,7 +27,7 @@ import org.scalatest.BeforeAndAfterEach
 import play.api.libs.json.{JsObject, Json}
 import play.api.test._
 import play.api.test.Helpers._
-import org.scalatest.mockito.MockitoSugar
+import org.scalatestplus.mockito.MockitoSugar
 import services.{PresubmissionService, ValidationService}
 import uk.gov.hmrc.play.test.{UnitSpec, WithFakeApplication}
 import fixtures.Fixtures

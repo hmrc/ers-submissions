@@ -16,7 +16,7 @@
 
 package models
 
-import play.api.libs.json.{JsObject, JsString, JsValue, Json, Reads, Writes}
+import play.api.libs.json.{JsObject, Json, Reads, Writes}
 
 case class UpscanCallback(name: String,
                           downloadUrl: String,

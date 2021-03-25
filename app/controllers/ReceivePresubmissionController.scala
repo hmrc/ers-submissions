@@ -18,9 +18,7 @@ package controllers
 
 import java.util.concurrent.TimeUnit
 import akka.actor.ActorSystem
-import akka.http.scaladsl.Http
-import akka.http.scaladsl.model.{HttpRequest, HttpResponse}
-import akka.stream.scaladsl.{Flow, Sink, Source}
+import akka.stream.scaladsl.{Sink, Source}
 import akka.util.ByteString
 
 import javax.inject.Inject
@@ -53,6 +51,7 @@ class ReceivePresubmissionController @Inject()(presubmissionService: Presubmissi
 
   def authorisedAction(empRef: String): AuthAction = AuthorisedAction(empRef, authConnector, bodyParser)
 
+  //TODO Old version - remove after successful release of large file changes
   def receivePresubmissionJson(empRef: String): Action[JsValue] =
     authorisedAction(empRef).async(parse.json(maxLength = 1024 * 10000)) { implicit request =>
 
@@ -69,52 +68,53 @@ class ReceivePresubmissionController @Inject()(presubmissionService: Presubmissi
       validationService.validateSubmissionsSchemeData(request.body.as[JsObject]) match {
         case schemeData: Some[SubmissionsSchemeData] =>
           storePresubmission(schemeData.get)
-        case somethingElse =>
-          Logger.error("requestBody was actually" + request.body)
+        case _ =>
           Future.successful(BadRequest("Invalid json format."))
       }
     }
 
-  def storePresubmission(schemeData: SubmissionsSchemeData)(
-    implicit request: Request[_], hc: HeaderCarrier): Future[Result] = {
+  def submitJson(fileSource: Source[(Seq[Seq[ByteString]], Long), _], submissionsSchemeData: SubmissionsSchemeData)(
+    implicit request: Request[_], hc: HeaderCarrier): Future[(Boolean, Long)] = {
+
+    val schemeDataJson = Json.toJson(SchemeData(submissionsSchemeData.schemeInfo, submissionsSchemeData.sheetName, None, None)).as[JsObject]
+
+    fileSource.mapAsyncUnordered(2)(chunkedRow =>
+      presubmissionService.storeJson(submissionsSchemeData, schemeDataJson + ("data" -> Json.toJson(chunkedRow._1.map(_.map(_.utf8String)))))
+        .map((_, chunkedRow._2))
+    )
+      .takeWhile(booleanAndIndex => booleanAndIndex._1, inclusive = true)
+      .runWith(Sink.last)
+  }
+
+  def storePresubmission(submissionsSchemeData: SubmissionsSchemeData)(implicit request: Request[_], hc: HeaderCarrier): Future[Result] = {
 
     val startTime = System.currentTimeMillis()
+    val fileSource: Source[(Seq[Seq[ByteString]], Long), _] =
+      fileDownloadService.schemeDataToChunksWithIndex(submissionsSchemeData)
 
-    val validatedFile: Source[(Seq[Seq[ByteString]], Long), _] =
-      fileDownloadService.fileToSequenceOfEithers(schemeData)
-
-    val schemeData2: JsObject = Json.toJson(SchemeData(schemeData.schemeInfo, schemeData.sheetName, None, None)).as[JsObject]
-
-    val submissionResults: Future[(Boolean, Long)] = validatedFile
-      .mapAsyncUnordered(2)(chunkedRow =>
-        presubmissionService.storeJson(schemeData, schemeData2 + ("data" -> Json.toJson(chunkedRow._1.map(_.map(_.utf8String)))))
-          .map((_, chunkedRow._2))
-      )
-      .takeWhile(boolean => boolean._1, inclusive = true)
-      .runWith(Sink.last)
-
-
-    submissionResults.map {
+    submitJson(fileSource, submissionsSchemeData).map {
       case (true, _) =>
         metrics.storePresubmission(System.currentTimeMillis() - startTime, TimeUnit.MILLISECONDS)
-        Logger.error("total running time was " + (System.currentTimeMillis() - startTime))
-        //            auditEvents.publicToProtectedEvent(schemeData.schemeInfo, schemeData.sheetName, schemeData.data.getOrElse(Seq()).length.toString)
-        ersLoggingAndAuditing.handleSuccess(schemeData.schemeInfo, s"Presubmission data for sheet ${schemeData.sheetName} is stored successfully")
+        Logger.debug("total running time was " + (System.currentTimeMillis() - startTime))
+        //auditEvents.publicToProtectedEvent(submissionsSchemeData.schemeInfo, submissionsSchemeData.sheetName, submissionsSchemeData.data.getOrElse(Seq()).length.toString)
+        ersLoggingAndAuditing.handleSuccess(
+          submissionsSchemeData.schemeInfo, s"Presubmission data for sheet ${submissionsSchemeData.sheetName} was stored successfully"
+        )
         Ok("Presubmission data is stored successfully.")
       case (_, index) =>
-        Logger.error("we got a false from storing presubmission")
-        presubmissionService.removeJson(schemeData.schemeInfo).map { wasSuccess =>
+        presubmissionService.removeJson(submissionsSchemeData.schemeInfo).map { wasSuccess =>
           if (!wasSuccess && index > 0) {
             Logger.error(
               "[ReceivePresubmissionController][storePresubmission] INTERVENTION NEEDED: Removing partial presubmission data failed after storing failure")
           }
         }
         metrics.failedStorePresubmission()
-        ersLoggingAndAuditing.handleFailure(schemeData.schemeInfo, s"Storing presubmission data for sheet ${schemeData.sheetName} failed")
+        ersLoggingAndAuditing.handleFailure(submissionsSchemeData.schemeInfo, s"Storing presubmission data for sheet ${submissionsSchemeData.sheetName} failed")
         InternalServerError("Storing presubmission data failed.")
     }
   }
 
+  //TODO Old version - remove after successful release of large file changes
   def storePresubmission(schemeData: SchemeData)(implicit request: Request[_], hc: HeaderCarrier): Future[Result] = {
     Logger.info(s"Starting storing presubmission data. SchemeInfo: ${schemeData.schemeInfo.toString}, SheetName: ${schemeData.sheetName}")
 
@@ -132,6 +132,5 @@ class ReceivePresubmissionController @Inject()(presubmissionService: Presubmissi
         InternalServerError("Storing presubmission data failed.")
     }
   }
-
 
 }

@@ -108,7 +108,7 @@ class FileDownloadServiceSpec extends TestKit(ActorSystem("FileDownloadServiceSp
 
       "file has less than grouping-size rows" in {
         val result = Await.result(testService
-          .fileToSequenceOfEithers(submissionsSchemeData, 10)
+          .schemeDataToChunksWithIndex(submissionsSchemeData, 10)
           .runWith(Sink.seq),
           Duration.Inf
         )
@@ -123,7 +123,7 @@ class FileDownloadServiceSpec extends TestKit(ActorSystem("FileDownloadServiceSp
 
       "file has more than grouping-size rows" in {
         val result = Await.result(testService
-          .fileToSequenceOfEithers(submissionsSchemeData, 1)
+          .schemeDataToChunksWithIndex(submissionsSchemeData, 1)
           .runWith(Sink.seq),
           Duration.Inf
         )

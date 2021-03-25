@@ -41,7 +41,7 @@ class FileDownloadService @Inject()(
         Logger.error(
           s"[ProcessCsvService][extractEntityData] Illegal response from Upscan: ${notOkResponse.status.intValue}, " +
             s"body: ${notOkResponse.entity.dataBytes}")
-        Source.failed(new Exception("aaaa")) //TODO maybe touch this up
+        Source.failed(new Exception("Could not download file from upscan")) //TODO maybe touch this up
     }
   }
 
@@ -49,7 +49,7 @@ class FileDownloadService @Inject()(
     _.flatMapConcat(extractEntityData)
       .via(CsvParsing.lineScanner())
 
-  def fileToSequenceOfEithers(schemeData: SubmissionsSchemeData, maxGroupSize: Int = 10000): Source[(Seq[Seq[ByteString]], Long), _] = {
+  def schemeDataToChunksWithIndex(schemeData: SubmissionsSchemeData, maxGroupSize: Int = appConfig.maxGroupSize): Source[(Seq[Seq[ByteString]], Long), _] = {
     extractBodyOfRequest(streamFile(schemeData.data.downloadUrl))
       .grouped(maxGroupSize)
       .zipWithIndex

@@ -14,26 +14,8 @@
  * limitations under the License.
  */
 
-/*
- * Copyright 2020 HM Revenue & Customs
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package repositories
 
-import akka.stream.scaladsl.Source
-import akka.util.ByteString
 import config.ApplicationConfig
 import models.{SchemeData, SchemeInfo}
 import play.api.Logger
@@ -82,10 +64,13 @@ class PresubmissionMongoRepository @Inject()(applicationConfig: ApplicationConfi
     "schemeInfo.timestamp" -> BSONLong(schemeInfo.timestamp.getMillis)
   )
 
+  //TODO Old version - remove after successful release of large file changes
   def storeJson(presubmissionData: SchemeData): Future[Boolean] = {
     collection.insert(presubmissionData).map { res =>
       if(res.writeErrors.nonEmpty) {
-        Logger.error(s"Faling storing presubmission data. Error: ${Message.unapply(res).getOrElse("")} for schemeInfo: ${presubmissionData.schemeInfo.toString}")
+        Logger.error(s"Failed storing presubmission data. Error: ${Message.unapply(res).getOrElse("")} for schemeInfo:" +
+          s" ${presubmissionData.schemeInfo.toString}"
+        )
       }
       res.ok
     }
@@ -93,15 +78,14 @@ class PresubmissionMongoRepository @Inject()(applicationConfig: ApplicationConfi
 
   def storeJson(presubmissionData: JsObject, schemeInfo: String): Future[Boolean] = {
     val startTime: Long = System.currentTimeMillis()
-    collection.insert(ordered = false).one(presubmissionData).map { res =>
+    collection.insert(presubmissionData).map { res =>
       if(res.writeErrors.nonEmpty) {
         Logger.error(s"Faling storing presubmission data. Error: ${Message.unapply(res).getOrElse("")} for schemeInfo: ${schemeInfo}")
       }
-      Logger.error("!!!!!! TIME TAKEN " + (System.currentTimeMillis - startTime)) // TODO remove
+      Logger.debug("!!!!!! TIME TAKEN " + (System.currentTimeMillis - startTime))
       res.ok
     }.recover {
       case e: Throwable =>
-        Logger.error("found exception, it's " + e)
         throw e
     }
   }

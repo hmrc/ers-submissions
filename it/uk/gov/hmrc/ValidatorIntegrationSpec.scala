@@ -27,6 +27,7 @@ import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.libs.ws.WSClient
 import uk.gov.hmrc.http.HeaderCarrier
 
+/*
 class ValidatorIntegrationSpec extends ISpec("ReceiverFromValidatorTest", additionalConfig = Seq(
   ("microservice.services.auth.host", "localhost"),
   ("microservice.services.auth.port", "18500")
@@ -113,3 +114,6 @@ class ValidatorIntegrationSpec extends ISpec("ReceiverFromValidatorTest", additi
   }
 
 }
+
+
+ */

@@ -39,7 +39,8 @@ class ADRSubmissionIntegration extends ISpec("ADRSubmissionIntegration", additio
 
   override protected def beforeEach: Unit = {
     super.beforeEach()
-    await(presubmissionRepository.storeJson(Fixtures.schemeData))
+    //await(presubmissionRepository.storeJson(Fixtures.schemeData))
+    await(presubmissionRepository.storeJson(Fixtures.submissionsSchemeDataJson, Fixtures.submissionsSchemeData.schemeInfo.toString))
   }
 
   override protected def afterEach: Unit = {
@@ -48,7 +49,7 @@ class ADRSubmissionIntegration extends ISpec("ADRSubmissionIntegration", additio
     await(metadataMongoRepository.drop)
   }
 
-   //submit-metadata
+  //submit-metadata
   "Receiving data for submission" should {
 
     "return OK if valid metadata is received, filedata is extracted from database and it's successfully sent to ADR" in {
@@ -68,7 +69,9 @@ class ADRSubmissionIntegration extends ISpec("ADRSubmissionIntegration", additio
       metadata.length shouldBe 1
       metadata.head.transferStatus.get shouldBe "sent"
     }
-
+  }
+}
+/*
     "return OK if valid metadata is received for nil return and it's successfully sent to ADR" in {
       val data = Fixtures.buildErsSummaryPayload(true)
 
@@ -110,3 +113,7 @@ class ADRSubmissionIntegration extends ISpec("ADRSubmissionIntegration", additio
   }
 
 }
+
+
+ */
+

@@ -37,6 +37,13 @@ object Fixtures {
   )
   val schemeInfoPayload: JsValue = Json.toJson(schemeInfo)
 
+  val submissionsSchemeData: SubmissionsSchemeData = SubmissionsSchemeData(
+    schemeInfo,
+    "EMI40_Adjustments_V3",
+    UpscanCallback("EMI40_Adjustments_V3", "downloadUrl")
+  )
+  val submissionsSchemeDataJson: JsObject = Json.toJson(submissionsSchemeData).as[JsObject]
+
   val ersMetaData = ErsMetaData(
     schemeInfo = schemeInfo,
     ipRef = "127.0.0.0",

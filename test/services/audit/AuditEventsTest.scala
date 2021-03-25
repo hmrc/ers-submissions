@@ -24,7 +24,7 @@ import org.joda.time.{DateTime, DateTimeZone}
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.{reset, verify}
 import org.mockito.internal.verification.VerificationModeFactory
-import org.scalatest.mockito.MockitoSugar
+import org.scalatestplus.mockito.MockitoSugar
 import org.scalatest.{BeforeAndAfterEach, Matchers, WordSpec}
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.test.FakeRequest
