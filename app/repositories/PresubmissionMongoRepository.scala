@@ -97,8 +97,7 @@ class PresubmissionMongoRepository @Inject()(applicationConfig: ApplicationConfi
       if(res.writeErrors.nonEmpty) {
         Logger.error(s"Faling storing presubmission data. Error: ${Message.unapply(res).getOrElse("")} for schemeInfo: ${schemeInfo}")
       }
-      Logger.error("!!!!!!! FINISHED STORING PRESUBMISSION DATA - " + res.code)
-      Logger.error("!!!!!! TIME TAKEN " + (System.currentTimeMillis - startTime))
+      Logger.error("!!!!!! TIME TAKEN " + (System.currentTimeMillis - startTime)) // TODO remove
       res.ok
     }.recover {
       case e: Throwable =>
