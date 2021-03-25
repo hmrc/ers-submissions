@@ -71,4 +71,5 @@ lazy val microservice = Project(appName, file("."))
   )
   .settings(majorVersion := 1)
   .settings(resolvers += Resolver.jcenterRepo)
+  .settings(PlayKeys.playDefaultPort := 9292)
   .disablePlugins(JUnitXmlReportPlugin) //Required to prevent https://github.com/scalatest/scalatest/issues/1427

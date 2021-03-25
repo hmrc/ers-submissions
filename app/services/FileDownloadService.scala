@@ -19,15 +19,15 @@ package services
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.{HttpRequest, HttpResponse}
+import akka.stream.alpakka.csv.scaladsl.CsvParsing
 import akka.stream.scaladsl.{Flow, Sink, Source}
-import akka.stream.Materializer
 import akka.util.ByteString
 import config.ApplicationConfig
-import play.api.Logger
-import akka.stream.alpakka.csv.scaladsl.CsvParsing
-import javax.inject.Inject
 import models.SubmissionsSchemeData
+import play.api.Logger
 
+import javax.inject.Inject
+import scala.collection.immutable
 import scala.concurrent.Future
 
 class FileDownloadService @Inject()(
@@ -46,18 +46,15 @@ class FileDownloadService @Inject()(
     }
   }
 
-  def extractBodyOfRequest: Source[HttpResponse, _] => Source[Either[Throwable, List[ByteString]], _] =
+  def extractBodyOfRequest: Source[HttpResponse, _] => Source[List[ByteString], _] =
     _.flatMapConcat(extractEntityData)
       .via(CsvParsing.lineScanner())
-      .via(Flow.fromFunction(Right(_)))
-      .recover {
-        case e => Left(e)
-      }
 
-  def fileToSequenceOfEithers(schemeData: SubmissionsSchemeData): Future[Seq[Either[Throwable, Seq[ByteString]]]] = {
+  def fileToSequenceOfEithers(schemeData: SubmissionsSchemeData): Source[(Seq[Seq[ByteString]], Long), _] = {
     extractBodyOfRequest(streamFile(schemeData.data.downloadUrl))
-      .takeWhile(_.isRight, inclusive = true)
-      .runWith(Sink.seq[Either[Throwable, Seq[ByteString]]])
+      .grouped(10000)
+      .zipWithIndex
+//      .runWith(Sink.seq[Seq[Either[Throwable, Seq[ByteString]]]])
   }
 
   private[services] def streamFile(downloadUrl: String): Source[HttpResponse, _] = {

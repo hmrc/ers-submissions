@@ -32,13 +32,14 @@
 
 package repositories
 
+import akka.stream.scaladsl.Source
+import akka.util.ByteString
 import config.ApplicationConfig
-import javax.inject.Inject
-import models.{SchemeData, SchemeInfo, SubmissionsSchemeData}
+import models.{SchemeData, SchemeInfo}
 import play.api.Logger
-import play.api.libs.json.{JsObject, JsValue}
+import play.api.libs.json.JsObject
 import play.modules.reactivemongo.ReactiveMongoComponent
-import reactivemongo.api.{Cursor, DB}
+import reactivemongo.api.Cursor
 import reactivemongo.api.commands.WriteResult.Message
 import reactivemongo.api.indexes.{Index, IndexType}
 import reactivemongo.bson._
@@ -46,6 +47,7 @@ import reactivemongo.play.json.ImplicitBSONHandlers._
 import uk.gov.hmrc.mongo.ReactiveRepository
 import uk.gov.hmrc.mongo.json.ReactiveMongoFormats
 
+import javax.inject.Inject
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{Await, ExecutionContext, Future}
 
@@ -90,11 +92,13 @@ class PresubmissionMongoRepository @Inject()(applicationConfig: ApplicationConfi
   }
 
   def storeJson(presubmissionData: JsObject, schemeInfo: String): Future[Boolean] = {
+    val startTime: Long = System.currentTimeMillis()
     collection.insert(ordered = false).one(presubmissionData).map { res =>
       if(res.writeErrors.nonEmpty) {
         Logger.error(s"Faling storing presubmission data. Error: ${Message.unapply(res).getOrElse("")} for schemeInfo: ${schemeInfo}")
       }
       Logger.error("!!!!!!! FINISHED STORING PRESUBMISSION DATA - " + res.code)
+      Logger.error("!!!!!! TIME TAKEN " + (System.currentTimeMillis - startTime))
       res.ok
     }.recover {
       case e: Throwable =>
