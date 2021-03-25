@@ -16,6 +16,8 @@
 
 package controllers
 
+import akka.actor.ActorSystem
+import akka.testkit.TestKit
 import controllers.auth.AuthAction
 import fixtures.{Fixtures, WithMockedAuthActions}
 import metrics.Metrics
@@ -31,7 +33,7 @@ import play.api.libs.json.JsObject
 import play.api.mvc.{ControllerComponents, PlayBodyParsers, Request}
 import play.api.test.FakeRequest
 import services.audit.AuditEvents
-import services.{PresubmissionService, ValidationService}
+import services.{FileDownloadService, PresubmissionService, ValidationService}
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.play.test.{UnitSpec, WithFakeApplication}
 import utils.LoggingAndRexceptions.ErsLoggingAndAuditing
@@ -40,7 +42,8 @@ import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 import uk.gov.hmrc.http.HeaderCarrier
 
-class ReceivePresubmissionControllerSpec extends UnitSpec with MockitoSugar with BeforeAndAfterEach with GuiceOneAppPerSuite with WithMockedAuthActions{
+class ReceivePresubmissionControllerSpec extends TestKit(ActorSystem("ReceivePresubmissionControllerSpec"))
+  with UnitSpec with MockitoSugar with BeforeAndAfterEach with GuiceOneAppPerSuite with WithMockedAuthActions{
 
   val mockAuthAction: AuthAction = mock[AuthAction]
   val mockPresubmissionService: PresubmissionService = mock[PresubmissionService]
@@ -50,6 +53,7 @@ class ReceivePresubmissionControllerSpec extends UnitSpec with MockitoSugar with
   val mockAuditEvents: AuditEvents = mock[AuditEvents]
   val mockCc: ControllerComponents = stubControllerComponents()
   val mockBodyParser: PlayBodyParsers = mock[PlayBodyParsers]
+  val mockFileDownloadService: FileDownloadService = mock[FileDownloadService]
 
   val mockMetrics: Metrics = mock[Metrics]
   override def beforeEach() = {
@@ -68,6 +72,7 @@ class ReceivePresubmissionControllerSpec extends UnitSpec with MockitoSugar with
       new ReceivePresubmissionController(
         mockPresubmissionService,
         mockValidationService,
+        mockFileDownloadService,
         mockErsLoggingAndAuditing,
         mockAuthConnector,
         mockAuditEvents,

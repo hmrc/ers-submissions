@@ -49,7 +49,8 @@ object AppDependencies {
         "org.jsoup"               % "jsoup"              % jsoupVersion             % scope,
         "com.typesafe.play"      %% "play-test"          % PlayVersion.current      % scope,
         "uk.gov.hmrc"            %% "hmrctest"           % hmrcTestVersion          % scope,
-        "uk.gov.hmrc"            %% "mongo-lock"         % "6.23.0-play-26"
+        "uk.gov.hmrc"            %% "mongo-lock"         % "6.23.0-play-26",
+        "com.typesafe.akka"      %% "akka-testkit"       % "2.6.12"                 % scope
       )
     }.test
   }
