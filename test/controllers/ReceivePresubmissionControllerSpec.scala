@@ -94,10 +94,12 @@ class ReceivePresubmissionControllerSpec extends TestKit(ActorSystem("ReceivePre
       mockAuditEvents,
       mockMetrics,
       mockCc,
-      mockBodyParser
+      mockBodyParser,
+      mockApplicationConfig
     ) {
       mockJsValueAuthAction
 
+      when(mockApplicationConfig.submitParallelism).thenReturn(2)
       when(mockPresubmissionService.storeJson(any[SchemeData])(any[Request[_]](), any[HeaderCarrier]()))
         .thenReturn(Future(storeJsonResult))
       when(mockPresubmissionService.storeJson(any[SubmissionsSchemeData], any[JsObject])(any[Request[_]](), any[HeaderCarrier]()))

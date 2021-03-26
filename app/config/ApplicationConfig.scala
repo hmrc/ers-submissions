@@ -29,6 +29,7 @@ class ApplicationConfig @Inject()(serviceConfig: ServicesConfig) {
   lazy val metadataCollection: String = serviceConfig.getString("settings.metadata-collection")
   lazy val uploadCsvSizeLimit: Int = serviceConfig.getInt("csv.uploadSizeLimit")
   lazy val maxGroupSize: Int = serviceConfig.getInt("csv.maxGroupSize")
+  lazy val submitParallelism: Int = serviceConfig.getInt("csv.submitParallelism")
 
   lazy val adrBaseURI: String = serviceConfig.baseUrl("ers-stub")
   lazy val adrFullSubmissionURI: String = serviceConfig.getString("microservice.services.ers-stub.full-submission-url")

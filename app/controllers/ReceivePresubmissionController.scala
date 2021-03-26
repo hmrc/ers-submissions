@@ -20,6 +20,7 @@ import java.util.concurrent.TimeUnit
 import akka.actor.ActorSystem
 import akka.stream.scaladsl.{Sink, Source}
 import akka.util.ByteString
+import config.ApplicationConfig
 
 import javax.inject.Inject
 import controllers.auth.{AuthAction, AuthorisedAction}
@@ -46,7 +47,8 @@ class ReceivePresubmissionController @Inject()(presubmissionService: Presubmissi
                                                auditEvents: AuditEvents,
                                                metrics: Metrics,
                                                cc: ControllerComponents,
-                                               bodyParser: PlayBodyParsers)
+                                               bodyParser: PlayBodyParsers,
+                                               appConfig: ApplicationConfig)
                                               (implicit actorSystem: ActorSystem) extends BackendController(cc) {
 
   def authorisedAction(empRef: String): AuthAction = AuthorisedAction(empRef, authConnector, bodyParser)
@@ -77,8 +79,9 @@ class ReceivePresubmissionController @Inject()(presubmissionService: Presubmissi
     implicit request: Request[_], hc: HeaderCarrier): Future[(Boolean, Long)] = {
 
     val schemeDataJson = Json.toJson(SchemeData(submissionsSchemeData.schemeInfo, submissionsSchemeData.sheetName, None, None)).as[JsObject]
+    val parallelism: Int = appConfig.submitParallelism
 
-    fileSource.mapAsyncUnordered(2)(chunkedRow =>
+    fileSource.mapAsyncUnordered(parallelism)(chunkedRow =>
       presubmissionService.storeJson(submissionsSchemeData, schemeDataJson + ("data" -> Json.toJson(chunkedRow._1.map(_.map(_.utf8String)))))
         .map(wasStoredSuccessfully => (wasStoredSuccessfully, chunkedRow._2))
     )

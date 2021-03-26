@@ -78,11 +78,11 @@ class PresubmissionMongoRepository @Inject()(applicationConfig: ApplicationConfi
 
   def storeJson(presubmissionData: JsObject, schemeInfo: String): Future[Boolean] = {
     val startTime: Long = System.currentTimeMillis()
-    collection.insert(presubmissionData).map { res =>
+    collection.insert(ordered = false).one(presubmissionData).map { res =>
       if(res.writeErrors.nonEmpty) {
         Logger.error(s"Failed storing presubmission data. Error: ${Message.unapply(res).getOrElse("")} for schemeInfo: ${schemeInfo}")
       }
-      Logger.debug("!!!!!! TIME TAKEN " + (System.currentTimeMillis - startTime))
+      Logger.warn("[PresubmissionMongoRepository][storeJson] REMOVEME chunk upload time: " + (System.currentTimeMillis - startTime))
       res.ok
     }.recover {
       case e: Throwable =>
