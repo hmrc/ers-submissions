@@ -47,7 +47,11 @@
 
     <logger name="org.asynchttpclient.netty.channel" level="WARN"/>
 
+    <logger name="play.shaded.ahc.org.asynchttpclient.netty.channel.DefaultChannelPool" level="WARN"/>
+
     <logger name="com.google.inject" level="INFO"/>
+
+    <logger name="WARN" level="INFO"/>
 
     <logger name="application" level="INFO"/>
 

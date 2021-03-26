@@ -25,6 +25,8 @@ import akka.util.ByteString
 import config.ApplicationConfig
 import models.SubmissionsSchemeData
 import play.api.Logger
+import play.api.http.Status
+import uk.gov.hmrc.http.UpstreamErrorResponse
 
 import javax.inject.Inject
 import scala.concurrent.Future
@@ -41,7 +43,7 @@ class FileDownloadService @Inject()(
         Logger.error(
           s"[ProcessCsvService][extractEntityData] Illegal response from Upscan: ${notOkResponse.status.intValue}, " +
             s"body: ${notOkResponse.entity.dataBytes}")
-        Source.failed(new Exception("Could not download file from upscan")) //TODO maybe touch this up
+        Source.failed(UpstreamErrorResponse("Could not download file from upscan", Status.INTERNAL_SERVER_ERROR))
     }
   }
 

@@ -35,10 +35,9 @@ class PresubmissionService @Inject()(repositories: Repositories, ersLoggingAndAu
   def storeJson(presubmissionData: SchemeData)(implicit request: Request[_], hc: HeaderCarrier): Future[Boolean] = {
 
     presubmissionRepository.storeJson(presubmissionData).recover {
-      case ex: Exception => {
+      case ex: Exception =>
         ersLoggingAndAuditing.handleException(presubmissionData.schemeInfo, ex, "Exception during storing presubmission data")
         false
-      }
     }
 
   }
@@ -46,11 +45,9 @@ class PresubmissionService @Inject()(repositories: Repositories, ersLoggingAndAu
   def storeJson(presubmissionData: SubmissionsSchemeData, jsObject: JsObject)(implicit request: Request[_], hc: HeaderCarrier): Future[Boolean] = {
 
     presubmissionRepository.storeJson(jsObject, presubmissionData.schemeInfo.toString).recover {
-      case ex: Exception => {
-        Logger.error("our issue is " + ex)
-        ersLoggingAndAuditing.handleException(presubmissionData.schemeInfo, ex, "Exception during storing presubmission data")
+      case ex: Exception =>
+        ersLoggingAndAuditing.handleException(presubmissionData.schemeInfo, ex, "Exception during storing presubmission data in submission v2")
         false
-      }
     }
 
   }
@@ -80,10 +77,6 @@ class PresubmissionService @Inject()(repositories: Repositories, ersLoggingAndAu
       }
     }
 
-  }
-
-  def findAndUpdate(schemeInfo: SchemeInfo)(implicit request: Request[_], hc: HeaderCarrier): Future[Option[SchemeData]] = {
-    presubmissionRepository.findAndUpdate(schemeInfo)
   }
 
 }

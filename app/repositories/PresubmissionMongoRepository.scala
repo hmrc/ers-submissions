@@ -115,20 +115,4 @@ class PresubmissionMongoRepository @Inject()(applicationConfig: ApplicationConfi
     }
   }
 
-  def findAndUpdate(schemeInfo: SchemeInfo): Future[Option[SchemeData]] = {
-
-    val selector: BSONDocument = buildSelector(schemeInfo) ++ ("processed" -> BSONDocument("$exists" -> false))
-
-    val modifier: BSONDocument = BSONDocument(
-      "$set" -> BSONDocument("processed" -> true)
-    )
-
-    collection.findAndUpdate(selector, modifier).map { result =>
-      if(result.lastError.isDefined && result.lastError.get.err.isDefined) {
-        Logger.error(s"Error getting presubmission record: ${result.lastError.get.err.toString}")
-      }
-      result.result[SchemeData]
-    }
-  }
-
 }

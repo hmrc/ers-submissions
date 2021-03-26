@@ -119,7 +119,8 @@ object Fixtures extends MockitoSugar {
   val submissionsSchemeData: SubmissionsSchemeData = SubmissionsSchemeData(
     EMISchemeInfo,
     sheetName,
-    UpscanCallback(sheetName, "downloadUrl")
+    UpscanCallback(sheetName, "downloadUrl"),
+    1
   )
 
   val schemeDataJson: JsObject = Json.toJson(schemeData).as[JsObject]

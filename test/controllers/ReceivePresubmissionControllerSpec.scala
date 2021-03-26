@@ -23,9 +23,9 @@ import akka.testkit.TestKit
 import akka.util.ByteString
 import config.ApplicationConfig
 import controllers.auth.AuthAction
-import fixtures.{Fixtures, WithMockedAuthActions}
+import fixtures.{Fixtures, SIP, WithMockedAuthActions}
 import metrics.Metrics
-import models.{SchemeData, SubmissionsSchemeData}
+import models.{SchemeData, SubmissionsSchemeData, UpscanCallback}
 import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
 import play.api.test.Helpers._
@@ -33,6 +33,7 @@ import org.mockito.internal.verification.VerificationModeFactory
 import org.scalatest.BeforeAndAfterEach
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
+import play.api.http.Status
 import play.api.libs.json.JsObject
 import play.api.mvc.{ControllerComponents, PlayBodyParsers, Request}
 import play.api.test.FakeRequest
@@ -44,7 +45,7 @@ import utils.LoggingAndRexceptions.ErsLoggingAndAuditing
 
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
-import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.http.{HeaderCarrier, UpstreamErrorResponse}
 
 class ReceivePresubmissionControllerSpec extends TestKit(ActorSystem("ReceivePresubmissionControllerSpec"))
   with UnitSpec with MockitoSugar with BeforeAndAfterEach with GuiceOneAppPerSuite with WithMockedAuthActions {
@@ -61,11 +62,13 @@ class ReceivePresubmissionControllerSpec extends TestKit(ActorSystem("ReceivePre
 
   def testFileDownloadService(downloadResponse: String): FileDownloadService = new FileDownloadService(mockApplicationConfig) {
     override def makeRequest(request: HttpRequest): Future[HttpResponse] = Future.successful(HttpResponse(entity = downloadResponse))
+
     when(mockApplicationConfig.uploadCsvSizeLimit).thenReturn(104857600)
     when(mockApplicationConfig.maxGroupSize).thenReturn(10000)
   }
 
   val mockMetrics: Metrics = mock[Metrics]
+
   override def beforeEach(): Unit = {
     super.beforeEach()
     reset(mockMetrics)
@@ -79,7 +82,8 @@ class ReceivePresubmissionControllerSpec extends TestKit(ActorSystem("ReceivePre
   def buildPresubmissionController(validationResult: Boolean = true,
                                    storeJsonResult: Boolean = true,
                                    downloadResponse: String = Fixtures.submissionsSchemeData.toString,
-                                   mockSubmissionResult: Boolean = false
+                                   mockSubmissionResult: Boolean = false,
+                                   failSubmitJson: Option[Throwable] = None
                                   ): ReceivePresubmissionController =
     new ReceivePresubmissionController(
       mockPresubmissionService,
@@ -109,6 +113,8 @@ class ReceivePresubmissionControllerSpec extends TestKit(ActorSystem("ReceivePre
                              (implicit request: Request[_], hc: HeaderCarrier): Future[(Boolean, Long)] = {
         if (mockSubmissionResult) {
           Future((false, 3L))
+        } else if (failSubmitJson.isDefined) {
+          Future.failed(failSubmitJson.get)
         } else {
           super.submitJson(fileSource, submissionsSchemeData)
         }
@@ -178,5 +184,31 @@ class ReceivePresubmissionControllerSpec extends TestKit(ActorSystem("ReceivePre
       verify(mockMetrics, VerificationModeFactory.times(0)).failedStorePresubmission()
     }
 
+  }
+
+  "calling storePresubmission" should {
+    "return InternalServerError when receiving an UpstreamErrorResponse from submitJson" in {
+      val submissionsSchemeData: SubmissionsSchemeData = SubmissionsSchemeData(SIP.schemeInfo, "sip sheet name",
+        UpscanCallback("name", "/download/url"), 1)
+
+      val presubmissionController = buildPresubmissionController(failSubmitJson = Some(UpstreamErrorResponse("a message", 500)))
+      val result = await(presubmissionController.storePresubmission(submissionsSchemeData)(FakeRequest().withBody(Fixtures.submissionsSchemeDataJson),
+        HeaderCarrier.apply()))
+
+      result.header.status shouldBe Status.INTERNAL_SERVER_ERROR
+      bodyOf(result) shouldBe "a message"
+    }
+
+    "return InternalServerError when receiving an unknown exception from submitJson" in {
+      val submissionsSchemeData: SubmissionsSchemeData = SubmissionsSchemeData(SIP.schemeInfo, "sip sheet name",
+        UpscanCallback("name", "/download/url"), 1)
+
+      val presubmissionController = buildPresubmissionController(failSubmitJson = Some(new RuntimeException("a different message")))
+      val result = await(presubmissionController.storePresubmission(submissionsSchemeData)(FakeRequest().withBody(Fixtures.submissionsSchemeDataJson),
+        HeaderCarrier.apply()))
+
+      result.header.status shouldBe Status.INTERNAL_SERVER_ERROR
+      bodyOf(result) shouldBe "a different message"
+    }
   }
 }

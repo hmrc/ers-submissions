@@ -28,6 +28,7 @@ import org.scalatestplus.mockito.MockitoSugar
 import uk.gov.hmrc.play.test.{UnitSpec, WithFakeApplication}
 import org.mockito.Mockito._
 import org.scalatest.concurrent.ScalaFutures
+import uk.gov.hmrc.http.UpstreamErrorResponse
 
 import scala.concurrent.{Await, Future}
 import scala.concurrent.duration.Duration
@@ -61,7 +62,7 @@ class FileDownloadServiceSpec extends TestKit(ActorSystem("FileDownloadServiceSp
         val result = testService.extractEntityData(response).runWith(Sink.seq)
 
         ScalaFutures.whenReady(result.failed) { e =>
-          e shouldBe a[Exception] // TODO elaborate on this?
+          e shouldBe an[UpstreamErrorResponse] // TODO elaborate on this?
         }
 
       }
@@ -86,7 +87,7 @@ class FileDownloadServiceSpec extends TestKit(ActorSystem("FileDownloadServiceSp
 
     "convert file to sequence of eithers" when {
       val submissionsSchemeData: SubmissionsSchemeData = SubmissionsSchemeData(SIP.schemeInfo, "sip sheet name",
-        UpscanCallback("name", "/download/url"))
+        UpscanCallback("name", "/download/url"), 1)
 
       val testService: FileDownloadService = new FileDownloadService(mockAppConfig) {
         override def extractBodyOfRequest: Source[HttpResponse, _] => Source[List[ByteString], _] = {

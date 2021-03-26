@@ -17,10 +17,10 @@
 package controllers
 
 import java.util.concurrent.TimeUnit
-
 import akka.actor.ActorSystem
 import akka.stream.scaladsl.{Sink, Source}
 import akka.util.ByteString
+
 import javax.inject.Inject
 import controllers.auth.{AuthAction, AuthorisedAction}
 import metrics.Metrics
@@ -35,7 +35,7 @@ import utils.LoggingAndRexceptions.ErsLoggingAndAuditing
 
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
-import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.http.{HeaderCarrier, UpstreamErrorResponse}
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
 class ReceivePresubmissionController @Inject()(presubmissionService: PresubmissionService,
@@ -66,8 +66,8 @@ class ReceivePresubmissionController @Inject()(presubmissionService: Presubmissi
     authorisedAction(empRef).async(parse.json) { implicit request =>
 
       validationService.validateSubmissionsSchemeData(request.body.as[JsObject]) match {
-        case schemeData: Some[SubmissionsSchemeData] =>
-          storePresubmission(schemeData.get)
+        case submissionsSchemeData: Some[SubmissionsSchemeData] =>
+          storePresubmission(submissionsSchemeData.get)
         case _ =>
           Future.successful(BadRequest("Invalid json format."))
       }
@@ -80,7 +80,7 @@ class ReceivePresubmissionController @Inject()(presubmissionService: Presubmissi
 
     fileSource.mapAsyncUnordered(2)(chunkedRow =>
       presubmissionService.storeJson(submissionsSchemeData, schemeDataJson + ("data" -> Json.toJson(chunkedRow._1.map(_.map(_.utf8String)))))
-        .map((_, chunkedRow._2))
+        .map(wasStoredSuccessfully => (wasStoredSuccessfully, chunkedRow._2))
     )
       .takeWhile(booleanAndIndex => booleanAndIndex._1, inclusive = true)
       .runWith(Sink.last)
@@ -111,6 +111,12 @@ class ReceivePresubmissionController @Inject()(presubmissionService: Presubmissi
         metrics.failedStorePresubmission()
         ersLoggingAndAuditing.handleFailure(submissionsSchemeData.schemeInfo, s"Storing presubmission data for sheet ${submissionsSchemeData.sheetName} failed")
         InternalServerError("Storing presubmission data failed.")
+    }.recover {
+      case ex: UpstreamErrorResponse =>
+        InternalServerError(ex.getMessage())
+      case ex =>
+        Logger.error(s"[ReceivePresubmissionController][storePresubmission] Unknown exception encountered while submitting file: ${ex.getMessage}")
+        InternalServerError(ex.getMessage)
     }
   }
 

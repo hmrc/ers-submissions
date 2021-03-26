@@ -26,7 +26,7 @@ class ValidationService @Inject()() {
   def validateSchemeData(json: JsObject): Option[SchemeData] = {
     json.validate[SchemeData] match {
       case schemeData: JsSuccess[SchemeData] => Some(schemeData.value)
-      case e: JsError => {
+      case _: JsError => {
         None
       }
     }
@@ -35,19 +35,14 @@ class ValidationService @Inject()() {
   def validateSubmissionsSchemeData(json: JsObject): Option[SubmissionsSchemeData] = {
     json.validate[SubmissionsSchemeData] match {
       case schemeData: JsSuccess[SubmissionsSchemeData] => Some(schemeData.value)
-      case e: JsError => {
-        Logger.error("jsError is " + e)
-        None
-      }
+      case _: JsError => None
     }
   }
 
   def validateSchemeInfo(json: JsObject): Option[SchemeInfo] = {
     json.validate[SchemeInfo] match {
       case schemeInfo: JsSuccess[SchemeInfo] => Some(schemeInfo.value)
-      case e: JsError => {
-        None
-      }
+      case _: JsError => None
     }
   }
 

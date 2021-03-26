@@ -5,7 +5,7 @@ GET         /assets/*file                                        @controllers.As
 #TODO Old version - remove after successful release of large file changes
 POST        /:empRef/submit-presubmission                       @controllers.ReceivePresubmissionController.receivePresubmissionJson(empRef: String)
 
-POST        /:empRef/v2/submit-presubmission                    @controllers.ReceivePresubmissionController.receivePresubmissionJsonV2(empRef: String)
+POST        /v2/:empRef/submit-presubmission                    @controllers.ReceivePresubmissionController.receivePresubmissionJsonV2(empRef: String)
 
 POST        /submit-metadata                                    @controllers.SubmissionController.receiveMetadataJson
 

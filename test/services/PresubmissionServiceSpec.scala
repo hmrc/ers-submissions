@@ -78,7 +78,7 @@ class PresubmissionServiceSpec extends UnitSpec with MockitoSugar with WithFakeA
 
   "calling new storeJson" should {
     val submissionsSchemeData: SubmissionsSchemeData = SubmissionsSchemeData(SIP.schemeInfo, "sip sheet name",
-      UpscanCallback("name", "/download/url"))
+      UpscanCallback("name", "/download/url"), 1)
 
     "return true if storage is sussessful" in {
       val presubmissionService = buildPresubmissionService(Some(true))
@@ -159,19 +159,6 @@ class PresubmissionServiceSpec extends UnitSpec with MockitoSugar with WithFakeA
       val presubmissionService = buildPresubmissionService(None)
       val result = await(presubmissionService.compareSheetsNumber(expectedSheets = 1, schemeInfo = Fixtures.EMISchemeInfo))
       result shouldBe false
-    }
-  }
-
-  "calling findAndUpdate" should {
-    val presubmissionService: PresubmissionService = new PresubmissionService(mockRepositories, mockErsLoggingAndAuditing) {
-      override lazy val presubmissionRepository = mockPresubmissionRepository
-      when(mockPresubmissionRepository.findAndUpdate(any[SchemeInfo]()))
-        .thenReturn(Future.successful(Some(Fixtures.schemeData)))
-    }
-
-    "return the result of repository findAndUpdate" in {
-      val result = await(presubmissionService.findAndUpdate(Fixtures.EMISchemeInfo))
-      result.get shouldBe Fixtures.schemeData
     }
   }
 

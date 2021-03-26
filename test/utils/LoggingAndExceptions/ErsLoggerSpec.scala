@@ -69,16 +69,4 @@ class ErsLoggerSpec extends UnitSpec {
     }
   }
 
-  "calling logSliced" should {
-    "log list data in chuncks" in {
-      val testData = List(
-        List.fill(20)("test"),
-        List.fill(21)("test")
-      )
-      testData.map { testList =>
-        val result = TestErsLogger.logSliced(testList, "length message", "data message")
-        result shouldBe (())
-      }
-    }
-  }
 }
