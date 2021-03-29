@@ -27,7 +27,6 @@ import utils.LoggingAndRexceptions.ADRExceptionEmitter
 
 import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 import scala.concurrent.Future
-import util.control.Breaks._
 import scala.concurrent.ExecutionContext.Implicits.global
 import uk.gov.hmrc.http.HeaderCarrier
 

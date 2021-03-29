@@ -20,7 +20,7 @@ import config.ApplicationConfig
 import models.ERSQuery
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.when
-import org.scalatest.mockito.MockitoSugar
+import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import repositories.{DataVerificationMongoRepository, Repositories}
 import uk.gov.hmrc.play.test.UnitSpec

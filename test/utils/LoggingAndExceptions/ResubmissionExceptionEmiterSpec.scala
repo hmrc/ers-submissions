@@ -17,7 +17,7 @@
 package utils.LoggingAndExceptions
 
 import models.ResubmissionException
-import org.scalatest.mockito.MockitoSugar
+import org.scalatestplus.mockito.MockitoSugar
 import play.api.test.FakeRequest
 import services.audit.AuditEvents
 import uk.gov.hmrc.http.HeaderCarrier

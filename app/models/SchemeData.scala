@@ -17,11 +17,8 @@
 package models
 import com.github.nscala_time.time.Imports.DateTimeZone
 import org.joda.time.DateTime
-import play.api.libs.functional.syntax.toFunctionalBuilderOps
-import play.api.libs.json.{Format, JsValue, Json, OFormat, Reads, Writes, __}
-import play.api.libs.json.JodaReads._
-import play.api.libs.json.JodaWrites._
-import uk.gov.hmrc.mongo.json.ReactiveMongoFormats
+import play.api.libs.json.{Format, Json, OFormat, Reads, Writes, __}
+
 
 import scala.collection.mutable.ListBuffer
 
@@ -41,9 +38,7 @@ object SchemeInfo {
       new DateTime(dateTime, DateTimeZone.UTC)
     }
 
-  private val dateTimeWrite: Writes[DateTime] = new Writes[DateTime] {
-    def writes(dateTime: DateTime): JsValue = Json.toJson(dateTime.getMillis)
-  }
+  private val dateTimeWrite: Writes[DateTime] = (dateTime: DateTime) => Json.toJson(dateTime.getMillis)
 
   implicit val dateTimeFormats: Format[DateTime] = Format(dateTimeRead, dateTimeWrite)
   implicit val format: OFormat[SchemeInfo] = Json.format[SchemeInfo]
@@ -58,6 +53,17 @@ case class SchemeData(
                        )
 object SchemeData {
   implicit val format: OFormat[SchemeData] = Json.format[SchemeData]
+}
+
+case class SubmissionsSchemeData(
+                       schemeInfo: SchemeInfo,
+                       sheetName: String,
+                       data: UpscanCallback,
+                       numberOfRows: Int
+                       )
+
+object SubmissionsSchemeData {
+  implicit val format: OFormat[SubmissionsSchemeData] = Json.format[SubmissionsSchemeData]
 }
 
 case class SchemeRefContainer(schemeRef: String)

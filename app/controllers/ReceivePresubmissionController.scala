@@ -17,41 +17,111 @@
 package controllers
 
 import java.util.concurrent.TimeUnit
+import akka.actor.ActorSystem
+import akka.stream.scaladsl.{Sink, Source}
+import akka.util.ByteString
+import config.ApplicationConfig
 
 import javax.inject.Inject
 import controllers.auth.{AuthAction, AuthorisedAction}
 import metrics.Metrics
-import models.SchemeData
+import models.{SchemeData, SubmissionsSchemeData}
 import play.api.Logger
-import play.api.libs.json.{JsObject, JsValue}
+import play.api.libs.json.{JsObject, JsValue, Json}
 import play.api.mvc.{Action, ControllerComponents, PlayBodyParsers, Request, Result}
-import services.{PresubmissionService, ValidationService}
+import services.{FileDownloadService, PresubmissionService, ValidationService}
 import services.audit.AuditEvents
 import uk.gov.hmrc.auth.core.AuthConnector
 import utils.LoggingAndRexceptions.ErsLoggingAndAuditing
 
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
-import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.http.{HeaderCarrier, UpstreamErrorResponse}
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
 class ReceivePresubmissionController @Inject()(presubmissionService: PresubmissionService,
                                                validationService: ValidationService,
+                                               fileDownloadService: FileDownloadService,
                                                ersLoggingAndAuditing: ErsLoggingAndAuditing,
                                                authConnector: AuthConnector,
                                                auditEvents: AuditEvents,
                                                metrics: Metrics,
                                                cc: ControllerComponents,
-                                               bodyParser: PlayBodyParsers) extends BackendController(cc) {
+                                               bodyParser: PlayBodyParsers,
+                                               appConfig: ApplicationConfig)
+                                              (implicit actorSystem: ActorSystem) extends BackendController(cc) {
 
   def authorisedAction(empRef: String): AuthAction = AuthorisedAction(empRef, authConnector, bodyParser)
 
   def receivePresubmissionJson(empRef: String): Action[JsValue] =
     authorisedAction(empRef).async(parse.json(maxLength = 1024 * 10000)) { implicit request =>
 
-    validationService.validateSchemeData(request.body.as[JsObject]) match {
-      case schemeData: Some[SchemeData] => storePresubmission(schemeData.get)
-      case _ => Future.successful(BadRequest("Invalid json format."))
+      validationService.validateSchemeData(request.body.as[JsObject]) match {
+        case schemeData: Some[SchemeData] => storePresubmission(schemeData.get)
+        case _ =>
+          Future.successful(BadRequest("Invalid json format."))
+      }
+    }
+
+  def receivePresubmissionJsonV2(empRef: String): Action[JsValue] =
+    authorisedAction(empRef).async(parse.json) { implicit request =>
+
+      validationService.validateSubmissionsSchemeData(request.body.as[JsObject]) match {
+        case submissionsSchemeData: Some[SubmissionsSchemeData] =>
+          storePresubmission(submissionsSchemeData.get)
+        case _ =>
+          Future.successful(BadRequest("Invalid json format."))
+      }
+    }
+
+  def submitJson(fileSource: Source[(Seq[Seq[ByteString]], Long), _], submissionsSchemeData: SubmissionsSchemeData)(
+    implicit request: Request[_], hc: HeaderCarrier): Future[(Boolean, Long)] = {
+
+    val schemeDataJson = Json.toJson(SchemeData(submissionsSchemeData.schemeInfo, submissionsSchemeData.sheetName, None, None)).as[JsObject]
+
+    fileSource.mapAsyncUnordered(appConfig.submissionParallelism)(chunkedRowsWithIndex => {
+      val (chunkedRows, index) = chunkedRowsWithIndex
+      presubmissionService.storeJsonV2(submissionsSchemeData, schemeDataJson + ("data" -> Json.toJson(chunkedRows.map(_.map(_.utf8String)))))
+        .map(wasStoredSuccessfully => (wasStoredSuccessfully, index))
+    })
+      .takeWhile(booleanAndIndex => {
+        val wasStoredSuccessfully: Boolean = booleanAndIndex._1
+        wasStoredSuccessfully
+      }, inclusive = true)
+      .runWith(Sink.last)
+  }
+
+  def storePresubmission(submissionsSchemeData: SubmissionsSchemeData)(implicit request: Request[_], hc: HeaderCarrier): Future[Result] = {
+
+    val startTime = System.currentTimeMillis()
+    val fileSource: Source[(Seq[Seq[ByteString]], Long), _] =
+      fileDownloadService.schemeDataToChunksWithIndex(submissionsSchemeData)
+
+    submitJson(fileSource, submissionsSchemeData).map {
+      case (true, _) =>
+        metrics.storePresubmission(System.currentTimeMillis() - startTime, TimeUnit.MILLISECONDS)
+        Logger.debug("total running time was " + (System.currentTimeMillis() - startTime))
+        auditEvents.publicToProtectedEvent(submissionsSchemeData.schemeInfo, submissionsSchemeData.sheetName, submissionsSchemeData.numberOfRows.toString)
+        ersLoggingAndAuditing.handleSuccess(
+          submissionsSchemeData.schemeInfo, s"Presubmission data for sheet ${submissionsSchemeData.sheetName} was stored successfully"
+        )
+        Ok("Presubmission data is stored successfully.")
+      case (_, index) =>
+        presubmissionService.removeJson(submissionsSchemeData.schemeInfo).map { wasSuccess =>
+          if (!wasSuccess && index > 0) {
+            Logger.error(
+              "[ReceivePresubmissionController][storePresubmission] INTERVENTION NEEDED: Removing partial presubmission data failed after storing failure")
+          }
+        }
+        metrics.failedStorePresubmission()
+        ersLoggingAndAuditing.handleFailure(submissionsSchemeData.schemeInfo, s"Storing presubmission data for sheet ${submissionsSchemeData.sheetName} failed")
+        InternalServerError("Storing presubmission data failed.")
+    }.recover {
+      case ex: UpstreamErrorResponse =>
+        InternalServerError(ex.getMessage())
+      case ex =>
+        Logger.error(s"[ReceivePresubmissionController][storePresubmission] Unknown exception encountered while submitting file: ${ex.getMessage}")
+        InternalServerError(ex.getMessage)
     }
   }
 
@@ -72,4 +142,5 @@ class ReceivePresubmissionController @Inject()(presubmissionService: Presubmissi
         InternalServerError("Storing presubmission data failed.")
     }
   }
+
 }

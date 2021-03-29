@@ -18,14 +18,14 @@ package uk.gov.hmrc
 
 import _root_.play.api.libs.json.{JsValue, Json, JsObject}
 import models._
-import org.joda.time.DateTime
+import org.joda.time.{DateTime, DateTimeZone}
 
 import scala.collection.mutable.ListBuffer
 
 object Fixtures {
   val invalidPayload: JsObject = Json.obj("invalid data" -> "test")
 
-  val timestamp: DateTime = DateTime.now
+  val timestamp: DateTime = DateTime.now(DateTimeZone.UTC)
 
   val schemeInfo: SchemeInfo = SchemeInfo (
     schemeRef = "XA1100000000000",
@@ -36,6 +36,14 @@ object Fixtures {
     schemeType = "EMI"
   )
   val schemeInfoPayload: JsValue = Json.toJson(schemeInfo)
+
+  val submissionsSchemeData: SubmissionsSchemeData = SubmissionsSchemeData(
+    schemeInfo,
+    "EMI40_Adjustments_V3",
+    UpscanCallback("EMI40_Adjustments_V3", "downloadUrl"),
+    1
+  )
+  val submissionsSchemeDataJson: JsObject = Json.toJson(submissionsSchemeData).as[JsObject]
 
   val ersMetaData = ErsMetaData(
     schemeInfo = schemeInfo,

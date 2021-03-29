@@ -18,7 +18,7 @@ package utils.LoggingAndExceptions
 
 import fixtures.Fixtures
 import models.ADRTransferException
-import org.scalatest.mockito.MockitoSugar
+import org.scalatestplus.mockito.MockitoSugar
 import play.api.test.FakeRequest
 import services.audit.AuditEvents
 import uk.gov.hmrc.play.test.{UnitSpec, WithFakeApplication}

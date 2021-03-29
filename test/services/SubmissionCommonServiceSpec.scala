@@ -26,7 +26,7 @@ import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
 import org.mockito.internal.verification.VerificationModeFactory
 import org.scalatest.BeforeAndAfterEach
-import org.scalatest.mockito.MockitoSugar
+import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.libs.json.{JsObject, Json}
 import play.api.mvc.Request
@@ -34,7 +34,7 @@ import play.api.test.FakeRequest
 import repositories.{MetadataMongoRepository, Repositories}
 import services.audit.AuditEvents
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
-import uk.gov.hmrc.play.test.{UnitSpec, WithFakeApplication}
+import uk.gov.hmrc.play.test.UnitSpec
 import utils.LoggingAndRexceptions.{ADRExceptionEmitter, ErsLoggingAndAuditing}
 import utils.{ADRSubmission, SubmissionCommon}
 

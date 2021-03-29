@@ -19,7 +19,7 @@ package services
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.verify
 import org.mockito.internal.verification.VerificationModeFactory
-import org.scalatest.mockito.MockitoSugar
+import org.scalatestplus.mockito.MockitoSugar
 import org.scalatest.{Matchers, WordSpec}
 import play.api.mvc.AnyContentAsEmpty
 import play.api.test.FakeRequest

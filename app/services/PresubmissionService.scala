@@ -17,8 +17,9 @@
 package services
 
 import javax.inject.Inject
-import models.{SchemeData, SchemeInfo}
+import models.{SchemeData, SchemeInfo, SubmissionsSchemeData}
 import play.api.Logger
+import play.api.libs.json.JsObject
 import play.api.mvc.Request
 import repositories.{PresubmissionMongoRepository, Repositories}
 import utils.LoggingAndRexceptions.ErsLoggingAndAuditing
@@ -34,10 +35,19 @@ class PresubmissionService @Inject()(repositories: Repositories, ersLoggingAndAu
   def storeJson(presubmissionData: SchemeData)(implicit request: Request[_], hc: HeaderCarrier): Future[Boolean] = {
 
     presubmissionRepository.storeJson(presubmissionData).recover {
-      case ex: Exception => {
+      case ex: Exception =>
         ersLoggingAndAuditing.handleException(presubmissionData.schemeInfo, ex, "Exception during storing presubmission data")
         false
-      }
+    }
+
+  }
+
+  def storeJsonV2(presubmissionData: SubmissionsSchemeData, jsObject: JsObject)(implicit request: Request[_], hc: HeaderCarrier): Future[Boolean] = {
+
+    presubmissionRepository.storeJsonV2(presubmissionData.schemeInfo.toString, jsObject).recover {
+      case ex: Exception =>
+        ersLoggingAndAuditing.handleException(presubmissionData.schemeInfo, ex, "Exception during storing presubmission data in submission v2")
+        false
     }
 
   }
@@ -67,10 +77,6 @@ class PresubmissionService @Inject()(repositories: Repositories, ersLoggingAndAu
       }
     }
 
-  }
-
-  def findAndUpdate(schemeInfo: SchemeInfo)(implicit request: Request[_], hc: HeaderCarrier): Future[Option[SchemeData]] = {
-    presubmissionRepository.findAndUpdate(schemeInfo)
   }
 
 }

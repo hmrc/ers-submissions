@@ -18,8 +18,7 @@ package repositories
 
 import config.ApplicationConfig
 import javax.inject.Inject
-import uk.gov.hmrc.mongo.MongoConnector
-import play.modules.reactivemongo.{MongoDbConnection, ReactiveMongoComponent}
+import play.modules.reactivemongo.ReactiveMongoComponent
 import uk.gov.hmrc.lock.LockRepository
 
 
