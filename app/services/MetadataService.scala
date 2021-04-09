@@ -21,7 +21,6 @@ import models.ErsSummary
 import play.api.Logger
 import play.api.libs.json.{JsError, JsObject, JsSuccess}
 import play.api.mvc.Request
-import repositories.Repositories
 import uk.gov.hmrc.http.HeaderCarrier
 import utils.LoggingAndRexceptions.ErsLoggingAndAuditing
 import repositories.MetadataMongoRepository

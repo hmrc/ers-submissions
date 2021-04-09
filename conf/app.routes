@@ -1,8 +1,12 @@
 # microservice specific routes
 
-GET         /assets/*file                                       @controllers.Assets.at(path="/public", file)
+GET         /assets/*file                                        @controllers.Assets.at(path="/public", file)
 
+# Used by ods files
 POST        /:empRef/submit-presubmission                       @controllers.ReceivePresubmissionController.receivePresubmissionJson(empRef: String)
+
+# Used by csv files
+POST        /v2/:empRef/submit-presubmission                    @controllers.ReceivePresubmissionController.receivePresubmissionJsonV2(empRef: String)
 
 POST        /submit-metadata                                    @controllers.SubmissionController.receiveMetadataJson
 

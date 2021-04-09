@@ -43,22 +43,4 @@ trait ErsLogger extends ErsDataMessages with ErsExceptionMessages {
     Logger.warn(buildMessage(message, data))
   }
 
-  def logSliced(data: List[String], lengthMessage: String, dataMessage: String): Unit = {
-    val maxNumber: Int = 20
-
-    def numberOfSlices(listLength: Int): Int = {
-      if(listLength%maxNumber > 0)
-        listLength/maxNumber + 1
-      else
-        listLength/maxNumber
-    }
-
-    val listLength = data.length
-    logWarn(s"${listLength} ${lengthMessage}")
-    val slices: Int = numberOfSlices(listLength)
-    for (i <- 0 until slices * maxNumber by maxNumber) {
-      logWarn(s"${dataMessage}:\n${data.slice(i, (i + maxNumber))}")
-    }
-  }
-
 }

@@ -17,10 +17,11 @@
 package fixtures
 
 import models._
-import org.joda.time.{DateTimeZone, DateTime}
-import play.api.libs.json.{Json, JsObject}
+import org.joda.time.{DateTime, DateTimeZone}
+import org.scalatestplus.mockito.MockitoSugar
+import play.api.libs.json.{JsObject, JsValue, Json}
+
 import scala.collection.mutable.ListBuffer
-import org.scalatest.mock.MockitoSugar
 import uk.gov.hmrc.domain.Generator
 
 object Fixtures extends MockitoSugar {
@@ -39,6 +40,8 @@ object Fixtures extends MockitoSugar {
     schemeName = "My scheme",
     schemeType = "EMI"
   )
+
+  val schemeInfoJson: JsValue = Json.toJson(schemeInfo)
 
   val summaryData = ErsSummary(
     bundleRef = "123453222",
@@ -97,7 +100,7 @@ object Fixtures extends MockitoSugar {
     transferStatus = Some("saved")
   )
 
-  val scheetName: String = "EMI40_Adjustments_V3"
+  val sheetName: String = "EMI40_Adjustments_V3"
   val data: Option[ListBuffer[Seq[String]]] = Some(
     ListBuffer(
       Seq("no", "no", "yes", "3", "2015-12-09", "First", "", "Last", nino, "123/123456", "10.1234", "100.12", "10.1234", "10.1234"),
@@ -108,12 +111,21 @@ object Fixtures extends MockitoSugar {
 
   val schemeData: SchemeData = SchemeData(
     EMISchemeInfo,
-    scheetName,
+    sheetName,
     None,
     data
   )
 
+  val submissionsSchemeData: SubmissionsSchemeData = SubmissionsSchemeData(
+    EMISchemeInfo,
+    sheetName,
+    UpscanCallback(sheetName, "downloadUrl"),
+    1
+  )
+
   val schemeDataJson: JsObject = Json.toJson(schemeData).as[JsObject]
+
+  val submissionsSchemeDataJson: JsObject = Json.toJson(submissionsSchemeData).as[JsObject]
 
   val invalidJson: JsObject = Json.obj(
     "metafield1" -> "metavalue1",

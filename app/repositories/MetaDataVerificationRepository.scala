@@ -20,9 +20,8 @@ import config.ApplicationConfig
 import javax.inject.Inject
 import models.{ERSMetaDataResults, ERSQuery, ErsSummary}
 import org.joda.time.DateTime
-import play.api.libs.json.JsObject
 import play.modules.reactivemongo.ReactiveMongoComponent
-import reactivemongo.api.{Cursor, DB}
+import reactivemongo.api.Cursor
 import reactivemongo.bson._
 import reactivemongo.play.json.ImplicitBSONHandlers._
 import uk.gov.hmrc.mongo.ReactiveRepository

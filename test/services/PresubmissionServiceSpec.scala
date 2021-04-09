@@ -16,11 +16,12 @@
 
 package services
 
-import fixtures.Fixtures
-import models.{SchemeData, SchemeInfo}
+import fixtures.{Fixtures, SIP}
+import models.{SchemeData, SchemeInfo, SubmissionsSchemeData, UpscanCallback}
 import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
-import org.scalatest.mockito.MockitoSugar
+import org.scalatestplus.mockito.MockitoSugar
+import play.api.libs.json.{JsObject, Json}
 import play.api.test.FakeRequest
 import repositories.{PresubmissionMongoRepository, Repositories}
 import uk.gov.hmrc.http.HeaderCarrier
@@ -32,7 +33,7 @@ import scala.concurrent.Future
 
 class PresubmissionServiceSpec extends UnitSpec with MockitoSugar with WithFakeApplication {
 
-  implicit val hc: HeaderCarrier = new HeaderCarrier()
+  implicit val hc: HeaderCarrier = HeaderCarrier()
   implicit val request = FakeRequest().withBody(Fixtures.metadataJson)
   val mockRepositories: Repositories = mock[Repositories]
   val mockErsLoggingAndAuditing: ErsLoggingAndAuditing = mock[ErsLoggingAndAuditing]
@@ -44,17 +45,19 @@ class PresubmissionServiceSpec extends UnitSpec with MockitoSugar with WithFakeA
     new PresubmissionService(mockRepositories, mockErsLoggingAndAuditing) {
 
       override lazy val presubmissionRepository = mockPresubmissionRepository
-    when(mockPresubmissionRepository.storeJson(any[SchemeData])).thenReturn(
-      if(storeJsonResult.isDefined) Future(storeJsonResult.get) else Future.failed(new RuntimeException))
-    when(mockPresubmissionRepository.getJson(any[SchemeInfo]))
-      .thenReturn(Future(if (getJsonResult) List(Fixtures.schemeData) else List()))
-    when(mockPresubmissionRepository.removeJson(any[SchemeInfo]))
-      .thenReturn(if(removeJsonResult.isDefined) Future(removeJsonResult.get) else Future.failed(new RuntimeException))
-  }
+      when(mockPresubmissionRepository.storeJson(any[SchemeData])).thenReturn(
+        if (storeJsonResult.isDefined) Future(storeJsonResult.get) else Future.failed(new RuntimeException))
+      when(mockPresubmissionRepository.storeJsonV2(any[String], any[JsObject])).thenReturn(
+        if (storeJsonResult.isDefined) Future(storeJsonResult.get) else Future.failed(new RuntimeException("here's a message")))
+      when(mockPresubmissionRepository.getJson(any[SchemeInfo]))
+        .thenReturn(Future(if (getJsonResult) List(Fixtures.schemeData) else List()))
+      when(mockPresubmissionRepository.removeJson(any[SchemeInfo]))
+        .thenReturn(if (removeJsonResult.isDefined) Future(removeJsonResult.get) else Future.failed(new RuntimeException))
+    }
 
   "calling storeJson" should {
 
-    "return true if storage is sussessful" in {
+    "return true if storage is successful" in {
       val presubmissionService = buildPresubmissionService(Some(true))
       val result = await(presubmissionService.storeJson(Fixtures.schemeData))
       result shouldBe true
@@ -69,6 +72,29 @@ class PresubmissionServiceSpec extends UnitSpec with MockitoSugar with WithFakeA
     "return false if exception" in {
       val presubmissionService = buildPresubmissionService(None)
       val result = await(presubmissionService.storeJson(Fixtures.schemeData))
+      result shouldBe false
+    }
+  }
+
+  "calling storeJsonV2" should {
+    val submissionsSchemeData: SubmissionsSchemeData = SubmissionsSchemeData(SIP.schemeInfo, "sip sheet name",
+      UpscanCallback("name", "/download/url"), 1)
+
+    "return true if storage is successful" in {
+      val presubmissionService = buildPresubmissionService(Some(true))
+      val result = await(presubmissionService.storeJsonV2(submissionsSchemeData, Json.obj("a" -> "e")))
+      result shouldBe true
+    }
+
+    "return false if storage fails" in {
+      val presubmissionService = buildPresubmissionService(Some(false))
+      val result = await(presubmissionService.storeJsonV2(submissionsSchemeData, Json.obj("a" -> "e")))
+      result shouldBe false
+    }
+
+    "return false if exception" in {
+      val presubmissionService = buildPresubmissionService(None)
+      val result = await(presubmissionService.storeJsonV2(submissionsSchemeData, Json.obj("a" -> "e")))
       result shouldBe false
     }
   }
@@ -114,7 +140,7 @@ class PresubmissionServiceSpec extends UnitSpec with MockitoSugar with WithFakeA
     def buildPresubmissionService(foundSheets: Option[Int]): PresubmissionService = new PresubmissionService(mockRepositories, mockErsLoggingAndAuditing) {
       override lazy val presubmissionRepository = mockPresubmissionRepository
       when(mockPresubmissionRepository.count(any[SchemeInfo]()))
-        .thenReturn(if(foundSheets.isDefined) Future.successful(foundSheets.get) else Future.failed(new RuntimeException))
+        .thenReturn(if (foundSheets.isDefined) Future.successful(foundSheets.get) else Future.failed(new RuntimeException))
     }
 
     "return true if expected number of sheets is equal to found ones" in {
@@ -133,19 +159,6 @@ class PresubmissionServiceSpec extends UnitSpec with MockitoSugar with WithFakeA
       val presubmissionService = buildPresubmissionService(None)
       val result = await(presubmissionService.compareSheetsNumber(expectedSheets = 1, schemeInfo = Fixtures.EMISchemeInfo))
       result shouldBe false
-    }
-  }
-
-  "calling findAndUpdate" should {
-    val  presubmissionService: PresubmissionService = new PresubmissionService(mockRepositories, mockErsLoggingAndAuditing) {
-      override lazy val presubmissionRepository = mockPresubmissionRepository
-      when(mockPresubmissionRepository.findAndUpdate(any[SchemeInfo]()))
-        .thenReturn(Future.successful(Some(Fixtures.schemeData)))
-    }
-
-    "return the result of repository findAndUpdate" in {
-      val result = await(presubmissionService.findAndUpdate(Fixtures.EMISchemeInfo))
-      result.get shouldBe Fixtures.schemeData
     }
   }
 

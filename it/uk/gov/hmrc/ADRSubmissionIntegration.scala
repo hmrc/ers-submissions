@@ -16,6 +16,7 @@
 
 package uk.gov.hmrc
 
+import _root_.play.api.libs.json.{Json, JsObject}
 import org.scalatest.BeforeAndAfterEach
 import repositories.{MetadataMongoRepository, PresubmissionMongoRepository}
 
@@ -24,6 +25,7 @@ import _root_.play.api.test.Helpers._
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import uk.gov.hmrc.http.HeaderCarrier
 import _root_.play.api.libs.ws.WSClient
+
 
 class ADRSubmissionIntegration extends ISpec("ADRSubmissionIntegration", additionalConfig = Seq(
   ("microservice.services.ers-stub.host", "localhost"),
@@ -39,7 +41,10 @@ class ADRSubmissionIntegration extends ISpec("ADRSubmissionIntegration", additio
 
   override protected def beforeEach: Unit = {
     super.beforeEach()
-    await(presubmissionRepository.storeJson(Fixtures.schemeData))
+    await(presubmissionRepository.storeJsonV2(
+      Fixtures.submissionsSchemeData.schemeInfo.toString,
+      Json.toJson(Fixtures.schemeData).as[JsObject]
+    ))
   }
 
   override protected def afterEach: Unit = {
@@ -48,7 +53,7 @@ class ADRSubmissionIntegration extends ISpec("ADRSubmissionIntegration", additio
     await(metadataMongoRepository.drop)
   }
 
-   //submit-metadata
+  //submit-metadata
   "Receiving data for submission" should {
 
     "return OK if valid metadata is received, filedata is extracted from database and it's successfully sent to ADR" in {
@@ -77,7 +82,7 @@ class ADRSubmissionIntegration extends ISpec("ADRSubmissionIntegration", additio
       metadataAfterSave.length shouldBe 1
       metadataAfterSave.head.transferStatus.get shouldBe "saved"
 
-      val res = await(request("ers/submit-metadata").post(Fixtures.buildErsSummaryPayload(true)))
+      val res = await(request("ers/submit-metadata").post(data))
       res.status shouldBe OK
 
       val metadata = await(metadataMongoRepository.getJson(Fixtures.schemeInfo))
@@ -104,9 +109,9 @@ class ADRSubmissionIntegration extends ISpec("ADRSubmissionIntegration", additio
     }
   }
 
-  "return BAD_REQUEST if invalid request is made" in {
-    val response = await(request("ers/save-metadata").post(Fixtures.invalidPayload))
-    response.status shouldBe BAD_REQUEST
-  }
+    "return BAD_REQUEST if invalid request is made" in {
+      val response = await(request("ers/save-metadata").post(Fixtures.invalidPayload))
+      response.status shouldBe BAD_REQUEST
+    }
 
 }
