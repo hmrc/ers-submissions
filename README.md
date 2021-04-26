@@ -1,8 +1,6 @@
 
 # ERS-Submissions
 
-[![Download](https://api.bintray.com/packages/hmrc/releases/ers-submissions/images/download.svg) ](https://bintray.com/hmrc/releases/ers-submissions/_latestVersion)
-
 This microservice handles the submission of an ERS return to ADR.
 
 When ERS-Submissions receives a call from ERS-File-Validator, it stores the data from the validated file (split into chunks) into Mongo as a pre-submission.
