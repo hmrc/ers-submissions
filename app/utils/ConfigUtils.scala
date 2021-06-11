@@ -52,14 +52,14 @@ class ConfigUtils @Inject()(adrExceptionEmitter: ADRExceptionEmitter) {
 
   def extractField(configData: Config, data: Object): Object = {
     if(!configData.hasPath("extract") || data.isInstanceOf[Option[_]]) {
-      return data
+      data
+    } else {
+      val currentElem: Config = configData.getConfig("extract")
+      val field = data.getClass.getDeclaredField(currentElem.getString("name"))
+      field.setAccessible(true)
+      val result: Object = getClearData(field.get(data))
+      extractField(currentElem, result)
     }
-
-    val currentElem: Config = configData.getConfig("extract")
-    val field = data.getClass.getDeclaredField(currentElem.getString("name"))
-    field.setAccessible(true)
-    val result: Object = getClearData(field.get(data))
-    extractField(currentElem, result)
   }
 
 }

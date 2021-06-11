@@ -16,7 +16,7 @@
 
 package models
 
-import play.api.libs.json.Json
+import play.api.libs.json.{Json, OFormat}
 
 case class ERSQuery(schemeType: Option[String],
                     startDate: Option[String],
@@ -24,15 +24,15 @@ case class ERSQuery(schemeType: Option[String],
                     transferStatus:Option[String],
                     schemeRefsList:List[String])
 object ERSQuery {
-  implicit val format = Json.format[ERSQuery]
+  implicit val format: OFormat[ERSQuery] = Json.format[ERSQuery]
 }
 
 case class ERSMetaDataResults(bundleRef:String,schemeRef:String,transferStatus:String,fileType:String, timestamp:String, taxYear:String )
 object ERSMetaDataResults {
-  implicit val format = Json.format[ERSMetaDataResults]
+  implicit val format: OFormat[ERSMetaDataResults] = Json.format[ERSMetaDataResults]
 }
 
 case class ERSDataResults(schemeRef: String,taxYear:String,timestamp:String, sheetName:String)
 object ERSDataResults {
-  implicit val format = Json.format[ERSDataResults]
+  implicit val format: OFormat[ERSDataResults] = Json.format[ERSDataResults]
 }

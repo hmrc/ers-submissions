@@ -17,14 +17,13 @@
 package fixtures
 
 import com.typesafe.config.Config
-import org.scalatestplus.play.guice.GuiceOneAppPerSuite
+import helpers.ERSTestHelper
 import play.api.test._
 import play.api.test.Helpers._
 import utils.ConfigUtils
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.play.test.UnitSpec
 
-object Common extends UnitSpec with GuiceOneAppPerSuite {
+object Common extends ERSTestHelper {
 
   def loadConfiguration(schemeType: String, sheetName: String, configUtils: ConfigUtils): Config = {
     running(app) {

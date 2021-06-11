@@ -16,26 +16,28 @@
 
 package uk.gov.hmrc
 
-import _root_.play.api.libs.json.{Json, JsObject}
-import org.scalatest.BeforeAndAfterEach
+import _root_.play.api.libs.json.{JsObject, Json}
+import org.scalatest.{BeforeAndAfterEach, Matchers, WordSpec}
 import repositories.{MetadataMongoRepository, PresubmissionMongoRepository}
+import controllers.SubmissionController
+
+import _root_.play.api.test.Helpers._
+import _root_.play.api.Application
+import _root_.play.api.inject.guice.GuiceApplicationBuilder
+import _root_.play.api.libs.ws.WSClient
+import _root_.play.api.test.FakeRequest
+import _root_.play.api.mvc.Result
+import uk.gov.hmrc.play.http.ws.WSRequest
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import _root_.play.api.test.Helpers._
-import org.scalatestplus.play.guice.GuiceOneAppPerSuite
-import uk.gov.hmrc.http.HeaderCarrier
-import _root_.play.api.libs.ws.WSClient
 
+class ADRSubmissionIntegration extends WordSpec with Matchers
+ with BeforeAndAfterEach with WSRequest with FakeErsStubService {
 
-class ADRSubmissionIntegration extends ISpec("ADRSubmissionIntegration", additionalConfig = Seq(
-  ("microservice.services.ers-stub.host", "localhost"),
-  ("microservice.services.ers-stub.port", "19339")
-)) with BeforeAndAfterEach with FakeErsStubService with GuiceOneAppPerSuite {
-
-  override def applicableHeaders(url: String)(implicit hc: HeaderCarrier): Seq[(String, String)] = Nil
-
+  val app: Application = new GuiceApplicationBuilder().configure(Map("microservice.services.ers-stub.port" -> "19339")).build()
   def wsClient: WSClient = app.injector.instanceOf[WSClient]
 
+  private lazy val submissionController = app.injector.instanceOf[SubmissionController]
   private lazy val presubmissionRepository = app.injector.instanceOf[PresubmissionMongoRepository]
   private lazy val metadataMongoRepository = app.injector.instanceOf[MetadataMongoRepository]
 
@@ -66,8 +68,9 @@ class ADRSubmissionIntegration extends ISpec("ADRSubmissionIntegration", additio
       metadataAfterSave.length shouldBe 1
       metadataAfterSave.head.transferStatus.get shouldBe "saved"
 
-      val res = await(request("ers/submit-metadata").post(data))
-      res.status shouldBe OK
+      val res: Result = await(submissionController.receiveMetadataJson()
+        .apply(FakeRequest().withBody(data.as[JsObject])))
+      res.header.status shouldBe OK
 
       val metadata = await(metadataMongoRepository.getJson(Fixtures.schemeInfo))
       metadata.length shouldBe 1
@@ -82,8 +85,9 @@ class ADRSubmissionIntegration extends ISpec("ADRSubmissionIntegration", additio
       metadataAfterSave.length shouldBe 1
       metadataAfterSave.head.transferStatus.get shouldBe "saved"
 
-      val res = await(request("ers/submit-metadata").post(data))
-      res.status shouldBe OK
+      val res: Result = await(submissionController.receiveMetadataJson()
+        .apply(FakeRequest().withBody(data.as[JsObject])))
+      res.header.status shouldBe OK
 
       val metadata = await(metadataMongoRepository.getJson(Fixtures.schemeInfo))
       metadata.length shouldBe 1
@@ -91,8 +95,9 @@ class ADRSubmissionIntegration extends ISpec("ADRSubmissionIntegration", additio
     }
 
     "return BAD_REQUEST if invalid request is made" in {
-      val response = await(request("ers/submit-metadata").post(Fixtures.invalidPayload))
-      response.status shouldBe BAD_REQUEST
+      val response: Result = await(submissionController.receiveMetadataJson()
+        .apply(FakeRequest().withBody(Fixtures.invalidPayload.as[JsObject])))
+      response.header.status shouldBe BAD_REQUEST
     }
   }
 
@@ -100,8 +105,9 @@ class ADRSubmissionIntegration extends ISpec("ADRSubmissionIntegration", additio
 
     "return OK and save metadata if valid metadata is sent" in {
 
-      val response = await(request("ers/save-metadata").post(Fixtures.buildErsSummaryPayload( true)))
-      response.status shouldBe OK
+      val response: Result = await(submissionController.saveMetadata()
+        .apply(FakeRequest().withBody(Fixtures.buildErsSummaryPayload( true).as[JsObject])))
+      response.header.status shouldBe OK
       val result = await(metadataMongoRepository.getJson(Fixtures.schemeInfo))
 
       result.length shouldBe 1
@@ -110,8 +116,9 @@ class ADRSubmissionIntegration extends ISpec("ADRSubmissionIntegration", additio
   }
 
     "return BAD_REQUEST if invalid request is made" in {
-      val response = await(request("ers/save-metadata").post(Fixtures.invalidPayload))
-      response.status shouldBe BAD_REQUEST
+      val response: Result = await(submissionController.saveMetadata()
+        .apply(FakeRequest().withBody(Fixtures.invalidPayload.as[JsObject])))
+      response.header.status shouldBe BAD_REQUEST
     }
 
 }

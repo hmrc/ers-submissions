@@ -21,7 +21,7 @@ import java.text.SimpleDateFormat
 import com.typesafe.config.Config
 import javax.inject.Inject
 import org.joda.time.DateTime
-import play.api.Logger
+import play.api.Logging
 import play.api.libs.json.Json.JsValueWrapper
 import play.api.libs.json._
 import reactivemongo.bson.BSONObjectID
@@ -29,12 +29,12 @@ import reactivemongo.bson.BSONObjectID
 import scala.collection.mutable.ListBuffer
 import uk.gov.hmrc.http.HttpResponse
 
-class SubmissionCommon @Inject()(configUtils: ConfigUtils) {
+class SubmissionCommon @Inject()(configUtils: ConfigUtils) extends Logging{
 
   def getCorrelationID(response: HttpResponse): String = {
     val correlationIdRegEx = "CorrelationId -> Buffer\\((\\w+-\\w+-\\w+-\\w+-\\w+)".r
     correlationIdRegEx.findFirstMatchIn(
-      response.allHeaders.toString()
+      response.headers.toString()
     ).map(
       _ group 1
     ).getOrElse("")
@@ -48,7 +48,7 @@ class SubmissionCommon @Inject()(configUtils: ConfigUtils) {
     }
     catch {
       case ex: Exception => {
-        Logger.error(s"Error creating ObjectID from ${objectID}, exception: ${ex.getMessage}")
+        logger.error(s"Error creating ObjectID from ${objectID}, exception: ${ex.getMessage}")
         throw ex
       }
     }
@@ -147,42 +147,42 @@ class SubmissionCommon @Inject()(configUtils: ConfigUtils) {
       getNewField(configElem, elemVal)
     }
     else {
-      val value = configUtils.extractField(configElem, metadata)
-      if (value.isInstanceOf[Option[_]] && !value.asInstanceOf[Option[_]].isDefined) {
-        if (configElem.hasPath("default_value")) {
-          val elemType: String = configElem.getString("type")
-          val elemVal: JsValueWrapper = if(elemType == "boolean") {
-            configElem.getBoolean("default_value")
+      configUtils.extractField(configElem, metadata) match {
+        case None => {
+          if (configElem.hasPath("default_value")) {
+            val elemType: String = configElem.getString("type")
+            val elemVal: JsValueWrapper = if(elemType == "boolean") {
+              configElem.getBoolean("default_value")
+            }
+            else {
+              configElem.getString("default_value")
+            }
+            getNewField(configElem, elemVal)
           }
           else {
-            configElem.getString("default_value")
+            Json.obj()
+          }
+        }
+        case value => {
+          val elemType: String = configElem.getString("type")
+          val elemVal: JsValueWrapper = elemType match {
+            case "boolean" => {
+              val valid_value = configElem.getString("valid_value")
+              (value.toString == valid_value)
+            }
+            case "string" => {
+              value match {
+                case time: DateTime =>
+                  customFormat(time, configElem.getConfig("format"))
+                case _: String =>
+                  value.toString
+                case _ =>
+                  JsNull
+              }
+            }
           }
           getNewField(configElem, elemVal)
         }
-        else {
-          Json.obj()
-        }
-      }
-      else {
-        val elemType: String = configElem.getString("type")
-        val elemVal: JsValueWrapper = elemType match {
-          case "boolean" => {
-            val valid_value = configElem.getString("valid_value")
-            (value.toString == valid_value)
-          }
-          case "string" => {
-            if (value.isInstanceOf[DateTime]) {
-              customFormat(value.asInstanceOf[DateTime], configElem.getConfig("format"))
-            }
-            else if (value.isInstanceOf[String]) {
-              value.toString
-            }
-            else {
-              JsNull
-            }
-          }
-        }
-        getNewField(configElem, elemVal)
       }
     }
   }

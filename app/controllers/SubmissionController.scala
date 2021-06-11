@@ -29,15 +29,15 @@ import services.audit.AuditEvents
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import utils.LoggingAndRexceptions.ErsLoggingAndAuditing
 
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 class SubmissionController @Inject()(submissionCommonService: SubmissionService,
                                      metadataService: MetadataService,
                                      metrics: Metrics,
                                      ersLoggingAndAuditing: ErsLoggingAndAuditing,
                                      auditEvents: AuditEvents,
-                                     cc: ControllerComponents) extends BackendController(cc) {
+                                     cc: ControllerComponents)
+                                    (implicit val ec: ExecutionContext) extends BackendController(cc) {
 
   def receiveMetadataJson(): Action[JsObject] = Action.async(parse.json[JsObject]) { implicit request =>
     ersLoggingAndAuditing.logWarn(s"Submission journey 1. received request: ${DateTime.now}")

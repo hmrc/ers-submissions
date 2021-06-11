@@ -40,7 +40,7 @@ object Fixtures {
   val submissionsSchemeData: SubmissionsSchemeData = SubmissionsSchemeData(
     schemeInfo,
     "EMI40_Adjustments_V3",
-    UpscanCallback("EMI40_Adjustments_V3", "downloadUrl"),
+    UpscanCallback("EMI40_Adjustments_V3", "http://localhost:19000/fakeDownload"),
     1
   )
   val submissionsSchemeDataJson: JsObject = Json.toJson(submissionsSchemeData).as[JsObject]

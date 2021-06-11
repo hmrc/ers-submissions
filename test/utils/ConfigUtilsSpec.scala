@@ -17,21 +17,19 @@
 package utils
 
 import fixtures.Fixtures
+import helpers.ERSTestHelper
 import models.{ADRTransferException, ErsSummary}
-import org.scalatestplus.mockito.MockitoSugar
-import org.scalatestplus.play.guice.GuiceOneAppPerSuite
-import play.api.mvc.AnyContentAsEmpty
+import play.api.mvc.AnyContent
 import play.api.test.FakeRequest
-import uk.gov.hmrc.play.test.UnitSpec
 import uk.gov.hmrc.http.HeaderCarrier
 import utils.LoggingAndRexceptions.ADRExceptionEmitter
 
-class ConfigUtilsSpec extends UnitSpec with MockitoSugar with GuiceOneAppPerSuite {
+class ConfigUtilsSpec extends ERSTestHelper {
 
   val mockADRExceptionEmitter: ADRExceptionEmitter = app.injector.instanceOf[ADRExceptionEmitter]
   val testConfigUtils = new ConfigUtils(mockADRExceptionEmitter)
-  implicit val request: FakeRequest[AnyContentAsEmpty.type] = FakeRequest()
-  implicit val hc = HeaderCarrier()
+  implicit val request: FakeRequest[AnyContent] = FakeRequest()
+  implicit val hc: HeaderCarrier = HeaderCarrier()
   implicit val ersSummary: ErsSummary = Fixtures.EMISummaryDate
 
   "calling getConfigData" should {
@@ -46,9 +44,9 @@ class ConfigUtilsSpec extends UnitSpec with MockitoSugar with GuiceOneAppPerSuit
 
     "throws ADRException if unexisting file is loaded" in {
       val result = intercept[ADRTransferException] {
-        testConfigUtils.getConfigData("unexisting path", "Root")
+        testConfigUtils.getConfigData("nonexistent path", "Root")
       }
-      result.message shouldBe "Trying to load invalid configuration. Path: unexisting path, value: Root"
+      result.message shouldBe "Trying to load invalid configuration. Path: nonexistent path, value: Root"
       result.context shouldBe "ConfigUtils.getConfigData"
     }
   }

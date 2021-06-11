@@ -18,21 +18,19 @@ package services.resubmission
 
 import akka.actor.ActorSystem
 import config.ApplicationConfig
+import helpers.ERSTestHelper
 import org.joda.time.DateTime
 import org.mockito.Mockito._
 import org.scalatest.BeforeAndAfterEach
-import org.scalatestplus.mockito.MockitoSugar
-import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.mvc.Request
 import play.api.test.FakeRequest
 import repositories.Repositories
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.play.test.UnitSpec
 import utils.LoggingAndRexceptions.ErsLoggingAndAuditing
 
 import scala.concurrent.Future
 
-class SchedulerServiceSpec extends UnitSpec with MockitoSugar with BeforeAndAfterEach with GuiceOneAppPerSuite {
+class SchedulerServiceSpec extends ERSTestHelper with BeforeAndAfterEach {
 
   implicit val hc: HeaderCarrier = HeaderCarrier()
   implicit val request: Request[_] = FakeRequest()
@@ -48,14 +46,14 @@ class SchedulerServiceSpec extends UnitSpec with MockitoSugar with BeforeAndAfte
   }
 
   "getTime" should {
-    System.out.println("GET TIME")
+    println("GET TIME")
     val schedulerService: SchedulerService = new SchedulerService(
       mockApplicationConfig,
       mockRepositories,
       mockResubPresubmissionService,
       mockSchedulerLoggingAndAuditing,
       mockActorSystem) {
-      System.out.println("SchedulerService start")
+      println("SchedulerService start")
     }
 
     "return current date with given time" in {
@@ -136,6 +134,5 @@ class SchedulerServiceSpec extends UnitSpec with MockitoSugar with BeforeAndAfte
       val result = await(schedulerService.resubmit())
       result shouldBe Some(false)
     }
-
   }
 }

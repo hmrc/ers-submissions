@@ -19,12 +19,16 @@ package repositories
 import config.ApplicationConfig
 import javax.inject.Inject
 import play.modules.reactivemongo.ReactiveMongoComponent
+import reactivemongo.api.DefaultDB
 import uk.gov.hmrc.lock.LockRepository
 
+import scala.concurrent.ExecutionContext
 
-class Repositories @Inject()(applicationConfig: ApplicationConfig, mongoComponent: ReactiveMongoComponent) {
 
-  private implicit val connection = {
+class Repositories @Inject()(applicationConfig: ApplicationConfig, mongoComponent: ReactiveMongoComponent)
+                            (implicit ec: ExecutionContext) {
+
+  private implicit val connection: () => DefaultDB = {
     mongoComponent.mongoConnector.db
   }
 

@@ -23,18 +23,17 @@ import akka.testkit.TestKit
 import akka.util.ByteString
 import config.ApplicationConfig
 import fixtures.SIP
-import models.{SchemeInfo, SubmissionsSchemeData, UpscanCallback}
-import org.scalatestplus.mockito.MockitoSugar
-import uk.gov.hmrc.play.test.{UnitSpec, WithFakeApplication}
+import helpers.ERSTestHelper
+import models.{SubmissionsSchemeData, UpscanCallback}
 import org.mockito.Mockito._
 import org.scalatest.concurrent.ScalaFutures
 import uk.gov.hmrc.http.UpstreamErrorResponse
 
-import scala.concurrent.{Await, Future}
 import scala.concurrent.duration.Duration
+import scala.concurrent.{Await, Future}
 
 class FileDownloadServiceSpec extends TestKit(ActorSystem("FileDownloadServiceSpec"))
-  with UnitSpec with MockitoSugar with WithFakeApplication {
+  with ERSTestHelper {
 
   val mockAppConfig: ApplicationConfig = mock[ApplicationConfig]
   when(mockAppConfig.uploadCsvSizeLimit).thenReturn(10000)
@@ -64,7 +63,6 @@ class FileDownloadServiceSpec extends TestKit(ActorSystem("FileDownloadServiceSp
         ScalaFutures.whenReady(result.failed) { e =>
           e shouldBe an[UpstreamErrorResponse]
         }
-
       }
     }
 
@@ -147,14 +145,11 @@ class FileDownloadServiceSpec extends TestKit(ActorSystem("FileDownloadServiceSp
           override def makeRequest(request: HttpRequest): Future[HttpResponse] = Future.successful(HttpResponse(StatusCodes.OK))
         }
 
-        val result = Await.result(testService.streamFile("http://thisIsNot.aRealPage").runWith(Sink.seq),
-          Duration.Inf)
+        val result = await(testService.streamFile("http://thisIsNot.aRealPage").runWith(Sink.seq))
 
         result.length shouldBe 1
         result.head shouldBe HttpResponse(StatusCodes.OK)
       }
     }
-
   }
-
 }

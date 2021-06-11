@@ -18,24 +18,22 @@ package utils
 
 import com.typesafe.config.Config
 import fixtures.Fixtures
+import helpers.ERSTestHelper
 import models.{ADRTransferException, ErsSummary, SchemeInfo}
 import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
 import org.scalatest.BeforeAndAfterEach
-import org.scalatestplus.mockito.MockitoSugar
-import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.libs.json.{JsObject, Json}
 import play.api.mvc.Request
 import play.api.test.FakeRequest
 import services.PresubmissionService
-import uk.gov.hmrc.play.test.UnitSpec
-
-import scala.collection.mutable.ListBuffer
-import scala.concurrent.Future
 import uk.gov.hmrc.http.HeaderCarrier
 import utils.LoggingAndRexceptions.ADRExceptionEmitter
 
-class ADRSubmissionSpec extends UnitSpec with MockitoSugar with GuiceOneAppPerSuite with BeforeAndAfterEach {
+import scala.collection.mutable.ListBuffer
+import scala.concurrent.Future
+
+class ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach {
 
   implicit val hc: HeaderCarrier = new HeaderCarrier()
   implicit val request = FakeRequest().withBody(Fixtures.metadataJson)
@@ -91,9 +89,11 @@ class ADRSubmissionSpec extends UnitSpec with MockitoSugar with GuiceOneAppPerSu
       mockConfigUtils
     ) {
 
-      override def createSubmissionJson()(implicit request: Request[_], hc: HeaderCarrier, ersSummary: ErsSummary, schemeType: String): Future[JsObject] = Future.successful(notNilReturnJson)
+      override def createSubmissionJson()(implicit request: Request[_], hc: HeaderCarrier, ersSummary: ErsSummary, schemeType: String): Future[JsObject] =
+        Future.successful(notNilReturnJson)
 
-      override def createRootJson(sheetsJson: JsObject)(implicit request: Request[_], hc: HeaderCarrier, ersSummary: ErsSummary, schemeType: String): JsObject = nilReturnJson
+      override def createRootJson(sheetsJson: JsObject)(implicit request: Request[_], hc: HeaderCarrier, ersSummary: ErsSummary, schemeType: String): JsObject =
+        nilReturnJson
 
     }
 
@@ -117,18 +117,18 @@ class ADRSubmissionSpec extends UnitSpec with MockitoSugar with GuiceOneAppPerSu
       mockAdrExceptionEmitter,
       mockConfigUtils
     ) {
-      override def createSheetsJson(sheetsJson: JsObject)(implicit request: Request[_], hc: HeaderCarrier, ersSummary: ErsSummary, schemeType: String): Future[JsObject] = Future.successful(sheetsJson)
+      override def createSheetsJson(sheetsJson: JsObject)(implicit request: Request[_], hc: HeaderCarrier, ersSummary: ErsSummary, schemeType: String): Future[JsObject] =
+        Future.successful(sheetsJson)
 
-      override def createRootJson(sheetsJson: JsObject)(implicit request: Request[_], hc: HeaderCarrier, ersSummary: ErsSummary, schemeType: String): JsObject = notNilReturnJson
+      override def createRootJson(sheetsJson: JsObject)(implicit request: Request[_], hc: HeaderCarrier, ersSummary: ErsSummary, schemeType: String): JsObject =
+        notNilReturnJson
     }
 
     "return the result of createRootJson" in {
 
       val result = await(mockAdrSubmission.createSubmissionJson()(request, hc, Fixtures.metadata, Fixtures.schemeType))
       result shouldBe notNilReturnJson
-
     }
-
   }
 
   "calling createSheetsJson" should {
@@ -141,7 +141,8 @@ class ADRSubmissionSpec extends UnitSpec with MockitoSugar with GuiceOneAppPerSu
     ) {
       when(mockSubmissionCommon.mergeSheetData(any[Config](), any[JsObject], any[JsObject])).thenReturn(sheetsJson)
 
-      override def buildJson(configData: Config, fileData: ListBuffer[Seq[String]], row: Option[Int] = None)(implicit request: Request[_], hc: HeaderCarrier): JsObject = sheetsJson
+      override def buildJson(configData: Config, fileData: ListBuffer[Seq[String]], row: Option[Int] = None)(implicit request: Request[_], hc: HeaderCarrier): JsObject =
+        sheetsJson
     }
 
     "return given json as parameter if there is no data in the database" in {
@@ -177,12 +178,13 @@ class ADRSubmissionSpec extends UnitSpec with MockitoSugar with GuiceOneAppPerSu
       mockAdrExceptionEmitter,
       mockConfigUtils
     ) {
-      override def buildRoot(configData: Config, metadata: Object, sheetsJson: JsObject)(implicit request: Request[_], hc: HeaderCarrier, ersSummary: ErsSummary, schemeType: String): JsObject = nilReturnJson
+      override def buildRoot(configData: Config, metadata: Object, sheetsJson: JsObject)
+                            (implicit request: Request[_], hc: HeaderCarrier, ersSummary: ErsSummary, schemeType: String): JsObject = nilReturnJson
     }
 
     "return the result of buildRoot" in {
 
-      val result = await(mockAdrSubmission.createRootJson(Json.obj())(request, hc, Fixtures.metadataNilReturn, Fixtures.schemeType))
+      val result = mockAdrSubmission.createRootJson(Json.obj())(request, hc, Fixtures.metadataNilReturn, Fixtures.schemeType)
       result shouldBe nilReturnJson
     }
 

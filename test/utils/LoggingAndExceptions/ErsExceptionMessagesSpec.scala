@@ -17,11 +17,11 @@
 package utils.LoggingAndExceptions
 
 import fixtures.Fixtures
+import helpers.ERSTestHelper
 import models.{ADRTransferException, ResubmissionException}
-import uk.gov.hmrc.play.test.UnitSpec
 import utils.LoggingAndRexceptions.ErsExceptionMessages
 
-class ErsExceptionMessagesSpec extends UnitSpec {
+class ErsExceptionMessagesSpec extends ERSTestHelper {
 
   object TestExceptionMessages extends ErsExceptionMessages
 

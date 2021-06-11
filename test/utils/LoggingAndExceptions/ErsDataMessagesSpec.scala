@@ -17,10 +17,10 @@
 package utils.LoggingAndExceptions
 
 import fixtures.Fixtures
-import uk.gov.hmrc.play.test.UnitSpec
+import helpers.ERSTestHelper
 import utils.LoggingAndRexceptions.ErsDataMessages
 
-class ErsDataMessagesSpec extends UnitSpec {
+class ErsDataMessagesSpec extends ERSTestHelper {
 
   object TestDataMessages extends ErsDataMessages
 
@@ -34,7 +34,11 @@ class ErsDataMessagesSpec extends UnitSpec {
   "calling buildErsSummaryMessage" should {
     "display correct message for ErsSummary" in {
       val result = TestDataMessages.buildErsSummaryMessage(Fixtures.EMISummaryDate)
-      result shouldBe "ConfirmationDateTime: 2015-12-05T12:50:55.000Z\nBundleRef: 123453222,\nisNilReturn: true,\nfileType: ods,\nSchemeInfo: SchemeInfo(XA1100000000000,2015-12-05T12:50:55.000Z,123PA12345678,2014/15,My scheme,EMI)"
+      result shouldBe "ConfirmationDateTime: 2015-12-05T12:50:55.000Z\n" +
+        "BundleRef: 123453222,\n" +
+        "isNilReturn: true,\n" +
+        "fileType: ods,\n" +
+        "SchemeInfo: SchemeInfo(XA1100000000000,2015-12-05T12:50:55.000Z,123PA12345678,2014/15,My scheme,EMI)"
     }
   }
 

@@ -18,21 +18,20 @@ package services
 
 import fixtures.Fixtures
 import fixtures.Fixtures.schemeData
+import helpers.ERSTestHelper
 import models.{ErsMetaData, SchemeInfo}
 import org.joda.time.{DateTime, DateTimeZone}
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.{reset, verify}
 import org.mockito.internal.verification.VerificationModeFactory
-import org.scalatestplus.mockito.MockitoSugar
-import org.scalatest.{BeforeAndAfterEach, Matchers, WordSpec}
-import org.scalatestplus.play.guice.GuiceOneAppPerSuite
+import org.scalatest.BeforeAndAfterEach
 import play.api.test.FakeRequest
 import services.audit.{AuditEvents, AuditService}
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 
 class AuditEventsTest
-  extends WordSpec with Matchers with MockitoSugar with GuiceOneAppPerSuite with BeforeAndAfterEach {
+  extends ERSTestHelper with BeforeAndAfterEach {
 
   implicit val request = FakeRequest()
   implicit var hc = new HeaderCarrier()

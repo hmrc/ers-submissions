@@ -17,16 +17,16 @@
 package controllers
 
 import java.util.concurrent.TimeUnit
+
 import akka.actor.ActorSystem
 import akka.stream.scaladsl.{Sink, Source}
 import akka.util.ByteString
 import config.ApplicationConfig
-
 import javax.inject.Inject
 import controllers.auth.{AuthAction, AuthorisedAction}
 import metrics.Metrics
 import models.{SchemeData, SubmissionsSchemeData}
-import play.api.Logger
+import play.api.Logging
 import play.api.libs.json.{JsObject, JsValue, Json}
 import play.api.mvc.{Action, ControllerComponents, PlayBodyParsers, Request, Result}
 import services.{FileDownloadService, PresubmissionService, ValidationService}
@@ -34,8 +34,7 @@ import services.audit.AuditEvents
 import uk.gov.hmrc.auth.core.AuthConnector
 import utils.LoggingAndRexceptions.ErsLoggingAndAuditing
 
-import scala.concurrent.Future
-import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.{ExecutionContext, Future}
 import uk.gov.hmrc.http.{HeaderCarrier, UpstreamErrorResponse}
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
@@ -49,7 +48,7 @@ class ReceivePresubmissionController @Inject()(presubmissionService: Presubmissi
                                                cc: ControllerComponents,
                                                bodyParser: PlayBodyParsers,
                                                appConfig: ApplicationConfig)
-                                              (implicit actorSystem: ActorSystem) extends BackendController(cc) {
+                                              (implicit actorSystem: ActorSystem, ec: ExecutionContext) extends BackendController(cc) with Logging {
 
   def authorisedAction(empRef: String): AuthAction = AuthorisedAction(empRef, authConnector, bodyParser)
 
@@ -100,7 +99,7 @@ class ReceivePresubmissionController @Inject()(presubmissionService: Presubmissi
     submitJson(fileSource, submissionsSchemeData).map {
       case (true, _) =>
         metrics.storePresubmission(System.currentTimeMillis() - startTime, TimeUnit.MILLISECONDS)
-        Logger.debug("total running time was " + (System.currentTimeMillis() - startTime))
+        logger.debug("total running time was " + (System.currentTimeMillis() - startTime))
         auditEvents.publicToProtectedEvent(submissionsSchemeData.schemeInfo, submissionsSchemeData.sheetName, submissionsSchemeData.numberOfRows.toString)
         ersLoggingAndAuditing.handleSuccess(
           submissionsSchemeData.schemeInfo, s"Presubmission data for sheet ${submissionsSchemeData.sheetName} was stored successfully"
@@ -109,7 +108,7 @@ class ReceivePresubmissionController @Inject()(presubmissionService: Presubmissi
       case (_, index) =>
         presubmissionService.removeJson(submissionsSchemeData.schemeInfo).map { wasSuccess =>
           if (!wasSuccess && index > 0) {
-            Logger.error(
+            logger.error(
               "[ReceivePresubmissionController][storePresubmission] INTERVENTION NEEDED: Removing partial presubmission data failed after storing failure")
           }
         }
@@ -120,13 +119,13 @@ class ReceivePresubmissionController @Inject()(presubmissionService: Presubmissi
       case ex: UpstreamErrorResponse =>
         InternalServerError(ex.getMessage())
       case ex =>
-        Logger.error(s"[ReceivePresubmissionController][storePresubmission] Unknown exception encountered while submitting file: ${ex.getMessage}")
+        logger.error(s"[ReceivePresubmissionController][storePresubmission] Unknown exception encountered while submitting file: ${ex.getMessage}")
         InternalServerError(ex.getMessage)
     }
   }
 
   def storePresubmission(schemeData: SchemeData)(implicit request: Request[_], hc: HeaderCarrier): Future[Result] = {
-    Logger.info(s"Starting storing presubmission data. SchemeInfo: ${schemeData.schemeInfo.toString}, SheetName: ${schemeData.sheetName}")
+    logger.info(s"Starting storing presubmission data. SchemeInfo: ${schemeData.schemeInfo.toString}, SheetName: ${schemeData.sheetName}")
 
     val startTime = System.currentTimeMillis()
 

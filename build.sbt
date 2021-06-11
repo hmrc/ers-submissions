@@ -1,4 +1,4 @@
-import sbt.{ModuleID, _}
+
 import scoverage.ScoverageKeys
 import play.routes.compiler.InjectedRoutesGenerator
 import sbt.Keys._
@@ -9,15 +9,10 @@ import uk.gov.hmrc.sbtdistributables.SbtDistributablesPlugin.publishingSettings
 
 import uk.gov.hmrc._
 import DefaultBuildSettings._
-import uk.gov.hmrc.SbtAutoBuildPlugin
 import play.sbt.routes.RoutesKeys.routesGenerator
 import uk.gov.hmrc.versioning.SbtGitVersioning.autoImport.majorVersion
-import uk.gov.hmrc.versioning.SbtGitVersioning
 
 val appName = "ers-submissions"
-
-lazy val appDependencies: Seq[ModuleID] = AppDependencies()
-lazy val plugins: Seq[Plugins] = Seq(play.sbt.PlayScala, SbtAutoBuildPlugin, SbtGitVersioning, SbtDistributablesPlugin)
 
 lazy val scoverageSettings = {
   Seq(
@@ -30,7 +25,7 @@ lazy val scoverageSettings = {
 }
 
 lazy val microservice = Project(appName, file("."))
-  .enablePlugins(plugins : _*)
+  .enablePlugins(play.sbt.PlayScala, SbtDistributablesPlugin)
   .settings(scoverageSettings : _*)
   .settings(scalaSettings: _*)
   .settings(publishingSettings: _*)
@@ -38,20 +33,11 @@ lazy val microservice = Project(appName, file("."))
   .settings(
     targetJvm := "jvm-1.8",
     scalaVersion := "2.12.12",
-    libraryDependencies ++= appDependencies,
-    parallelExecution in Test := false,
-    fork in Test := false,
-    retrieveManaged := true,
+    libraryDependencies ++= AppDependencies(),
     routesGenerator := InjectedRoutesGenerator
   )
   .configs(IntegrationTest)
-  .settings(inConfig(IntegrationTest)(Defaults.itSettings): _*)
   .settings(integrationTestSettings())
-  .settings(
-    evictionWarningOptions in update := EvictionWarningOptions.default.withWarnTransitiveEvictions(false)
-      .withWarnDirectEvictions(false)
-      .withWarnScalaVersionEviction(false)
-  )
   .settings(majorVersion := 1)
   .settings(PlayKeys.playDefaultPort := 9292)
   .disablePlugins(JUnitXmlReportPlugin) //Required to prevent https://github.com/scalatest/scalatest/issues/1427

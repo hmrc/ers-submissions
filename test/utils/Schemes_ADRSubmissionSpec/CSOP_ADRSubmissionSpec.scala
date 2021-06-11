@@ -18,26 +18,23 @@ package utils.Schemes_ADRSubmissionSpec
 
 import com.typesafe.config.Config
 import fixtures.{CSOP, Common, Fixtures}
+import helpers.ERSTestHelper
 import models.{SchemeData, SchemeInfo}
+import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
 import org.scalatest.BeforeAndAfter
-import org.scalatestplus.mockito.MockitoSugar
-import org.mockito.ArgumentMatchers._
-import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.libs.json.{JsObject, Json}
-import play.api.mvc.Request
 import play.api.test.FakeRequest
 import services.PresubmissionService
-import uk.gov.hmrc.play.test.UnitSpec
-import utils.{ADRSubmission, ConfigUtils, SubmissionCommon}
-
-import scala.concurrent.Future
-import scala.collection.mutable.ListBuffer
 import uk.gov.hmrc.http.HeaderCarrier
 import utils.LoggingAndRexceptions.ADRExceptionEmitter
+import utils.{ADRSubmission, ConfigUtils, SubmissionCommon}
+
+import scala.collection.mutable.ListBuffer
+import scala.concurrent.Future
 
 class CSOP_ADRSubmissionSpec
-  extends UnitSpec with MockitoSugar with BeforeAndAfter with GuiceOneAppPerSuite {
+  extends ERSTestHelper with BeforeAndAfter {
 
   val mockSubmissionCommon: SubmissionCommon = app.injector.instanceOf[SubmissionCommon]
   val mockAdrExceptionEmitter: ADRExceptionEmitter = mock[ADRExceptionEmitter]
@@ -53,7 +50,7 @@ class CSOP_ADRSubmissionSpec
     mockAdrExceptionEmitter,
     mockConfigUtils
   )
-  def before(fun : => scala.Any) = {
+  def before(fun : => scala.Any): Unit  = {
     super.before(())
     reset(mockPresubmissionService)
   }

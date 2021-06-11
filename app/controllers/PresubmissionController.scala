@@ -21,7 +21,7 @@ import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import metrics.Metrics
 import models.SchemeInfo
-import play.api.Logger
+import play.api.Logging
 import play.api.libs.json.JsObject
 import play.api.mvc._
 import services.{PresubmissionService, ValidationService}
@@ -35,14 +35,14 @@ class PresubmissionController @Inject()(presubmissionService: PresubmissionServi
                                         validationService: ValidationService,
                                         ersLoggingAndAuditing: ErsLoggingAndAuditing,
                                         metrics: Metrics,
-                                        cc: ControllerComponents) extends BackendController(cc) {
+                                        cc: ControllerComponents) extends BackendController(cc) with Logging{
 
 
   def removePresubmissionJson(): Action[JsObject] = Action.async(parse.json[JsObject]) { implicit request =>
     validationService.validateSchemeInfo(request.body) match {
       case Some(schemeInfo) =>
         val startTime = System.currentTimeMillis()
-        Logger.info(s"Start deleting presubmission data from external url for ${schemeInfo.toString}")
+        logger.info(s"Start deleting presubmission data from external url for ${schemeInfo.toString}")
 
         presubmissionService.removeJson(schemeInfo).map {
           case true =>

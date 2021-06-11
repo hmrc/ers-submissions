@@ -20,46 +20,44 @@ import java.util.concurrent.TimeUnit
 
 import connectors.ADRConnector
 import fixtures.Fixtures
+import helpers.ERSTestHelper
 import metrics.Metrics
 import models._
 import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
 import org.mockito.internal.verification.VerificationModeFactory
 import org.scalatest.BeforeAndAfterEach
-import org.scalatestplus.mockito.MockitoSugar
-import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.libs.json.{JsObject, Json}
 import play.api.mvc.Request
 import play.api.test.FakeRequest
 import repositories.{MetadataMongoRepository, Repositories}
 import services.audit.AuditEvents
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
-import uk.gov.hmrc.play.test.UnitSpec
 import utils.LoggingAndRexceptions.{ADRExceptionEmitter, ErsLoggingAndAuditing}
 import utils.{ADRSubmission, SubmissionCommon}
 
 import scala.concurrent.Future
 
-class SubmissionCommonServiceSpec
-  extends UnitSpec with MockitoSugar with BeforeAndAfterEach with GuiceOneAppPerSuite {
+class SubmissionCommonServiceSpec extends ERSTestHelper with BeforeAndAfterEach {
+
   implicit val hc: HeaderCarrier = new HeaderCarrier()
   implicit val request: Request[_] = FakeRequest()
 
-  val mockErsLoggingAndAuditing: ErsLoggingAndAuditing = new ErsLoggingAndAuditing(auditEvents) {
+  val auditEvents: AuditEvents = mock[AuditEvents]
+  val mockMetadataRepository: MetadataMongoRepository = mock[MetadataMongoRepository]
+  val repositories: Repositories = mock[Repositories]
+  val adrExceptionEmmiter: ADRExceptionEmitter = app.injector.instanceOf[ADRExceptionEmitter]
+  val adrConnector: ADRConnector = mock[ADRConnector]
+  val adrSubmission: ADRSubmission = mock[ADRSubmission]
+  val submissionCommon: SubmissionCommon = mock[SubmissionCommon]
+  val metrics: Metrics = mock[Metrics]
+
+  val ersLoggingAndAuditing: ErsLoggingAndAuditing = new ErsLoggingAndAuditing(auditEvents) {
     override val buildDataMessage: PartialFunction[Object, String] = {
       case _ => ""
     }
     override def handleFailure(schemeInfo: SchemeInfo, message: String)(implicit request: Request[_], hc: HeaderCarrier): Unit = {}
   }
-  val adrConnector: ADRConnector = mock[ADRConnector]
-  val adrSubmission: ADRSubmission = mock[ADRSubmission]
-  val submissionCommon: SubmissionCommon = mock[SubmissionCommon]
-  val metrics: Metrics = mock[Metrics]
-  val ersLoggingAndAuditing: ErsLoggingAndAuditing = mockErsLoggingAndAuditing
-  val mockMetadataRepository: MetadataMongoRepository = mock[MetadataMongoRepository]
-  val auditEvents: AuditEvents = mock[AuditEvents]
-  val repositories: Repositories = mock[Repositories]
-  val adrExceptionEmmiter: ADRExceptionEmitter = app.injector.instanceOf[ADRExceptionEmitter]
 
   override def beforeEach(): Unit = {
     super.beforeEach()
@@ -74,7 +72,8 @@ class SubmissionCommonServiceSpec
         new SubmissionService(repositories, adrConnector, adrSubmission, submissionCommon, ersLoggingAndAuditing, adrExceptionEmmiter, auditEvents, metrics) {
 
         override lazy val metadataRepository: MetadataMongoRepository = mockMetadataRepository
-        override def processData(ersSummary: ErsSummary, failedStatus: String, successStatus: String)(implicit request: Request[_], hc: HeaderCarrier): Future[Boolean] = {
+        override def processData(ersSummary: ErsSummary, failedStatus: String, successStatus: String)
+                                (implicit request: Request[_], hc: HeaderCarrier): Future[Boolean] = {
           Future.successful(true)
         }
       }
@@ -91,7 +90,8 @@ class SubmissionCommonServiceSpec
         when(mockMetadataRepository.updateStatus( any[SchemeInfo](), anyString()))
           .thenReturn(Future.successful(true))
 
-        override def processData(ersSummary: ErsSummary, failedStatus: String, successStatus: String)(implicit request: Request[_], hc: HeaderCarrier): Future[Boolean] = {
+        override def processData(ersSummary: ErsSummary, failedStatus: String, successStatus: String)
+                                (implicit request: Request[_], hc: HeaderCarrier): Future[Boolean] = {
           Future.failed(ADRTransferException(Fixtures.EMIMetaData, "test message", "text context"))
         }
       }
@@ -112,7 +112,8 @@ class SubmissionCommonServiceSpec
           when(mockMetadataRepository.updateStatus( any[SchemeInfo](), anyString()))
             .thenReturn(Future.successful(true))
 
-        override def processData(ersSummary: ErsSummary, failedStatus: String, successStatus: String)(implicit request: Request[_], hc: HeaderCarrier): Future[Boolean] = {
+        override def processData(ersSummary: ErsSummary, failedStatus: String, successStatus: String)
+                                (implicit request: Request[_], hc: HeaderCarrier): Future[Boolean] = {
           Future.failed(new Exception("test message"))
         }
       }
@@ -133,7 +134,8 @@ class SubmissionCommonServiceSpec
       override def transformData(ersSummary: ErsSummary)(implicit request: Request[_], hc: HeaderCarrier): Future[JsObject] = {
         Future.successful(Json.obj())
       }
-      override def sendToADRUpdatePostData(ersSummary: ErsSummary, adrData: JsObject, failedStatus: String, successStatus: String)(implicit request: Request[_], hc: HeaderCarrier): Future[Boolean] = {
+      override def sendToADRUpdatePostData(ersSummary: ErsSummary, adrData: JsObject, failedStatus: String, successStatus: String)
+                                          (implicit request: Request[_], hc: HeaderCarrier): Future[Boolean] = {
         Future.successful(true)
       }
     }
@@ -152,7 +154,7 @@ class SubmissionCommonServiceSpec
 
     "return json created by adrSubmission.generateSubmission" in {
       when(adrSubmission.generateSubmission()(any[Request[_]](), any[HeaderCarrier], any[ErsSummary]()))
-        .thenReturn(Fixtures.schemeDataJson)
+        .thenReturn(Future.successful(Fixtures.schemeDataJson))
 
       val result = await(submissionCommonService.transformData(Fixtures.metadata))
       result shouldBe Fixtures.schemeDataJson
@@ -186,12 +188,13 @@ class SubmissionCommonServiceSpec
     val submissionCommonService: SubmissionService =
       new SubmissionService(repositories, adrConnector, adrSubmission, submissionCommon, ersLoggingAndAuditing, adrExceptionEmmiter, auditEvents, metrics) {
 
-      override def updatePostsubmission(adrSubmissionStatus: Int, status: String, ersSummary: ErsSummary)(implicit request: Request[_], hc: HeaderCarrier): Future[Boolean] = Future.successful(true)
+      override def updatePostsubmission(adrSubmissionStatus: Int, status: String, ersSummary: ErsSummary)
+                                       (implicit request: Request[_], hc: HeaderCarrier): Future[Boolean] = Future.successful(true)
     }
 
     "return result from updatePostsubmission if sending to ADR is successful" in {
       when(adrConnector.sendData(any[JsObject](), anyString())(any[HeaderCarrier]()))
-        .thenReturn(Future.successful(HttpResponse(202)))
+        .thenReturn(Future.successful(HttpResponse(202, "")))
 
       val result = await(submissionCommonService.sendToADRUpdatePostData(Fixtures.metadata, Fixtures.metadataJson, Statuses.Failed.toString, Statuses.Sent.toString))
       result shouldBe true
@@ -202,7 +205,7 @@ class SubmissionCommonServiceSpec
 
     "return result from updatePostsubmission if sending to ADR failed" in {
       when(adrConnector.sendData(any[JsObject](), anyString())(any[HeaderCarrier]()))
-        .thenReturn(Future.successful(HttpResponse(500)))
+        .thenReturn(Future.successful(HttpResponse(500, "")))
 
       val result = await(submissionCommonService.sendToADRUpdatePostData(Fixtures.metadata, Fixtures.metadataJson, Statuses.Failed.toString, Statuses.Sent.toString))
       result shouldBe true

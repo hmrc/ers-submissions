@@ -18,17 +18,15 @@ package connectors
 
 import config.ApplicationConfig
 import javax.inject.Inject
-import play.Logger
+import play.api.Logging
 import play.api.libs.json.JsObject
-import uk.gov.hmrc.http.logging.Authorization
-import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
-import uk.gov.hmrc.play.bootstrap.http.HttpClient
+import uk.gov.hmrc.http.{Authorization, HeaderCarrier, HttpClient, HttpResponse}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 class ADRConnector @Inject()(applicationConfig: ApplicationConfig,
-                             http: HttpClient) {
+                             http: HttpClient) extends Logging {
 
   def buildEtmpPath(path: String): String = s"${applicationConfig.adrBaseURI}/${path}"
 
@@ -41,19 +39,19 @@ class ADRConnector @Inject()(applicationConfig: ApplicationConfig,
     implicit val hc: HeaderCarrier = createHeaderCarrier
     val url: String = buildEtmpPath(s"${applicationConfig.adrFullSubmissionURI}/${schemeType.toLowerCase()}")
 
-    Logger.debug("Sending data to ADR.\n" +
+    logger.debug("Sending data to ADR.\n" +
       s"hc - headers: ${hc.extraHeaders.toString()}, authorization: ${hc.authorization.toString}\n" +
       s"url: $url")
 
-    http.POST(url, adrData).map { res =>
-      Logger.warn(s"ADR response: ${res.status}")
+    http.POST(url, adrData, headers = hc.headers(Seq("Authorization"))).map { res =>
+      logger.warn(s"ADR response: ${res.status}")
       res
     }.recover {
       case ex: Exception =>
-        Logger.error("Exception in ADRConnector sending data to ADR" + ex.getMessage)
+        logger.error("Exception in ADRConnector sending data to ADR" + ex.getMessage)
         throw ex
       case tex: Throwable =>
-        Logger.error("Throwable recovery in ADRConnector sending data to ADR" + tex.getMessage)
+        logger.error("Throwable recovery in ADRConnector sending data to ADR" + tex.getMessage)
         throw tex
     }
   }

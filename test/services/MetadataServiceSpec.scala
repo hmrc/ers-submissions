@@ -17,20 +17,19 @@
 package services
 
 import fixtures.Fixtures
+import helpers.ERSTestHelper
 import models.ErsSummary
 import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
 import org.scalatest.BeforeAndAfterEach
-import org.scalatestplus.mockito.MockitoSugar
 import play.api.test.FakeRequest
 import repositories.{MetadataMongoRepository, Repositories}
-import uk.gov.hmrc.play.test.UnitSpec
 import utils.LoggingAndRexceptions.ErsLoggingAndAuditing
 
 import scala.concurrent.Future
 import uk.gov.hmrc.http.HeaderCarrier
 
-class MetadataServiceSpec extends UnitSpec with MockitoSugar with BeforeAndAfterEach {
+class MetadataServiceSpec extends ERSTestHelper with BeforeAndAfterEach {
 
   implicit val hc: HeaderCarrier = new HeaderCarrier()
 

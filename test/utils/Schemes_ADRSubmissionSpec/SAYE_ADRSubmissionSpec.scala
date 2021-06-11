@@ -18,27 +18,25 @@ package utils.Schemes_ADRSubmissionSpec
 
 import com.typesafe.config.Config
 import fixtures.{Common, Fixtures, SAYE}
+import helpers.ERSTestHelper
 import models.{SchemeData, SchemeInfo}
 import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
 import org.scalatest.BeforeAndAfter
-import org.scalatestplus.mockito.MockitoSugar
-import org.scalatestplus.play.guice.GuiceOneAppPerSuite
-import play.api.libs.json.Json
+import play.api.libs.json.{JsObject, Json}
 import play.api.test.FakeRequest
 import services.PresubmissionService
-import uk.gov.hmrc.play.test.UnitSpec
+import uk.gov.hmrc.http.HeaderCarrier
+import utils.LoggingAndRexceptions.ADRExceptionEmitter
 import utils.{ADRSubmission, ConfigUtils, SubmissionCommon}
 
 import scala.collection.mutable.ListBuffer
 import scala.concurrent.Future
-import uk.gov.hmrc.http.HeaderCarrier
-import utils.LoggingAndRexceptions.ADRExceptionEmitter
 
-class SAYE_ADRSubmissionSpec extends UnitSpec with MockitoSugar with BeforeAndAfter with GuiceOneAppPerSuite {
+class SAYE_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfter {
 
   implicit val hc: HeaderCarrier = new HeaderCarrier()
-  implicit val request = FakeRequest().withBody(Fixtures.metadataJson)
+  implicit val request: FakeRequest[JsObject] = FakeRequest().withBody(Fixtures.metadataJson)
 
   val mockSubmissionCommon: SubmissionCommon = app.injector.instanceOf[SubmissionCommon]
   val mockPresubmissionService: PresubmissionService = mock[PresubmissionService]
@@ -52,7 +50,7 @@ class SAYE_ADRSubmissionSpec extends UnitSpec with MockitoSugar with BeforeAndAf
     mockConfigUtils
   )
 
-  def before(fun : => scala.Any) = {
+  def before(fun : => scala.Any): Unit  = {
     super.before(())
     reset(mockPresubmissionService)
   }

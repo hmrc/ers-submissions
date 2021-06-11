@@ -16,13 +16,13 @@
 
 package controllers.auth
 
-import play.api.Logger
+import play.api.Logging
 import play.api.mvc.Results.Unauthorized
 import play.api.mvc.{ActionBuilder, ActionFunction, AnyContent, BodyParser, PlayBodyParsers, Request, Result}
 import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.domain.EmpRef
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.play.HeaderCarrierConverter
+import uk.gov.hmrc.play.http.HeaderCarrierConverter
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Try
@@ -34,13 +34,13 @@ case class AuthorisedAction(slashSeperatedRef: String, authConnector: AuthConnec
   val parser: BodyParser[AnyContent] = bodyParser.default
 }
 
-trait AuthAction extends AuthorisedFunctions with ActionBuilder[Request, AnyContent] with ActionFunction[Request, Request] {
+trait AuthAction extends AuthorisedFunctions with ActionBuilder[Request, AnyContent] with ActionFunction[Request, Request] with Logging {
 
   val optionalEmpRef: Option[EmpRef]
   implicit val executionContext: ExecutionContext
 
   override def invokeBlock[A](request: Request[A], block: Request[A] => Future[Result]): Future[Result] = {
-    implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromHeadersAndSessionAndRequest(request.headers, request = Some(request))
+    implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
 
     optionalEmpRef.map( empRef =>
       authorised(
@@ -52,11 +52,11 @@ trait AuthAction extends AuthorisedFunctions with ActionBuilder[Request, AnyCont
         block(request)
       } recover {
         case ex: AuthorisationException =>
-          Logger.warn(s"[AuthAction][invokeBlock] user is unauthorised for ${request.uri} with exception  ${ex.getMessage}", ex)
+          logger.warn(s"[AuthAction][invokeBlock] user is unauthorised for ${request.uri} with exception  ${ex.getMessage}", ex)
           Unauthorized
       }
     ).getOrElse {
-      Logger.warn(s"[AuthAction][invokeBlock] empRef is invalid ${request.uri}")
+      logger.warn(s"[AuthAction][invokeBlock] empRef is invalid ${request.uri}")
       Future.successful(Unauthorized)
     }
   }
