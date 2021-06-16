@@ -16,10 +16,10 @@
 
 package utils.LoggingAndExceptions
 
-import uk.gov.hmrc.play.test.UnitSpec
+import helpers.ERSTestHelper
 import utils.LoggingAndRexceptions.ErsLogger
 
-class ErsLoggerSpec extends UnitSpec {
+class ErsLoggerSpec extends ERSTestHelper {
 
   object TestErsLogger extends ErsLogger {
     override def buildExceptionMesssage(ex: Exception): String = "exception message"

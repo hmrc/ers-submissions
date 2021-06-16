@@ -17,24 +17,21 @@
 package services.query
 
 import config.ApplicationConfig
-import models.ERSQuery
+import helpers.ERSTestHelper
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.when
-import org.scalatestplus.mockito.MockitoSugar
-import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import repositories.{DataVerificationMongoRepository, Repositories}
-import uk.gov.hmrc.play.test.UnitSpec
 
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
-class DataVerificationServiceSpec extends UnitSpec with MockitoSugar with GuiceOneAppPerSuite {
+class DataVerificationServiceSpec extends ERSTestHelper {
 
   val mockApplicationConfig: ApplicationConfig = app.injector.instanceOf[ApplicationConfig]
   val mockRepositories: Repositories = mock[Repositories]
   val mockDataVerificationRepository: DataVerificationMongoRepository = mock[DataVerificationMongoRepository]
 
-  def buildDataVerificationService(): DataVerificationService = new DataVerificationService(mockApplicationConfig, mockRepositories) {
+  def buildDataVerificationService(implicit ec: ExecutionContext): DataVerificationService =
+    new DataVerificationService(mockApplicationConfig, mockRepositories) {
     override lazy val dataVerificationRepository: DataVerificationMongoRepository = mockDataVerificationRepository
     when(mockDataVerificationRepository.getCountBySchemeTypeWithInDateRange(any()))
       .thenReturn(Future(10))
@@ -44,8 +41,8 @@ class DataVerificationServiceSpec extends UnitSpec with MockitoSugar with GuiceO
 
     "return correct count" in {
       val totalNumberOfRecords = 10
-      val dataVerificationService =  buildDataVerificationService()
-      val result = await(dataVerificationService.getCountBySchemeTypeWithInDateRange())
+      val dataVerificationService =  buildDataVerificationService
+      val result = await(dataVerificationService.getCountBySchemeTypeWithInDateRange)
       result shouldBe totalNumberOfRecords
     }
   }

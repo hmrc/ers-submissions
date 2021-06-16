@@ -21,23 +21,32 @@ import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 class Metrics @Inject()() {
-import com.codahale.metrics._
-  def storePresubmission(diff: Long, unit: TimeUnit): Unit = SharedMetricRegistries.getOrCreate("store-presubmission").timer("store-presubmission").update(diff, unit)
+import com.codahale.metrics.SharedMetricRegistries
+
+  def storePresubmission(diff: Long, unit: TimeUnit): Unit =
+    SharedMetricRegistries.getOrCreate("store-presubmission").timer("store-presubmission").update(diff, unit)
+
   def failedStorePresubmission(): Unit = SharedMetricRegistries.getOrCreate("failed-store-presubmission").counter("failed-store-presubmission").inc()
 
-  def removePresubmission(diff: Long, unit: TimeUnit): Unit = SharedMetricRegistries.getOrCreate("remove-presubmission").timer("remove-presubmission").update(diff, unit)
+  def removePresubmission(diff: Long, unit: TimeUnit): Unit =
+    SharedMetricRegistries.getOrCreate("remove-presubmission").timer("remove-presubmission").update(diff, unit)
+
   def failedRemovePresubmission(): Unit = SharedMetricRegistries.getOrCreate("failed-remove-presubmission").counter("failed-remove-presubmission").inc()
 
   def generateJson(diff: Long, unit: TimeUnit): Unit = SharedMetricRegistries.getOrCreate("generate-json").timer("generate-json").update(diff, unit)
 
   def sendToADR(diff: Long, unit: TimeUnit): Unit = SharedMetricRegistries.getOrCreate("send-to-ADR").timer("send-to-ADR").update(diff, unit)
+
   def successfulSendToADR(): Unit = SharedMetricRegistries.getOrCreate("successful-send-to-ADR").counter("successful-send-to-ADR").inc()
+
   def failedSendToADR(): Unit = SharedMetricRegistries.getOrCreate("failed-send-to-ADR").counter("failed-send-to-ADR").inc()
 
-  def updatePostsubmissionStatus(diff: Long, unit: TimeUnit): Unit = SharedMetricRegistries.getOrCreate("update-postsubmission-status").timer("update-postsubmission-status").update(diff, unit)
+  def updatePostsubmissionStatus(diff: Long, unit: TimeUnit): Unit =
+    SharedMetricRegistries.getOrCreate("update-postsubmission-status").timer("update-postsubmission-status").update(diff, unit)
 
   def saveMetadata(diff: Long, unit: TimeUnit): Unit = SharedMetricRegistries.getOrCreate("save-metadata").timer("save-metadata").update(diff, unit)
 
-  def checkForPresubmission(diff: Long, unit: TimeUnit): Unit =  SharedMetricRegistries.getOrCreate("check-for-presubmission").timer("check-for-presubmission").update(diff, unit)
+  def checkForPresubmission(diff: Long, unit: TimeUnit): Unit =
+    SharedMetricRegistries.getOrCreate("check-for-presubmission").timer("check-for-presubmission").update(diff, unit)
 
 }

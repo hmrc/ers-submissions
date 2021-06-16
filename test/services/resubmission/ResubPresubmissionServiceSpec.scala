@@ -18,24 +18,22 @@ package services.resubmission
 
 import config.ApplicationConfig
 import fixtures.Fixtures
+import helpers.ERSTestHelper
 import models.{ADRTransferException, ErsSummary, ResubmissionException}
 import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
 import org.scalatest.BeforeAndAfterEach
-import org.scalatestplus.mockito.MockitoSugar
-import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.mvc.Request
 import play.api.test.FakeRequest
 import repositories.MetadataMongoRepository
 import services.SubmissionService
 import services.audit.AuditEvents
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.play.test.UnitSpec
-import utils.LoggingAndRexceptions.{ErsLoggingAndAuditing, ResubmissionExceptionEmiter}
+import utils.LoggingAndRexceptions.{ErsLoggingAndAuditing, ResubmissionExceptionEmitter}
 
 import scala.concurrent.Future
 
-class ResubPresubmissionServiceSpec extends UnitSpec with MockitoSugar with BeforeAndAfterEach with GuiceOneAppPerSuite {
+class ResubPresubmissionServiceSpec extends ERSTestHelper with BeforeAndAfterEach {
   implicit val hc: HeaderCarrier = new HeaderCarrier()
   implicit val request: Request[_] = FakeRequest()
 
@@ -44,7 +42,7 @@ class ResubPresubmissionServiceSpec extends UnitSpec with MockitoSugar with Befo
   val mockSubmissionService: SubmissionService = mock[SubmissionService]
   val mockApplicationConfig: ApplicationConfig = app.injector.instanceOf[ApplicationConfig]
   val mockAuditEvents: AuditEvents = mock[AuditEvents]
-  val mockResubmissionExceptionEmiter: ResubmissionExceptionEmiter = app.injector.instanceOf[ResubmissionExceptionEmiter]
+  val mockResubmissionExceptionEmitter: ResubmissionExceptionEmitter = app.injector.instanceOf[ResubmissionExceptionEmitter]
 
   override def beforeEach(): Unit = {
     super.beforeEach()
@@ -62,7 +60,7 @@ class ResubPresubmissionServiceSpec extends UnitSpec with MockitoSugar with Befo
       mockSubmissionService,
       mockApplicationConfig,
       mockAuditEvents,
-      mockResubmissionExceptionEmiter
+      mockResubmissionExceptionEmitter
     ) {
       override def startResubmission(ersSummary: ErsSummary)(implicit request: Request[_], hc: HeaderCarrier): Future[Boolean] = {
         Future.successful(false)
@@ -118,7 +116,7 @@ class ResubPresubmissionServiceSpec extends UnitSpec with MockitoSugar with Befo
       mockSubmissionService,
       mockApplicationConfig,
       mockAuditEvents,
-      mockResubmissionExceptionEmiter
+      mockResubmissionExceptionEmitter
     )
 
     "return the result of callProcessData if ErsSubmissions is successfully extracted" in {
@@ -165,5 +163,4 @@ class ResubPresubmissionServiceSpec extends UnitSpec with MockitoSugar with Befo
       result.schemeInfo.get shouldBe Fixtures.metadata.metaData.schemeInfo
     }
   }
-
 }

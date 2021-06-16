@@ -18,7 +18,7 @@ package services
 
 import javax.inject.Inject
 import models.ErsSummary
-import play.api.Logger
+import play.api.Logging
 import play.api.libs.json.{JsError, JsObject, JsSuccess}
 import play.api.mvc.Request
 import uk.gov.hmrc.http.HeaderCarrier
@@ -28,7 +28,8 @@ import repositories.MetadataMongoRepository
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class MetadataService @Inject()(metadataMongoRepository: MetadataMongoRepository, ersLoggingAndAuditing: ErsLoggingAndAuditing) {
+class MetadataService @Inject()(metadataMongoRepository: MetadataMongoRepository, ersLoggingAndAuditing: ErsLoggingAndAuditing)
+  extends Logging {
 
   lazy val metadataRepository: MetadataMongoRepository = metadataMongoRepository
 
@@ -49,12 +50,12 @@ class MetadataService @Inject()(metadataMongoRepository: MetadataMongoRepository
           Some(ersSummary.value)
         }
         else {
-          Logger.info("Invalid metadata. Json: " + json.toString() + ", errors: " + isMetadataValid._2.getOrElse(""))
+          logger.info("Invalid metadata. Json: " + json.toString() + ", errors: " + isMetadataValid._2.getOrElse(""))
           None
         }
       }
       case e: JsError => {
-        Logger.info("Invalid request. Json: " + json.toString() + ", errors: " + JsError.toJson(e).toString())
+        logger.info("Invalid request. Json: " + json.toString() + ", errors: " + JsError.toJson(e).toString())
         None
       }
     }

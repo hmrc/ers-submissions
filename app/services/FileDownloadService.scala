@@ -24,7 +24,7 @@ import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import config.ApplicationConfig
 import models.SubmissionsSchemeData
-import play.api.Logger
+import play.api.Logging
 import play.api.http.Status
 import uk.gov.hmrc.http.UpstreamErrorResponse
 
@@ -33,14 +33,14 @@ import scala.concurrent.Future
 
 class FileDownloadService @Inject()(
                                    appConfig: ApplicationConfig
-                                   )(implicit actorSystem: ActorSystem) {
+                                   )(implicit actorSystem: ActorSystem) extends Logging {
 
   def extractEntityData(response: HttpResponse): Source[ByteString, _] = {
     val uploadCsvSizeLimit = appConfig.uploadCsvSizeLimit
     response match {
       case HttpResponse(akka.http.scaladsl.model.StatusCodes.OK, _, entity, _) => entity.withSizeLimit(uploadCsvSizeLimit).dataBytes
       case notOkResponse =>
-        Logger.error(
+        logger.error(
           s"[ProcessCsvService][extractEntityData] Illegal response from Upscan: ${notOkResponse.status.intValue}, " +
             s"body: ${notOkResponse.entity.dataBytes}")
         Source.failed(UpstreamErrorResponse("Could not download file from upscan", Status.INTERNAL_SERVER_ERROR))

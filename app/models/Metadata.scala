@@ -18,8 +18,7 @@ package models
 
 import com.github.nscala_time.time.Imports.DateTimeZone
 import org.joda.time.DateTime
-import play.api.libs.json.{Format, JsValue, Json, Reads, Writes, __}
-import uk.gov.hmrc.mongo.json.ReactiveMongoFormats
+import play.api.libs.json._
 
 /*
 case class ReturnServiceCache(
@@ -180,12 +179,10 @@ object ErsMetaData {
       new DateTime(dateTime, DateTimeZone.UTC)
     }
 
-  private val dateTimeWrite: Writes[DateTime] = new Writes[DateTime] {
-    def writes(dateTime: DateTime): JsValue = Json.toJson(dateTime.getMillis)
-  }
+  private val dateTimeWrite: Writes[DateTime] = (dateTime: DateTime) => Json.toJson(dateTime.getMillis)
 
   implicit val dateTimeFormats: Format[DateTime] = Format(dateTimeRead, dateTimeWrite)
-  implicit val format = Json.format[ErsMetaData]
+  implicit val format: OFormat[ErsMetaData] = Json.format[ErsMetaData]
 }
 
 case class AlterationAmends(
@@ -197,7 +194,7 @@ case class AlterationAmends(
                              )
 
 object AlterationAmends {
-  implicit val format = Json.format[AlterationAmends]
+  implicit val format: OFormat[AlterationAmends] = Json.format[AlterationAmends]
 }
 
 case class GroupSchemeInfo(
@@ -206,7 +203,7 @@ case class GroupSchemeInfo(
 
                             )
 object GroupSchemeInfo {
-  implicit val format = Json.format[GroupSchemeInfo]
+  implicit val format: OFormat[GroupSchemeInfo] = Json.format[GroupSchemeInfo]
 }
 
 case class SchemeOrganiserDetails(
@@ -221,7 +218,7 @@ case class SchemeOrganiserDetails(
                                    corporationRef: Option[String]
                                    )
 object SchemeOrganiserDetails {
-  implicit val format = Json.format[SchemeOrganiserDetails]
+  implicit val format: OFormat[SchemeOrganiserDetails] = Json.format[SchemeOrganiserDetails]
 }
 
 case class CompanyDetails(
@@ -236,13 +233,13 @@ case class CompanyDetails(
                            corporationRef: Option[String]
                            )
 object CompanyDetails {
-  implicit val format = Json.format[CompanyDetails]
+  implicit val format: OFormat[CompanyDetails] = Json.format[CompanyDetails]
 }
 case class CompanyDetailsList(
                                companies: List[CompanyDetails]
                                )
 object CompanyDetailsList {
-  implicit val format = Json.format[CompanyDetailsList]
+  implicit val format: OFormat[CompanyDetailsList] = Json.format[CompanyDetailsList]
 }
 
 case class TrusteeDetails(
@@ -255,7 +252,7 @@ case class TrusteeDetails(
                            country: Option[String]
                            )
 object TrusteeDetails {
-  implicit val format = Json.format[TrusteeDetails]
+  implicit val format: OFormat[TrusteeDetails] = Json.format[TrusteeDetails]
 }
 
 
@@ -263,12 +260,12 @@ case class TrusteeDetailsList(
                                trustees: List[TrusteeDetails]
                                )
 object TrusteeDetailsList {
-  implicit val format = Json.format[TrusteeDetailsList]
+  implicit val format: OFormat[TrusteeDetailsList] = Json.format[TrusteeDetailsList]
 }
 
 case class AltAmendsActivity(altActivity: String)
 object AltAmendsActivity {
-  implicit val format = Json.format[AltAmendsActivity]
+  implicit val format: OFormat[AltAmendsActivity] = Json.format[AltAmendsActivity]
 }
 
 case class ErsSummary(
@@ -293,10 +290,9 @@ object ErsSummary {
       new DateTime(dateTime, DateTimeZone.UTC)
     }
 
-  private val dateTimeWrite: Writes[DateTime] = new Writes[DateTime] {
-    def writes(dateTime: DateTime): JsValue = Json.toJson(dateTime.getMillis)
-  }
+  private val dateTimeWrite: Writes[DateTime] = (dateTime: DateTime) => Json.toJson(dateTime.getMillis)
 
   implicit val dateTimeFormats: Format[DateTime] = Format(dateTimeRead, dateTimeWrite)
-  implicit val format = Json.format[ErsSummary]
+
+  implicit val format: OFormat[ErsSummary] = Json.format[ErsSummary]
 }

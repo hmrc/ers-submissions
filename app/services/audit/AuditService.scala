@@ -19,7 +19,7 @@ package services.audit
 import javax.inject.Inject
 import org.joda.time.DateTime
 import play.api.mvc.Request
-import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.http.{HeaderCarrier, HeaderNames}
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 import uk.gov.hmrc.play.audit.model.DataEvent
 
@@ -40,8 +40,7 @@ class AuditService @Inject()(auditConnector: AuditConnector) {
     )
 
   def generateTags(hc: HeaderCarrier): Map[String, String] =
-    hc.headers.toMap ++
-      hc.headers.toMap ++
+    hc.headers(HeaderNames.explicitlyIncludedHeaders).toMap ++
       Map("dateTime" ->  getDateTime.toString)
 
   def getDateTime: DateTime = new DateTime

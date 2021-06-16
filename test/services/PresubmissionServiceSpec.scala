@@ -17,34 +17,33 @@
 package services
 
 import fixtures.{Fixtures, SIP}
+import helpers.ERSTestHelper
 import models.{SchemeData, SchemeInfo, SubmissionsSchemeData, UpscanCallback}
 import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
-import org.scalatestplus.mockito.MockitoSugar
 import play.api.libs.json.{JsObject, Json}
 import play.api.test.FakeRequest
 import repositories.{PresubmissionMongoRepository, Repositories}
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.play.test.{UnitSpec, WithFakeApplication}
 import utils.LoggingAndRexceptions.ErsLoggingAndAuditing
 
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
-class PresubmissionServiceSpec extends UnitSpec with MockitoSugar with WithFakeApplication {
+class PresubmissionServiceSpec extends ERSTestHelper {
 
   implicit val hc: HeaderCarrier = HeaderCarrier()
-  implicit val request = FakeRequest().withBody(Fixtures.metadataJson)
+  implicit val request: FakeRequest[JsObject] = FakeRequest().withBody(Fixtures.metadataJson)
   val mockRepositories: Repositories = mock[Repositories]
   val mockErsLoggingAndAuditing: ErsLoggingAndAuditing = mock[ErsLoggingAndAuditing]
   val mockPresubmissionRepository: PresubmissionMongoRepository = mock[PresubmissionMongoRepository]
 
   def buildPresubmissionService(storeJsonResult: Option[Boolean] = Some(true),
                                 getJsonResult: Boolean = true,
-                                removeJsonResult: Option[Boolean] = Some(true)): PresubmissionService =
+                                removeJsonResult: Option[Boolean] = Some(true))
+                               (implicit ec: ExecutionContext): PresubmissionService =
     new PresubmissionService(mockRepositories, mockErsLoggingAndAuditing) {
 
-      override lazy val presubmissionRepository = mockPresubmissionRepository
+      override lazy val presubmissionRepository: PresubmissionMongoRepository = mockPresubmissionRepository
       when(mockPresubmissionRepository.storeJson(any[SchemeData])).thenReturn(
         if (storeJsonResult.isDefined) Future(storeJsonResult.get) else Future.failed(new RuntimeException))
       when(mockPresubmissionRepository.storeJsonV2(any[String], any[JsObject])).thenReturn(

@@ -16,9 +16,9 @@
 
 package utils.LoggingAndRexceptions
 
-import play.api.Logger
+import play.api.Logging
 
-trait ErsLogger extends ErsDataMessages with ErsExceptionMessages {
+trait ErsLogger extends ErsDataMessages with ErsExceptionMessages with Logging {
 
   def buildMessage(message: String, data: Option[Object]): String = {
     data match {
@@ -32,15 +32,15 @@ trait ErsLogger extends ErsDataMessages with ErsExceptionMessages {
     if(context.isDefined) {
       errorMessage += s",\nContext: ${context}"
     }
-    Logger.error(errorMessage)
+    logger.error(errorMessage)
   }
 
   def logError(message: String, data: Option[Object] = None): Unit = {
-    Logger.error(buildMessage(message, data))
+    logger.error(buildMessage(message, data))
   }
 
   def logWarn(message: String, data: Option[Object] = None): Unit = {
-    Logger.warn(buildMessage(message, data))
+    logger.warn(buildMessage(message, data))
   }
 
 }

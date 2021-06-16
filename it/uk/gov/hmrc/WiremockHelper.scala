@@ -33,17 +33,23 @@ trait FakeAuthService extends BeforeAndAfterAll with ScalaFutures {
 
   final lazy val authServiceBaseUrl = s"http://$authServiceHost:$authServicePort"
 
+  lazy val downloadServer = new WireMockServer(wireMockConfig().port(19000))
+
   override def beforeAll() = {
     super.beforeAll()
     authServer.start()
+    downloadServer.start()
   }
 
   override def afterAll() = {
     super.afterAll()
     authServer.stop()
+    downloadServer.stop()
   }
 
   authServer.stubFor(WireMock.post(urlMatching("/auth/authorise")).willReturn(WireMock.aResponse().withStatus(200).withBody("""{}""")))
+  downloadServer.stubFor(WireMock.get(urlMatching("/fakeDownload")).willReturn(WireMock.aResponse().withStatus(200)
+    .withBody(""""no", "no", "yes", "3", "2015-12-09", "John", "", "Doe", "AA123456A", "123/XZ55555555", "10.1234", "100.12", "10.1234", "10.1234"""")))
 }
 
 trait FakeErsStubService extends BeforeAndAfterAll with ScalaFutures {
@@ -56,12 +62,12 @@ trait FakeErsStubService extends BeforeAndAfterAll with ScalaFutures {
 
   final lazy val stubServiceBaseUrl = s"http://$stubServiceHost:$stubServicePort"
 
-  override def beforeAll() = {
+  override def beforeAll(): Unit = {
     super.beforeAll()
     stubServer.start()
   }
 
-  override def afterAll() = {
+  override def afterAll(): Unit = {
     super.afterAll()
     stubServer.stop()
   }

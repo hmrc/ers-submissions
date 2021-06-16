@@ -19,24 +19,24 @@ package utils
 import com.typesafe.config.Config
 import javax.inject.Inject
 import models._
-import play.api.Logger
+import play.api.Logging
 import play.api.libs.json.{JsObject, Json}
 import play.api.mvc.Request
 import services.PresubmissionService
 import utils.LoggingAndRexceptions.ADRExceptionEmitter
 
 import scala.collection.mutable.{ArrayBuffer, ListBuffer}
-import scala.concurrent.Future
-import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.{ExecutionContext, Future}
 import uk.gov.hmrc.http.HeaderCarrier
 
 class ADRSubmission @Inject()(submissionCommon: SubmissionCommon,
                               presubmissionService: PresubmissionService,
                               adrExceptionEmitter: ADRExceptionEmitter,
-                              configUtils: ConfigUtils) {
+                              configUtils: ConfigUtils)
+                             (implicit ec: ExecutionContext) extends Logging {
 
   def generateSubmission()(implicit request: Request[_], hc: HeaderCarrier, ersSummary: ErsSummary): Future[JsObject] = {
-    Logger.debug("LFP -> 1. generateSubmission :START ")
+    logger.debug("LFP -> 1. generateSubmission :START ")
     implicit val schemeType: String = ersSummary.metaData.schemeInfo.schemeType.toUpperCase()
 
     if (ersSummary.isNilReturn == IsNilReturn.False.toString) {
@@ -49,18 +49,18 @@ class ADRSubmission @Inject()(submissionCommon: SubmissionCommon,
 
   def createSubmissionJson()(implicit request: Request[_], hc: HeaderCarrier, ersSummary: ErsSummary, schemeType: String): Future[JsObject] = {
     createSheetsJson(Json.obj()) flatMap { sheetsDataJson =>
-      Logger.debug("LFP -> 7. Json Creation complete --> ")
+      logger.debug("LFP -> 7. Json Creation complete --> ")
       Future(createRootJson(sheetsDataJson)) map { res => res}
     }
   }
 
   def createSheetsJson(sheetsJson: JsObject)(implicit request: Request[_], hc: HeaderCarrier, ersSummary: ErsSummary, schemeType: String): Future[JsObject] = {
     var result = sheetsJson
-    Logger.debug("LFP -> 2. createSheetsJson () ")
+    logger.debug("LFP -> 2. createSheetsJson () ")
     presubmissionService.getJson(ersSummary.metaData.schemeInfo).map { fileDataList =>
-      Logger.debug("LFP -> 5. Json retireved + list = " + fileDataList.size)
+      logger.debug("LFP -> 5. Json retireved + list = " + fileDataList.size)
       for(fileData <- fileDataList) {
-        Logger.debug(s" LFP -> 6. data record  is --> ${fileData.sheetName}" )
+        logger.debug(s" LFP -> 6. data record  is --> ${fileData.sheetName}" )
         val sheetName: String = fileData.sheetName
         val configData: Config = configUtils.getConfigData(s"${schemeType}/${sheetName}", sheetName)
         val data: JsObject = buildJson(configData, fileData.data.get)
@@ -84,12 +84,13 @@ class ADRSubmission @Inject()(submissionCommon: SubmissionCommon,
     buildRoot(rootConfigData, ersSummary, sheetsJson)
   }
 
-  def buildRoot(configData: Config, metadata: Object, sheetsJson: JsObject)(implicit request: Request[_], hc: HeaderCarrier, ersSummary: ErsSummary, schemeType: String): JsObject = {
-    import scala.collection.JavaConversions._
+  def buildRoot(configData: Config, metadata: Object, sheetsJson: JsObject)
+               (implicit request: Request[_], hc: HeaderCarrier, ersSummary: ErsSummary, schemeType: String): JsObject = {
+    import scala.collection.JavaConverters._
 
     var json: JsObject = Json.obj()
 
-    val fieldsConfigList = configData.getConfigList("fields")
+    val fieldsConfigList = configData.getConfigList("fields").asScala
 
     for (elem <- fieldsConfigList) {
       elem.getString("type") match {
@@ -99,7 +100,7 @@ class ADRSubmission @Inject()(submissionCommon: SubmissionCommon,
         }
         case "array" => {
           if (elem.hasPath("values")) {
-            val elVal = for (el <- elem.getConfigList("values")) yield {
+            val elVal = for (el <- elem.getConfigList("values").asScala) yield {
               val ev = configUtils.extractField(el, metadata)
               val valid_value = el.getString("valid_value")
               if (ev.toString == valid_value) {
@@ -144,11 +145,11 @@ class ADRSubmission @Inject()(submissionCommon: SubmissionCommon,
   }
 
   def buildJson(configData: Config, fileData: ListBuffer[Seq[String]], row: Option[Int] = None)(implicit request: Request[_], hc: HeaderCarrier): JsObject = {
-    import scala.collection.JavaConversions._
+    import scala.collection.JavaConverters._
 
     var json: JsObject = Json.obj()
 
-    val fieldsConfigList = configData.getConfigList("fields")
+    val fieldsConfigList = configData.getConfigList("fields").asScala
     for (elem <- fieldsConfigList) {
       elem.getString("type") match {
         case "object" => {
@@ -156,9 +157,9 @@ class ADRSubmission @Inject()(submissionCommon: SubmissionCommon,
           json ++= submissionCommon.addObjectValue(elem, elemVal)
         }
         case "array" => {
-          if (fileData.length > 0) {
+          if (fileData.nonEmpty) {
             if(row.isEmpty) {
-              val elemVal: List[JsObject] = for (row <- (0 to (fileData.length - 1)).toList) yield buildJson(elem, fileData, Some(row))
+              val elemVal: List[JsObject] = for (row <- fileData.indices.toList) yield buildJson(elem, fileData, Some(row))
               json ++= submissionCommon.addArrayValue(elem, elemVal)
             }
             else {

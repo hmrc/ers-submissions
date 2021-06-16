@@ -17,12 +17,11 @@
 package services.resubmission
 
 import akka.actor.{ActorSystem, Cancellable}
-import akka.actor.TypedActor.context
 import config.ApplicationConfig
 import javax.inject.Inject
 import models.ResubmissionLock
 import org.joda.time.{DateTime, Duration}
-import play.api.Logger
+import play.api.Logging
 import play.api.libs.json.JsObject
 import play.api.mvc.Request
 import repositories.Repositories
@@ -37,7 +36,7 @@ class SchedulerService @Inject()(val applicationConfig: ApplicationConfig,
                                  repositories: Repositories,
                                  resubPresubmissionService: ResubPresubmissionService,
                                  schedulerLoggingAndAuditing: ErsLoggingAndAuditing,
-                                 actorSystem: ActorSystem) extends SchedulerConfig {
+                                 actorSystem: ActorSystem) extends SchedulerConfig with Logging {
 
   val request: Request[JsObject] = ERSRequest.createERSRequest()
   val hc: HeaderCarrier = HeaderCarrier()
@@ -51,7 +50,7 @@ class SchedulerService @Inject()(val applicationConfig: ApplicationConfig,
     actorSystem.scheduler.schedule(delay milliseconds, repeat seconds) {
       if ((schedulerStartTime.isEqualNow || schedulerStartTime.isBeforeNow) && schedulerEndTime.isAfterNow) {
         lock.tryToAcquireOrRenewLock {
-          Logger.info(s"Start scheduling ${DateTime.now.toString}")
+          logger.info(s"Start scheduling ${DateTime.now.toString}")
           resubmit()(request, hc).map { res => res }
         }
       }

@@ -16,20 +16,20 @@
 
 package utils.LoggingAndExceptions
 
+import helpers.ERSTestHelper
 import models.ResubmissionException
-import org.scalatestplus.mockito.MockitoSugar
+import play.api.mvc.AnyContent
 import play.api.test.FakeRequest
 import services.audit.AuditEvents
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.play.test.{UnitSpec, WithFakeApplication}
-import utils.LoggingAndRexceptions.ResubmissionExceptionEmiter
+import utils.LoggingAndRexceptions.ResubmissionExceptionEmitter
 
-class ResubmissionExceptionEmiterSpec extends UnitSpec with WithFakeApplication with MockitoSugar {
+class ResubmissionExceptionEmitterSpec extends ERSTestHelper {
 
-  implicit val request = FakeRequest()
-  implicit val hc = new HeaderCarrier()
+  implicit val request: FakeRequest[AnyContent] = FakeRequest()
+  implicit val hc: HeaderCarrier = new HeaderCarrier()
   val mockAuditEvents: AuditEvents = mock[AuditEvents]
-  val mockResubmissionExceptionEmiter: ResubmissionExceptionEmiter = new ResubmissionExceptionEmiter(mockAuditEvents)
+  val mockResubmissionExceptionEmiter: ResubmissionExceptionEmitter = new ResubmissionExceptionEmitter(mockAuditEvents)
 
   "calling emitFrom" should {
 

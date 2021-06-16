@@ -18,18 +18,16 @@ package connectors
 
 import config.ApplicationConfig
 import fixtures.Fixtures
+import helpers.ERSTestHelper
 import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
-import org.scalatestplus.mockito.MockitoSugar
-import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.libs.json.JsObject
 import play.api.test.Helpers._
 import uk.gov.hmrc.http.{HeaderCarrier, HttpClient, HttpResponse}
-import uk.gov.hmrc.play.test.UnitSpec
 
 import scala.concurrent.Future
 
-class ADRConnectorSpec extends UnitSpec with MockitoSugar with GuiceOneAppPerSuite {
+class ADRConnectorSpec extends ERSTestHelper {
 
   val mockAppConfig: ApplicationConfig = mock[ApplicationConfig]
   val mockHttpClient: HttpClient = mock[HttpClient]
@@ -42,7 +40,7 @@ class ADRConnectorSpec extends UnitSpec with MockitoSugar with GuiceOneAppPerSui
 
     "send data successfully" in {
       when(mockHttpClient.POST[JsObject, HttpResponse](any(), any(), any())(any(), any(), any(), any()))
-        .thenReturn(Future.successful(HttpResponse(OK)))
+        .thenReturn(Future.successful(HttpResponse(OK, "")))
 
       val result = await(mockConnector.sendData(Fixtures.schemeDataJson, Fixtures.schemeType))
       result.status shouldBe OK
@@ -51,7 +49,7 @@ class ADRConnectorSpec extends UnitSpec with MockitoSugar with GuiceOneAppPerSui
     "fail sending data" in {
 
       when(mockHttpClient.POST[JsObject, HttpResponse](any(), any(), any())(any(), any(), any(), any()))
-        .thenReturn(Future.successful(HttpResponse(INTERNAL_SERVER_ERROR)))
+        .thenReturn(Future.successful(HttpResponse(INTERNAL_SERVER_ERROR, "")))
 
       val result = await(mockConnector.sendData(Fixtures.schemeDataJson, Fixtures.schemeType))
       result.status shouldBe INTERNAL_SERVER_ERROR

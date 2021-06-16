@@ -18,15 +18,13 @@ package utils
 
 import com.typesafe.config.{Config, ConfigFactory, ConfigValueFactory}
 import fixtures.Common
+import helpers.ERSTestHelper
 import org.joda.time.{DateTime, DateTimeZone}
-import org.scalatestplus.mockito.MockitoSugar
-import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.libs.json.{JsObject, Json}
 import reactivemongo.bson.BSONObjectID
 import uk.gov.hmrc.http.HttpResponse
-import uk.gov.hmrc.play.test.UnitSpec
 
-class SubmissionCommonSpec extends UnitSpec with MockitoSugar with GuiceOneAppPerSuite {
+class SubmissionCommonSpec extends ERSTestHelper {
 
   val mockConfigUtils: ConfigUtils = app.injector.instanceOf[ConfigUtils]
   val testSubmissionCommon: SubmissionCommon = new SubmissionCommon(mockConfigUtils)

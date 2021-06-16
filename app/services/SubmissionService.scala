@@ -24,7 +24,7 @@ import javax.inject.Inject
 import metrics.Metrics
 import models.{ADRTransferException, ErsSummary}
 import org.joda.time.DateTime
-import play.api.Logger
+import play.api.Logging
 import play.api.libs.json.JsObject
 import play.api.mvc.Request
 import repositories.{MetadataMongoRepository, Repositories}
@@ -43,7 +43,7 @@ class SubmissionService @Inject()(repositories: Repositories,
                                   ersLoggingAndAuditing: ErsLoggingAndAuditing,
                                   adrExceptionEmitter: ADRExceptionEmitter,
                                   auditEvents: AuditEvents,
-                                  metrics: Metrics) {
+                                  metrics: Metrics) extends Logging {
 
   lazy val metadataRepository: MetadataMongoRepository = repositories.metadataRepository
 
@@ -71,7 +71,7 @@ class SubmissionService @Inject()(repositories: Repositories,
 
   def processData(ersSummary: ErsSummary, failedStatus: String, successStatus: String)(implicit request: Request[_], hc: HeaderCarrier): Future[Boolean] = {
     ersLoggingAndAuditing.logWarn(s"Submission journey 3. start processing data: ${DateTime.now}", Some(ersSummary))
-    Logger.info(s"Start processing data for ${ersLoggingAndAuditing.buildDataMessage(ersSummary)}")
+    logger.info(s"Start processing data for ${ersLoggingAndAuditing.buildDataMessage(ersSummary)}")
     transformData(ersSummary).flatMap { adrData =>
       sendToADRUpdatePostData(ersSummary, adrData, failedStatus, successStatus) map {res => res}
     }
@@ -82,7 +82,7 @@ class SubmissionService @Inject()(repositories: Repositories,
     val startTime = System.currentTimeMillis()
     adrSubmission.generateSubmission()(request, hc, ersSummary).map { json =>
       ersLoggingAndAuditing.logWarn(s"Submission journey 5. json is created: ${DateTime.now}", Some(ersSummary))
-      Logger.debug("LFP -> 8. Json created () In PostsubmissionService.transformData method " + json.fields.size)
+      logger.debug("LFP -> 8. Json created () In PostsubmissionService.transformData method " + json.fields.size)
       metrics.generateJson(System.currentTimeMillis() - startTime, TimeUnit.MILLISECONDS)
       ersLoggingAndAuditing.handleSuccess(ersSummary, "Json is successfully created")
       json
@@ -106,7 +106,7 @@ class SubmissionService @Inject()(repositories: Repositories,
   def sendToADRUpdatePostData(ersSummary: ErsSummary, adrData: JsObject, failedStatus: String, successStatus: String)
                              (implicit request: Request[_], hc: HeaderCarrier): Future[Boolean] = {
     ersLoggingAndAuditing.logWarn(s"Submission journey 6. start sending data: ${DateTime.now}", Some(ersSummary))
-    Logger.info(s"Start sending data ${ersLoggingAndAuditing.buildDataMessage(ersSummary)}")
+    logger.info(s"Start sending data ${ersLoggingAndAuditing.buildDataMessage(ersSummary)}")
 
     val startTime = System.currentTimeMillis()
 
@@ -114,7 +114,7 @@ class SubmissionService @Inject()(repositories: Repositories,
       ersLoggingAndAuditing.logWarn(s"Submission journey 7. data is sent with response ${response.status}: ${DateTime.now}", Some(ersSummary))
       val transferStatus: String = response.status match {
         case ACCEPTED =>
-          Logger.debug("LFP -> 14. Data sent ")
+          logger.debug("LFP -> 14. Data sent ")
           metrics.sendToADR(System.currentTimeMillis() - startTime, TimeUnit.MILLISECONDS)
           metrics.successfulSendToADR()
           val correlationID: String = submissionCommon.getCorrelationID(response)
@@ -148,7 +148,7 @@ class SubmissionService @Inject()(repositories: Repositories,
   def updatePostsubmission(adrSubmissionStatus: Int, transferStatus: String, ersSummary: ErsSummary)
                           (implicit request: Request[_], hc: HeaderCarrier): Future[Boolean] = {
     ersLoggingAndAuditing.logWarn(s"Submission journey 8. start updating status ${transferStatus}: ${DateTime.now}", Some(ersSummary))
-    Logger.info(s"Start updating status for ${ersSummary.metaData.schemeInfo.toString}")
+    logger.info(s"Start updating status for ${ersSummary.metaData.schemeInfo.toString}")
     val startUpdateTime = System.currentTimeMillis()
 
     metadataRepository.updateStatus(ersSummary.metaData.schemeInfo, transferStatus).map[Boolean] {

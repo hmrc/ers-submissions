@@ -17,15 +17,14 @@
 package utils.LoggingAndExceptions
 
 import fixtures.Fixtures
+import helpers.ERSTestHelper
 import models.ADRTransferException
-import org.scalatestplus.mockito.MockitoSugar
 import play.api.test.FakeRequest
 import services.audit.AuditEvents
-import uk.gov.hmrc.play.test.{UnitSpec, WithFakeApplication}
 import utils.LoggingAndRexceptions.ErsLoggingAndAuditing
 import uk.gov.hmrc.http.HeaderCarrier
 
-class ErsLoggingAndAuditingSpec extends UnitSpec with WithFakeApplication with MockitoSugar {
+class ErsLoggingAndAuditingSpec extends ERSTestHelper {
 
   val mockAuditEvents: AuditEvents = mock[AuditEvents]
   val mockErsLoggingAndAuditing: ErsLoggingAndAuditing = new ErsLoggingAndAuditing(mockAuditEvents)

@@ -20,9 +20,9 @@ import controllers.auth.AuthAction
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.when
 import org.mockito.invocation.InvocationOnMock
-import org.mockito.stubbing.{Answer, OngoingStubbing}
+import org.mockito.stubbing.OngoingStubbing
 import play.api.libs.json.JsValue
-import play.api.mvc.{Action, AnyContent, BodyParser, BodyParsers, Request, Result}
+import play.api.mvc.{Action, BodyParser, Request, Result}
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -32,15 +32,15 @@ trait WithMockedAuthActions {
 
   def mockJsValueAuthAction: OngoingStubbing[Action[JsValue]] =
     when(mockAuthAction.async(any[BodyParser[JsValue]])(any[Request[JsValue] => Future[Result]]()))
-      .thenAnswer(new Answer[Action[JsValue]] {
-        override def answer(invocation: InvocationOnMock): Action[JsValue] = {
-          val passedInBodyParser = invocation.getArguments()(0).asInstanceOf[BodyParser[JsValue]]
-          val passedInBlock = invocation.getArguments()(1).asInstanceOf[Request[JsValue] => Future[Result]]
-          new Action[JsValue]{
-            override def parser: BodyParser[JsValue] = passedInBodyParser
-            override def apply(request: Request[JsValue]): Future[Result] = passedInBlock(request)
-            override def executionContext: ExecutionContext = ExecutionContext.global
-          }
+      .thenAnswer((invocation: InvocationOnMock) => {
+        val passedInBodyParser = invocation.getArguments()(0).asInstanceOf[BodyParser[JsValue]]
+        val passedInBlock = invocation.getArguments()(1).asInstanceOf[Request[JsValue] => Future[Result]]
+        new Action[JsValue] {
+          override def parser: BodyParser[JsValue] = passedInBodyParser
+
+          override def apply(request: Request[JsValue]): Future[Result] = passedInBlock(request)
+
+          override def executionContext: ExecutionContext = ExecutionContext.global
         }
       })
 }

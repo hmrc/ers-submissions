@@ -17,11 +17,11 @@
 package services
 
 import fixtures.Fixtures
-import models.{SchemeInfo, SchemeData}
+import helpers.ERSTestHelper
+import models.{SchemeData, SchemeInfo}
 import play.api.libs.json.{JsObject, Json}
-import uk.gov.hmrc.play.test.UnitSpec
 
-class ValidationServiceSpec extends UnitSpec {
+class ValidationServiceSpec extends ERSTestHelper {
 
   val service = new ValidationService
 

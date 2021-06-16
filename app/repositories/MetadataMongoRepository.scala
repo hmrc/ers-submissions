@@ -20,7 +20,6 @@ import config.ApplicationConfig
 import javax.inject.Inject
 import models._
 import org.joda.time.DateTime
-import play.api.Logger
 import play.api.libs.json.Format.GenericFormat
 import play.api.libs.json.Json
 import play.modules.reactivemongo.ReactiveMongoComponent
@@ -31,10 +30,10 @@ import reactivemongo.play.json.ImplicitBSONHandlers._
 import uk.gov.hmrc.mongo.ReactiveRepository
 import uk.gov.hmrc.mongo.json.ReactiveMongoFormats
 
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 class MetadataMongoRepository @Inject()(applicationConfig: ApplicationConfig, rmc: ReactiveMongoComponent)
+                                       (implicit ec: ExecutionContext)
   extends ReactiveRepository[ErsSummary, BSONObjectID](applicationConfig.metadataCollection,
     rmc.mongoConnector.db,
     ErsSummary.format,
@@ -48,7 +47,7 @@ class MetadataMongoRepository @Inject()(applicationConfig: ApplicationConfig, rm
   def storeErsSummary(ersSummary: ErsSummary): Future[Boolean] = {
     collection.insert(ersSummary).map { res =>
       if(res.writeErrors.nonEmpty) {
-        Logger.error(s"Faling storing metadata. Error: ${Message.unapply(res).getOrElse("")} for ${ersSummary.metaData.schemeInfo}")
+        logger.error(s"Faling storing metadata. Error: ${Message.unapply(res).getOrElse("")} for ${ersSummary.metaData.schemeInfo}")
       }
       res.ok
     }
@@ -66,13 +65,18 @@ class MetadataMongoRepository @Inject()(applicationConfig: ApplicationConfig, rm
 
     collection.update(selector, update).map { res =>
       if (res.writeErrors.nonEmpty) {
-        Logger.warn(s"Faling updating metadata status. Error: ${Message.unapply(res).getOrElse("")} for ${schemeInfo.toString}, status: ${status}")
+        logger.warn(s"Faling updating metadata status. Error: ${Message.unapply(res).getOrElse("")} for ${schemeInfo.toString}, status: ${status}")
       }
       res.ok
     }
   }
 
-  def findAndUpdateByStatus(statusList: List[String], resubmitWithNilReturn: Boolean =  true, isResubmitBeforeDate:Boolean = true, schemeRefList: Option[List[String]], schemeType: Option[String]): Future[Option[ErsSummary]] = {
+  def findAndUpdateByStatus(statusList: List[String],
+                            resubmitWithNilReturn: Boolean =  true,
+                            isResubmitBeforeDate: Boolean = true,
+                            schemeRefList: Option[List[String]],
+                            schemeType: Option[String]): Future[Option[ErsSummary]] = {
+
     val baseSelector: BSONDocument = BSONDocument(
       "transferStatus" -> BSONDocument(
         "$in" -> statusList
@@ -131,7 +135,7 @@ class MetadataMongoRepository @Inject()(applicationConfig: ApplicationConfig, rm
         for{
           total <- futureTotal
         }yield {
-          Logger.warn(s"The number of ${status} files in the database is: ${total}")
+          logger.warn(s"The number of ${status} files in the database is: ${total}")
         }
       }
     }

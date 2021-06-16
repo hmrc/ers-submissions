@@ -16,31 +16,25 @@
 
 package controllers.auth
 
-import akka.stream.Materializer
-import org.scalatestplus.mockito.MockitoSugar
+import helpers.ERSTestHelper
 import org.mockito.Mockito._
 import org.scalatest.BeforeAndAfterEach
 import uk.gov.hmrc.auth.core.{AuthConnector, BearerTokenExpired, ConfidenceLevel, Enrolment, InsufficientConfidenceLevel}
-import uk.gov.hmrc.play.test.UnitSpec
 import org.mockito.ArgumentMatchers.{any, eq => eqTo}
-import play.api.Play
 import play.api.http.Status
 import play.api.mvc.{AnyContent, BodyParser, PlayBodyParsers, Request, Result, Results}
 import play.api.test.FakeRequest
 import uk.gov.hmrc.auth.core.authorise.Predicate
 import uk.gov.hmrc.auth.core.retrieve.EmptyRetrieval
 import uk.gov.hmrc.domain.EmpRef
-import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 
 import scala.concurrent.{ExecutionContext, Future}
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.Try
 
-class AuthActionSpec extends UnitSpec with MockitoSugar with BeforeAndAfterEach with GuiceOneAppPerSuite {
+class AuthActionSpec extends ERSTestHelper with BeforeAndAfterEach {
 
   val mockAuthConnector: AuthConnector = mock[AuthConnector]
-  val mockBodyPraser: PlayBodyParsers = mock[PlayBodyParsers]
-  implicit def materializer: Materializer = Play.materializer(fakeApplication)
+  val mockBodyParser: PlayBodyParsers = mock[PlayBodyParsers]
 
   override protected def beforeEach(): Unit = {
     super.beforeEach()
@@ -51,7 +45,7 @@ class AuthActionSpec extends UnitSpec with MockitoSugar with BeforeAndAfterEach 
     override val optionalEmpRef: Option[EmpRef] = Try(EmpRef.fromIdentifiers(empRef)).toOption
     override def authConnector: AuthConnector = mockAuthConnector
     override implicit val executionContext: ExecutionContext = ExecutionContext.global
-    override def parser: BodyParser[AnyContent] = mockBodyPraser.default
+    override def parser: BodyParser[AnyContent] = mockBodyParser.default
   }
 
   def defaultAsyncBody: Request[_] => Result = _ => Results.Ok("Successful")
@@ -64,7 +58,7 @@ class AuthActionSpec extends UnitSpec with MockitoSugar with BeforeAndAfterEach 
 
 
   "AuthAction" should {
-    "return a perform the action if the user is authorised " in {
+    "perform the action if the user is authorised " in {
       when(
         mockAuthConnector
           .authorise(

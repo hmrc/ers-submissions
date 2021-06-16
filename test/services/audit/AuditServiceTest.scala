@@ -21,7 +21,7 @@ import org.mockito.Mockito.verify
 import org.mockito.internal.verification.VerificationModeFactory
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatest.{Matchers, WordSpec}
-import play.api.mvc.AnyContentAsEmpty
+import play.api.mvc.AnyContent
 import play.api.test.FakeRequest
 import services.audit.AuditService
 import uk.gov.hmrc.http.HeaderCarrier
@@ -30,7 +30,7 @@ import uk.gov.hmrc.play.audit.model.DataEvent
 
 class AuditServiceTest extends WordSpec with Matchers with MockitoSugar {
 
-  implicit val request: FakeRequest[AnyContentAsEmpty.type] = FakeRequest()
+  implicit val request: FakeRequest[AnyContent] = FakeRequest()
   implicit val hc: HeaderCarrier = new HeaderCarrier
 
   val mockAuditConnector: AuditConnector = mock[AuditConnector]

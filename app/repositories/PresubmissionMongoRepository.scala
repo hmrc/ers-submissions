@@ -18,8 +18,7 @@ package repositories
 
 import config.ApplicationConfig
 import models.{SchemeData, SchemeInfo}
-import play.api.Logger
-import play.api.libs.json.{JsObject, Json}
+import play.api.libs.json.JsObject
 import play.modules.reactivemongo.ReactiveMongoComponent
 import reactivemongo.api.Cursor
 import reactivemongo.api.commands.WriteResult.Message
@@ -30,20 +29,20 @@ import uk.gov.hmrc.mongo.ReactiveRepository
 import uk.gov.hmrc.mongo.json.ReactiveMongoFormats
 import javax.inject.Inject
 
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{Await, ExecutionContext, Future}
 
 class PresubmissionMongoRepository @Inject()(applicationConfig: ApplicationConfig, rmc: ReactiveMongoComponent)
+                                            (implicit ec: ExecutionContext)
   extends ReactiveRepository[SchemeData, BSONObjectID](applicationConfig.presubmissionCollection,
     rmc.mongoConnector.db,
     SchemeData.format,
     ReactiveMongoFormats.objectIdFormats) {
 
-  ensureIndexes(ExecutionContext.Implicits.global)
+  ensureIndexes
 
   override def ensureIndexes(implicit ec: ExecutionContext): Future[Seq[Boolean]] = {
     Await.result(collection.indexesManager(ec).list(), scala.concurrent.duration.Duration.Inf) //do this to make the connection to the DB for ensure indexes
-    super.ensureIndexes(ec)
+    super.ensureIndexes
   }
 
   override def indexes: Seq[Index] = {
@@ -67,7 +66,7 @@ class PresubmissionMongoRepository @Inject()(applicationConfig: ApplicationConfi
   def storeJson(presubmissionData: SchemeData): Future[Boolean] = {
     collection.insert(presubmissionData).map { res =>
       if(res.writeErrors.nonEmpty) {
-        Logger.error(s"[PresubmissionMongoRepository][storeJson] Failed storing presubmission data. Error: " +
+        logger.error(s"[PresubmissionMongoRepository][storeJson] Failed storing presubmission data. Error: " +
           s"${Message.unapply(res).getOrElse("")} for schemeInfo:" +
           s" ${presubmissionData.schemeInfo.toString}"
         )
@@ -79,19 +78,19 @@ class PresubmissionMongoRepository @Inject()(applicationConfig: ApplicationConfi
   def storeJsonV2(schemeInfo: String, presubmissionData: JsObject): Future[Boolean] = {
     collection.insert(ordered = false).one(presubmissionData).map { res =>
       if(res.writeErrors.nonEmpty) {
-        Logger.error(s"[PresubmissionMongoRepository][storeJsonV2] Failed storing presubmission data. Error: " +
+        logger.error(s"[PresubmissionMongoRepository][storeJsonV2] Failed storing presubmission data. Error: " +
           s"${Message.unapply(res).getOrElse("")} for schemeInfo: ${schemeInfo}")
       }
       res.ok
     }.recover {
       case e: Throwable =>
-        Logger.error(s"Failed storing presubmission data. Error: ${e.getMessage} for schemeInfo: ${schemeInfo}")
+        logger.error(s"Failed storing presubmission data. Error: ${e.getMessage} for schemeInfo: ${schemeInfo}")
         throw e
     }
   }
 
   def getJson(schemeInfo: SchemeInfo): Future[List[SchemeData]] = {
-    Logger.debug("LFP -> 4. PresubmissionMongoRepository.getJson () ")
+    logger.debug("LFP -> 4. PresubmissionMongoRepository.getJson () ")
     collection.find(
       buildSelector(schemeInfo)
     ).cursor[SchemeData]().collect[List](Int.MaxValue, Cursor.FailOnError[List[SchemeData]]())
@@ -109,7 +108,7 @@ class PresubmissionMongoRepository @Inject()(applicationConfig: ApplicationConfi
     val selector = buildSelector(schemeInfo)
     collection.remove(selector).map { res =>
       if(res.writeErrors.nonEmpty) {
-        Logger.error(s"Deleting presubmission error message: ${Message.unapply(res).getOrElse("")} for schemeInfo: ${schemeInfo.toString}")
+        logger.error(s"Deleting presubmission error message: ${Message.unapply(res).getOrElse("")} for schemeInfo: ${schemeInfo.toString}")
       }
       res.ok
     }

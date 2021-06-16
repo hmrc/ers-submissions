@@ -30,7 +30,7 @@ object ERSRequest {
 
     new Request[JsObject] {
 
-       override def connection = new RemoteConnection {
+       override def connection: RemoteConnection = new RemoteConnection {
          override def secure: Boolean = false
          override def clientCertificateChain: Option[Seq[X509Certificate]]  = None
          override def remoteAddress: InetAddress = ???

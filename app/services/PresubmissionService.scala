@@ -18,17 +18,17 @@ package services
 
 import javax.inject.Inject
 import models.{SchemeData, SchemeInfo, SubmissionsSchemeData}
-import play.api.Logger
+import play.api.Logging
 import play.api.libs.json.JsObject
 import play.api.mvc.Request
 import repositories.{PresubmissionMongoRepository, Repositories}
 import utils.LoggingAndRexceptions.ErsLoggingAndAuditing
 
-import scala.concurrent.Future
-import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.{ExecutionContext, Future}
 import uk.gov.hmrc.http.HeaderCarrier
 
-class PresubmissionService @Inject()(repositories: Repositories, ersLoggingAndAuditing: ErsLoggingAndAuditing) {
+class PresubmissionService @Inject()(repositories: Repositories, ersLoggingAndAuditing: ErsLoggingAndAuditing)
+                                    (implicit ec: ExecutionContext) extends Logging {
 
   lazy val presubmissionRepository: PresubmissionMongoRepository = repositories.presubmissionRepository
 
@@ -53,7 +53,7 @@ class PresubmissionService @Inject()(repositories: Repositories, ersLoggingAndAu
   }
 
   def getJson(schemeInfo: SchemeInfo): Future[List[SchemeData]] = {
-    Logger.debug("LFP -> 3. PresubmissionService.getJson () ")
+    logger.debug("LFP -> 3. PresubmissionService.getJson () ")
     presubmissionRepository.getJson(schemeInfo)
   }
 

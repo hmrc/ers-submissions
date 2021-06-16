@@ -22,9 +22,10 @@ import play.api.mvc.Request
 import services.audit.AuditEvents
 import uk.gov.hmrc.http.HeaderCarrier
 
-class ResubmissionExceptionEmiter @Inject()(auditEvents: AuditEvents) extends ErsLogger {
+class ResubmissionExceptionEmitter @Inject()(auditEvents: AuditEvents) extends ErsLogger {
 
-  def emitFrom(data: Map[String, String], ex: Option[Exception] = None, schemeInfo: Option[SchemeInfo])(implicit request: Request[_], hc: HeaderCarrier) = {
+  def emitFrom(data: Map[String, String], ex: Option[Exception] = None, schemeInfo: Option[SchemeInfo])
+              (implicit request: Request[_], hc: HeaderCarrier): Nothing = {
     val errorMessage = buildEmiterMessage(data)
     if(ex.isDefined) {
       val context = if(schemeInfo.isDefined) {
@@ -42,25 +43,27 @@ class ResubmissionExceptionEmiter @Inject()(auditEvents: AuditEvents) extends Er
     }
   }
 
-  def auditAndThrowWithStackTrace(data: Map[String, String], ex: Exception, schemeInfo: Option[SchemeInfo])(implicit request: Request[_], hc: HeaderCarrier) = {
+  def auditAndThrowWithStackTrace(data: Map[String, String], ex: Exception, schemeInfo: Option[SchemeInfo])
+                                 (implicit request: Request[_], hc: HeaderCarrier): Nothing = {
     if(!ex.isInstanceOf[ADRTransferException]) {
       auditEvents.auditRunTimeError(ex, data("context"))
     }
     throw createResubmissionExceptionWithStackTrace(data, ex, schemeInfo)
   }
 
-  def auditAndThrow(data: Map[String, String], schemeInfo: Option[SchemeInfo])(implicit request: Request[_], hc: HeaderCarrier) = {
+  def auditAndThrow(data: Map[String, String], schemeInfo: Option[SchemeInfo])
+                   (implicit request: Request[_], hc: HeaderCarrier): Nothing = {
     throw createResubmissionException(data, schemeInfo)
   }
 
-  def createResubmissionExceptionWithStackTrace(data: Map[String, String], ex: Exception, schemeInfo: Option[SchemeInfo]) = {
+  def createResubmissionExceptionWithStackTrace(data: Map[String, String], ex: Exception, schemeInfo: Option[SchemeInfo]): Throwable = {
     createResubmissionException(data, schemeInfo).initCause(ex)
   }
 
-  def createResubmissionException(data: Map[String, String], schemeInfo: Option[SchemeInfo]) = {
+  def createResubmissionException(data: Map[String, String], schemeInfo: Option[SchemeInfo]): ResubmissionException = {
     ResubmissionException (
-      data.get("message").getOrElse("Undefined message"),
-      data.get("context").getOrElse("Undefined context"),
+      data.getOrElse("message", "Undefined message"),
+      data.getOrElse("context", "Undefined context"),
       schemeInfo
     )
   }

@@ -17,30 +17,29 @@
 package utils.LoggingAndExceptions
 
 import fixtures.Fixtures
+import helpers.ERSTestHelper
 import models.ADRTransferException
-import org.scalatestplus.mockito.MockitoSugar
+import play.api.mvc.AnyContent
 import play.api.test.FakeRequest
 import services.audit.AuditEvents
-import uk.gov.hmrc.play.test.{UnitSpec, WithFakeApplication}
 import utils.LoggingAndRexceptions.ADRExceptionEmitter
 import uk.gov.hmrc.http.HeaderCarrier
 
-class ADRExceptionEmitterSpec extends UnitSpec with WithFakeApplication with MockitoSugar {
+class ADRExceptionEmitterSpec extends ERSTestHelper {
 
   val mockAuditEvents: AuditEvents = mock[AuditEvents]
-  def FunctionWrapper: Int = 1/0
 
   val mockADRExceptionEmitter = new ADRExceptionEmitter(mockAuditEvents)
 
   "emitFrom" should {
 
-    implicit val request = FakeRequest()
-    implicit val hc = new HeaderCarrier()
+    implicit val request: FakeRequest[AnyContent] = FakeRequest()
+    implicit val hc: HeaderCarrier = new HeaderCarrier()
 
     "throw ADRException that contains original exception" in {
       val thrownException = intercept[ADRTransferException] {
         try {
-          FunctionWrapper
+          throw new RuntimeException("generic runtime exception")
         }
         catch {
           case ex: Exception => mockADRExceptionEmitter.emitFrom(
@@ -54,16 +53,16 @@ class ADRExceptionEmitterSpec extends UnitSpec with WithFakeApplication with Moc
         }
       }
       thrownException.getMessage shouldBe s"Error message"
-      thrownException.getCause.getMessage shouldBe "/ by zero"
+      thrownException.getCause.getMessage shouldBe "generic runtime exception"
     }
 
     "throw ADRException" in {
       val thrownException = intercept[ADRTransferException] {
         try {
-          FunctionWrapper
+          throw new RuntimeException
         }
         catch {
-          case ex: Exception => mockADRExceptionEmitter.emitFrom(
+          case _: Exception => mockADRExceptionEmitter.emitFrom(
             Fixtures.EMIMetaData,
             Map(
               "message" -> "Error message",
