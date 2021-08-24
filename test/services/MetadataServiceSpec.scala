@@ -22,7 +22,6 @@ import models.ErsSummary
 import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
 import org.scalatest.BeforeAndAfterEach
-import play.api.test.FakeRequest
 import repositories.{MetadataMongoRepository, Repositories}
 import utils.LoggingAndRexceptions.ErsLoggingAndAuditing
 
@@ -50,7 +49,7 @@ class MetadataServiceSpec extends ERSTestHelper with BeforeAndAfterEach {
     "return the result of storeErsSummary" in {
       when(mockMetadataRepository.storeErsSummary(any[ErsSummary]())).thenReturn(Future.successful(true))
 
-      val result = await(metadataService.storeErsSummary(Fixtures.metadata)(FakeRequest().withBody(Fixtures.metadataJson), hc))
+      val result = await(metadataService.storeErsSummary(Fixtures.metadata)(hc))
       result shouldBe true
     }
 
@@ -58,7 +57,7 @@ class MetadataServiceSpec extends ERSTestHelper with BeforeAndAfterEach {
       when(mockMetadataRepository.storeErsSummary(any[ErsSummary]()))
         .thenReturn(Future.failed(new RuntimeException))
 
-      val result = await(metadataService.storeErsSummary(Fixtures.metadata)(FakeRequest().withBody(Fixtures.metadataJson), hc))
+      val result = await(metadataService.storeErsSummary(Fixtures.metadata)(hc))
       result shouldBe false
     }
   }

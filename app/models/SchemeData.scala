@@ -16,10 +16,8 @@
 
 package models
 
-import com.github.nscala_time.time.Imports.DateTimeZone
-import org.joda.time.DateTime
+import org.joda.time.{DateTime, DateTimeZone}
 import play.api.libs.json.{Format, Json, OFormat, Reads, Writes, __}
-
 
 import scala.collection.mutable.ListBuffer
 

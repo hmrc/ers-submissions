@@ -16,30 +16,29 @@
 
 package utils.LoggingAndRexceptions
 
-import javax.inject.Inject
 import models._
-import play.api.mvc.Request
 import services.audit.AuditEvents
 import uk.gov.hmrc.http.HeaderCarrier
 
+import javax.inject.Inject
+
 class ErsLoggingAndAuditing @Inject()(auditEvents: AuditEvents) extends ErsLogger {
 
-  def handleException(data: Object, ex: Exception, contextInfo: String)(implicit request: Request[_], hc: HeaderCarrier): Unit = {
+  def handleException(data: Object, ex: Exception, contextInfo: String)(implicit hc: HeaderCarrier): Unit = {
     logException(data, ex)
     if(!ex.isInstanceOf[ResubmissionException] && !ex.isInstanceOf[ADRTransferException]) {
       auditEvents.auditRunTimeError(ex, contextInfo)
     }
   }
 
-  def handleFailure(schemeInfo: SchemeInfo, message: String)(implicit request: Request[_], hc: HeaderCarrier): Unit = {
+  def handleFailure(schemeInfo: SchemeInfo, message: String)(implicit hc: HeaderCarrier): Unit = {
     logError(message, Some(schemeInfo))
     auditEvents.auditADRTransferFailure(schemeInfo, Map.empty)
   }
 
   def handleSuccess(data: Object, message: String): Unit = logWarn(message, Some(data))
 
-  def handleResult(result: Option[Boolean], successMsg: Option[String], errorMsg: Option[String], data: Option[Object] = None)
-                  (implicit request: Request[_], hc: HeaderCarrier): Unit = {
+  def handleResult(result: Option[Boolean], successMsg: Option[String], errorMsg: Option[String], data: Option[Object] = None): Unit = {
     result match {
       case Some(true) if successMsg.isDefined => logWarn(successMsg.get, data)
       case Some(false) if errorMsg.isDefined => logError(errorMsg.get, data)

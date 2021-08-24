@@ -20,8 +20,8 @@ import com.typesafe.config.{Config, ConfigFactory, ConfigValueFactory}
 import fixtures.Common
 import helpers.ERSTestHelper
 import org.joda.time.{DateTime, DateTimeZone}
+import org.mongodb.scala.bson.BsonObjectId
 import play.api.libs.json.{JsObject, Json}
-import reactivemongo.bson.BSONObjectID
 import uk.gov.hmrc.http.HttpResponse
 
 class SubmissionCommonSpec extends ERSTestHelper {
@@ -33,7 +33,7 @@ class SubmissionCommonSpec extends ERSTestHelper {
 
     "return BSONObjectID if valid string is given" in {
       val result = testSubmissionCommon.getBSONObjectID("""BSONObjectID("575164805500007f007d5406")""")
-      result.isInstanceOf[BSONObjectID] shouldBe true
+      result.isInstanceOf[BsonObjectId] shouldBe true
     }
 
     "throws exception if invalid string is given" in {
@@ -47,12 +47,12 @@ class SubmissionCommonSpec extends ERSTestHelper {
   "getCorrelationID" should {
 
     "return CorrelationId from header" in {
-      val result = testSubmissionCommon.getCorrelationID(HttpResponse(202, None, Map("CorrelationId" -> Seq("CorrelationId -> Buffer(1A2B-3C-4D5F-6G-7Q)"))))
+      val result = testSubmissionCommon.getCorrelationID(HttpResponse(202, Json.obj(), Map("CorrelationId" -> Seq("CorrelationId -> Buffer(1A2B-3C-4D5F-6G-7Q)"))))
       result shouldBe "1A2B-3C-4D5F-6G-7Q"
     }
 
     "return empty string if CorrelationId is not in header" in {
-      val result = testSubmissionCommon.getCorrelationID(HttpResponse(202))
+      val result = testSubmissionCommon.getCorrelationID(HttpResponse(202, body = ""))
       result shouldBe ""
     }
   }

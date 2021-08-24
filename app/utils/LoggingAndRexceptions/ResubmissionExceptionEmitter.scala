@@ -16,16 +16,16 @@
 
 package utils.LoggingAndRexceptions
 
-import javax.inject.Inject
 import models.{ADRTransferException, ResubmissionException, SchemeInfo}
-import play.api.mvc.Request
 import services.audit.AuditEvents
 import uk.gov.hmrc.http.HeaderCarrier
+
+import javax.inject.Inject
 
 class ResubmissionExceptionEmitter @Inject()(auditEvents: AuditEvents) extends ErsLogger {
 
   def emitFrom(data: Map[String, String], ex: Option[Exception] = None, schemeInfo: Option[SchemeInfo])
-              (implicit request: Request[_], hc: HeaderCarrier): Nothing = {
+              (implicit hc: HeaderCarrier): Nothing = {
     val errorMessage = buildEmiterMessage(data)
     if(ex.isDefined) {
       val context = if(schemeInfo.isDefined) {
@@ -39,25 +39,16 @@ class ResubmissionExceptionEmitter @Inject()(auditEvents: AuditEvents) extends E
     }
     else {
       logError(errorMessage)
-      auditAndThrow(data, schemeInfo)
+      throw createResubmissionException(data, schemeInfo)
     }
   }
 
   def auditAndThrowWithStackTrace(data: Map[String, String], ex: Exception, schemeInfo: Option[SchemeInfo])
-                                 (implicit request: Request[_], hc: HeaderCarrier): Nothing = {
+                                 (implicit hc: HeaderCarrier): Nothing = {
     if(!ex.isInstanceOf[ADRTransferException]) {
       auditEvents.auditRunTimeError(ex, data("context"))
     }
-    throw createResubmissionExceptionWithStackTrace(data, ex, schemeInfo)
-  }
-
-  def auditAndThrow(data: Map[String, String], schemeInfo: Option[SchemeInfo])
-                   (implicit request: Request[_], hc: HeaderCarrier): Nothing = {
-    throw createResubmissionException(data, schemeInfo)
-  }
-
-  def createResubmissionExceptionWithStackTrace(data: Map[String, String], ex: Exception, schemeInfo: Option[SchemeInfo]): Throwable = {
-    createResubmissionException(data, schemeInfo).initCause(ex)
+    throw createResubmissionException(data, schemeInfo).initCause(ex)
   }
 
   def createResubmissionException(data: Map[String, String], schemeInfo: Option[SchemeInfo]): ResubmissionException = {

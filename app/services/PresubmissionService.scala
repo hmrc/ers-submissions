@@ -16,23 +16,21 @@
 
 package services
 
-import javax.inject.Inject
 import models.{SchemeData, SchemeInfo, SubmissionsSchemeData}
 import play.api.Logging
-import play.api.libs.json.JsObject
-import play.api.mvc.Request
 import repositories.{PresubmissionMongoRepository, Repositories}
+import uk.gov.hmrc.http.HeaderCarrier
 import utils.LoggingAndRexceptions.ErsLoggingAndAuditing
 
+import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
-import uk.gov.hmrc.http.HeaderCarrier
 
 class PresubmissionService @Inject()(repositories: Repositories, ersLoggingAndAuditing: ErsLoggingAndAuditing)
                                     (implicit ec: ExecutionContext) extends Logging {
 
   lazy val presubmissionRepository: PresubmissionMongoRepository = repositories.presubmissionRepository
 
-  def storeJson(presubmissionData: SchemeData)(implicit request: Request[_], hc: HeaderCarrier): Future[Boolean] = {
+  def storeJson(presubmissionData: SchemeData)(implicit hc: HeaderCarrier): Future[Boolean] = {
 
     presubmissionRepository.storeJson(presubmissionData).recover {
       case ex: Exception =>
@@ -42,9 +40,9 @@ class PresubmissionService @Inject()(repositories: Repositories, ersLoggingAndAu
 
   }
 
-  def storeJsonV2(presubmissionData: SubmissionsSchemeData, jsObject: JsObject)(implicit request: Request[_], hc: HeaderCarrier): Future[Boolean] = {
+  def storeJsonV2(presubmissionData: SubmissionsSchemeData, schemeData: SchemeData)(implicit hc: HeaderCarrier): Future[Boolean] = {
 
-    presubmissionRepository.storeJsonV2(presubmissionData.schemeInfo.toString, jsObject).recover {
+    presubmissionRepository.storeJsonV2(presubmissionData.schemeInfo.toString, schemeData).recover {
       case ex: Exception =>
         ersLoggingAndAuditing.handleException(presubmissionData.schemeInfo, ex, "Exception during storing presubmission data in submission v2")
         false
@@ -52,12 +50,12 @@ class PresubmissionService @Inject()(repositories: Repositories, ersLoggingAndAu
 
   }
 
-  def getJson(schemeInfo: SchemeInfo): Future[List[SchemeData]] = {
+  def getJson(schemeInfo: SchemeInfo): Future[Seq[SchemeData]] = {
     logger.debug("LFP -> 3. PresubmissionService.getJson () ")
     presubmissionRepository.getJson(schemeInfo)
   }
 
-  def removeJson(schemeInfo: SchemeInfo)(implicit request: Request[_], hc: HeaderCarrier): Future[Boolean] = {
+  def removeJson(schemeInfo: SchemeInfo)(implicit hc: HeaderCarrier): Future[Boolean] = {
     presubmissionRepository.removeJson(schemeInfo).recover {
       case ex: Exception => {
         ersLoggingAndAuditing.handleException(schemeInfo, ex, "Exception during deleting presubmission data")
@@ -67,7 +65,7 @@ class PresubmissionService @Inject()(repositories: Repositories, ersLoggingAndAu
 
   }
 
-  def compareSheetsNumber(expectedSheets: Int, schemeInfo: SchemeInfo)(implicit request: Request[_], hc: HeaderCarrier): Future[Boolean] = {
+  def compareSheetsNumber(expectedSheets: Int, schemeInfo: SchemeInfo)(implicit hc: HeaderCarrier): Future[Boolean] = {
     presubmissionRepository.count(schemeInfo).map { existingSheets =>
       existingSheets == expectedSheets
     }.recover {

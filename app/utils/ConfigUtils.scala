@@ -17,15 +17,15 @@
 package utils
 
 import com.typesafe.config.{Config, ConfigFactory}
-import javax.inject.Inject
 import models.ErsSummary
-import play.api.mvc.Request
 import uk.gov.hmrc.http.HeaderCarrier
 import utils.LoggingAndRexceptions.ADRExceptionEmitter
 
+import javax.inject.Inject
+
 class ConfigUtils @Inject()(adrExceptionEmitter: ADRExceptionEmitter) {
 
-  def getConfigData(configPath: String, configValue: String)(implicit request: Request[_], hc: HeaderCarrier, ersSummary: ErsSummary): Config = {
+  def getConfigData(configPath: String, configValue: String)(implicit hc: HeaderCarrier, ersSummary: ErsSummary): Config = {
     try {
       ConfigFactory.load(s"schemes/${configPath}").getConfig(configValue)
     }

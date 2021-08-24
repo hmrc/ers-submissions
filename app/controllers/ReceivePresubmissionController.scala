@@ -16,27 +16,27 @@
 
 package controllers
 
-import java.util.concurrent.TimeUnit
-
 import akka.actor.ActorSystem
 import akka.stream.scaladsl.{Sink, Source}
 import akka.util.ByteString
 import config.ApplicationConfig
-import javax.inject.Inject
 import controllers.auth.{AuthAction, AuthorisedAction}
 import metrics.Metrics
 import models.{SchemeData, SubmissionsSchemeData}
 import play.api.Logging
-import play.api.libs.json.{JsObject, JsValue, Json}
-import play.api.mvc.{Action, ControllerComponents, PlayBodyParsers, Request, Result}
-import services.{FileDownloadService, PresubmissionService, ValidationService}
+import play.api.libs.json.{JsObject, JsValue}
+import play.api.mvc._
 import services.audit.AuditEvents
+import services.{FileDownloadService, PresubmissionService, ValidationService}
 import uk.gov.hmrc.auth.core.AuthConnector
-import utils.LoggingAndRexceptions.ErsLoggingAndAuditing
-
-import scala.concurrent.{ExecutionContext, Future}
 import uk.gov.hmrc.http.{HeaderCarrier, UpstreamErrorResponse}
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
+import utils.LoggingAndRexceptions.ErsLoggingAndAuditing
+
+import java.util.concurrent.TimeUnit
+import javax.inject.Inject
+import scala.collection.mutable.ListBuffer
+import scala.concurrent.{ExecutionContext, Future}
 
 class ReceivePresubmissionController @Inject()(presubmissionService: PresubmissionService,
                                                validationService: ValidationService,
@@ -74,13 +74,17 @@ class ReceivePresubmissionController @Inject()(presubmissionService: Presubmissi
     }
 
   def submitJson(fileSource: Source[(Seq[Seq[ByteString]], Long), _], submissionsSchemeData: SubmissionsSchemeData)(
-    implicit request: Request[_], hc: HeaderCarrier): Future[(Boolean, Long)] = {
-
-    val schemeDataJson = Json.toJson(SchemeData(submissionsSchemeData.schemeInfo, submissionsSchemeData.sheetName, None, None)).as[JsObject]
+    implicit hc: HeaderCarrier): Future[(Boolean, Long)] = {
 
     fileSource.mapAsyncUnordered(appConfig.submissionParallelism)(chunkedRowsWithIndex => {
       val (chunkedRows, index) = chunkedRowsWithIndex
-      presubmissionService.storeJsonV2(submissionsSchemeData, schemeDataJson + ("data" -> Json.toJson(chunkedRows.map(_.map(_.utf8String)))))
+      val checkedData: Option[ListBuffer[Seq[String]]] = Option(chunkedRows.map(_.map(_.utf8String)).to[ListBuffer]).filter(_.nonEmpty)
+
+      presubmissionService.storeJsonV2(submissionsSchemeData,
+        SchemeData(submissionsSchemeData.schemeInfo,
+          submissionsSchemeData.sheetName,
+          numberOfParts = None,
+          data = checkedData))
         .map(wasStoredSuccessfully => (wasStoredSuccessfully, index))
     })
       .takeWhile(booleanAndIndex => {
@@ -90,7 +94,7 @@ class ReceivePresubmissionController @Inject()(presubmissionService: Presubmissi
       .runWith(Sink.last)
   }
 
-  def storePresubmission(submissionsSchemeData: SubmissionsSchemeData)(implicit request: Request[_], hc: HeaderCarrier): Future[Result] = {
+  def storePresubmission(submissionsSchemeData: SubmissionsSchemeData)(implicit hc: HeaderCarrier): Future[Result] = {
 
     val startTime = System.currentTimeMillis()
     val fileSource: Source[(Seq[Seq[ByteString]], Long), _] =
@@ -124,7 +128,7 @@ class ReceivePresubmissionController @Inject()(presubmissionService: Presubmissi
     }
   }
 
-  def storePresubmission(schemeData: SchemeData)(implicit request: Request[_], hc: HeaderCarrier): Future[Result] = {
+  def storePresubmission(schemeData: SchemeData)(implicit hc: HeaderCarrier): Future[Result] = {
     logger.info(s"Starting storing presubmission data. SchemeInfo: ${schemeData.schemeInfo.toString}, SheetName: ${schemeData.sheetName}")
 
     val startTime = System.currentTimeMillis()

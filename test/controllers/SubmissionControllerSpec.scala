@@ -117,7 +117,7 @@ class SubmissionControllerSpec extends ERSTestHelper with BeforeAndAfterEach {
 
   "calling saveMetadata" should {
 
-    def buildSubmissionController(validateErsSummaryFromJsonResult: Boolean = true, storeErsSummaryResult: Boolean = true): SubmissionController =
+    def buildSubmissionController(validateErsSummaryFromJsonResult: Boolean, storeErsSummaryResult: Boolean): SubmissionController =
       new SubmissionController(mockSubmissionCommonService,
         mockMetaService,
         mockMetrics,
@@ -130,7 +130,7 @@ class SubmissionControllerSpec extends ERSTestHelper with BeforeAndAfterEach {
       ).thenReturn(if (validateErsSummaryFromJsonResult) Some(Fixtures.metadataNilReturn) else None)
 
       when(
-        mockMetaService.storeErsSummary(any[ErsSummary]())(any[Request[_]](), any[HeaderCarrier]())
+        mockMetaService.storeErsSummary(any[ErsSummary]())(any[HeaderCarrier]())
       ).thenReturn(
         Future.successful(storeErsSummaryResult)
       )

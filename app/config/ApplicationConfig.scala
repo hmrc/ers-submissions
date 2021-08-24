@@ -58,7 +58,6 @@ class ApplicationConfig @Inject()(serviceConfig: ServicesConfig) {
   lazy val schedulerEnableResubmitByScheme: Boolean = serviceConfig.getBoolean("scheduling.resubmit-scheme-enable")
   lazy val schedulerResubmitScheme: String = serviceConfig.getString("scheduling.resubmit-scheme")
   lazy val schedulerSuccessStatus: String = serviceConfig.getString("scheduling.resubmit-successful-status")
-  lazy val schedulerResubmitWithNilReturn: Boolean = serviceConfig.getBoolean("scheduling.resubmit-scheme-with-nil-returns")
   lazy val isSchedulerResubmitBeforeDate: Boolean = serviceConfig.getBoolean("scheduling.resubmit-scheme-before-date")
 
   lazy val defaultScheduleStartDate: String = serviceConfig.getString("scheduling.default-resubmit-start-date")
