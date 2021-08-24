@@ -16,18 +16,17 @@
 
 package utils
 
-import java.text.SimpleDateFormat
-
 import com.typesafe.config.Config
-import javax.inject.Inject
 import org.joda.time.DateTime
+import org.mongodb.scala.bson.BsonObjectId
 import play.api.Logging
 import play.api.libs.json.Json.JsValueWrapper
 import play.api.libs.json._
-import reactivemongo.bson.BSONObjectID
-
-import scala.collection.mutable.ListBuffer
 import uk.gov.hmrc.http.HttpResponse
+
+import java.text.SimpleDateFormat
+import javax.inject.Inject
+import scala.collection.mutable.ListBuffer
 
 class SubmissionCommon @Inject()(configUtils: ConfigUtils) extends Logging{
 
@@ -40,11 +39,11 @@ class SubmissionCommon @Inject()(configUtils: ConfigUtils) extends Logging{
     ).getOrElse("")
   }
 
-  def getBSONObjectID(objectID: String): BSONObjectID = {
+  def getBSONObjectID(objectID: String): BsonObjectId = {
     try {
-      BSONObjectID.parse(
+      BsonObjectId.apply(
         objectID.replace("BSONObjectID(\"", "").replace("\")", "")
-      ).get
+      )
     }
     catch {
       case ex: Exception => {

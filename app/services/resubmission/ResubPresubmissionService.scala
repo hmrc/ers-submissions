@@ -39,20 +39,17 @@ class ResubPresubmissionService @Inject()(metadataRepository: MetadataMongoRepos
   def processFailedSubmissions()(implicit request: Request[_], hc: HeaderCarrier): Future[Option[Boolean]] = {
     metadataRepository.findAndUpdateByStatus(
       searchStatusList,
-      resubmitWithNilReturn,
       isResubmitBeforeDate,
       schemeRefList,
       resubmitScheme
-    ).flatMap { ersSummary =>
-      if(ersSummary.isDefined) {
-        startResubmission(ersSummary.get).map(res => {
-          auditEvents.resubmissionResult(ersSummary.get.metaData.schemeInfo, res)
-          Some(res)
-        })
-      } else {
+    ).flatMap {
+      case Some(ersSummary) => startResubmission(ersSummary).map(res => {
+        auditEvents.resubmissionResult(ersSummary.metaData.schemeInfo, res)
+        Some(res)
+      })
+      case None =>
         schedulerLoggingAndAuditing.logWarn("No data found for resubmission")
         Future(None)
-      }
     }.recover {
       case rex: ResubmissionException => throw rex
       case ex: Exception => resubmissionExceptionEmiter.emitFrom(

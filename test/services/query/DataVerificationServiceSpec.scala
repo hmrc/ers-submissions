@@ -34,7 +34,7 @@ class DataVerificationServiceSpec extends ERSTestHelper {
     new DataVerificationService(mockApplicationConfig, mockRepositories) {
     override lazy val dataVerificationRepository: DataVerificationMongoRepository = mockDataVerificationRepository
     when(mockDataVerificationRepository.getCountBySchemeTypeWithInDateRange(any()))
-      .thenReturn(Future(10))
+      .thenReturn(Future(10L))
   }
 
   "Calling getCountBySchemeTypeWithInDateRange" should {

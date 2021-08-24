@@ -51,7 +51,6 @@ trait SchedulerConfig {
   }
 
   val resubmitSuccessStatus: String = applicationConfig.schedulerSuccessStatus
-  val resubmitWithNilReturn: Boolean = applicationConfig.schedulerResubmitWithNilReturn
   val isResubmitBeforeDate: Boolean = applicationConfig.isSchedulerResubmitBeforeDate
 
   val r: Random.type = scala.util.Random

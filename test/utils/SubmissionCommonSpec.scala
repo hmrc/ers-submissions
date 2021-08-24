@@ -20,8 +20,8 @@ import com.typesafe.config.{Config, ConfigFactory, ConfigValueFactory}
 import fixtures.Common
 import helpers.ERSTestHelper
 import org.joda.time.{DateTime, DateTimeZone}
+import org.mongodb.scala.bson.BsonObjectId
 import play.api.libs.json.{JsObject, Json}
-import reactivemongo.bson.BSONObjectID
 import uk.gov.hmrc.http.HttpResponse
 
 class SubmissionCommonSpec extends ERSTestHelper {
@@ -33,7 +33,7 @@ class SubmissionCommonSpec extends ERSTestHelper {
 
     "return BSONObjectID if valid string is given" in {
       val result = testSubmissionCommon.getBSONObjectID("""BSONObjectID("575164805500007f007d5406")""")
-      result.isInstanceOf[BSONObjectID] shouldBe true
+      result.isInstanceOf[BsonObjectId] shouldBe true
     }
 
     "throws exception if invalid string is given" in {

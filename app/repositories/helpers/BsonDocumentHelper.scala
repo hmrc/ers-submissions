@@ -14,9 +14,22 @@
  * limitations under the License.
  */
 
-package models
+package repositories.helpers
 
-import org.joda.time.Duration
-import uk.gov.hmrc.lock.{ExclusiveTimePeriodLock, LockRepository}
+import collection.JavaConverters._
+import org.mongodb.scala.bson.{BsonDocument, BsonValue}
 
-final case class ResubmissionLock(lockId: String, holdLockFor: Duration, repo: LockRepository) extends ExclusiveTimePeriodLock
+object BsonDocumentHelper {
+
+  implicit class BsonOps(bsonDocument: BsonDocument) {
+    private def bsonToSeqOfTuples(bson: BsonDocument): Seq[(String, BsonValue)] = {
+      bson.entrySet().asScala.toSeq.map(javaMap => (javaMap.getKey, javaMap.getValue))
+    }
+
+    //scalastyle:off method.name
+    def +:+(toAdd: BsonDocument): BsonDocument = {
+      BsonDocument(bsonToSeqOfTuples(bsonDocument) ++ bsonToSeqOfTuples(toAdd))
+    }
+  }
+
+}

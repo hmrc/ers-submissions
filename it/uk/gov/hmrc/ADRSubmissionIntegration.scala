@@ -45,14 +45,14 @@ class ADRSubmissionIntegration extends WordSpec with Matchers
     super.beforeEach()
     await(presubmissionRepository.storeJsonV2(
       Fixtures.submissionsSchemeData.schemeInfo.toString,
-      Json.toJson(Fixtures.schemeData).as[JsObject]
+      Fixtures.schemeData
     ))
   }
 
   override protected def afterEach: Unit = {
     super.afterEach
-    await(presubmissionRepository.drop)
-    await(metadataMongoRepository.drop)
+    await(presubmissionRepository.collection.drop.toFuture)
+    await(metadataMongoRepository.collection.drop.toFuture)
   }
 
   //submit-metadata

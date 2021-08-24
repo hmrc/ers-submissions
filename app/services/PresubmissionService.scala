@@ -42,9 +42,9 @@ class PresubmissionService @Inject()(repositories: Repositories, ersLoggingAndAu
 
   }
 
-  def storeJsonV2(presubmissionData: SubmissionsSchemeData, jsObject: JsObject)(implicit request: Request[_], hc: HeaderCarrier): Future[Boolean] = {
+  def storeJsonV2(presubmissionData: SubmissionsSchemeData, schemeData: SchemeData)(implicit request: Request[_], hc: HeaderCarrier): Future[Boolean] = {
 
-    presubmissionRepository.storeJsonV2(presubmissionData.schemeInfo.toString, jsObject).recover {
+    presubmissionRepository.storeJsonV2(presubmissionData.schemeInfo.toString, schemeData).recover {
       case ex: Exception =>
         ersLoggingAndAuditing.handleException(presubmissionData.schemeInfo, ex, "Exception during storing presubmission data in submission v2")
         false
@@ -52,7 +52,7 @@ class PresubmissionService @Inject()(repositories: Repositories, ersLoggingAndAu
 
   }
 
-  def getJson(schemeInfo: SchemeInfo): Future[List[SchemeData]] = {
+  def getJson(schemeInfo: SchemeInfo): Future[Seq[SchemeData]] = {
     logger.debug("LFP -> 3. PresubmissionService.getJson () ")
     presubmissionRepository.getJson(schemeInfo)
   }

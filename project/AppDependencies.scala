@@ -9,13 +9,13 @@ object AppDependencies {
   private val alpakkaVersion = "3.0.1"
   private val mongoLockVersion = "7.0.0-play-27"
   private val nettyTransportVersion = "4.1.65.Final"
+  private val mongoTestVersion = "0.52.0"
 
   val compile = Seq(
     ws,
     "uk.gov.hmrc"        %% "bootstrap-backend-play-27"           % "5.4.0",
     "uk.gov.hmrc"        %% "domain"                              % "5.11.0-play-27",
-    "uk.gov.hmrc"        %% "mongo-lock"                          % mongoLockVersion,
-    "uk.gov.hmrc"        %% "simple-reactivemongo"                % "7.31.0-play-27",
+    "uk.gov.hmrc.mongo"  %% "hmrc-mongo-play-27"                  % mongoTestVersion,
     "org.reactivemongo"  %% "reactivemongo-akkastream"            % "1.0.4",
     "com.typesafe.play"  %% "play-json-joda"                      % "2.9.2",
     "io.netty"           %  "netty-transport-native-epoll"        % nettyTransportVersion,
@@ -44,8 +44,7 @@ object AppDependencies {
   object Test {
     def apply(): Seq[ModuleID] = new TestDependencies {
       override lazy val test = Seq(
-        "uk.gov.hmrc"            %% "reactivemongo-test" % reactiveMongoTestVersion % scope,
-        "uk.gov.hmrc"            %% "mongo-lock"         % mongoLockVersion         % scope,
+        "uk.gov.hmrc.mongo" %% "hmrc-mongo-test-play-27" % mongoTestVersion         % scope,
         "org.scalatest"          %% "scalatest"          % scalaTestVersion         % scope,
         "org.scalatestplus.play" %% "scalatestplus-play" % scalaTestPlusPlayVersion % scope,
         "org.mockito"            %  "mockito-core"       % mockitoCoreVersion       % scope,

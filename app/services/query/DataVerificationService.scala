@@ -29,28 +29,28 @@ import scala.concurrent.ExecutionContext.Implicits.global
 class DataVerificationService @Inject()(applicationConfig: ApplicationConfig, repositories: Repositories) extends Logging {
   lazy val dataVerificationRepository: DataVerificationMongoRepository = repositories.dataVerificationRepository
 
-  def start: Future[List[ERSDataResults]] = {
+  def start: Future[Seq[ERSDataResults]] = {
     logger.info(s"Start DataVerification ${DateTime.now.toString}")
     getCountBySchemeTypeWithInDateRange
     getSchemeRefBySchemeTypeWithInDateRange
     getSchemeRefsInfo
   }
 
-  def getCountBySchemeTypeWithInDateRange: Future[Int] = {
+  def getCountBySchemeTypeWithInDateRange: Future[Long] = {
       dataVerificationRepository.getCountBySchemeTypeWithInDateRange(applicationConfig.ersQuery).map{ total=>
         logger.warn(s"The total number of ${applicationConfig.ersQuery.schemeType} Scheme Type files available in the 'ers-presubmission' is => ${total}")
         total
       }
   }
 
-  def getSchemeRefBySchemeTypeWithInDateRange: Future[List[String]] = {
+  def getSchemeRefBySchemeTypeWithInDateRange: Future[Seq[String]] = {
     dataVerificationRepository.getSchemeRefBySchemeTypeWithInDateRange(applicationConfig.ersQuery).map{ schemeRefsList =>
       logger.warn(s"The total (SchemeRefs) of ${applicationConfig.ersQuery.schemeType} Scheme Type available in the 'ers-presubmission' are => ${schemeRefsList}")
       schemeRefsList
     }
   }
 
-  def getSchemeRefsInfo: Future[List[ERSDataResults]] = {
+  def getSchemeRefsInfo: Future[Seq[ERSDataResults]] = {
     dataVerificationRepository.getSchemeRefsInfo(applicationConfig.ersQuery).map{ ersDataResults =>
       logger.warn(s" (SchemeRef,TaxYear,TimeStamp,SheetName) from 'ers-presubmission' => ${ersDataResults}")
       ersDataResults

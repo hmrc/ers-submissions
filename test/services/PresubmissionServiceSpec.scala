@@ -46,7 +46,7 @@ class PresubmissionServiceSpec extends ERSTestHelper {
       override lazy val presubmissionRepository: PresubmissionMongoRepository = mockPresubmissionRepository
       when(mockPresubmissionRepository.storeJson(any[SchemeData])).thenReturn(
         if (storeJsonResult.isDefined) Future(storeJsonResult.get) else Future.failed(new RuntimeException))
-      when(mockPresubmissionRepository.storeJsonV2(any[String], any[JsObject])).thenReturn(
+      when(mockPresubmissionRepository.storeJsonV2(any[String], any[SchemeData])).thenReturn(
         if (storeJsonResult.isDefined) Future(storeJsonResult.get) else Future.failed(new RuntimeException("here's a message")))
       when(mockPresubmissionRepository.getJson(any[SchemeInfo]))
         .thenReturn(Future(if (getJsonResult) List(Fixtures.schemeData) else List()))
@@ -79,21 +79,23 @@ class PresubmissionServiceSpec extends ERSTestHelper {
     val submissionsSchemeData: SubmissionsSchemeData = SubmissionsSchemeData(SIP.schemeInfo, "sip sheet name",
       UpscanCallback("name", "/download/url"), 1)
 
+    val testSchemeData: SchemeData = SchemeData(SIP.schemeInfo, "sip sheet name", None, None)
+
     "return true if storage is successful" in {
       val presubmissionService = buildPresubmissionService(Some(true))
-      val result = await(presubmissionService.storeJsonV2(submissionsSchemeData, Json.obj("a" -> "e")))
+      val result = await(presubmissionService.storeJsonV2(submissionsSchemeData, testSchemeData))
       result shouldBe true
     }
 
     "return false if storage fails" in {
       val presubmissionService = buildPresubmissionService(Some(false))
-      val result = await(presubmissionService.storeJsonV2(submissionsSchemeData, Json.obj("a" -> "e")))
+      val result = await(presubmissionService.storeJsonV2(submissionsSchemeData, testSchemeData))
       result shouldBe false
     }
 
     "return false if exception" in {
       val presubmissionService = buildPresubmissionService(None)
-      val result = await(presubmissionService.storeJsonV2(submissionsSchemeData, Json.obj("a" -> "e")))
+      val result = await(presubmissionService.storeJsonV2(submissionsSchemeData, testSchemeData))
       result shouldBe false
     }
   }
@@ -139,7 +141,7 @@ class PresubmissionServiceSpec extends ERSTestHelper {
     def buildPresubmissionService(foundSheets: Option[Int]): PresubmissionService = new PresubmissionService(mockRepositories, mockErsLoggingAndAuditing) {
       override lazy val presubmissionRepository = mockPresubmissionRepository
       when(mockPresubmissionRepository.count(any[SchemeInfo]()))
-        .thenReturn(if (foundSheets.isDefined) Future.successful(foundSheets.get) else Future.failed(new RuntimeException))
+        .thenReturn(if (foundSheets.isDefined) Future.successful(foundSheets.get.toLong) else Future.failed(new RuntimeException))
     }
 
     "return true if expected number of sheets is equal to found ones" in {

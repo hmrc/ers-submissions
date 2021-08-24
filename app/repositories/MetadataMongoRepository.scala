@@ -17,166 +17,105 @@
 package repositories
 
 import config.ApplicationConfig
-import javax.inject.Inject
 import models._
 import org.joda.time.DateTime
-import play.api.libs.json.Format.GenericFormat
-import play.api.libs.json.Json
-import play.modules.reactivemongo.ReactiveMongoComponent
-import reactivemongo.api.Cursor
-import reactivemongo.api.commands.WriteResult.Message
-import reactivemongo.bson._
-import reactivemongo.play.json.ImplicitBSONHandlers._
-import uk.gov.hmrc.mongo.ReactiveRepository
-import uk.gov.hmrc.mongo.json.ReactiveMongoFormats
+import org.mongodb.scala.bson.{BsonDocument, BsonInt64, BsonString}
+import org.mongodb.scala.model.FindOneAndUpdateOptions
+import play.api.Logging
+import repositories.helpers.BaseVerificationRepository
+import repositories.helpers.BsonDocumentHelper.BsonOps
+import uk.gov.hmrc.mongo.MongoComponent
+import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
 
+import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
-class MetadataMongoRepository @Inject()(applicationConfig: ApplicationConfig, rmc: ReactiveMongoComponent)
+class MetadataMongoRepository @Inject()(val applicationConfig: ApplicationConfig, mc: MongoComponent)
                                        (implicit ec: ExecutionContext)
-  extends ReactiveRepository[ErsSummary, BSONObjectID](applicationConfig.metadataCollection,
-    rmc.mongoConnector.db,
-    ErsSummary.format,
-    ReactiveMongoFormats.objectIdFormats) {
+  extends PlayMongoRepository[ErsSummary](
+    mongoComponent = mc,
+    collectionName = applicationConfig.metadataCollection,
+    domainFormat = ErsSummary.format,
+    indexes = Seq.empty
+  ) with BaseVerificationRepository with Logging {
 
-  def buildSelector(schemeInfo: SchemeInfo): BSONDocument = BSONDocument(
-    "metaData.schemeInfo.schemeRef" -> BSONString(schemeInfo.schemeRef),
-    "metaData.schemeInfo.timestamp" -> BSONLong(schemeInfo.timestamp.getMillis)
+  def buildSelector(schemeInfo: SchemeInfo): BsonDocument = BsonDocument(
+    "metaData.schemeInfo.schemeRef" -> BsonString(schemeInfo.schemeRef),
+    "metaData.schemeInfo.timestamp" -> BsonInt64(schemeInfo.timestamp.getMillis)
   )
 
   def storeErsSummary(ersSummary: ErsSummary): Future[Boolean] = {
-    collection.insert(ersSummary).map { res =>
-      if(res.writeErrors.nonEmpty) {
-        logger.error(s"Faling storing metadata. Error: ${Message.unapply(res).getOrElse("")} for ${ersSummary.metaData.schemeInfo}")
-      }
-      res.ok
+    collection.insertOne(ersSummary).toFuture.map { res =>
+      res.wasAcknowledged()
     }
   }
 
-  def getJson(schemeInfo: SchemeInfo): Future[List[ErsSummary]] = {
+  def getJson(schemeInfo: SchemeInfo): Future[Seq[ErsSummary]] = {
     collection.find(
       buildSelector(schemeInfo)
-    ).cursor[ErsSummary]().collect[List](Int.MaxValue, Cursor.FailOnError[List[ErsSummary]]())
+    ).batchSize(Int.MaxValue).toFuture()
   }
 
   def updateStatus(schemeInfo: SchemeInfo, status: String): Future[Boolean] = {
     val selector = buildSelector(schemeInfo)
-    val update = BSONDocument("$set" -> BSONDocument("transferStatus" ->  status))
+    val update = BsonDocument("$set" -> BsonDocument("transferStatus" ->  status))
 
-    collection.update(selector, update).map { res =>
-      if (res.writeErrors.nonEmpty) {
-        logger.warn(s"Faling updating metadata status. Error: ${Message.unapply(res).getOrElse("")} for ${schemeInfo.toString}, status: ${status}")
-      }
-      res.ok
+    collection.updateOne(selector, update).toFuture.map { res =>
+      res.wasAcknowledged()
     }
   }
 
   def findAndUpdateByStatus(statusList: List[String],
-                            resubmitWithNilReturn: Boolean =  true,
                             isResubmitBeforeDate: Boolean = true,
                             schemeRefList: Option[List[String]],
                             schemeType: Option[String]): Future[Option[ErsSummary]] = {
 
-    val baseSelector: BSONDocument = BSONDocument(
-      "transferStatus" -> BSONDocument(
+    val baseSelector: BsonDocument = BsonDocument(
+      "transferStatus" -> BsonDocument(
         "$in" -> statusList
       )
     )
 
-    val schemeRefSelector: BSONDocument = if(schemeRefList.isDefined) {
-      BSONDocument("metaData.schemeInfo.schemeRef" -> BSONDocument("$in" -> schemeRefList.get))
+    val schemeRefSelector: BsonDocument = if(schemeRefList.isDefined) {
+      BsonDocument("metaData.schemeInfo.schemeRef" -> BsonDocument("$in" -> schemeRefList.get))
     }
     else {
-      BSONDocument()
+      BsonDocument()
     }
 
-    val schemeSelector: BSONDocument = if(schemeType.isDefined) {
-      BSONDocument(
+    val schemeSelector: BsonDocument = if(schemeType.isDefined) {
+      BsonDocument(
         "metaData.schemeInfo.schemeType" -> schemeType.get
       )
     }
     else {
-      BSONDocument()
+      BsonDocument()
     }
 
-    val nilReturnSelector: BSONDocument = if(resubmitWithNilReturn) {
-      BSONDocument()
-    }
-    else {
-      BSONDocument(
-        "isNilReturn" -> "1"
-      )
-    }
-
-    val dateRangeSelector: BSONDocument = if(isResubmitBeforeDate){
-      BSONDocument(
-        "metaData.schemeInfo.timestamp" -> BSONDocument(
+    val dateRangeSelector: BsonDocument = if(isResubmitBeforeDate){
+      BsonDocument(
+        "metaData.schemeInfo.timestamp" -> BsonDocument(
           "$gte" -> DateTime.parse(applicationConfig.scheduleStartDate).getMillis,
           "$lte" -> DateTime.parse(applicationConfig.scheduleEndDate).getMillis
         )
       )
     } else {
-      BSONDocument()
+      BsonDocument()
     }
 
-    val modifier: BSONDocument = BSONDocument(
-      "$set" -> BSONDocument(
+    val modifier: BsonDocument = BsonDocument(
+      "$set" -> BsonDocument(
         "transferStatus" -> Statuses.Process.toString
       )
     )
 
-    def statusSelector(status: String) = {
-      BSONDocument("transferStatus" -> status)
-    }
+    val selector = (Seq(baseSelector, schemeRefSelector, schemeSelector, dateRangeSelector).foldLeft(BsonDocument())(_ +:+ _))
 
-    val countByStatus = {
-      for(status <- statusList) {
-        val futureTotal = collection.count(Option((statusSelector(status) ++ schemeSelector ++ dateRangeSelector).as[collection.pack.Document]))
-        for{
-          total <- futureTotal
-        }yield {
-          logger.warn(s"The number of ${status} files in the database is: ${total}")
-        }
-      }
-    }
-
-    val selector = baseSelector ++ schemeRefSelector ++ schemeSelector ++ dateRangeSelector
-
-    collection.findAndUpdate(
-      selector,
-      modifier,
-      fetchNewObject = false,
-      sort = Some(Json.obj("metaData.schemeInfo.timestamp" -> 1))
-    ).map { res =>
-      res.result[ErsSummary]
-    }
-  }
-
-  def findAndUpdateBySchemeType(statusList: List[String], schemeType: String): Future[Option[ErsSummary]] = {
-    val baseSelector: BSONDocument = BSONDocument(
-      "transferStatus" -> BSONDocument(
-        "$in" -> statusList
-      )
-    )
-
-    val selector: BSONDocument = baseSelector ++ BSONDocument("metaData.schemeInfo.schemeType" -> BSONDocument("$in" -> schemeType))
-
-//    val selector: BSONDocument = if(schemeRefList.isDefined) {
-//      baseSelector ++ BSONDocument("metaData.schemeInfo.schemeRef" -> BSONDocument("$in" -> schemeRefList.get))
-//    }
-//    else {
-//      baseSelector
-//    }
-
-    val modifier: BSONDocument = BSONDocument(
-      "$set" -> BSONDocument(
-        "transferStatus" -> Statuses.Process.toString
-      )
-    )
-
-    collection.findAndUpdate(selector, modifier, fetchNewObject = false, sort = Some(Json.obj("metaData.schemeInfo.timestamp" -> 1))).map { res =>
-      res.result[ErsSummary]
-    }
+    collection.findOneAndUpdate(
+      filter = selector,
+      update = Seq(modifier),
+      options = FindOneAndUpdateOptions().sort(BsonDocument("metaData.schemeInfo.timestamp" -> 1))
+    ).toFutureOption()
   }
 
 }

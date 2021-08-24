@@ -68,7 +68,7 @@ class ResubPresubmissionServiceSpec extends ERSTestHelper with BeforeAndAfterEac
     }
 
     "return the result of startResubmission if findAndUpdateByStatus is successful and returns a record" in {
-      when(mockMetadataRepository.findAndUpdateByStatus(any[List[String]](), anyBoolean(), anyBoolean(),any[Option[List[String]]], any[Option[String]]))
+      when(mockMetadataRepository.findAndUpdateByStatus(any[List[String]](), anyBoolean(),any[Option[List[String]]], any[Option[String]]))
         .thenReturn(Future.successful(Some(Fixtures.metadata)))
 
       val result = await(resubPresubmissionService.processFailedSubmissions())
@@ -76,7 +76,7 @@ class ResubPresubmissionServiceSpec extends ERSTestHelper with BeforeAndAfterEac
     }
 
     "return None if findAndUpdateByStatus is successful but returns None" in {
-      when(mockMetadataRepository.findAndUpdateByStatus(any[List[String]](), anyBoolean(), anyBoolean(), any[Option[List[String]]], any[Option[String]]))
+      when(mockMetadataRepository.findAndUpdateByStatus(any[List[String]](), anyBoolean(), any[Option[List[String]]], any[Option[String]]))
         .thenReturn(Future.successful(None))
 
       val result = await(resubPresubmissionService.processFailedSubmissions())
@@ -84,7 +84,7 @@ class ResubPresubmissionServiceSpec extends ERSTestHelper with BeforeAndAfterEac
     }
 
     "rethrow ResubmissionException if such one occurs" in {
-      when(mockMetadataRepository.findAndUpdateByStatus(any[List[String]](), anyBoolean(), anyBoolean(), any[Option[List[String]]], any[Option[String]]))
+      when(mockMetadataRepository.findAndUpdateByStatus(any[List[String]](), anyBoolean(), any[Option[List[String]]], any[Option[String]]))
         .thenReturn(Future.failed(ResubmissionException("test message", "test context", Some(Fixtures.schemeInfo))))
 
       val result = intercept[ResubmissionException] {
@@ -96,7 +96,7 @@ class ResubPresubmissionServiceSpec extends ERSTestHelper with BeforeAndAfterEac
     }
 
     "throw ResubmissionException if Exception occurs" in {
-      when(mockMetadataRepository.findAndUpdateByStatus(any[List[String]](), anyBoolean(), anyBoolean(), any[Option[List[String]]], any[Option[String]]))
+      when(mockMetadataRepository.findAndUpdateByStatus(any[List[String]](), anyBoolean(), any[Option[List[String]]], any[Option[String]]))
         .thenReturn(Future.failed(new Exception("test message")))
 
       val result = intercept[ResubmissionException] {

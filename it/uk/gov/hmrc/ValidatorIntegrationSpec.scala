@@ -45,7 +45,7 @@ class ValidatorIntegrationSpec extends WordSpec with Matchers
 
   override protected def afterEach: Unit = {
     super.afterEach
-    await(presubmissionRepository.drop)
+    await(presubmissionRepository.collection.drop.toFuture)
   }
 
   // /submit-presubmission
