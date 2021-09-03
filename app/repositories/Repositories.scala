@@ -17,24 +17,17 @@
 package repositories
 
 import config.ApplicationConfig
-import javax.inject.Inject
-import play.modules.reactivemongo.ReactiveMongoComponent
-import reactivemongo.api.DefaultDB
-import uk.gov.hmrc.lock.LockRepository
+import uk.gov.hmrc.mongo.MongoComponent
 
+import javax.inject.Inject
 import scala.concurrent.ExecutionContext
 
 
-class Repositories @Inject()(applicationConfig: ApplicationConfig, mongoComponent: ReactiveMongoComponent)
+class Repositories @Inject()(applicationConfig: ApplicationConfig, mongoComponent: MongoComponent)
                             (implicit ec: ExecutionContext) {
-
-  private implicit val connection: () => DefaultDB = {
-    mongoComponent.mongoConnector.db
-  }
 
   lazy val presubmissionRepository: PresubmissionMongoRepository = new PresubmissionMongoRepository(applicationConfig, mongoComponent)
   lazy val metadataRepository: MetadataMongoRepository = new MetadataMongoRepository(applicationConfig, mongoComponent)
   lazy val dataVerificationRepository: DataVerificationMongoRepository = new DataVerificationMongoRepository(applicationConfig, mongoComponent)
   lazy val metaDataVerificationRepository: MetaDataVerificationMongoRepository = new MetaDataVerificationMongoRepository(applicationConfig, mongoComponent)
-  lazy val lockRepository: LockRepository = new LockRepository
 }

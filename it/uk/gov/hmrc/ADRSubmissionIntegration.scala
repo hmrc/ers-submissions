@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc
 
-import _root_.play.api.libs.json.{JsObject, Json}
+import _root_.play.api.libs.json.JsObject
 import org.scalatest.{BeforeAndAfterEach, Matchers, WordSpec}
 import repositories.{MetadataMongoRepository, PresubmissionMongoRepository}
 import controllers.SubmissionController
@@ -28,8 +28,6 @@ import _root_.play.api.libs.ws.WSClient
 import _root_.play.api.test.FakeRequest
 import _root_.play.api.mvc.Result
 import uk.gov.hmrc.play.http.ws.WSRequest
-
-import scala.concurrent.ExecutionContext.Implicits.global
 
 class ADRSubmissionIntegration extends WordSpec with Matchers
  with BeforeAndAfterEach with WSRequest with FakeErsStubService {
@@ -45,14 +43,14 @@ class ADRSubmissionIntegration extends WordSpec with Matchers
     super.beforeEach()
     await(presubmissionRepository.storeJsonV2(
       Fixtures.submissionsSchemeData.schemeInfo.toString,
-      Json.toJson(Fixtures.schemeData).as[JsObject]
+      Fixtures.schemeData
     ))
   }
 
   override protected def afterEach: Unit = {
     super.afterEach
-    await(presubmissionRepository.drop)
-    await(metadataMongoRepository.drop)
+    await(presubmissionRepository.collection.drop.toFuture)
+    await(metadataMongoRepository.collection.drop.toFuture)
   }
 
   //submit-metadata

@@ -51,7 +51,7 @@ class AuditEventsTest
     testAuditEvents.auditRunTimeError(new RuntimeException, "some context")
 
     verify(mockAuditService, VerificationModeFactory.times(1))
-      .sendEvent(any(), any())(any(), any())
+      .sendEvent(any(), any())(any())
   }
 
   "public to protected audit event" in {
@@ -64,7 +64,7 @@ class AuditEventsTest
     result shouldBe true
 
     verify(mockAuditService, VerificationModeFactory.times(1))
-      .sendEvent(any(), any())(any(), any())
+      .sendEvent(any(), any())(any())
   }
 
   "send To Adr Event audit event" in {
@@ -73,7 +73,7 @@ class AuditEventsTest
 
     result shouldBe true
     verify(mockAuditService, VerificationModeFactory.times(1))
-      .sendEvent(any(), any())(any(), any())
+      .sendEvent(any(), any())(any())
   }
 
   "send resubmissionResult Event audit event" in {
@@ -81,7 +81,7 @@ class AuditEventsTest
 
     result shouldBe true
     verify(mockAuditService, VerificationModeFactory.times(1))
-      .sendEvent(any(), any())(any(), any())
+      .sendEvent(any(), any())(any())
   }
 
   "eventMap should return the correct map when no additional maps are added" in {

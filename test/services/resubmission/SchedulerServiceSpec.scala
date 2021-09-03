@@ -26,6 +26,7 @@ import play.api.mvc.Request
 import play.api.test.FakeRequest
 import repositories.Repositories
 import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.mongo.lock.MongoLockRepository
 import utils.LoggingAndRexceptions.ErsLoggingAndAuditing
 
 import scala.concurrent.Future
@@ -37,6 +38,7 @@ class SchedulerServiceSpec extends ERSTestHelper with BeforeAndAfterEach {
   val mockSchedulerLoggingAndAuditing: ErsLoggingAndAuditing = app.injector.instanceOf[ErsLoggingAndAuditing]
   val mockApplicationConfig: ApplicationConfig = app.injector.instanceOf[ApplicationConfig]
   val mockRepositories: Repositories = mock[Repositories]
+  val mockMongoLockRepository: MongoLockRepository = mock[MongoLockRepository]
   val mockResubPresubmissionService: ResubPresubmissionService = mock[ResubPresubmissionService]
   val mockActorSystem: ActorSystem = mock[ActorSystem]
 
@@ -49,7 +51,7 @@ class SchedulerServiceSpec extends ERSTestHelper with BeforeAndAfterEach {
     println("GET TIME")
     val schedulerService: SchedulerService = new SchedulerService(
       mockApplicationConfig,
-      mockRepositories,
+      mockMongoLockRepository,
       mockResubPresubmissionService,
       mockSchedulerLoggingAndAuditing,
       mockActorSystem) {
@@ -71,7 +73,7 @@ class SchedulerServiceSpec extends ERSTestHelper with BeforeAndAfterEach {
   "schedulerStartTime" should {
     val schedulerServiceTest: SchedulerService = new SchedulerService(
       mockApplicationConfig,
-      mockRepositories,
+      mockMongoLockRepository,
       mockResubPresubmissionService,
       mockSchedulerLoggingAndAuditing,
       mockActorSystem)
@@ -89,7 +91,7 @@ class SchedulerServiceSpec extends ERSTestHelper with BeforeAndAfterEach {
   "schedulerEndTime" should {
     val schedulerService: SchedulerService = new SchedulerService(
       mockApplicationConfig,
-      mockRepositories,
+      mockMongoLockRepository,
       mockResubPresubmissionService,
       mockSchedulerLoggingAndAuditing,
       mockActorSystem)
@@ -109,7 +111,7 @@ class SchedulerServiceSpec extends ERSTestHelper with BeforeAndAfterEach {
     "return the result of processFailedGridFSSubmissions" in {
       val schedulerService: SchedulerService = new SchedulerService(
         mockApplicationConfig,
-        mockRepositories,
+        mockMongoLockRepository,
         mockResubPresubmissionService,
         mockSchedulerLoggingAndAuditing,
         mockActorSystem)
@@ -124,7 +126,7 @@ class SchedulerServiceSpec extends ERSTestHelper with BeforeAndAfterEach {
     "return false if resubmitting gridFS data throws exception" in {
       val schedulerService: SchedulerService = new SchedulerService(
         mockApplicationConfig,
-        mockRepositories,
+        mockMongoLockRepository,
         mockResubPresubmissionService,
         mockSchedulerLoggingAndAuditing,
         mockActorSystem)

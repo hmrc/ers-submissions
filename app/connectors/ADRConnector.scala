@@ -21,9 +21,9 @@ import javax.inject.Inject
 import play.api.Logging
 import play.api.libs.json.JsObject
 import uk.gov.hmrc.http.{Authorization, HeaderCarrier, HttpClient, HttpResponse}
+import uk.gov.hmrc.http.HttpReads.Implicits.readRaw
 
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 class ADRConnector @Inject()(applicationConfig: ApplicationConfig,
                              http: HttpClient) extends Logging {
@@ -35,7 +35,7 @@ class ADRConnector @Inject()(applicationConfig: ApplicationConfig,
     authorization = Some(Authorization(applicationConfig.UrlHeaderAuthorization))
   )
 
-  def sendData(adrData: JsObject, schemeType: String)(implicit hc: HeaderCarrier): Future[HttpResponse] = {
+  def sendData(adrData: JsObject, schemeType: String)(implicit ec: ExecutionContext): Future[HttpResponse] = {
     implicit val hc: HeaderCarrier = createHeaderCarrier
     val url: String = buildEtmpPath(s"${applicationConfig.adrFullSubmissionURI}/${schemeType.toLowerCase()}")
 

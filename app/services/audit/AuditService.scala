@@ -16,22 +16,21 @@
 
 package services.audit
 
-import javax.inject.Inject
 import org.joda.time.DateTime
-import play.api.mvc.Request
 import uk.gov.hmrc.http.{HeaderCarrier, HeaderNames}
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 import uk.gov.hmrc.play.audit.model.DataEvent
 
+import javax.inject.Inject
 import scala.concurrent.ExecutionContext.Implicits.global
 
 class AuditService @Inject()(auditConnector: AuditConnector) {
   val auditSource = "ers-submissions"
 
-  def sendEvent(transactionName : String, details: Map[String, String])(implicit request: Request[_], hc: HeaderCarrier): Unit =
+  def sendEvent(transactionName : String, details: Map[String, String])(implicit hc: HeaderCarrier): Unit =
     auditConnector.sendEvent(buildEvent(transactionName, details))
 
-  def buildEvent(transactionName: String,  details: Map[String, String])(implicit request: Request[_], hc: HeaderCarrier): DataEvent =
+  def buildEvent(transactionName: String,  details: Map[String, String])(implicit hc: HeaderCarrier): DataEvent =
     DataEvent(
       auditSource = auditSource,
       auditType = transactionName,

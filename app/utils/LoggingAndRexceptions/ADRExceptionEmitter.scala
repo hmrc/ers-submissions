@@ -16,15 +16,15 @@
 
 package utils.LoggingAndRexceptions
 
-import javax.inject.Inject
 import models.{ADRTransferException, ErsMetaData}
-import play.api.mvc.Request
 import services.audit.AuditEvents
 import uk.gov.hmrc.http.HeaderCarrier
 
+import javax.inject.Inject
+
 class ADRExceptionEmitter @Inject()(auditEvents: AuditEvents) extends ErsLogger {
   
-  def emitFrom(ersMetaData: ErsMetaData, data: Map[String, String], ex: Option[Exception] = None)(implicit request: Request[_], hc: HeaderCarrier): Nothing = {
+  def emitFrom(ersMetaData: ErsMetaData, data: Map[String, String], ex: Option[Exception] = None)(implicit hc: HeaderCarrier): Nothing = {
     if(ex.isDefined) {
       logException(ersMetaData.schemeInfo, ex.get, Some(buildEmiterMessage(data)))
       auditAndThrowWithStackTrace(ersMetaData, data, ex.get)
@@ -38,13 +38,12 @@ class ADRExceptionEmitter @Inject()(auditEvents: AuditEvents) extends ErsLogger 
   def auditAndThrowWithStackTrace(ersMetaData: ErsMetaData,
                                   data: Map[String, String],
                                   ex: Exception)
-                                 (implicit request: Request[_],
-                                  hc: HeaderCarrier): Nothing = {
+                                 (implicit hc: HeaderCarrier): Nothing = {
     auditEvents.auditRunTimeError(ex, data("context"))
     throw createADRException(ersMetaData, data).initCause(ex)
   }
 
-  def auditAndThrow(ersMetaData: ErsMetaData, data: Map[String, String])(implicit request: Request[_], hc: HeaderCarrier): Nothing = {
+  def auditAndThrow(ersMetaData: ErsMetaData, data: Map[String, String])(implicit hc: HeaderCarrier): Nothing = {
     auditEvents.auditADRTransferFailure(ersMetaData.schemeInfo, data)
     throw createADRException(ersMetaData, data)
   }

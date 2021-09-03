@@ -19,8 +19,6 @@ package utils.LoggingAndExceptions
 import fixtures.Fixtures
 import helpers.ERSTestHelper
 import models.ADRTransferException
-import play.api.mvc.AnyContent
-import play.api.test.FakeRequest
 import services.audit.AuditEvents
 import utils.LoggingAndRexceptions.ADRExceptionEmitter
 import uk.gov.hmrc.http.HeaderCarrier
@@ -33,7 +31,6 @@ class ADRExceptionEmitterSpec extends ERSTestHelper {
 
   "emitFrom" should {
 
-    implicit val request: FakeRequest[AnyContent] = FakeRequest()
     implicit val hc: HeaderCarrier = new HeaderCarrier()
 
     "throw ADRException that contains original exception" in {

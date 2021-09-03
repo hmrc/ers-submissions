@@ -19,7 +19,6 @@ package uk.gov.hmrc
 import org.scalatest.{BeforeAndAfterEach, Matchers, WordSpec}
 import repositories.PresubmissionMongoRepository
 
-import scala.concurrent.ExecutionContext.Implicits.global
 import _root_.play.api.test.Helpers._
 import _root_.play.api.test.FakeRequest
 import _root_.play.api.libs.json.Json
@@ -45,7 +44,7 @@ class ValidatorIntegrationSpec extends WordSpec with Matchers
 
   override protected def afterEach: Unit = {
     super.afterEach
-    await(presubmissionRepository.drop)
+    await(presubmissionRepository.collection.drop.toFuture)
   }
 
   // /submit-presubmission

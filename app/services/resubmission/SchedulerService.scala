@@ -18,40 +18,34 @@ package services.resubmission
 
 import akka.actor.{ActorSystem, Cancellable}
 import config.ApplicationConfig
-import javax.inject.Inject
-import models.ResubmissionLock
-import org.joda.time.{DateTime, Duration}
+import org.joda.time.DateTime
 import play.api.Logging
 import play.api.libs.json.JsObject
 import play.api.mvc.Request
-import repositories.Repositories
-
-import scala.concurrent.ExecutionContext.Implicits.global
-import concurrent.duration._
-import scala.concurrent.Future
 import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.mongo.lock.{MongoLockRepository, TimePeriodLockService}
 import utils.LoggingAndRexceptions.ErsLoggingAndAuditing
 
+import javax.inject.Inject
+import scala.concurrent.duration._
+import scala.concurrent.{ExecutionContext, Future}
+
 class SchedulerService @Inject()(val applicationConfig: ApplicationConfig,
-                                 repositories: Repositories,
+                                 lockRepository: MongoLockRepository,
                                  resubPresubmissionService: ResubPresubmissionService,
                                  schedulerLoggingAndAuditing: ErsLoggingAndAuditing,
-                                 actorSystem: ActorSystem) extends SchedulerConfig with Logging {
+                                 actorSystem: ActorSystem)(implicit ec: ExecutionContext) extends SchedulerConfig with Logging {
 
   val request: Request[JsObject] = ERSRequest.createERSRequest()
   val hc: HeaderCarrier = HeaderCarrier()
 
   def run(): Cancellable = {
-    val lock = ResubmissionLock(
-      applicationConfig.schedulerLockName,
-      new Duration(applicationConfig.schedulerLockExpireMin * 60000),
-      repositories.lockRepository
-    )
-    actorSystem.scheduler.schedule(delay milliseconds, repeat seconds) {
+    val lock = TimePeriodLockService(lockRepository, applicationConfig.schedulerLockName, applicationConfig.schedulerLockExpireMin.minutes)
+    actorSystem.scheduler.schedule(delay.milliseconds, repeat.seconds) {
       if ((schedulerStartTime.isEqualNow || schedulerStartTime.isBeforeNow) && schedulerEndTime.isAfterNow) {
-        lock.tryToAcquireOrRenewLock {
+        lock.withRenewedLock {
           logger.info(s"Start scheduling ${DateTime.now.toString}")
-          resubmit()(request, hc).map { res => res }
+          resubmit()(request, hc)
         }
       }
     }

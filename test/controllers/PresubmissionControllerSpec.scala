@@ -33,7 +33,6 @@ import helpers.ERSTestHelper
 import utils.LoggingAndRexceptions.ErsLoggingAndAuditing
 
 import scala.concurrent.Future
-import play.api.mvc._
 import uk.gov.hmrc.http.HeaderCarrier
 
 class PresubmissionControllerSpec extends ERSTestHelper with BeforeAndAfterEach {
@@ -57,7 +56,7 @@ class PresubmissionControllerSpec extends ERSTestHelper with BeforeAndAfterEach 
 
     def buildPresubmissionController(validationResult: Boolean = true, removeJsonResult: Boolean = true): PresubmissionController = {
       new PresubmissionController(mockPresubmissionService, mockValidationService, mockErsLoggingAndAuditing, mockMetrics, mockCc ) {
-        when(mockPresubmissionService.removeJson(any[SchemeInfo])(any[Request[_]](), any[HeaderCarrier]()))
+        when(mockPresubmissionService.removeJson(any[SchemeInfo])(any[HeaderCarrier]()))
           .thenReturn(Future(removeJsonResult))
         when(mockValidationService.validateSchemeInfo(any[JsObject]))
           .thenReturn(if (validationResult) Some(mock[SchemeInfo]) else None)
@@ -94,7 +93,7 @@ class PresubmissionControllerSpec extends ERSTestHelper with BeforeAndAfterEach 
 
     def buildPresubmissionController(validationResult: Boolean = true, checkResult: Boolean = true): PresubmissionController =
       new PresubmissionController(mockPresubmissionService, mockValidationService, mockErsLoggingAndAuditing, mockMetrics, mockCc) {
-      when(mockPresubmissionService.compareSheetsNumber(anyInt(), any[SchemeInfo])(any[Request[_]](), any[HeaderCarrier]()))
+      when(mockPresubmissionService.compareSheetsNumber(anyInt(), any[SchemeInfo])(any[HeaderCarrier]()))
         .thenReturn(Future(checkResult))
       when(mockValidationService.validateSchemeInfo(any[JsObject]))
         .thenReturn(if (validationResult) Some(mock[SchemeInfo]) else None)

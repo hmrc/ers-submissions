@@ -16,15 +16,15 @@
 
 package services.audit
 
-import javax.inject.Inject
 import models.{ErsSummary, SchemeInfo}
 import org.apache.commons.lang3.exception.ExceptionUtils
-import play.api.mvc.Request
 import uk.gov.hmrc.http.HeaderCarrier
+
+import javax.inject.Inject
 
 class AuditEvents @Inject()(auditService: AuditService) {
 
-  def auditRunTimeError(exception: Throwable, contextInfo: String) (implicit request: Request[_], hc: HeaderCarrier): Unit = {
+  def auditRunTimeError(exception: Throwable, contextInfo: String)(implicit hc: HeaderCarrier): Unit = {
     auditService.sendEvent(
       "ERSRunTimeError",
       Map(
@@ -35,11 +35,11 @@ class AuditEvents @Inject()(auditService: AuditService) {
     )
   }
 
-  def auditADRTransferFailure(schemeInfo: SchemeInfo, data: Map[String, String])(implicit request: Request[_], hc: HeaderCarrier): Unit = {
+  def auditADRTransferFailure(schemeInfo: SchemeInfo, data: Map[String, String])(implicit hc: HeaderCarrier): Unit = {
     auditService.sendEvent("ErsADRTransferFailure", eventMap(schemeInfo, data))
   }
 
-  def publicToProtectedEvent(schemeInfo: SchemeInfo, sheetName: String, numRows: String)(implicit request: Request[_], hc: HeaderCarrier): Boolean = {
+  def publicToProtectedEvent(schemeInfo: SchemeInfo, sheetName: String, numRows: String)(implicit hc: HeaderCarrier): Boolean = {
     val additionalData: Map[String, String] = Map(
       "sheetName" -> sheetName,
       "numberOfRows" -> numRows
@@ -49,7 +49,7 @@ class AuditEvents @Inject()(auditService: AuditService) {
   }
 
   def sendToAdrEvent(context : String, ersSummaryData: ErsSummary, correlationId: Option[String] = None, source: Option[String] = None)
-                    (implicit request: Request[_], hc: HeaderCarrier): Boolean = {
+                    (implicit hc: HeaderCarrier): Boolean = {
     val additionalData: Map[String, String] = Map(
       "sapNumber" -> ersSummaryData.metaData.sapNumber.getOrElse(""),
       "ipRef" -> ersSummaryData.metaData.ipRef,
@@ -67,7 +67,7 @@ class AuditEvents @Inject()(auditService: AuditService) {
     true
   }
 
-  def resubmissionResult(schemeInfo: SchemeInfo, res: Boolean)(implicit request: Request[_], hc: HeaderCarrier): Boolean = {
+  def resubmissionResult(schemeInfo: SchemeInfo, res: Boolean)(implicit hc: HeaderCarrier): Boolean = {
     auditService.sendEvent("resubmissionResult", eventMap(schemeInfo,Map("result"-> res.toString)))
     true
   }

@@ -16,15 +16,14 @@
 
 package services
 
-import javax.inject.Inject
 import models.ErsSummary
 import play.api.Logging
 import play.api.libs.json.{JsError, JsObject, JsSuccess}
-import play.api.mvc.Request
+import repositories.MetadataMongoRepository
 import uk.gov.hmrc.http.HeaderCarrier
 import utils.LoggingAndRexceptions.ErsLoggingAndAuditing
-import repositories.MetadataMongoRepository
 
+import javax.inject.Inject
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
@@ -33,7 +32,7 @@ class MetadataService @Inject()(metadataMongoRepository: MetadataMongoRepository
 
   lazy val metadataRepository: MetadataMongoRepository = metadataMongoRepository
 
-  def storeErsSummary(ersSummary: ErsSummary)(implicit request: Request[_], hc: HeaderCarrier): Future[Boolean] = {
+  def storeErsSummary(ersSummary: ErsSummary)(implicit hc: HeaderCarrier): Future[Boolean] = {
     metadataRepository.storeErsSummary(ersSummary).recover {
       case ex: Exception => {
         ersLoggingAndAuditing.handleException(ersSummary, ex, "Exception during storing ersSummary")

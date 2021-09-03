@@ -44,7 +44,7 @@ class ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach {
   when(mockConfig.getConfig(anyString())).thenReturn(mock[Config])
 
   val mockConfigUtils: ConfigUtils = mock[ConfigUtils]
-  when(mockConfigUtils.getConfigData(anyString(), anyString())(any[Request[_]](), any[HeaderCarrier](), any[ErsSummary]()))
+  when(mockConfigUtils.getConfigData(anyString(), anyString())(any[HeaderCarrier](), any[ErsSummary]()))
     .thenReturn(mockConfig)
 
   override def beforeEach(): Unit = {

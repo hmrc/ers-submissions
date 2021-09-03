@@ -104,7 +104,7 @@ class SubmissionService @Inject()(repositories: Repositories,
   }
 
   def sendToADRUpdatePostData(ersSummary: ErsSummary, adrData: JsObject, failedStatus: String, successStatus: String)
-                             (implicit request: Request[_], hc: HeaderCarrier): Future[Boolean] = {
+                             (implicit hc: HeaderCarrier): Future[Boolean] = {
     ersLoggingAndAuditing.logWarn(s"Submission journey 6. start sending data: ${DateTime.now}", Some(ersSummary))
     logger.info(s"Start sending data ${ersLoggingAndAuditing.buildDataMessage(ersSummary)}")
 
@@ -146,7 +146,7 @@ class SubmissionService @Inject()(repositories: Repositories,
   }
 
   def updatePostsubmission(adrSubmissionStatus: Int, transferStatus: String, ersSummary: ErsSummary)
-                          (implicit request: Request[_], hc: HeaderCarrier): Future[Boolean] = {
+                          (implicit hc: HeaderCarrier): Future[Boolean] = {
     ersLoggingAndAuditing.logWarn(s"Submission journey 8. start updating status ${transferStatus}: ${DateTime.now}", Some(ersSummary))
     logger.info(s"Start updating status for ${ersSummary.metaData.schemeInfo.toString}")
     val startUpdateTime = System.currentTimeMillis()
