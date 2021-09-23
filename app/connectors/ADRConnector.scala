@@ -44,7 +44,7 @@ class ADRConnector @Inject()(applicationConfig: ApplicationConfig,
       s"url: $url")
 
     http.POST(url, adrData, headers = hc.headers(Seq("Authorization"))).map { res =>
-      logger.warn(s"ADR response: ${res.status}")
+      logger.warn(s"ADR response: $res")
       res
     }.recover {
       case ex: Exception =>
