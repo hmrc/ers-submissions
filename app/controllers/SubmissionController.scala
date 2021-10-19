@@ -30,6 +30,8 @@ import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import utils.LoggingAndRexceptions.ErsLoggingAndAuditing
 
 import scala.concurrent.{ExecutionContext, Future}
+import utils.CorrelationIdHelper
+import uk.gov.hmrc.http.HeaderCarrier
 
 class SubmissionController @Inject()(submissionCommonService: SubmissionService,
                                      metadataService: MetadataService,
@@ -37,9 +39,10 @@ class SubmissionController @Inject()(submissionCommonService: SubmissionService,
                                      ersLoggingAndAuditing: ErsLoggingAndAuditing,
                                      auditEvents: AuditEvents,
                                      cc: ControllerComponents)
-                                    (implicit val ec: ExecutionContext) extends BackendController(cc) {
+                                    (implicit val ec: ExecutionContext) extends BackendController(cc) with CorrelationIdHelper {
 
   def receiveMetadataJson(): Action[JsObject] = Action.async(parse.json[JsObject]) { implicit request =>
+    implicit val hc: HeaderCarrier = getOrCreateCorrelationID(request)
     ersLoggingAndAuditing.logWarn(s"Submission journey 1. received request: ${DateTime.now}")
 
     metadataService.validateErsSummaryFromJson(request.body) match {
