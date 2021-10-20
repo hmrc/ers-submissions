@@ -192,7 +192,7 @@ class SubmissionCommonServiceSpec extends ERSTestHelper with BeforeAndAfterEach 
     }
 
     "return result from updatePostsubmission if sending to ADR is successful" in {
-      when(adrConnector.sendData(any[JsObject](), anyString())(any[ExecutionContext]()))
+      when(adrConnector.sendData(any[JsObject](), anyString())(any[ExecutionContext](), any[HeaderCarrier]()))
         .thenReturn(Future.successful(HttpResponse(202, "")))
 
       val result = await(submissionCommonService.sendToADRUpdatePostData(Fixtures.metadata, Fixtures.metadataJson, Statuses.Failed.toString, Statuses.Sent.toString))
@@ -203,7 +203,7 @@ class SubmissionCommonServiceSpec extends ERSTestHelper with BeforeAndAfterEach 
     }
 
     "return result from updatePostsubmission if sending to ADR failed" in {
-      when(adrConnector.sendData(any[JsObject](), anyString())(any[ExecutionContext]()))
+      when(adrConnector.sendData(any[JsObject](), anyString())(any[ExecutionContext](), any[HeaderCarrier]()))
         .thenReturn(Future.successful(HttpResponse(500, "")))
 
       val result = await(submissionCommonService.sendToADRUpdatePostData(Fixtures.metadata, Fixtures.metadataJson, Statuses.Failed.toString, Statuses.Sent.toString))
@@ -214,7 +214,7 @@ class SubmissionCommonServiceSpec extends ERSTestHelper with BeforeAndAfterEach 
     }
 
     "re-throws ADRTransferException if sending to ADR or update throws ADRTransferException exception" in {
-      when(adrConnector.sendData(any[JsObject](), anyString())(any[ExecutionContext]()))
+      when(adrConnector.sendData(any[JsObject](), anyString())(any[ExecutionContext](), any[HeaderCarrier]()))
         .thenReturn(Future.failed(new ADRTransferException(Fixtures.metadata.metaData, "errorMessage", "errorContext")))
 
       intercept[ADRTransferException] {
@@ -226,7 +226,7 @@ class SubmissionCommonServiceSpec extends ERSTestHelper with BeforeAndAfterEach 
     }
 
     "throws ADRTransferException if sending to ADR or update throws exception" in {
-      when(adrConnector.sendData(any[JsObject](), anyString())(any[ExecutionContext]())).thenReturn(Future.failed(new Exception("errorMessage")))
+      when(adrConnector.sendData(any[JsObject](), anyString())(any[ExecutionContext](), any[HeaderCarrier]())).thenReturn(Future.failed(new Exception("errorMessage")))
 
       intercept[ADRTransferException] {
         await(submissionCommonService.sendToADRUpdatePostData(Fixtures.metadata, Fixtures.metadataJson, Statuses.Failed.toString, Statuses.Sent.toString))

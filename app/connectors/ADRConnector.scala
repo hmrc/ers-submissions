@@ -20,30 +20,34 @@ import config.ApplicationConfig
 import javax.inject.Inject
 import play.api.Logging
 import play.api.libs.json.JsObject
-import uk.gov.hmrc.http.{Authorization, HeaderCarrier, HttpClient, HttpResponse}
+import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 import uk.gov.hmrc.http.HttpReads.Implicits.readRaw
 
 import scala.concurrent.{ExecutionContext, Future}
+import uk.gov.hmrc.play.bootstrap.http.DefaultHttpClient
+import utils.CorrelationIdHelper
 
 class ADRConnector @Inject()(applicationConfig: ApplicationConfig,
-                             http: HttpClient) extends Logging {
+                             http: DefaultHttpClient) extends Logging with CorrelationIdHelper {
 
   def buildEtmpPath(path: String): String = s"${applicationConfig.adrBaseURI}/${path}"
 
-  private def createHeaderCarrier = HeaderCarrier(
-    extraHeaders = Seq(("Environment" -> applicationConfig.UrlHeaderEnvironment)),
-    authorization = Some(Authorization(applicationConfig.UrlHeaderAuthorization))
-  )
+  private def explicitHeaders()(implicit hc: HeaderCarrier): Seq[(String, String)] = Seq(
+    ("Environment" -> applicationConfig.UrlHeaderEnvironment),
+    ("Authorization" -> applicationConfig.UrlHeaderAuthorization)
+  ) ++ hc.headers(Seq(HEADER_X_CORRELATION_ID))
 
-  def sendData(adrData: JsObject, schemeType: String)(implicit ec: ExecutionContext): Future[HttpResponse] = {
-    implicit val hc: HeaderCarrier = createHeaderCarrier
+  def sendData(adrData: JsObject, schemeType: String)(implicit ec: ExecutionContext, hc: HeaderCarrier): Future[HttpResponse] = {
     val url: String = buildEtmpPath(s"${applicationConfig.adrFullSubmissionURI}/${schemeType.toLowerCase()}")
+    val headersForRequest = hc
+      .withExtraHeaders(explicitHeaders(): _*)
+      .headersForUrl(HeaderCarrier.Config.fromConfig(http.configuration))(url)
 
     logger.debug("Sending data to ADR.\n" +
-      s"hc - headers: ${hc.extraHeaders.toString()}, authorization: ${hc.authorization.toString}\n" +
+      s"hc - headers: $headersForRequest\n" +
       s"url: $url")
 
-    http.POST(url, adrData, headers = hc.headers(Seq("Authorization"))).map { res =>
+    http.POST(url, adrData, headers = headersForRequest).map { res =>
       logger.warn(s"ADR response: ${res.status}")
       res
     }.recover {
