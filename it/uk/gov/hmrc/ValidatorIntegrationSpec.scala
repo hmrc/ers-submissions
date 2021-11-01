@@ -16,7 +16,10 @@
 
 package uk.gov.hmrc
 
-import org.scalatest.{BeforeAndAfterEach, Matchers, WordSpec}
+import org.scalatest.BeforeAndAfterEach
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpecLike
+
 import repositories.PresubmissionMongoRepository
 
 import _root_.play.api.test.Helpers._
@@ -29,7 +32,7 @@ import _root_.play.api.inject.guice.GuiceApplicationBuilder
 import controllers.{PresubmissionController, ReceivePresubmissionController}
 import uk.gov.hmrc.play.http.ws.WSRequest
 
-class ValidatorIntegrationSpec extends WordSpec with Matchers
+class ValidatorIntegrationSpec extends AnyWordSpecLike with Matchers
   with BeforeAndAfterEach with WSRequest with FakeAuthService {
 
   lazy val app: Application = new GuiceApplicationBuilder().configure(Map("microservice.services.auth.port" -> "18500")).build()

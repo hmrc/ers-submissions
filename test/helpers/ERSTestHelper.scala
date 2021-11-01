@@ -20,7 +20,9 @@ import java.nio.charset.Charset
 
 import akka.stream.Materializer
 import akka.util.ByteString
-import org.scalatest.{Matchers, OptionValues, WordSpecLike}
+import org.scalatest.OptionValues
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpecLike
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.Play
@@ -30,7 +32,7 @@ import play.api.test.Helpers.stubControllerComponents
 import scala.concurrent.duration.{DurationInt, FiniteDuration}
 import scala.concurrent.{Await, ExecutionContext, Future}
 
-trait ERSTestHelper extends WordSpecLike with Matchers with OptionValues with MockitoSugar with GuiceOneAppPerSuite {
+trait ERSTestHelper extends AnyWordSpecLike with Matchers with OptionValues with MockitoSugar with GuiceOneAppPerSuite {
 
   val mockCc: ControllerComponents = stubControllerComponents()
   implicit def materializer: Materializer = Play.materializer(fakeApplication)

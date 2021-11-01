@@ -17,7 +17,9 @@
 package uk.gov.hmrc
 
 import _root_.play.api.libs.json.JsObject
-import org.scalatest.{BeforeAndAfterEach, Matchers, WordSpec}
+import org.scalatest.BeforeAndAfterEach
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpecLike
 import repositories.{MetadataMongoRepository, PresubmissionMongoRepository}
 import controllers.SubmissionController
 
@@ -29,7 +31,7 @@ import _root_.play.api.test.FakeRequest
 import _root_.play.api.mvc.Result
 import uk.gov.hmrc.play.http.ws.WSRequest
 
-class ADRSubmissionIntegration extends WordSpec with Matchers
+class ADRSubmissionIntegration extends AnyWordSpecLike with Matchers
  with BeforeAndAfterEach with WSRequest with FakeErsStubService {
 
   val app: Application = new GuiceApplicationBuilder().configure(Map("microservice.services.ers-stub.port" -> "19339")).build()

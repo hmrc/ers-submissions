@@ -19,7 +19,7 @@ package services
 import java.util.concurrent.TimeUnit
 
 import connectors.ADRConnector
-import controllers.Assets.ACCEPTED
+import play.api.http.Status.ACCEPTED
 import javax.inject.Inject
 import metrics.Metrics
 import models.{ADRTransferException, ErsSummary}
