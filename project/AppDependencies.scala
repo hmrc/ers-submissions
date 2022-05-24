@@ -5,15 +5,15 @@ object AppDependencies {
   import play.sbt.PlayImport._
 
   private val silencerVersion = "1.7.1"
-  private val akkaVersion = "2.6.17"
+  private val akkaVersion = "2.6.19"
   private val alpakkaVersion = "3.0.3"
   private val nettyTransportVersion = "4.1.69.Final"
-  private val mongoTestVersion = "0.55.0"
+  private val mongoTestVersion = "0.64.0"
 
   val compile = Seq(
     ws,
-    "uk.gov.hmrc"        %% "bootstrap-backend-play-28"           % "5.16.0",
-    "uk.gov.hmrc"        %% "domain"                              % "6.2.0-play-28",
+    "uk.gov.hmrc"        %% "bootstrap-backend-play-28"           % "5.24.0",
+    "uk.gov.hmrc"        %% "domain"                              % "8.1.0-play-28",
     "uk.gov.hmrc.mongo"  %% "hmrc-mongo-play-28"                  % mongoTestVersion,
     "com.typesafe.play"  %% "play-json-joda"                      % "2.9.2",
     "io.netty"           %  "netty-transport-native-epoll"        % nettyTransportVersion,
