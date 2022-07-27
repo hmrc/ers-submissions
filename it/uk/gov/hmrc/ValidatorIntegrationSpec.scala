@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 HM Revenue & Customs
+ * Copyright 2022 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,13 +55,15 @@ class ValidatorIntegrationSpec extends AnyWordSpecLike with Matchers
 
     "return BAD_REQUEST if invalid object is sent" in {
       val response = await(receivePresubmissionController.receivePresubmissionJsonV2("ABC%2F1234")
-        .apply(FakeRequest().withBody(Json.parse("{ \"key\": \"value\" }"))))
+        .apply(FakeRequest().withBody(Json.parse("{ \"key\": \"value\" }"))
+          .withHeaders(("Authorization", "Bearer123"))))
       response.header.status shouldBe BAD_REQUEST
     }
 
     "be stored successfully in database" in {
       val response = await(receivePresubmissionController.receivePresubmissionJsonV2("ABC%2F1234")
-        .apply(FakeRequest().withBody(Fixtures.submissionsSchemeDataJson)))
+        .apply(FakeRequest().withBody(Fixtures.submissionsSchemeDataJson)
+          .withHeaders(("Authorization", "Bearer123"))))
       response.header.status shouldBe OK
 
       val presubmissionData = await(presubmissionRepository.getJson(Fixtures.schemeInfo))
@@ -76,7 +78,9 @@ class ValidatorIntegrationSpec extends AnyWordSpecLike with Matchers
 
     "successfully remove data by session Id and scheme ref" in {
       val response = await(receivePresubmissionController.receivePresubmissionJsonV2("ABC%2F1234")
-        .apply(FakeRequest().withBody(Fixtures.submissionsSchemeDataJson)))
+        .apply(FakeRequest().withBody(Fixtures.submissionsSchemeDataJson)
+          .withHeaders(("Authorization", "Bearer123"))))
+
       response.header.status shouldBe OK
 
       val presubmissionData = await(presubmissionRepository.getJson(Fixtures.schemeInfo))
@@ -99,7 +103,9 @@ class ValidatorIntegrationSpec extends AnyWordSpecLike with Matchers
 
     "return OK if expected records are equal to existing ones" in {
       val response = await(receivePresubmissionController.receivePresubmissionJsonV2("ABC%2F1234")
-        .apply(FakeRequest().withBody(Fixtures.submissionsSchemeDataJson)))
+        .apply(FakeRequest().withBody(Fixtures.submissionsSchemeDataJson)
+          .withHeaders(("Authorization", "Bearer123"))))
+
       response.header.status shouldBe OK
       val presubmissionData = await(presubmissionRepository.getJson(Fixtures.schemeInfo))
       presubmissionData.length shouldBe 1
@@ -113,7 +119,9 @@ class ValidatorIntegrationSpec extends AnyWordSpecLike with Matchers
 
     "return InternalServerError if expected records are not equal to existing ones" in {
       val response = await(receivePresubmissionController.receivePresubmissionJsonV2("ABC%2F1234")
-        .apply(FakeRequest().withBody(Fixtures.submissionsSchemeDataJson)))
+        .apply(FakeRequest().withBody(Fixtures.submissionsSchemeDataJson)
+        .withHeaders(("Authorization", "Bearer123"))))
+
       response.header.status shouldBe OK
       val presubmissionData = await(presubmissionRepository.getJson(Fixtures.schemeInfo))
       presubmissionData.length shouldBe 1

@@ -8,13 +8,13 @@ object AppDependencies {
   private val akkaVersion = "2.6.19"
   private val alpakkaVersion = "3.0.3"
   private val nettyTransportVersion = "4.1.69.Final"
-  private val mongoTestVersion = "0.64.0"
+  private val mongoVersion = "0.68.0"
 
   val compile = Seq(
     ws,
     "uk.gov.hmrc"        %% "bootstrap-backend-play-28"           % "5.24.0",
     "uk.gov.hmrc"        %% "domain"                              % "8.1.0-play-28",
-    "uk.gov.hmrc.mongo"  %% "hmrc-mongo-play-28"                  % mongoTestVersion,
+    "uk.gov.hmrc.mongo"  %% "hmrc-mongo-play-28"                  % mongoVersion,
     "com.typesafe.play"  %% "play-json-joda"                      % "2.9.2",
     "io.netty"           %  "netty-transport-native-epoll"        % nettyTransportVersion,
     "com.lightbend.akka" %% "akka-stream-alpakka-csv"             % alpakkaVersion,
@@ -44,7 +44,7 @@ object AppDependencies {
   object Test {
     def apply(): Seq[ModuleID] = new TestDependencies {
       override lazy val test = Seq(
-        "uk.gov.hmrc.mongo"      %% "hmrc-mongo-test-play-28" % mongoTestVersion         % scope,
+        "uk.gov.hmrc.mongo"      %% "hmrc-mongo-test-play-28" % mongoVersion         % scope,
         "org.scalatest"          %% "scalatest"               % scalaTestVersion         % scope,
         "org.scalatestplus.play" %% "scalatestplus-play"      % scalaTestPlusPlayVersion % scope,
         "com.vladsch.flexmark"   %  "flexmark-all"            % flexmarkAllVersion       % scope,
@@ -63,7 +63,7 @@ object AppDependencies {
       override lazy val scope: String = "it"
 
       override lazy val test = Seq(
-        "uk.gov.hmrc.mongo"      %% "hmrc-mongo-test-play-28"      % mongoTestVersion         % scope,
+        "uk.gov.hmrc.mongo"      %% "hmrc-mongo-test-play-28"      % mongoVersion         % scope,
         "com.typesafe.play"      %% "play-test"                    % PlayVersion.current      % scope,
         "org.scalatest"          %% "scalatest"                    % scalaTestVersion         % scope,
         "org.scalatestplus.play" %% "scalatestplus-play"           % scalaTestPlusPlayVersion % scope,

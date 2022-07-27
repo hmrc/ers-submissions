@@ -5,6 +5,7 @@
 !.travis.yml
 
 .cache
+.bsp
 /.classpath
 db
 dist
