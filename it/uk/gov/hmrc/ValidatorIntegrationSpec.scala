@@ -80,7 +80,7 @@ class ValidatorIntegrationSpec extends AnyWordSpecLike with Matchers
       val response = await(receivePresubmissionController.receivePresubmissionJsonV2("ABC%2F1234")
         .apply(FakeRequest().withBody(Fixtures.submissionsSchemeDataJson)
           .withHeaders(("Authorization", "Bearer123"))))
-
+      
       response.header.status shouldBe OK
 
       val presubmissionData = await(presubmissionRepository.getJson(Fixtures.schemeInfo))
