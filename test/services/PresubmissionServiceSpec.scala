@@ -21,7 +21,7 @@ import helpers.ERSTestHelper
 import models.{SchemeData, SchemeInfo, SubmissionsSchemeData, UpscanCallback}
 import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
-import play.api.libs.json.JsObject
+import play.api.libs.json.{JsObject, Json}
 import play.api.test.FakeRequest
 import repositories.{PresubmissionMongoRepository, Repositories}
 import uk.gov.hmrc.http.HeaderCarrier
@@ -49,7 +49,7 @@ class PresubmissionServiceSpec extends ERSTestHelper {
       when(mockPresubmissionRepository.storeJsonV2(any[String], any[SchemeData])).thenReturn(
         if (storeJsonResult.isDefined) Future(storeJsonResult.get) else Future.failed(new RuntimeException("here's a message")))
       when(mockPresubmissionRepository.getJson(any[SchemeInfo]))
-        .thenReturn(Future(if (getJsonResult) List(Fixtures.schemeData) else List()))
+        .thenReturn(Future(if (getJsonResult) List(Json.toJsObject(Fixtures.schemeData)) else List()))
       when(mockPresubmissionRepository.removeJson(any[SchemeInfo]))
         .thenReturn(if (removeJsonResult.isDefined) Future(removeJsonResult.get) else Future.failed(new RuntimeException))
     }

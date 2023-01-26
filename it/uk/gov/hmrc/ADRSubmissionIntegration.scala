@@ -16,19 +16,18 @@
 
 package uk.gov.hmrc
 
+import _root_.play.api.Application
+import _root_.play.api.inject.guice.GuiceApplicationBuilder
 import _root_.play.api.libs.json.JsObject
+import _root_.play.api.libs.ws.WSClient
+import _root_.play.api.mvc.Result
+import _root_.play.api.test.FakeRequest
+import _root_.play.api.test.Helpers._
+import controllers.SubmissionController
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 import repositories.{MetadataMongoRepository, PresubmissionMongoRepository}
-import controllers.SubmissionController
-
-import _root_.play.api.test.Helpers._
-import _root_.play.api.Application
-import _root_.play.api.inject.guice.GuiceApplicationBuilder
-import _root_.play.api.libs.ws.WSClient
-import _root_.play.api.test.FakeRequest
-import _root_.play.api.mvc.Result
 import uk.gov.hmrc.play.http.ws.WSRequest
 
 class ADRSubmissionIntegration extends AnyWordSpecLike with Matchers

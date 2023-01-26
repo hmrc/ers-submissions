@@ -17,7 +17,6 @@
 package services.resubmission
 
 import config.ApplicationConfig
-import javax.inject.Inject
 import models._
 import play.api.mvc.Request
 import repositories.MetadataMongoRepository
@@ -26,6 +25,7 @@ import services.audit.AuditEvents
 import uk.gov.hmrc.http.HeaderCarrier
 import utils.LoggingAndRexceptions.{ErsLoggingAndAuditing, ResubmissionExceptionEmitter}
 
+import javax.inject.Inject
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 

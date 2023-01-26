@@ -52,15 +52,14 @@ class PresubmissionService @Inject()(repositories: Repositories, ersLoggingAndAu
 
   def getJson(schemeInfo: SchemeInfo): Future[Seq[SchemeData]] = {
     logger.debug("LFP -> 3. PresubmissionService.getJson () ")
-    presubmissionRepository.getJson(schemeInfo)
+    presubmissionRepository.getJson(schemeInfo).map(_.map(_.as[SchemeData]))
   }
 
   def removeJson(schemeInfo: SchemeInfo)(implicit hc: HeaderCarrier): Future[Boolean] = {
     presubmissionRepository.removeJson(schemeInfo).recover {
-      case ex: Exception => {
+      case ex: Exception =>
         ersLoggingAndAuditing.handleException(schemeInfo, ex, "Exception during deleting presubmission data")
         false
-      }
     }
 
   }
@@ -69,10 +68,9 @@ class PresubmissionService @Inject()(repositories: Repositories, ersLoggingAndAu
     presubmissionRepository.count(schemeInfo).map { existingSheets =>
       existingSheets == expectedSheets
     }.recover {
-      case ex: Exception => {
+      case ex: Exception =>
         ersLoggingAndAuditing.handleException(schemeInfo, ex, "Exception during checking for presubmission data")
         false
-      }
     }
 
   }

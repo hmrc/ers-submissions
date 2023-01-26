@@ -54,7 +54,6 @@ class ReceivePresubmissionController @Inject()(presubmissionService: Presubmissi
 
   def receivePresubmissionJson(empRef: String): Action[JsValue] =
     authorisedAction(empRef).async(parse.json(maxLength = 1024 * 10000)) { implicit request =>
-
       validationService.validateSchemeData(request.body.as[JsObject]) match {
         case schemeData: Some[SchemeData] => storePresubmission(schemeData.get)
         case _ =>
@@ -64,7 +63,6 @@ class ReceivePresubmissionController @Inject()(presubmissionService: Presubmissi
 
   def receivePresubmissionJsonV2(empRef: String): Action[JsValue] =
     authorisedAction(empRef).async(parse.json) { implicit request =>
-
       validationService.validateSubmissionsSchemeData(request.body.as[JsObject]) match {
         case submissionsSchemeData: Some[SubmissionsSchemeData] =>
           storePresubmission(submissionsSchemeData.get)

@@ -16,20 +16,17 @@
 
 package uk.gov.hmrc
 
+import _root_.play.api.Application
+import _root_.play.api.inject.guice.GuiceApplicationBuilder
+import _root_.play.api.libs.json.{JsObject, Json}
+import _root_.play.api.libs.ws.WSClient
+import _root_.play.api.test.FakeRequest
+import _root_.play.api.test.Helpers._
+import controllers.{PresubmissionController, ReceivePresubmissionController}
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
-
 import repositories.PresubmissionMongoRepository
-
-import _root_.play.api.test.Helpers._
-import _root_.play.api.test.FakeRequest
-import _root_.play.api.libs.json.Json
-import _root_.play.api.libs.json.JsObject
-import _root_.play.api.libs.ws.WSClient
-import _root_.play.api.Application
-import _root_.play.api.inject.guice.GuiceApplicationBuilder
-import controllers.{PresubmissionController, ReceivePresubmissionController}
 import uk.gov.hmrc.play.http.ws.WSRequest
 
 class ValidatorIntegrationSpec extends AnyWordSpecLike with Matchers
@@ -98,7 +95,6 @@ class ValidatorIntegrationSpec extends AnyWordSpecLike with Matchers
   }
 
   // /check-for-presubmission/:validatedSheets
-
   "Checking for received presubmission data" should {
 
     "return OK if expected records are equal to existing ones" in {
@@ -131,7 +127,5 @@ class ValidatorIntegrationSpec extends AnyWordSpecLike with Matchers
         .apply(FakeRequest().withBody(Fixtures.schemeInfoPayload.as[JsObject])))
       checkResponse.header.status shouldBe INTERNAL_SERVER_ERROR
     }
-
   }
-
 }

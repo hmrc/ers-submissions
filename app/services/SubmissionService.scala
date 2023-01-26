@@ -16,15 +16,12 @@
 
 package services
 
-import java.util.concurrent.TimeUnit
-
 import connectors.ADRConnector
-import play.api.http.Status.ACCEPTED
-import javax.inject.Inject
 import metrics.Metrics
 import models.{ADRTransferException, ErsSummary}
 import org.joda.time.DateTime
 import play.api.Logging
+import play.api.http.Status.ACCEPTED
 import play.api.libs.json.JsObject
 import play.api.mvc.Request
 import repositories.{MetadataMongoRepository, Repositories}
@@ -33,6 +30,8 @@ import uk.gov.hmrc.http.HeaderCarrier
 import utils.LoggingAndRexceptions.{ADRExceptionEmitter, ErsLoggingAndAuditing}
 import utils.{ADRSubmission, SubmissionCommon}
 
+import java.util.concurrent.TimeUnit
+import javax.inject.Inject
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
@@ -118,7 +117,7 @@ class SubmissionService @Inject()(repositories: Repositories,
           metrics.sendToADR(System.currentTimeMillis() - startTime, TimeUnit.MILLISECONDS)
           metrics.successfulSendToADR()
           val correlationID: String = submissionCommon.getCorrelationID(response)
-          ersLoggingAndAuditing.handleSuccess(ersSummary, s"Data is sent successfully to ADR. CorrelationId : ${correlationID}" + "size of Fields in Json: " + adrData.fields.size)
+          ersLoggingAndAuditing.handleSuccess(ersSummary, s"Data is sent successfully to ADR. CorrelationId : $correlationID" + "size of Fields in Json: " + adrData.fields.size)
           auditEvents.sendToAdrEvent("ErsTransferToAdrResponseReceived", ersSummary, Some(correlationID))
           successStatus
         case _ =>
@@ -147,7 +146,7 @@ class SubmissionService @Inject()(repositories: Repositories,
 
   def updatePostsubmission(adrSubmissionStatus: Int, transferStatus: String, ersSummary: ErsSummary)
                           (implicit hc: HeaderCarrier): Future[Boolean] = {
-    ersLoggingAndAuditing.logWarn(s"Submission journey 8. start updating status ${transferStatus}: ${DateTime.now}", Some(ersSummary))
+    ersLoggingAndAuditing.logWarn(s"Submission journey 8. start updating status $transferStatus: ${DateTime.now}", Some(ersSummary))
     logger.info(s"Start updating status for ${ersSummary.metaData.schemeInfo.toString}")
     val startUpdateTime = System.currentTimeMillis()
 

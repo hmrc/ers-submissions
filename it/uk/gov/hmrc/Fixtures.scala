@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc
 
-import _root_.play.api.libs.json.{JsValue, Json, JsObject}
+import _root_.play.api.libs.json.{JsObject, JsValue, Json}
 import models._
 import org.joda.time.{DateTime, DateTimeZone}
 
@@ -45,7 +45,7 @@ object Fixtures {
   )
   val submissionsSchemeDataJson: JsObject = Json.toJson(submissionsSchemeData).as[JsObject]
 
-  val ersMetaData = ErsMetaData(
+  val ersMetaData: ErsMetaData = ErsMetaData(
     schemeInfo = schemeInfo,
     ipRef = "127.0.0.0",
     aoRef = Some("123PA12345678"),
