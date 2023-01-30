@@ -23,9 +23,10 @@ import repositories.helpers.BaseVerificationRepository
 import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
 
-import javax.inject.Inject
+import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
+@Singleton
 class MetaDataVerificationMongoRepository @Inject()(val applicationConfig: ApplicationConfig, mc: MongoComponent)(implicit ec: ExecutionContext)
   extends PlayMongoRepository[ErsSummary](
     mongoComponent = mc,

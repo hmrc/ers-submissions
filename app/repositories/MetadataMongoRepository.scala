@@ -27,9 +27,10 @@ import repositories.helpers.BsonDocumentHelper.BsonOps
 import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
 
-import javax.inject.Inject
+import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
+@Singleton
 class MetadataMongoRepository @Inject()(val applicationConfig: ApplicationConfig, mc: MongoComponent)
                                        (implicit ec: ExecutionContext)
   extends PlayMongoRepository[ErsSummary](
@@ -97,7 +98,7 @@ class MetadataMongoRepository @Inject()(val applicationConfig: ApplicationConfig
       )
     )
 
-    val selector = (Seq(baseSelector, schemeRefSelector, schemeSelector, dateRangeSelector).foldLeft(BsonDocument())(_ +:+ _))
+    val selector = Seq(baseSelector, schemeRefSelector, schemeSelector, dateRangeSelector).foldLeft(BsonDocument())(_ +:+ _)
 
     collection.findOneAndUpdate(
       filter = selector,
