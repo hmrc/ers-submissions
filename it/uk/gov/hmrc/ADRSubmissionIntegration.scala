@@ -28,10 +28,9 @@ import org.scalatest.BeforeAndAfterEach
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 import repositories.{MetadataMongoRepository, PresubmissionMongoRepository}
-import uk.gov.hmrc.play.http.ws.WSRequest
 
 class ADRSubmissionIntegration extends AnyWordSpecLike with Matchers
- with BeforeAndAfterEach with WSRequest with FakeErsStubService {
+ with BeforeAndAfterEach with FakeErsStubService {
 
   val app: Application = new GuiceApplicationBuilder().configure(Map("microservice.services.ers-stub.port" -> "19339")).build()
   def wsClient: WSClient = app.injector.instanceOf[WSClient]

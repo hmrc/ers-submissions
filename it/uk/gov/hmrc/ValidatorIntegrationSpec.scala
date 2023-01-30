@@ -27,10 +27,9 @@ import org.scalatest.BeforeAndAfterEach
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 import repositories.PresubmissionMongoRepository
-import uk.gov.hmrc.play.http.ws.WSRequest
 
 class ValidatorIntegrationSpec extends AnyWordSpecLike with Matchers
-  with BeforeAndAfterEach with WSRequest with FakeAuthService {
+  with BeforeAndAfterEach with FakeAuthService {
 
   lazy val app: Application = new GuiceApplicationBuilder().configure(Map("microservice.services.auth.port" -> "18500")).build()
 

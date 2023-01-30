@@ -25,13 +25,12 @@ import org.scalatest.BeforeAndAfterEach
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 import repositories.PresubmissionMongoRepository
-import uk.gov.hmrc.play.http.ws.WSRequest
 
 import java.util.concurrent.TimeUnit
 import scala.collection.mutable.ListBuffer
 
 class PresubmissionMongoRepositorySpec extends AnyWordSpecLike with Matchers
-  with BeforeAndAfterEach with WSRequest with FakeAuthService {
+  with BeforeAndAfterEach {
 
   lazy val app: Application = new GuiceApplicationBuilder().configure(
     Map(
