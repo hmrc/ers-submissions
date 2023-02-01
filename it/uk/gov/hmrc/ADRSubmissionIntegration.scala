@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 HM Revenue & Customs
+ * Copyright 2023 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,23 +16,21 @@
 
 package uk.gov.hmrc
 
+import _root_.play.api.Application
+import _root_.play.api.inject.guice.GuiceApplicationBuilder
 import _root_.play.api.libs.json.JsObject
+import _root_.play.api.libs.ws.WSClient
+import _root_.play.api.mvc.Result
+import _root_.play.api.test.FakeRequest
+import _root_.play.api.test.Helpers._
+import controllers.SubmissionController
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 import repositories.{MetadataMongoRepository, PresubmissionMongoRepository}
-import controllers.SubmissionController
-
-import _root_.play.api.test.Helpers._
-import _root_.play.api.Application
-import _root_.play.api.inject.guice.GuiceApplicationBuilder
-import _root_.play.api.libs.ws.WSClient
-import _root_.play.api.test.FakeRequest
-import _root_.play.api.mvc.Result
-import uk.gov.hmrc.play.http.ws.WSRequest
 
 class ADRSubmissionIntegration extends AnyWordSpecLike with Matchers
- with BeforeAndAfterEach with WSRequest with FakeErsStubService {
+ with BeforeAndAfterEach with FakeErsStubService {
 
   val app: Application = new GuiceApplicationBuilder().configure(Map("microservice.services.ers-stub.port" -> "19339")).build()
   def wsClient: WSClient = app.injector.instanceOf[WSClient]

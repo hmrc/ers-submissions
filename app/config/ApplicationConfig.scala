@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 HM Revenue & Customs
+ * Copyright 2023 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ class ApplicationConfig @Inject()(serviceConfig: ServicesConfig) {
 
 
   lazy val presubmissionCollection: String = serviceConfig.getString("settings.presubmission-collection")
+  lazy val presubmissionCollectionTTL: Int = serviceConfig.getInt("settings.presubmission-collection-ttl-days")
   lazy val metadataCollection: String = serviceConfig.getString("settings.metadata-collection")
   lazy val uploadCsvSizeLimit: Int = serviceConfig.getInt("csv.uploadSizeLimit")
   lazy val maxGroupSize: Int = serviceConfig.getInt("csv.maxGroupSize")

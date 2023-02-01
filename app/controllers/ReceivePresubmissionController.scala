@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 HM Revenue & Customs
+ * Copyright 2023 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,7 +54,6 @@ class ReceivePresubmissionController @Inject()(presubmissionService: Presubmissi
 
   def receivePresubmissionJson(empRef: String): Action[JsValue] =
     authorisedAction(empRef).async(parse.json(maxLength = 1024 * 10000)) { implicit request =>
-
       validationService.validateSchemeData(request.body.as[JsObject]) match {
         case schemeData: Some[SchemeData] => storePresubmission(schemeData.get)
         case _ =>
@@ -64,7 +63,6 @@ class ReceivePresubmissionController @Inject()(presubmissionService: Presubmissi
 
   def receivePresubmissionJsonV2(empRef: String): Action[JsValue] =
     authorisedAction(empRef).async(parse.json) { implicit request =>
-
       validationService.validateSubmissionsSchemeData(request.body.as[JsObject]) match {
         case submissionsSchemeData: Some[SubmissionsSchemeData] =>
           storePresubmission(submissionsSchemeData.get)

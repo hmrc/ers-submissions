@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 HM Revenue & Customs
+ * Copyright 2023 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,11 +17,12 @@
 package services.query
 
 import config.ApplicationConfig
+
 import javax.inject.Inject
-import repositories.{MetaDataVerificationMongoRepository, Repositories}
 import models.ERSMetaDataResults
 import org.joda.time.DateTime
 import play.api.Logging
+import repositories.{MetaDataVerificationMongoRepository, Repositories}
 
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -38,21 +39,21 @@ class MetaDataVerificationService @Inject()(applicationConfig: ApplicationConfig
 
   def getCountBySchemeTypeWithInDateRange: Future[Long] = {
     metaDataVerificationRepository.getCountBySchemeTypeWithInDateRange(applicationConfig.ersQuery).map{ total=>
-      logger.warn(s"The total number of ${applicationConfig.ersQuery.schemeType} Scheme Type files available in the 'ers-metadata' is => ${total}")
+      logger.warn(s"The total number of ${applicationConfig.ersQuery.schemeType} Scheme Type files available in the 'ers-metadata' is => $total")
       total
     }
   }
 
   def getBundleRefAndSchemeRefBySchemeTypeWithInDateRange: Future[Seq[(String,String,String)]] = {
     metaDataVerificationRepository.getBundleRefAndSchemeRefBySchemeTypeWithInDateRange(applicationConfig.ersQuery).map{ schemeRefsList =>
-        logger.warn(s"The total (BundleRefs,SchemeRefs,TransferStatus) of ${applicationConfig.ersQuery.schemeType} Scheme Type available in the 'ers-metadata' are => ${schemeRefsList}")
+        logger.warn(s"The total (BundleRefs,SchemeRefs,TransferStatus) of ${applicationConfig.ersQuery.schemeType} Scheme Type available in the 'ers-metadata' are => $schemeRefsList")
         schemeRefsList
       }
   }
 
   def getSchemeRefsInfo: Future[Seq[ERSMetaDataResults]] = {
     metaDataVerificationRepository.getSchemeRefsInfo(applicationConfig.ersQuery).map{ ersMetaDataResults =>
-      logger.warn(s"(BundleRefs,SchemeRefs,TransferStatus,FileType,Timestamp, TaxYear) from 'ers-metadata' => ${ersMetaDataResults}")
+      logger.warn(s"(BundleRefs,SchemeRefs,TransferStatus,FileType,Timestamp, TaxYear) from 'ers-metadata' => $ersMetaDataResults")
       ersMetaDataResults
     }
   }
