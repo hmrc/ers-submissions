@@ -11,7 +11,7 @@ object AppDependencies {
   private val nettyTransportVersion = "4.1.79.Final"
   private val mongoVersion = "0.68.0"
 
-  val compile = Seq(
+  val compile: Seq[ModuleID] = Seq(
     ws,
     "uk.gov.hmrc"        %% "bootstrap-backend-play-28"          % "6.4.0",
     "uk.gov.hmrc"        %% "domain"                             % "8.1.0-play-28",
@@ -26,6 +26,7 @@ object AppDependencies {
     "com.typesafe.akka"  %% "akka-actor-typed"                   % akkaVersion,
     "com.typesafe.akka"  %% "akka-serialization-jackson"         % akkaVersion,
     "com.typesafe.akka"  %% "akka-http-spray-json"               % "10.2.9",
+    "com.enragedginger"  %% "akka-quartz-scheduler"              % "1.9.3-akka-2.6.x",
     compilerPlugin("com.github.ghik" % "silencer-plugin" % silencerVersion cross CrossVersion.full),
     "com.github.ghik" % "silencer-lib" % silencerVersion % Provided cross CrossVersion.full
   )
@@ -44,7 +45,7 @@ object AppDependencies {
 
   object Test {
     def apply(): Seq[ModuleID] = new TestDependencies {
-      override lazy val test = Seq(
+      override lazy val test: Seq[ModuleID] = Seq(
         "uk.gov.hmrc.mongo"      %% "hmrc-mongo-test-play-28" % mongoVersion             % scope,
         "org.scalatest"          %% "scalatest"               % scalaTestVersion         % scope,
         "org.scalatestplus.play" %% "scalatestplus-play"      % scalaTestPlusPlayVersion % scope,
@@ -63,7 +64,7 @@ object AppDependencies {
 
       override lazy val scope: String = "it"
 
-      override lazy val test = Seq(
+      override lazy val test: Seq[ModuleID] = Seq(
         "uk.gov.hmrc.mongo"      %% "hmrc-mongo-test-play-28"      % mongoVersion             % scope,
         "com.typesafe.play"      %% "play-test"                    % PlayVersion.current      % scope,
         "org.scalatest"          %% "scalatest"                    % scalaTestVersion         % scope,
@@ -74,7 +75,8 @@ object AppDependencies {
         "org.jsoup"              %  "jsoup"                        % jsoupVersion             % scope,
         "io.netty"               %  "netty-transport-native-epoll" % nettyTransportVersion    % scope,
         "com.github.tomakehurst" %  "wiremock-jre8"                % "2.33.2"                 % scope,
-        "com.fasterxml.jackson.module" %% "jackson-module-scala"   % "2.13.3"                 % scope
+        "com.fasterxml.jackson.module" %% "jackson-module-scala"   % "2.13.3"                 % scope,
+        "com.typesafe.akka"      %% "akka-testkit"            % akkaVersion              % scope
       )
     }.test
   }

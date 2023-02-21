@@ -24,7 +24,6 @@ import scala.util.Try
 
 class ApplicationConfig @Inject()(serviceConfig: ServicesConfig) {
 
-
   lazy val presubmissionCollection: String = serviceConfig.getString("settings.presubmission-collection")
   lazy val presubmissionCollectionTTL: Int = serviceConfig.getInt("settings.presubmission-collection-ttl-days")
   lazy val metadataCollection: String = serviceConfig.getString("settings.metadata-collection")

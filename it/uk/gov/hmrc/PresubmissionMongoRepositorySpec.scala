@@ -17,25 +17,33 @@
 package uk.gov.hmrc
 
 import _root_.play.api.Application
+import _root_.play.api.inject.bind
 import _root_.play.api.inject.guice.GuiceApplicationBuilder
 import _root_.play.api.libs.json.{JsObject, Json}
 import _root_.play.api.libs.ws.WSClient
 import _root_.play.api.test.Helpers._
-import org.scalatest.BeforeAndAfterEach
+import models.UpdateRepositoryError
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
+import org.scalatest.{BeforeAndAfterEach, EitherValues, Inside}
 import repositories.PresubmissionMongoRepository
+import scheduler.UpdateCreatedAtFieldsJob
+import services.DocumentUpdateService
 
 import java.util.concurrent.TimeUnit
 import scala.collection.mutable.ListBuffer
 
 class PresubmissionMongoRepositorySpec extends AnyWordSpecLike with Matchers
-  with BeforeAndAfterEach {
+  with BeforeAndAfterEach with EitherValues with Inside {
 
-  lazy val app: Application = new GuiceApplicationBuilder().configure(
+  lazy val app: Application = new GuiceApplicationBuilder()
+    .overrides(
+    bind[DocumentUpdateService].to[FakeDocumentUpdateService],
+    bind[UpdateCreatedAtFieldsJob].to[FakeUpdateCreatedAtFieldsJob]
+  ).configure(
     Map(
       "microservice.services.auth.port" -> "18500",
-    "settings.presubmission-collection-ttl" -> 365)
+      "settings.presubmission-collection-ttl-days" -> 365)
   ).build()
 
   def wsClient: WSClient = app.injector.instanceOf[WSClient]
@@ -93,6 +101,43 @@ class PresubmissionMongoRepositorySpec extends AnyWordSpecLike with Matchers
       await(presubmissionRepository.count(Fixtures.schemeData.schemeInfo)) shouldBe 1
       await(presubmissionRepository.removeJson(Fixtures.schemeData.schemeInfo)) shouldBe true
       await(presubmissionRepository.count(Fixtures.schemeData.schemeInfo)) shouldBe 0
+    }
+  }
+
+  "getDocumentIdsWithoutCreatedAtField" should {
+    "return list of document ids without createdAt field" in {
+      await(presubmissionRepository.storeJson(Fixtures.schemeData)) //document with createdAt
+
+      val testDocumentId = await(
+        presubmissionRepository.collection.insertOne(Json.toJsObject(Fixtures.schemeData)).toFuture()
+      ).getInsertedId.asObjectId().getValue //document without createdAt
+
+      await(presubmissionRepository.getDocumentIdsWithoutCreatedAtField(2)).head shouldBe testDocumentId
+    }
+
+    "return empty list of document ids if createdAt exists for every record" in {
+      await(presubmissionRepository.storeJson(Fixtures.schemeData)) //document with createdAt
+      await(presubmissionRepository.storeJson(Fixtures.schemeData)) //document with createdAt
+
+      await(presubmissionRepository.getDocumentIdsWithoutCreatedAtField(2)) shouldBe Seq.empty
+    }
+  }
+
+  "addCreatedAtField" should {
+    "add createdAt field to documents without this field" in {
+      await(presubmissionRepository.storeJson(Fixtures.schemeData)) //document with createdAt
+
+      val testDocumentId = await(
+        presubmissionRepository.collection.insertOne(Json.toJsObject(Fixtures.schemeData)).toFuture()
+      ).getInsertedId.asObjectId().getValue //document without createdAt
+
+      await(presubmissionRepository.addCreatedAtField(Seq(testDocumentId))).value.getModifiedCount shouldBe 1
+    }
+
+    "return an error if called with an empty list of ids" in {
+      inside(await(presubmissionRepository.addCreatedAtField(Seq.empty))) {
+        case Left(value) => value shouldBe UpdateRepositoryError("requirement failed: list of IDs for update cannot be empty")
+      }
     }
   }
 }
