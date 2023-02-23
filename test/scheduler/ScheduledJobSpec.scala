@@ -27,12 +27,12 @@ import play.api.Configuration
 import play.api.inject.ApplicationLifecycle
 import scheduler.SchedulingActor.UpdateDocumentsClass
 import services.DocumentUpdateService
+
 class ScheduledJobSpec extends AnyWordSpecLike with Matchers with MockitoSugar {
   val jobNameTest = "testJobName"
   val mockActorSystem: ActorSystem = mock[ActorSystem]
   val mockService: DocumentUpdateService = mock[DocumentUpdateService]
   val mockApplicationLifecycle: ApplicationLifecycle = mock[ApplicationLifecycle]
-
   val mockQuartzSchedulerExtension: QuartzSchedulerExtension = mock[QuartzSchedulerExtension]
 
   class Setup(cronString: String, enabled: Boolean = false) {
@@ -60,10 +60,6 @@ class ScheduledJobSpec extends AnyWordSpecLike with Matchers with MockitoSugar {
     job.expression shouldBe "0 0/10 0-23 ? * * *"
   }
 
-  "expression should read from string correctly with underscores with a different value we will also be using" in new Setup("0/59_0_0-23_?_*_*_*") {
-    job.expression shouldBe "0/59 0 0-23 ? * * *"
-  }
-
   "isValid should return true if valid cron config returned" in new Setup("0_0/2_0-23_?_*_*_*") {
     job.isValid shouldBe true
   }
@@ -76,6 +72,7 @@ class ScheduledJobSpec extends AnyWordSpecLike with Matchers with MockitoSugar {
     job.isValid shouldBe false
   }
 
+  //run job every 10 seconds every hour
   "expression once converted should convert to a cron expression success" in new Setup("0/10_0_0-23_?_*_*_*") {
     val parsed = new CronExpression(job.expression)
     parsed.getCronExpression shouldBe "0/10 0 0-23 ? * * *"
@@ -157,8 +154,8 @@ class ScheduledJobSpec extends AnyWordSpecLike with Matchers with MockitoSugar {
 
   "scheduler NOT called if not enabled and cron config invalid" in new Setup("testInvalidCronString", false) {
     job.schedule shouldBe false
-
   }
+
   "scheduler NOT called if enabled and cron config invalid" in new Setup("testInvalidCronString", true) {
     job.schedule shouldBe false
   }

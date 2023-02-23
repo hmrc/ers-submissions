@@ -29,7 +29,7 @@ lazy val microservice = Project(appName, file("."))
   .settings(defaultSettings(): _*)
   .settings(
     targetJvm := "jvm-1.8",
-    scalaVersion := "2.12.16",
+    scalaVersion := "2.12.17",
     libraryDependencies ++= AppDependencies(),
     routesGenerator := InjectedRoutesGenerator
   )
@@ -42,3 +42,6 @@ lazy val microservice = Project(appName, file("."))
 scalacOptions ++= Seq(
   "-P:silencer:pathFilters=views;routes"
 )
+
+addCommandAlias("scalastyleAll", "all scalastyle test:scalastyle")
+addCommandAlias("testAll", "all test it:test")

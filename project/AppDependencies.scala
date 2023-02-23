@@ -4,19 +4,19 @@ object AppDependencies {
   import play.core.PlayVersion
   import play.sbt.PlayImport._
 
-  private val silencerVersion = "1.7.9"
-  private val akkaVersion = "2.6.19"
+  private val silencerVersion = "1.7.12"
+  private val akkaVersion = "2.6.20"
 
   private val alpakkaVersion = "3.0.4"
-  private val nettyTransportVersion = "4.1.79.Final"
-  private val mongoVersion = "0.68.0"
+  private val nettyTransportVersion = "4.1.89.Final"
+  private val mongoVersion = "0.74.0"
 
   val compile: Seq[ModuleID] = Seq(
     ws,
-    "uk.gov.hmrc"        %% "bootstrap-backend-play-28"          % "6.4.0",
+    "uk.gov.hmrc"        %% "bootstrap-backend-play-28"          % "7.13.0",
     "uk.gov.hmrc"        %% "domain"                             % "8.1.0-play-28",
     "uk.gov.hmrc.mongo"  %% "hmrc-mongo-play-28"                 % mongoVersion,
-    "com.typesafe.play"  %% "play-json-joda"                     % "2.9.2",
+    "com.typesafe.play"  %% "play-json-joda"                     % "2.9.4",
     "io.netty"           %  "netty-transport-native-epoll"       % nettyTransportVersion,
     "com.lightbend.akka" %% "akka-stream-alpakka-csv"            % alpakkaVersion,
     "com.lightbend.akka" %% "akka-stream-alpakka-json-streaming" % alpakkaVersion,
@@ -25,7 +25,7 @@ object AppDependencies {
     "com.typesafe.akka"  %% "akka-protobuf"                      % akkaVersion,
     "com.typesafe.akka"  %% "akka-actor-typed"                   % akkaVersion,
     "com.typesafe.akka"  %% "akka-serialization-jackson"         % akkaVersion,
-    "com.typesafe.akka"  %% "akka-http-spray-json"               % "10.2.9",
+    "com.typesafe.akka"  %% "akka-http-spray-json"               % "10.2.10",
     "com.enragedginger"  %% "akka-quartz-scheduler"              % "1.9.3-akka-2.6.x",
     compilerPlugin("com.github.ghik" % "silencer-plugin" % silencerVersion cross CrossVersion.full),
     "com.github.ghik" % "silencer-lib" % silencerVersion % Provided cross CrossVersion.full
@@ -37,9 +37,9 @@ object AppDependencies {
   }
 
   private val pegdownVersion = "1.6.0"
-  private val jsoupVersion = "1.15.2"
+  private val jsoupVersion = "1.15.4"
   private val scalaTestPlusPlayVersion = "5.1.0"
-  private val scalaTestVersion = "3.2.12"
+  private val scalaTestVersion = "3.2.15"
   private val mockitoCoreVersion = "4.6.1"
   private val flexmarkAllVersion = "0.62.2"
 
@@ -75,8 +75,7 @@ object AppDependencies {
         "org.jsoup"              %  "jsoup"                        % jsoupVersion             % scope,
         "io.netty"               %  "netty-transport-native-epoll" % nettyTransportVersion    % scope,
         "com.github.tomakehurst" %  "wiremock-jre8"                % "2.33.2"                 % scope,
-        "com.fasterxml.jackson.module" %% "jackson-module-scala"   % "2.13.3"                 % scope,
-        "com.typesafe.akka"      %% "akka-testkit"            % akkaVersion              % scope
+        "com.fasterxml.jackson.module" %% "jackson-module-scala"   % "2.13.5"                 % scope
       )
     }.test
   }

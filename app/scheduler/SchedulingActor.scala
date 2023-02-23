@@ -19,6 +19,7 @@ package scheduler
 import akka.actor.{Actor, ActorLogging, Props}
 import scheduler.SchedulingActor._
 import services.DocumentUpdateService
+
 class SchedulingActor extends Actor with ActorLogging {
   import context.dispatcher
 

@@ -34,7 +34,7 @@ trait CorrelationIdHelper {
                 HEADER_X_CORRELATION_ID,
                 UUID
                   .randomUUID()
-                  .toString()
+                  .toString
               ))
           case _ =>
             hcFromRequest
