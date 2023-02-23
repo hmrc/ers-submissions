@@ -29,7 +29,7 @@ class UpdateCreatedAtFieldsJobImpl @Inject()(
                                               val documentUpdateService: DocumentUpdateService
                                             ) extends UpdateCreatedAtFieldsJob {
 
-  override def jobName: String = "UpdateCreatedAtFieldJob"
+  override def jobName: String = "update-created-at-field-job"
   val actorSystem: ActorSystem = ActorSystem(jobName)
   val scheduledMessage: UpdateDocumentsClass = UpdateDocumentsClass(documentUpdateService)
 

@@ -33,9 +33,9 @@ class DefaultDocumentUpdateService @Inject()(repository: PresubmissionMongoRepos
                                              servicesConfig: ServicesConfig
                                             )(implicit ec: ExecutionContext) extends DocumentUpdateService {
 
-  override val jobName: String = "UpdateCreatedAtFieldJob"
-  private val updateLimit: Int = servicesConfig.getInt("schedules.UpdateCreatedAtFieldJob.updateLimit")
-  private lazy val lockoutTimeout: Int = servicesConfig.getInt("schedules.UpdateCreatedAtFieldJob.lockTimeout")
+  override val jobName: String = "update-created-at-field-job"
+  private val updateLimit: Int = servicesConfig.getInt("schedules.update-created-at-field-job.updateLimit")
+  private lazy val lockoutTimeout: Int = servicesConfig.getInt("schedules.update-created-at-field-job.lockTimeout")
   private val lockService: LockService = LockService(lockRepositoryProvider.repo, lockId = "update-created-at-job-lock",
     ttl = Duration.create(lockoutTimeout, SECONDS))
 

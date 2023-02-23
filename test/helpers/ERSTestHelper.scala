@@ -68,7 +68,7 @@ trait ERSTestHelper extends AnyWordSpecLike with Matchers with OptionValues with
 }
 
 class FakeDocumentUpdateService extends DocumentUpdateService {
-  override val jobName: String = "UpdateCreatedAtFieldJob"
+  override val jobName: String = "update-created-at-field-job"
 
   override def invoke(implicit ec: ExecutionContext): Future[Long] = Future.successful(2)
 }
@@ -79,7 +79,7 @@ class FakeUpdateCreatedAtFieldsJob @Inject()(
                                               val applicationLifecycle: ApplicationLifecycle
 ) extends UpdateCreatedAtFieldsJob {
 
-  override def jobName: String = "UpdateCreatedAtFieldJob"
+  override def jobName: String = "update-created-at-field-job"
   override val scheduledMessage: SchedulingActor.ScheduledMessage[_] = UpdateDocumentsClass(service)
   override val actorSystem: ActorSystem = ActorSystem(jobName)
 }
