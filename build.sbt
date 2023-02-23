@@ -29,7 +29,7 @@ lazy val microservice = Project(appName, file("."))
   .settings(defaultSettings(): _*)
   .settings(
     targetJvm := "jvm-1.8",
-    scalaVersion := "2.12.17",
+    scalaVersion := "2.12.16",
     libraryDependencies ++= AppDependencies(),
     routesGenerator := InjectedRoutesGenerator
   )

@@ -26,15 +26,15 @@ import uk.gov.hmrc.http.HeaderCarrier
 import utils.LoggingAndRexceptions.{ErsLoggingAndAuditing, ResubmissionExceptionEmitter}
 
 import javax.inject.Inject
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 class ResubPresubmissionService @Inject()(metadataRepository: MetadataMongoRepository,
                                           val schedulerLoggingAndAuditing: ErsLoggingAndAuditing,
                                           submissionCommonService: SubmissionService,
                                           val applicationConfig: ApplicationConfig,
                                           auditEvents: AuditEvents,
-                                          resubmissionExceptionEmiter: ResubmissionExceptionEmitter) extends SchedulerConfig {
+                                          resubmissionExceptionEmiter: ResubmissionExceptionEmitter)
+                                         (implicit ec: ExecutionContext) extends SchedulerConfig {
 
   def processFailedSubmissions()(implicit request: Request[_], hc: HeaderCarrier): Future[Option[Boolean]] = {
     metadataRepository.findAndUpdateByStatus(

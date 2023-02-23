@@ -32,8 +32,7 @@ import utils.{ADRSubmission, SubmissionCommon}
 
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 class SubmissionService @Inject()(repositories: Repositories,
                                   adrConnector: ADRConnector,
@@ -42,7 +41,7 @@ class SubmissionService @Inject()(repositories: Repositories,
                                   ersLoggingAndAuditing: ErsLoggingAndAuditing,
                                   adrExceptionEmitter: ADRExceptionEmitter,
                                   auditEvents: AuditEvents,
-                                  metrics: Metrics) extends Logging {
+                                  metrics: Metrics)(implicit ec: ExecutionContext) extends Logging {
 
   lazy val metadataRepository: MetadataMongoRepository = repositories.metadataRepository
 

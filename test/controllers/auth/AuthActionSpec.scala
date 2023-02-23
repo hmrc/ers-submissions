@@ -44,7 +44,7 @@ class AuthActionSpec extends ERSTestHelper with BeforeAndAfterEach {
   def authAction(empRef: String): AuthAction = new AuthAction {
     override val optionalEmpRef: Option[EmpRef] = Try(EmpRef.fromIdentifiers(empRef)).toOption
     override def authConnector: AuthConnector = mockAuthConnector
-    override implicit val executionContext: ExecutionContext = ExecutionContext.global
+    override implicit val executionContext: ExecutionContext = ec
     override def parser: BodyParser[AnyContent] = mockBodyParser.default
   }
 

@@ -24,10 +24,10 @@ import org.joda.time.DateTime
 import play.api.Logging
 import repositories.{MetaDataVerificationMongoRepository, Repositories}
 
-import scala.concurrent.Future
-import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.{ExecutionContext, Future}
 
-class MetaDataVerificationService @Inject()(applicationConfig: ApplicationConfig, repositories: Repositories) extends Logging {
+class MetaDataVerificationService @Inject()(applicationConfig: ApplicationConfig,
+                                            repositories: Repositories)(implicit ec: ExecutionContext) extends Logging {
   lazy val metaDataVerificationRepository: MetaDataVerificationMongoRepository = repositories.metaDataVerificationRepository
 
   def start: Future[Seq[ERSMetaDataResults]] = {

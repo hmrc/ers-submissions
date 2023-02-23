@@ -6,6 +6,7 @@ object AppDependencies {
 
   private val silencerVersion = "1.7.12"
   private val akkaVersion = "2.6.20"
+  private val bootstrapVersion = "7.13.0"
 
   private val alpakkaVersion = "3.0.4"
   private val nettyTransportVersion = "4.1.89.Final"
@@ -13,7 +14,7 @@ object AppDependencies {
 
   val compile: Seq[ModuleID] = Seq(
     ws,
-    "uk.gov.hmrc"        %% "bootstrap-backend-play-28"          % "7.13.0",
+    "uk.gov.hmrc"        %% "bootstrap-backend-play-28"          % bootstrapVersion,
     "uk.gov.hmrc"        %% "domain"                             % "8.1.0-play-28",
     "uk.gov.hmrc.mongo"  %% "hmrc-mongo-play-28"                 % mongoVersion,
     "com.typesafe.play"  %% "play-json-joda"                     % "2.9.4",
@@ -46,6 +47,7 @@ object AppDependencies {
   object Test {
     def apply(): Seq[ModuleID] = new TestDependencies {
       override lazy val test: Seq[ModuleID] = Seq(
+        "uk.gov.hmrc"            %% "bootstrap-test-play-28"  % bootstrapVersion         % scope,
         "uk.gov.hmrc.mongo"      %% "hmrc-mongo-test-play-28" % mongoVersion             % scope,
         "org.scalatest"          %% "scalatest"               % scalaTestVersion         % scope,
         "org.scalatestplus.play" %% "scalatestplus-play"      % scalaTestPlusPlayVersion % scope,
@@ -65,6 +67,7 @@ object AppDependencies {
       override lazy val scope: String = "it"
 
       override lazy val test: Seq[ModuleID] = Seq(
+        "uk.gov.hmrc"            %% "bootstrap-test-play-28"       % bootstrapVersion         % scope,
         "uk.gov.hmrc.mongo"      %% "hmrc-mongo-test-play-28"      % mongoVersion             % scope,
         "com.typesafe.play"      %% "play-test"                    % PlayVersion.current      % scope,
         "org.scalatest"          %% "scalatest"                    % scalaTestVersion         % scope,

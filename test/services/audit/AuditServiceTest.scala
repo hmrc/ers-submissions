@@ -16,6 +16,7 @@
 
 package services
 
+import helpers.ERSTestHelper
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.verify
 import org.mockito.internal.verification.VerificationModeFactory
@@ -29,7 +30,9 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 import uk.gov.hmrc.play.audit.model.DataEvent
 
-class AuditServiceTest extends AnyWordSpecLike with Matchers with MockitoSugar {
+import scala.concurrent.ExecutionContext
+
+class AuditServiceTest extends ERSTestHelper {
 
   implicit val request: FakeRequest[AnyContent] = FakeRequest()
   implicit val hc: HeaderCarrier = new HeaderCarrier

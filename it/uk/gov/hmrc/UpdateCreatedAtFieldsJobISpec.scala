@@ -34,7 +34,7 @@ import org.scalatestplus.play.guice.GuiceOneServerPerSuite
 import repositories.PresubmissionMongoRepository
 import scheduler.{ScheduledJob, UpdateCreatedAtFieldsJob}
 
-import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.ExecutionContext
 
 class UpdateCreatedAtFieldsJobISpec extends AnyWordSpecLike
   with Matchers
@@ -60,6 +60,8 @@ class UpdateCreatedAtFieldsJobISpec extends AnyWordSpecLike
   override implicit lazy val app: Application = new GuiceApplicationBuilder()
     .configure()
     .build()
+
+  implicit val ec: ExecutionContext = app.injector.instanceOf[ExecutionContext]
 
   class Setup {
     val repository: PresubmissionMongoRepository = app.injector.instanceOf[PresubmissionMongoRepository]

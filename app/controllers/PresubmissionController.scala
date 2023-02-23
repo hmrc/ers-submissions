@@ -17,7 +17,6 @@
 package controllers
 
 import java.util.concurrent.TimeUnit
-
 import javax.inject.Inject
 import metrics.Metrics
 import models.SchemeInfo
@@ -28,14 +27,13 @@ import services.{PresubmissionService, ValidationService}
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import utils.LoggingAndRexceptions.ErsLoggingAndAuditing
 
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 class PresubmissionController @Inject()(presubmissionService: PresubmissionService,
                                         validationService: ValidationService,
                                         ersLoggingAndAuditing: ErsLoggingAndAuditing,
                                         metrics: Metrics,
-                                        cc: ControllerComponents) extends BackendController(cc) with Logging{
+                                        cc: ControllerComponents)(implicit ec: ExecutionContext) extends BackendController(cc) with Logging{
 
 
   def removePresubmissionJson(): Action[JsObject] = Action.async(parse.json[JsObject]) { implicit request =>
