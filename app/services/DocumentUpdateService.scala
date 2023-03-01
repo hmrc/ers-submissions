@@ -17,7 +17,7 @@
 package services
 
 import com.google.inject.Inject
-import models.{FailedToLockRepositoryForUpdate, RepositoryUpdateMessage, UpdateRequestAcknowledged, UpdateRequestAcknowledgedNothingToUpdate}
+import models.{FailedToLockRepositoryForUpdate, RepositoryUpdateMessage, UpdateRequestAcknowledged, UpdateRequestNothingToUpdate}
 import play.api.Logging
 import repositories.{LockRepositoryProvider, PresubmissionMongoRepository}
 import scheduler.ScheduledService
@@ -34,8 +34,8 @@ class DefaultDocumentUpdateService @Inject()(repository: PresubmissionMongoRepos
                                             )(implicit ec: ExecutionContext) extends DocumentUpdateService {
 
   override val jobName: String = "update-created-at-field-job"
-  private val updateLimit: Int = servicesConfig.getInt("schedules.update-created-at-field-job.updateLimit")
-  private lazy val lockoutTimeout: Int = servicesConfig.getInt("schedules.update-created-at-field-job.lockTimeout")
+  private val updateLimit: Int = servicesConfig.getInt(s"schedules.$jobName.updateLimit")
+  private lazy val lockoutTimeout: Int = servicesConfig.getInt(s"schedules.$jobName.lockTimeout")
   private val lockService: LockService = LockService(lockRepositoryProvider.repo, lockId = "update-created-at-job-lock",
     ttl = Duration.create(lockoutTimeout, SECONDS))
 
@@ -50,7 +50,7 @@ class DefaultDocumentUpdateService @Inject()(repository: PresubmissionMongoRepos
 
         }
       } else {
-        Future.successful((0, UpdateRequestAcknowledgedNothingToUpdate))
+        Future.successful((0, UpdateRequestNothingToUpdate))
       }
     }
   }

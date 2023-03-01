@@ -24,7 +24,7 @@ case object UpdateRequestNotAcknowledged extends RepositoryUpdateMessage {
   override val message: String = "Request to update presubmission repository was not acknowledged. Data was not updated."
 }
 
-case object UpdateRequestAcknowledgedNothingToUpdate extends RepositoryUpdateMessage {
+case object UpdateRequestNothingToUpdate extends RepositoryUpdateMessage {
   override val message: String = "There is no more documents to update. Consider disabling scheduler."
 }
 

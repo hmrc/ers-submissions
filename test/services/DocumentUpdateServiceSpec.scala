@@ -18,7 +18,7 @@ package services
 
 import com.mongodb.client.result.UpdateResult
 import helpers.ERSTestHelper
-import models.{UpdateRequestAcknowledged, UpdateRequestAcknowledgedNothingToUpdate, UpdateRequestNotAcknowledged}
+import models.{UpdateRequestAcknowledged, UpdateRequestNothingToUpdate, UpdateRequestNotAcknowledged}
 import org.bson.types.ObjectId
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.{reset, times, verify, when}
@@ -81,7 +81,7 @@ class DocumentUpdateServiceSpec extends ERSTestHelper with BeforeAndAfterEach {
         val (modifiedDocuments, updateMessage) = result(documentUpdateService.updateMissingCreatedAtFields(), Duration.Inf)
 
         modifiedDocuments shouldBe 0
-        updateMessage shouldBe UpdateRequestAcknowledgedNothingToUpdate
+        updateMessage shouldBe UpdateRequestNothingToUpdate
 
         verify(mockPresubmissionMongo, times(1)).getDocumentIdsWithoutCreatedAtField(any[Int])
         verify(mockPresubmissionMongo, times(0)).addCreatedAtField(any[Seq[ObjectId]])
