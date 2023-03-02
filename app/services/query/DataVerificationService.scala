@@ -23,10 +23,10 @@ import play.api.Logging
 import repositories.{DataVerificationMongoRepository, Repositories}
 
 import javax.inject.Inject
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
-class DataVerificationService @Inject()(applicationConfig: ApplicationConfig, repositories: Repositories) extends Logging {
+class DataVerificationService @Inject()(applicationConfig: ApplicationConfig,
+                                        repositories: Repositories)(implicit ec: ExecutionContext) extends Logging {
   lazy val dataVerificationRepository: DataVerificationMongoRepository = repositories.dataVerificationRepository
 
   def start: Future[Seq[ERSDataResults]] = {

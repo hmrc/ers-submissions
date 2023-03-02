@@ -16,12 +16,21 @@
 
 package uk.gov.hmrc
 
+import _root_.play.api.Configuration
+import _root_.play.api.inject.ApplicationLifecycle
+import akka.actor.ActorSystem
 import com.github.tomakehurst.wiremock.WireMockServer
 import com.github.tomakehurst.wiremock.client.WireMock
 import com.github.tomakehurst.wiremock.client.WireMock._
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration._
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.{BeforeAndAfterAll, Suite}
+import scheduler.SchedulingActor.UpdateDocumentsClass
+import scheduler.{SchedulingActor, UpdateCreatedAtFieldsJob}
+import services.DocumentUpdateService
+
+import javax.inject.Inject
+import scala.concurrent.{ExecutionContext, Future}
 
 trait FakeAuthService extends BeforeAndAfterAll with ScalaFutures {
   this: Suite =>
@@ -35,13 +44,13 @@ trait FakeAuthService extends BeforeAndAfterAll with ScalaFutures {
 
   lazy val downloadServer = new WireMockServer(wireMockConfig().port(19000))
 
-  override def beforeAll() = {
+  override def beforeAll(): Unit = {
     super.beforeAll()
     authServer.start()
     downloadServer.start()
   }
 
-  override def afterAll() = {
+  override def afterAll(): Unit = {
     super.afterAll()
     authServer.stop()
     downloadServer.stop()
@@ -73,4 +82,20 @@ trait FakeErsStubService extends BeforeAndAfterAll with ScalaFutures {
   }
 
   stubServer.stubFor(WireMock.post(urlMatching("/.*")).willReturn(WireMock.aResponse().withStatus(202)))
+}
+
+class FakeDocumentUpdateService extends DocumentUpdateService {
+  override val jobName: String = "update-created-at-field-job"
+
+  override def invoke(implicit ec: ExecutionContext): Future[Boolean] = Future.successful(true)
+}
+
+class FakeUpdateCreatedAtFieldsJob @Inject()(
+                                              val config: Configuration,
+                                              val service: FakeDocumentUpdateService,
+                                              val applicationLifecycle: ApplicationLifecycle
+                                            ) extends UpdateCreatedAtFieldsJob {
+  override def jobName: String = "update-created-at-field-job"
+  override val scheduledMessage: SchedulingActor.ScheduledMessage[_] = UpdateDocumentsClass(service)
+  override val actorSystem: ActorSystem = ActorSystem(jobName)
 }

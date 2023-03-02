@@ -16,8 +16,7 @@
 
 package helpers
 
-import java.nio.charset.Charset
-
+import akka.actor.ActorSystem
 import akka.stream.Materializer
 import akka.util.ByteString
 import org.scalatest.OptionValues
@@ -25,17 +24,32 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
-import play.api.Play
+import play.api.inject.ApplicationLifecycle
+import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.mvc.{ControllerComponents, Result}
 import play.api.test.Helpers.stubControllerComponents
+import play.api.{Application, Configuration, Play, inject}
+import scheduler.SchedulingActor.UpdateDocumentsClass
+import scheduler.{SchedulingActor, UpdateCreatedAtFieldsJob}
+import services.DocumentUpdateService
 
+import java.nio.charset.Charset
+import javax.inject.Inject
 import scala.concurrent.duration.{DurationInt, FiniteDuration}
 import scala.concurrent.{Await, ExecutionContext, Future}
 
 trait ERSTestHelper extends AnyWordSpecLike with Matchers with OptionValues with MockitoSugar with GuiceOneAppPerSuite {
 
+  override def fakeApplication(): Application =
+    new GuiceApplicationBuilder()
+      .overrides(
+        inject.bind[DocumentUpdateService].to[FakeDocumentUpdateService],
+        inject.bind[UpdateCreatedAtFieldsJob].to[FakeUpdateCreatedAtFieldsJob]
+      )
+      .build()
+
   val mockCc: ControllerComponents = stubControllerComponents()
-  implicit def materializer: Materializer = Play.materializer(fakeApplication)
+  implicit def materializer: Materializer = Play.materializer(fakeApplication())
   implicit val ec: ExecutionContext = mockCc.executionContext
 
   def status(result: Future[Result]): Int = Await.result(result, 10.seconds).header.status
@@ -51,4 +65,21 @@ trait ERSTestHelper extends AnyWordSpecLike with Matchers with OptionValues with
 
   def await[T](future: Future[T], timeout: FiniteDuration = 10.seconds): T = Await.result(future, timeout)
 
+}
+
+class FakeDocumentUpdateService extends DocumentUpdateService {
+  override val jobName: String = "update-created-at-field-job"
+
+  override def invoke(implicit ec: ExecutionContext): Future[Boolean] = Future.successful(true)
+}
+
+class FakeUpdateCreatedAtFieldsJob @Inject()(
+                                              val config: Configuration,
+                                              val service: FakeDocumentUpdateService,
+                                              val applicationLifecycle: ApplicationLifecycle
+) extends UpdateCreatedAtFieldsJob {
+
+  override def jobName: String = "update-created-at-field-job"
+  override val scheduledMessage: SchedulingActor.ScheduledMessage[_] = UpdateDocumentsClass(service)
+  override val actorSystem: ActorSystem = ActorSystem(jobName)
 }

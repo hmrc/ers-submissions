@@ -46,10 +46,9 @@ class SubmissionCommon @Inject()(configUtils: ConfigUtils) extends Logging{
       )
     }
     catch {
-      case ex: Exception => {
-        logger.error(s"Error creating ObjectID from ${objectID}, exception: ${ex.getMessage}")
+      case ex: Exception =>
+        logger.error(s"Error creating ObjectID from $objectID, exception: ${ex.getMessage}")
         throw ex
-      }
     }
   }
 
@@ -73,14 +72,13 @@ class SubmissionCommon @Inject()(configUtils: ConfigUtils) extends Logging{
 
   def customFormat(value: DateTime, formatInfo: Config): String = {
     formatInfo.getString("type") match {
-      case "datetime" => {
+      case "datetime" =>
         val jsonFormat = formatInfo.getString("json_format")
         val jsonDateTimeFormat = new SimpleDateFormat(jsonFormat)
 
         jsonDateTimeFormat.format(
           value.toDate
         )
-      }
       case _ => value.toString()
     }
   }
@@ -117,16 +115,15 @@ class SubmissionCommon @Inject()(configUtils: ConfigUtils) extends Logging{
       val elemRow = row.getOrElse(configElem.getInt("row"))
       val value = fileData(elemRow)(elemColumn)
 
-      if (!value.isEmpty) {
+      if (value.nonEmpty) {
         val elemType: String = configElem.getString("type")
         val elemVal: JsValueWrapper = elemType match {
           case "string" => value
           case "int" => castToInt(value)
           case "double" => castToDouble(value)
-          case "boolean" => {
+          case "boolean" =>
             val valid_value = configElem.getString("valid_value")
-            (value.toUpperCase == valid_value.toUpperCase)
-          }
+            value.toUpperCase == valid_value.toUpperCase
         }
         getNewField(configElem, elemVal)
       }
@@ -147,7 +144,7 @@ class SubmissionCommon @Inject()(configUtils: ConfigUtils) extends Logging{
     }
     else {
       configUtils.extractField(configElem, metadata) match {
-        case None => {
+        case None =>
           if (configElem.hasPath("default_value")) {
             val elemType: String = configElem.getString("type")
             val elemVal: JsValueWrapper = if(elemType == "boolean") {
@@ -161,15 +158,13 @@ class SubmissionCommon @Inject()(configUtils: ConfigUtils) extends Logging{
           else {
             Json.obj()
           }
-        }
-        case value => {
+        case value =>
           val elemType: String = configElem.getString("type")
           val elemVal: JsValueWrapper = elemType match {
-            case "boolean" => {
+            case "boolean" =>
               val valid_value = configElem.getString("valid_value")
-              (value.toString == valid_value)
-            }
-            case "string" => {
+              value.toString == valid_value
+            case "string" =>
               value match {
                 case time: DateTime =>
                   customFormat(time, configElem.getConfig("format"))
@@ -178,30 +173,9 @@ class SubmissionCommon @Inject()(configUtils: ConfigUtils) extends Logging{
                 case _ =>
                   JsNull
               }
-            }
           }
           getNewField(configElem, elemVal)
-        }
       }
-    }
-  }
-
-  def updateSkipNext(oldSkipNext: Int, configData: Config, fileData: ListBuffer[Seq[String]], row: Option[Int] = None): Int = {
-    if (!configData.hasPath("skip_next")) {
-      return oldSkipNext
-    }
-
-    if(!configData.hasPath("skip_condition")) {
-      return configData.getInt("skip_next")
-    }
-
-    val column = configData.getInt("column")
-    val value = fileData(row.getOrElse(configData.getInt("row")))(column)
-    if (value.toUpperCase == configData.getString("skip_condition")) {
-      configData.getInt("skip_next")
-    }
-    else {
-      oldSkipNext
     }
   }
 
@@ -248,5 +222,4 @@ class SubmissionCommon @Inject()(configUtils: ConfigUtils) extends Logging{
       jsonField -> (getArrayFromJson(jsonField, oldJson) ++ getArrayFromJson(jsonField, newJson))
     )
   }
-
 }

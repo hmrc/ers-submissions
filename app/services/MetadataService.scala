@@ -24,10 +24,10 @@ import uk.gov.hmrc.http.HeaderCarrier
 import utils.LoggingAndRexceptions.ErsLoggingAndAuditing
 
 import javax.inject.Inject
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
-class MetadataService @Inject()(metadataMongoRepository: MetadataMongoRepository, ersLoggingAndAuditing: ErsLoggingAndAuditing)
+class MetadataService @Inject()(metadataMongoRepository: MetadataMongoRepository,
+                                ersLoggingAndAuditing: ErsLoggingAndAuditing)(implicit ec: ExecutionContext)
   extends Logging {
 
   lazy val metadataRepository: MetadataMongoRepository = metadataMongoRepository

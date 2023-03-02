@@ -17,19 +17,24 @@
 package repositories
 
 import config.ApplicationConfig
-import models.{SchemeData, SchemeInfo}
-import org.mongodb.scala.bson.{BsonDocument, BsonInt64, BsonString}
+import models._
+import org.mongodb.scala.bson.{BsonDocument, BsonInt64, BsonString, ObjectId}
 import org.mongodb.scala.model.Sorts._
-import org.mongodb.scala.model.{IndexModel, IndexOptions}
+import org.mongodb.scala.model.Updates.set
+import org.mongodb.scala.model._
+import org.mongodb.scala.result.UpdateResult
 import play.api.Logging
+import play.api.libs.json.OFormat.oFormatFromReadsAndOWrites
 import play.api.libs.json.{Format, JsObject, Json}
 import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
+import uk.gov.hmrc.mongo.play.json.formats.MongoFormats
 
 import java.time.Instant
 import java.util.concurrent.TimeUnit
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
+import scala.util.Try
 
 @Singleton
 class PresubmissionMongoRepository @Inject()(applicationConfig: ApplicationConfig, mc: MongoComponent)
@@ -46,6 +51,8 @@ class PresubmissionMongoRepository @Inject()(applicationConfig: ApplicationConfi
       )
     )
   ) with Logging {
+
+  private val objectIdKey: String = "_id"
 
   def buildSelector(schemeInfo: SchemeInfo): BsonDocument = BsonDocument(
     "schemeInfo.schemeRef" -> BsonString(schemeInfo.schemeRef),
@@ -96,4 +103,29 @@ class PresubmissionMongoRepository @Inject()(applicationConfig: ApplicationConfi
     }
   }
 
+  def getDocumentIdsWithoutCreatedAtField(updateLimit: Int): Future[Seq[ObjectId]] = {
+    val selector = Filters.exists("createdAt", exists = false)
+    val projection = Projections.include(objectIdKey)
+
+    collection
+      .find(selector)
+      .projection(projection)
+      .limit(updateLimit)
+      .map(json => (json \ objectIdKey).as[ObjectId](MongoFormats.objectIdFormat))
+      .toFuture()
+  }
+
+  def addCreatedAtField(documentIds: Seq[ObjectId]): Future[Long] = {
+    val selector = Filters.in(objectIdKey, documentIds: _*)
+    val update = Seq(set("createdAt", BsonDocument("$toDate" -> "$schemeInfo.timestamp")))
+    val options = UpdateOptions().upsert(false)
+
+    val result = collection.updateMany(selector, update, options).toFuture()
+
+    result.map { updateResult: UpdateResult =>
+      Try(updateResult.getModifiedCount).getOrElse(0L)
+    }.recover {
+      case e: Exception => throw new RuntimeException(s"Failed to add createdAt field: ${e.getMessage}")
+    }
+  }
 }

@@ -1,0 +1,110 @@
+/*
+ * Copyright 2023 HM Revenue & Customs
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package services
+
+import helpers.ERSTestHelper
+import models.{RepositoryUpdateMessage, UpdateRequestAcknowledged, UpdateRequestNotAcknowledged, UpdateRequestNothingToUpdate}
+import org.bson.types.ObjectId
+import org.mockito.ArgumentMatchers.any
+import org.mockito.Mockito.{reset, times, verify, when}
+import org.scalatest.{BeforeAndAfterEach, RecoverMethods}
+import repositories.{LockRepositoryProvider, PresubmissionMongoRepository}
+import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
+
+import scala.concurrent.Await.result
+import scala.concurrent.Future
+import scala.concurrent.duration.Duration
+
+class DocumentUpdateServiceSpec extends ERSTestHelper with BeforeAndAfterEach with RecoverMethods {
+
+  val mockPresubmissionMongo: PresubmissionMongoRepository = mock[PresubmissionMongoRepository]
+  val mockLockKeeper: LockRepositoryProvider = mock[LockRepositoryProvider]
+  val mockServicesConfig: ServicesConfig = mock[ServicesConfig]
+
+  class Setup() {
+    val documentUpdateService: DefaultDocumentUpdateService = new DefaultDocumentUpdateService(
+      mockPresubmissionMongo,
+      mockLockKeeper,
+      mockServicesConfig
+    )
+  }
+
+  override def beforeEach(): Unit = {
+    reset(mockPresubmissionMongo)
+    reset(mockLockKeeper)
+    reset(mockServicesConfig)
+  }
+
+  "updateMissingCreatedAtFields" should {
+    "run the update document scheduler job and return successful update message with modified count != 0" when {
+      "there are documents without createdAt fields" in new Setup {
+        when(mockPresubmissionMongo.getDocumentIdsWithoutCreatedAtField(any()))
+          .thenReturn(Future.successful(Seq(ObjectId.get(), ObjectId.get())))
+        when(mockPresubmissionMongo.addCreatedAtField(any()))
+          .thenReturn(Future.successful(2L))
+
+        val updateMessage: RepositoryUpdateMessage = result(documentUpdateService.updateMissingCreatedAtFields(), Duration.Inf)
+
+        updateMessage shouldBe UpdateRequestAcknowledged(2)
+
+        verify(mockPresubmissionMongo, times(1)).getDocumentIdsWithoutCreatedAtField(any[Int])
+        verify(mockPresubmissionMongo, times(1)).addCreatedAtField(any[Seq[ObjectId]])
+      }
+    }
+
+    "run the update document scheduler job and return nothing to update message" when {
+      "there are no documents without createdAt fields in the collection" in new Setup {
+        when(mockPresubmissionMongo.getDocumentIdsWithoutCreatedAtField(any()))
+          .thenReturn(Future.successful(Seq()))
+
+        val updateMessage: RepositoryUpdateMessage = result(documentUpdateService.updateMissingCreatedAtFields(), Duration.Inf)
+
+        updateMessage shouldBe UpdateRequestNothingToUpdate
+
+        verify(mockPresubmissionMongo, times(1)).getDocumentIdsWithoutCreatedAtField(any[Int])
+        verify(mockPresubmissionMongo, times(0)).addCreatedAtField(any[Seq[ObjectId]])
+      }
+    }
+
+    "run the update document scheduler job and return request not acknowledged message" when {
+      "nothing was updated in the database but documents without created at field exist" in new Setup {
+        when(mockPresubmissionMongo.getDocumentIdsWithoutCreatedAtField(any()))
+          .thenReturn(Future.successful(Seq(ObjectId.get())))
+        when(mockPresubmissionMongo.addCreatedAtField(any()))
+          .thenReturn(Future.successful(0L))
+
+        val updateMessage: RepositoryUpdateMessage = result(documentUpdateService.updateMissingCreatedAtFields(), Duration.Inf)
+
+        updateMessage shouldBe UpdateRequestNotAcknowledged
+
+        verify(mockPresubmissionMongo, times(1)).getDocumentIdsWithoutCreatedAtField(any[Int])
+        verify(mockPresubmissionMongo, times(1)).addCreatedAtField(any[Seq[ObjectId]])
+      }
+    }
+
+    "propagate database exception to the caller" in new Setup {
+      when(mockPresubmissionMongo.getDocumentIdsWithoutCreatedAtField(any()))
+        .thenReturn(Future.successful(Seq(ObjectId.get())))
+      when(mockPresubmissionMongo.addCreatedAtField(any()))
+        .thenReturn(Future.failed(new RuntimeException))
+
+      recoverToSucceededIf[RuntimeException] {
+        documentUpdateService.updateMissingCreatedAtFields()
+      }
+    }
+  }
+}

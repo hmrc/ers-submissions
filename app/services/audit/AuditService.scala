@@ -22,9 +22,9 @@ import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 import uk.gov.hmrc.play.audit.model.DataEvent
 
 import javax.inject.Inject
-import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.ExecutionContext
 
-class AuditService @Inject()(auditConnector: AuditConnector) {
+class AuditService @Inject()(auditConnector: AuditConnector)(implicit ec: ExecutionContext) {
   val auditSource = "ers-submissions"
 
   def sendEvent(transactionName : String, details: Map[String, String])(implicit hc: HeaderCarrier): Unit =
