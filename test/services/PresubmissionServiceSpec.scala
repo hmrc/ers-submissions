@@ -162,5 +162,4 @@ class PresubmissionServiceSpec extends ERSTestHelper {
       result shouldBe false
     }
   }
-
 }

@@ -17,7 +17,7 @@
 package services
 
 import com.google.inject.Inject
-import models.{FailedToLockRepositoryForUpdate, RepositoryUpdateMessage, UpdateRequestAcknowledged, UpdateRequestNothingToUpdate}
+import models._
 import play.api.Logging
 import repositories.{LockRepositoryProvider, PresubmissionMongoRepository}
 import scheduler.ScheduledService
@@ -27,7 +27,7 @@ import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 import scala.concurrent.duration.{Duration, SECONDS}
 import scala.concurrent.{ExecutionContext, Future}
 
-trait DocumentUpdateService extends ScheduledService[Long] with Logging
+trait DocumentUpdateService extends ScheduledService[Boolean] with Logging
 class DefaultDocumentUpdateService @Inject()(repository: PresubmissionMongoRepository,
                                              lockRepositoryProvider: LockRepositoryProvider,
                                              servicesConfig: ServicesConfig
@@ -39,29 +39,26 @@ class DefaultDocumentUpdateService @Inject()(repository: PresubmissionMongoRepos
   private val lockService: LockService = LockService(lockRepositoryProvider.repo, lockId = "update-created-at-job-lock",
     ttl = Duration.create(lockoutTimeout, SECONDS))
 
-  private[services] def updateMissingCreatedAtFields(): Future[(Long, RepositoryUpdateMessage)] = {
+  private[services] def updateMissingCreatedAtFields(): Future[RepositoryUpdateMessage] = {
     repository.getDocumentIdsWithoutCreatedAtField(updateLimit).flatMap { documentIds =>
-      if(documentIds.nonEmpty) {
-        for {
-          updateResult <- repository.addCreatedAtField(documentIds)
-        } yield updateResult match {
-          case Left(error) => (0, error)
-          case Right(result) => (result.getModifiedCount, UpdateRequestAcknowledged(result.getModifiedCount))
-
+      if (documentIds.nonEmpty) {
+        repository.addCreatedAtField(documentIds).map {
+          case updatedCount if updatedCount > 0 => UpdateRequestAcknowledged(updatedCount)
+          case _ => UpdateRequestNotAcknowledged
         }
       } else {
-        Future.successful((0, UpdateRequestNothingToUpdate))
+        Future.successful(UpdateRequestNothingToUpdate)
       }
     }
   }
 
-  override def invoke(implicit ec: ExecutionContext): Future[Long] =
-    lockService.withLock(updateMissingCreatedAtFields()) map {
-      case Some((updatedCount, updateMessage)) =>
-        logger.info("[DocumentUpdateService] - " + updateMessage.message)
-        updatedCount
+  override def invoke(implicit ec: ExecutionContext): Future[Boolean] =
+    lockService.withLock(updateMissingCreatedAtFields()).map {
+      case Some(updateMessage) =>
+        logger.info(updateMessage.message)
+        true
       case None =>
-        logger.info("[DocumentUpdateService] - " + FailedToLockRepositoryForUpdate.message)
-        0
+        logger.info(FailedToLockRepositoryForUpdate.message)
+        false
     }
 }

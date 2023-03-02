@@ -17,25 +17,22 @@
 package models
 
 trait RepositoryUpdateMessage {
+  val prefix: String = "[DocumentUpdateService]"
   val message: String
 }
 
 case object UpdateRequestNotAcknowledged extends RepositoryUpdateMessage {
-  override val message: String = "Request to update presubmission repository was not acknowledged. Data was not updated."
+  override val message: String = s"$prefix Request to update presubmission repository was not acknowledged. Data was not updated."
 }
 
 case object UpdateRequestNothingToUpdate extends RepositoryUpdateMessage {
-  override val message: String = "There is no more documents to update. Consider disabling scheduler."
+  override val message: String = s"$prefix There is no more documents to update. Consider disabling scheduler."
 }
 
 case object FailedToLockRepositoryForUpdate extends RepositoryUpdateMessage {
-  override val message: String = "Failed to acquire lock. Update job not completed."
+  override val message: String = s"$prefix Failed to acquire lock. Update job not completed."
 }
 
 case class UpdateRequestAcknowledged(count: Long) extends RepositoryUpdateMessage {
-  override val message: String = s"Updated $count document(s) with createdAt field."
-}
-
-case class UpdateRepositoryError(error: String) extends RepositoryUpdateMessage {
-  override val message: String = s"Exception occured when tried to perform update. Exception: $error."
+  override val message: String = s"$prefix Updated $count document(s) with createdAt field."
 }

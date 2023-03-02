@@ -37,5 +37,5 @@ object SchedulingActor {
 
   def props: Props = Props[SchedulingActor]
 
-  case class UpdateDocumentsClass(service: DocumentUpdateService) extends ScheduledMessage[Long]
+  case class UpdateDocumentsClass(service: DocumentUpdateService) extends ScheduledMessage[Boolean]
 }

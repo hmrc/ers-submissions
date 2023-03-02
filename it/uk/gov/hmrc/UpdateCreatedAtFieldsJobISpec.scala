@@ -69,20 +69,30 @@ class UpdateCreatedAtFieldsJobISpec extends AnyWordSpecLike
     await(repository.ensureIndexes)
     await(repository.collection.countDocuments(Filters.empty()).toFuture()) shouldBe 0
 
-    def insert(schemeData: SchemeData): Boolean = await(repository.storeJson(schemeData))
+    def insert(schemeData: SchemeData): Boolean = await(
+      repository.storeJson(schemeData)
+    )
 
     def insertAsJson(schemeData: SchemeData): InsertOneResult = await(
-      repository.collection.insertOne(Json.toJsObject(schemeData)).toFuture())
+      repository.collection.insertOne(Json.toJsObject(schemeData))
+        .toFuture()
+    )
 
-    def count: Long = await(repository.collection.countDocuments(Filters.empty).toFuture())
+    def count: Long = await(
+      repository.collection.countDocuments(Filters.empty)
+        .toFuture()
+    )
 
-    def getDocsWithCreatedAtField: Seq[JsObject] = await(repository.collection.find(Filters.and(Filters.exists("createdAt"), Filters.notEqual("createdAt", ""))).toFuture())
+    def getDocsWithCreatedAtField: Seq[JsObject] = await(
+      repository.collection.find(Filters.and(Filters.exists("createdAt"), Filters.notEqual("createdAt", "")))
+        .toFuture()
+    )
   }
 
   def getJob: ScheduledJob = app.injector.instanceOf[UpdateCreatedAtFieldsJob]
 
   "UpdateCreatedAtFieldsJob" should {
-    "update the documents where the createdAt is missing" in new Setup {
+    "update the documents where the createdAt is missing and return true" in new Setup {
       insert(Fixtures.schemeData) //with createdAt
       insertAsJson(Fixtures.schemeData) //without createdAt
       insertAsJson(Fixtures.schemeData) //without createdAt
@@ -90,14 +100,14 @@ class UpdateCreatedAtFieldsJobISpec extends AnyWordSpecLike
       count shouldBe 3
       getDocsWithCreatedAtField.size shouldBe 1
 
-      val updatedCount: Long = await(getJob.scheduledMessage.service.invoke.map(_.asInstanceOf[Long]))
+      val updateCompleted: Boolean = await(getJob.scheduledMessage.service.invoke.map(_.asInstanceOf[Boolean]))
 
-      updatedCount shouldBe 2
+      updateCompleted shouldBe true
       getDocsWithCreatedAtField.size shouldBe 3
     }
   }
 
-  "return updated count 0 if all documents have createdAt field" in new Setup {
+  "return true if there is nothing to update" in new Setup {
     insert(Fixtures.schemeData) //with createdAt
     insert(Fixtures.schemeData) //with createdAt
     insert(Fixtures.schemeData) //with createdAt
@@ -105,9 +115,9 @@ class UpdateCreatedAtFieldsJobISpec extends AnyWordSpecLike
     count shouldBe 3
     getDocsWithCreatedAtField.size shouldBe 3
 
-    val updatedCount: Long = await(getJob.scheduledMessage.service.invoke.map(_.asInstanceOf[Long]))
+    val updateCompleted: Boolean = await(getJob.scheduledMessage.service.invoke.map(_.asInstanceOf[Boolean]))
 
-    updatedCount shouldBe 0
+    updateCompleted shouldBe true
   }
 }
 

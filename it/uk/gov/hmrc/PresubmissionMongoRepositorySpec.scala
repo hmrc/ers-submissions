@@ -22,10 +22,9 @@ import _root_.play.api.inject.guice.GuiceApplicationBuilder
 import _root_.play.api.libs.json.{JsObject, Json}
 import _root_.play.api.libs.ws.WSClient
 import _root_.play.api.test.Helpers._
-import models.UpdateRepositoryError
+import org.scalatest.BeforeAndAfterEach
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
-import org.scalatest.{BeforeAndAfterEach, EitherValues, Inside}
 import repositories.PresubmissionMongoRepository
 import scheduler.UpdateCreatedAtFieldsJob
 import services.DocumentUpdateService
@@ -33,8 +32,7 @@ import services.DocumentUpdateService
 import java.util.concurrent.TimeUnit
 import scala.collection.mutable.ListBuffer
 
-class PresubmissionMongoRepositorySpec extends AnyWordSpecLike with Matchers
-  with BeforeAndAfterEach with EitherValues with Inside {
+class PresubmissionMongoRepositorySpec extends AnyWordSpecLike with Matchers with BeforeAndAfterEach {
 
   lazy val app: Application = new GuiceApplicationBuilder()
     .overrides(
@@ -131,13 +129,7 @@ class PresubmissionMongoRepositorySpec extends AnyWordSpecLike with Matchers
         presubmissionRepository.collection.insertOne(Json.toJsObject(Fixtures.schemeData)).toFuture()
       ).getInsertedId.asObjectId().getValue //document without createdAt
 
-      await(presubmissionRepository.addCreatedAtField(Seq(testDocumentId))).value.getModifiedCount shouldBe 1
-    }
-
-    "return an error if called with an empty list of ids" in {
-      inside(await(presubmissionRepository.addCreatedAtField(Seq.empty))) {
-        case Left(value) => value shouldBe UpdateRepositoryError("requirement failed: list of IDs for update cannot be empty")
-      }
+      await(presubmissionRepository.addCreatedAtField(Seq(testDocumentId))) shouldBe 1
     }
   }
 }

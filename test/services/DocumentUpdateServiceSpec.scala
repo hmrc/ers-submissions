@@ -16,13 +16,12 @@
 
 package services
 
-import com.mongodb.client.result.UpdateResult
 import helpers.ERSTestHelper
-import models.{UpdateRequestAcknowledged, UpdateRequestNothingToUpdate, UpdateRequestNotAcknowledged}
+import models.{RepositoryUpdateMessage, UpdateRequestAcknowledged, UpdateRequestNotAcknowledged, UpdateRequestNothingToUpdate}
 import org.bson.types.ObjectId
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.{reset, times, verify, when}
-import org.scalatest.BeforeAndAfterEach
+import org.scalatest.{BeforeAndAfterEach, RecoverMethods}
 import repositories.{LockRepositoryProvider, PresubmissionMongoRepository}
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
@@ -30,7 +29,7 @@ import scala.concurrent.Await.result
 import scala.concurrent.Future
 import scala.concurrent.duration.Duration
 
-class DocumentUpdateServiceSpec extends ERSTestHelper with BeforeAndAfterEach {
+class DocumentUpdateServiceSpec extends ERSTestHelper with BeforeAndAfterEach with RecoverMethods {
 
   val mockPresubmissionMongo: PresubmissionMongoRepository = mock[PresubmissionMongoRepository]
   val mockLockKeeper: LockRepositoryProvider = mock[LockRepositoryProvider]
@@ -44,9 +43,6 @@ class DocumentUpdateServiceSpec extends ERSTestHelper with BeforeAndAfterEach {
     )
   }
 
-  val successfulUpdateResult: UpdateResult = UpdateResult.acknowledged(0, 2, null)
-  val successfulUpdateResultNoModified: UpdateResult = UpdateResult.acknowledged(0, 0, null)
-
   override def beforeEach(): Unit = {
     reset(mockPresubmissionMongo)
     reset(mockLockKeeper)
@@ -54,16 +50,15 @@ class DocumentUpdateServiceSpec extends ERSTestHelper with BeforeAndAfterEach {
   }
 
   "updateMissingCreatedAtFields" should {
-    "run the update document scheduler job and return successful update result with modified count != 0" when {
+    "run the update document scheduler job and return successful update message with modified count != 0" when {
       "there are documents without createdAt fields" in new Setup {
         when(mockPresubmissionMongo.getDocumentIdsWithoutCreatedAtField(any()))
           .thenReturn(Future.successful(Seq(ObjectId.get(), ObjectId.get())))
         when(mockPresubmissionMongo.addCreatedAtField(any()))
-          .thenReturn(Future.successful(Right(successfulUpdateResult)))
+          .thenReturn(Future.successful(2L))
 
-        val (modifiedDocuments, updateMessage) = result(documentUpdateService.updateMissingCreatedAtFields(), Duration.Inf)
+        val updateMessage: RepositoryUpdateMessage = result(documentUpdateService.updateMissingCreatedAtFields(), Duration.Inf)
 
-        modifiedDocuments shouldBe 2
         updateMessage shouldBe UpdateRequestAcknowledged(2)
 
         verify(mockPresubmissionMongo, times(1)).getDocumentIdsWithoutCreatedAtField(any[Int])
@@ -71,16 +66,13 @@ class DocumentUpdateServiceSpec extends ERSTestHelper with BeforeAndAfterEach {
       }
     }
 
-    "run the update document scheduler job and return successful update result with modified count == 0" when {
-      "there are no documents without createdAt fields" in new Setup {
+    "run the update document scheduler job and return nothing to update message" when {
+      "there are no documents without createdAt fields in the collection" in new Setup {
         when(mockPresubmissionMongo.getDocumentIdsWithoutCreatedAtField(any()))
           .thenReturn(Future.successful(Seq()))
-        when(mockPresubmissionMongo.addCreatedAtField(any()))
-          .thenReturn(Future.successful(Right(successfulUpdateResultNoModified)))
 
-        val (modifiedDocuments, updateMessage) = result(documentUpdateService.updateMissingCreatedAtFields(), Duration.Inf)
+        val updateMessage: RepositoryUpdateMessage = result(documentUpdateService.updateMissingCreatedAtFields(), Duration.Inf)
 
-        modifiedDocuments shouldBe 0
         updateMessage shouldBe UpdateRequestNothingToUpdate
 
         verify(mockPresubmissionMongo, times(1)).getDocumentIdsWithoutCreatedAtField(any[Int])
@@ -88,20 +80,30 @@ class DocumentUpdateServiceSpec extends ERSTestHelper with BeforeAndAfterEach {
       }
     }
 
-    "run the update document scheduler job and return failed result" when {
-      "the update was not acknowledged" in new Setup {
+    "run the update document scheduler job and return request not acknowledged message" when {
+      "nothing was updated in the database but documents without created at field exist" in new Setup {
         when(mockPresubmissionMongo.getDocumentIdsWithoutCreatedAtField(any()))
           .thenReturn(Future.successful(Seq(ObjectId.get())))
         when(mockPresubmissionMongo.addCreatedAtField(any()))
-          .thenReturn(Future.successful(Left(UpdateRequestNotAcknowledged)))
+          .thenReturn(Future.successful(0L))
 
-        val (modifiedDocuments, updateMessage) = result(documentUpdateService.updateMissingCreatedAtFields(), Duration.Inf)
+        val updateMessage: RepositoryUpdateMessage = result(documentUpdateService.updateMissingCreatedAtFields(), Duration.Inf)
 
-        modifiedDocuments shouldBe 0
         updateMessage shouldBe UpdateRequestNotAcknowledged
 
         verify(mockPresubmissionMongo, times(1)).getDocumentIdsWithoutCreatedAtField(any[Int])
         verify(mockPresubmissionMongo, times(1)).addCreatedAtField(any[Seq[ObjectId]])
+      }
+    }
+
+    "propagate database exception to the caller" in new Setup {
+      when(mockPresubmissionMongo.getDocumentIdsWithoutCreatedAtField(any()))
+        .thenReturn(Future.successful(Seq(ObjectId.get())))
+      when(mockPresubmissionMongo.addCreatedAtField(any()))
+        .thenReturn(Future.failed(new RuntimeException))
+
+      recoverToSucceededIf[RuntimeException] {
+        documentUpdateService.updateMissingCreatedAtFields()
       }
     }
   }

@@ -21,7 +21,7 @@ import models._
 import org.mongodb.scala.bson.{BsonDocument, BsonInt64, BsonString, ObjectId}
 import org.mongodb.scala.model.Sorts._
 import org.mongodb.scala.model.Updates.set
-import org.mongodb.scala.model.{Filters, IndexModel, IndexOptions}
+import org.mongodb.scala.model._
 import org.mongodb.scala.result.UpdateResult
 import play.api.Logging
 import play.api.libs.json.OFormat.oFormatFromReadsAndOWrites
@@ -51,6 +51,8 @@ class PresubmissionMongoRepository @Inject()(applicationConfig: ApplicationConfi
       )
     )
   ) with Logging {
+
+  private val objectIdKey: String = "_id"
 
   def buildSelector(schemeInfo: SchemeInfo): BsonDocument = BsonDocument(
     "schemeInfo.schemeRef" -> BsonString(schemeInfo.schemeRef),
@@ -102,30 +104,28 @@ class PresubmissionMongoRepository @Inject()(applicationConfig: ApplicationConfi
   }
 
   def getDocumentIdsWithoutCreatedAtField(updateLimit: Int): Future[Seq[ObjectId]] = {
+    val selector = Filters.exists("createdAt", exists = false)
+    val projection = Projections.include(objectIdKey)
+
     collection
-      .find(Filters.and(Filters.exists("createdAt", exists = false)))
+      .find(selector)
+      .projection(projection)
       .limit(updateLimit)
-        .map(json => (json \ "_id").as[ObjectId](MongoFormats.objectIdFormat))
+      .map(json => (json \ objectIdKey).as[ObjectId](MongoFormats.objectIdFormat))
       .toFuture()
   }
 
-  def addCreatedAtField(documentIds: Seq[ObjectId]): Future[Either[RepositoryUpdateMessage, UpdateResult]] = {
-    Try {
-      require(documentIds.nonEmpty, "list of IDs for update cannot be empty")
+  def addCreatedAtField(documentIds: Seq[ObjectId]): Future[Long] = {
+    val selector = Filters.in(objectIdKey, documentIds: _*)
+    val update = Seq(set("createdAt", BsonDocument("$toDate" -> "$schemeInfo.timestamp")))
+    val options = UpdateOptions().upsert(false)
 
-      collection.updateMany(Filters.in("_id", documentIds: _*),
-        Seq(set("createdAt", BsonDocument("$toDate" -> "$schemeInfo.timestamp")))).toFuture()
-    }.toEither match {
-      case Left(exception) => handleException(exception)
-      case Right(updateResultF) =>
-        updateResultF map {
-          case result if !result.wasAcknowledged() => Left(UpdateRequestNotAcknowledged)
-          case result => Right(result)
-        }
+    val result = collection.updateMany(selector, update, options).toFuture()
+
+    result.map { updateResult: UpdateResult =>
+      Try(updateResult.getModifiedCount).getOrElse(0L)
+    }.recover {
+      case e: Exception => throw new RuntimeException(s"Failed to add createdAt field: ${e.getMessage}")
     }
-  }
-
-  private def handleException[T](exception: Throwable): Future[Left[RepositoryUpdateMessage, T]] = {
-    Future.successful(Left(UpdateRepositoryError(exception.getMessage)))
   }
 }
