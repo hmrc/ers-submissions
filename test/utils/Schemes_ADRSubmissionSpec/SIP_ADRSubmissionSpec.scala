@@ -313,14 +313,14 @@ class SIP_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfter {
 
     }
 
-    "create valid not NilReturn with Awards_V3, participants and trustees without data" in {
+    "create valid not NilReturn with Awards_V4, participants and trustees without data" in {
 
       when(
         mockPresubmissionService.getJson(any[SchemeInfo]())
       ).thenReturn(
         Future.successful(
           List(
-            SchemeData(SIP.schemeInfo, "SIP_Awards_V3", None, Some(ListBuffer(SIP.buildAwards(true, "yes", "yes"))))
+            SchemeData(SIP.schemeInfo, "SIP_Awards_V4", None, Some(ListBuffer(SIP.buildAwards(true, "yes", "yes"))))
           )
         )
       )
@@ -435,15 +435,15 @@ class SIP_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfter {
 
     }
 
-    "create valid not NilReturn with Awards_V3, participants and trustees without data from 2 records of sheet data" in {
+    "create valid not NilReturn with Awards_V4, participants and trustees without data from 2 records of sheet data" in {
 
       when(
         mockPresubmissionService.getJson(any[SchemeInfo]())
       ).thenReturn(
         Future.successful(
           List(
-            SchemeData(SIP.schemeInfo, "SIP_Awards_V3", None, Some(ListBuffer(SIP.buildAwards(true, "yes", "yes")))),
-            SchemeData(SIP.schemeInfo, "SIP_Awards_V3", None, Some(ListBuffer(SIP.buildAwards(true, "yes", "yes"))))
+            SchemeData(SIP.schemeInfo, "SIP_Awards_V4", None, Some(ListBuffer(SIP.buildAwards(true, "yes", "yes")))),
+            SchemeData(SIP.schemeInfo, "SIP_Awards_V4", None, Some(ListBuffer(SIP.buildAwards(true, "yes", "yes"))))
           )
         )
       )
@@ -581,14 +581,14 @@ class SIP_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfter {
 
     }
 
-    "create valid not NilReturn with Out_V3, participants and trustees without data" in {
+    "create valid not NilReturn with Out_V4, participants and trustees without data" in {
 
       when(
         mockPresubmissionService.getJson(any[SchemeInfo]())
       ).thenReturn(
         Future.successful(
           List(
-            SchemeData(SIP.schemeInfo, "SIP_Out_V3", None, Some(ListBuffer(SIP.buildOutOfPlan(true, "yes", "yes"))))
+            SchemeData(SIP.schemeInfo, "SIP_Out_V4", None, Some(ListBuffer(SIP.buildOutOfPlan(true, "yes", "yes"))))
           )
         )
       )
@@ -699,15 +699,15 @@ class SIP_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfter {
 
     }
 
-    "create valid not NilReturn with Out_V3, participants and trustees without data from 2 records of sheet data" in {
+    "create valid not NilReturn with Out_V4, participants and trustees without data from 2 records of sheet data" in {
 
       when(
         mockPresubmissionService.getJson(any[SchemeInfo]())
       ).thenReturn(
         Future.successful(
           List(
-            SchemeData(SIP.schemeInfo, "SIP_Out_V3", None, Some(ListBuffer(SIP.buildOutOfPlan(true, "yes", "yes")))),
-            SchemeData(SIP.schemeInfo, "SIP_Out_V3", None, Some(ListBuffer(SIP.buildOutOfPlan(true, "yes", "yes"))))
+            SchemeData(SIP.schemeInfo, "SIP_Out_V4", None, Some(ListBuffer(SIP.buildOutOfPlan(true, "yes", "yes")))),
+            SchemeData(SIP.schemeInfo, "SIP_Out_V4", None, Some(ListBuffer(SIP.buildOutOfPlan(true, "yes", "yes"))))
           )
         )
       )
@@ -837,15 +837,15 @@ class SIP_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfter {
 
     }
 
-    "create valid not NilReturn with Awards_V3, Out_V3, participants and trustees without data" in {
+    "create valid not NilReturn with Awards_V4, Out_V4, participants and trustees without data" in {
 
       when(
         mockPresubmissionService.getJson(any[SchemeInfo]())
       ).thenReturn(
         Future.successful(
           List(
-            SchemeData(SIP.schemeInfo, "SIP_Awards_V3", None, Some(ListBuffer(SIP.buildAwards(true, "yes", "yes")))),
-            SchemeData(SIP.schemeInfo, "SIP_Out_V3", None, Some(ListBuffer(SIP.buildOutOfPlan(true, "yes", "yes"))))
+            SchemeData(SIP.schemeInfo, "SIP_Awards_V4", None, Some(ListBuffer(SIP.buildAwards(true, "yes", "yes")))),
+            SchemeData(SIP.schemeInfo, "SIP_Out_V4", None, Some(ListBuffer(SIP.buildOutOfPlan(true, "yes", "yes"))))
           )
         )
       )
@@ -983,17 +983,17 @@ class SIP_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfter {
 
     }
 
-    "create valid not NilReturn with Awards_V3, Out_V3, participants and trustees without data from 2 records of sheet data" in {
+    "create valid not NilReturn with Awards_V4, Out_V4, participants and trustees without data from 2 records of sheet data" in {
 
       when(
         mockPresubmissionService.getJson(any[SchemeInfo]())
       ).thenReturn(
         Future.successful(
           List(
-            SchemeData(SIP.schemeInfo, "SIP_Awards_V3", None, Some(ListBuffer(SIP.buildAwards(true, "yes", "yes")))),
-            SchemeData(SIP.schemeInfo, "SIP_Awards_V3", None, Some(ListBuffer(SIP.buildAwards(true, "yes", "yes")))),
-            SchemeData(SIP.schemeInfo, "SIP_Out_V3", None, Some(ListBuffer(SIP.buildOutOfPlan(true, "yes", "yes")))),
-            SchemeData(SIP.schemeInfo, "SIP_Out_V3", None, Some(ListBuffer(SIP.buildOutOfPlan(true, "yes", "yes"))))
+            SchemeData(SIP.schemeInfo, "SIP_Awards_V4", None, Some(ListBuffer(SIP.buildAwards(true, "yes", "yes")))),
+            SchemeData(SIP.schemeInfo, "SIP_Awards_V4", None, Some(ListBuffer(SIP.buildAwards(true, "yes", "yes")))),
+            SchemeData(SIP.schemeInfo, "SIP_Out_V4", None, Some(ListBuffer(SIP.buildOutOfPlan(true, "yes", "yes")))),
+            SchemeData(SIP.schemeInfo, "SIP_Out_V4", None, Some(ListBuffer(SIP.buildOutOfPlan(true, "yes", "yes"))))
           )
         )
       )
@@ -1175,9 +1175,9 @@ class SIP_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfter {
 
   }
 
-  // SIP_Awards_V3
-  "calling generateJson for Awards_V3" should {
-    val configData: Config = Common.loadConfiguration(SIP.schemeType, "SIP_Awards_V3", mockConfigUtils)
+  // SIP_Awards_V4
+  "calling generateJson for Awards_V4" should {
+    val configData: Config = Common.loadConfiguration(SIP.schemeType, "SIP_Awards_V4", mockConfigUtils)
 
     "create valid JSON with withAllFields = (true or false), sharesListedOnSE = \"yes\", marketValueAgreedHMRC = \"yes\"" in {
 
@@ -1378,9 +1378,9 @@ class SIP_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfter {
 
   }
 
-  // SIP_Out_V3
-  "calling generateJson for Out_V3" should {
-    val configData: Config = Common.loadConfiguration(SIP.schemeType, "SIP_Out_V3", mockConfigUtils)
+  // SIP_Out_V4
+  "calling generateJson for Out_V4" should {
+    val configData: Config = Common.loadConfiguration(SIP.schemeType, "SIP_Out_V4", mockConfigUtils)
 
     "create valid JSON with withAllFields = (true or false), sharesHeld = \"yes\", payeApplied = \"yes\"" in {
 

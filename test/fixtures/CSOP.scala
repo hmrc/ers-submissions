@@ -36,8 +36,8 @@ object CSOP {
     schemeType = schemeType
   )
 
-  // CSOP_OptionsGranted_V3
-  def buildGrantedV3(sharesListedOnSE: String, marketValueAgreedHMRC: String): Seq[String] = Seq(
+  // CSOP_OptionsGranted_V4
+  def buildGrantedV4(sharesListedOnSE: String, marketValueAgreedHMRC: String): Seq[String] = Seq(
     "2015-12-09",
     "123456",
     "50.60",
@@ -49,7 +49,7 @@ object CSOP {
     "no"
   )
 
-  // CSOP_OptionsRCL_V3
+  // CSOP_OptionsRCL_V4
   def buildOptionsRCL(withAllFields: Boolean = true, moneyExchanged: String): Seq[String] = Seq(
     "2015-12-09",
     moneyExchanged,
@@ -68,7 +68,7 @@ object CSOP {
     "no"
   )
 
-  // CSOP_OptionsExercised_V3
+  // CSOP_OptionsExercised_V4
   def buildOptionsExercised(withAllFields: Boolean = true, sharesListedOnSE: String, marketValueAgreedHMRC: String, payeOperated: String): Seq[String] = Seq(
     "2015-12-09",
     "First",

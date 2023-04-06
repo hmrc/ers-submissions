@@ -37,21 +37,21 @@ object OTHER {
     schemeType = otherSchemeType
   )
 
-  def buildGrantedV3(): Seq[String] = Seq(
+  def buildGrantedV4(): Seq[String] = Seq(
     "2015-10-10", 
     "10.00",
     "10.1234", 
     "100.00"
   )
 
-  def buildGrantedV3Empty(): Seq[String] = Seq(
+  def buildGrantedV4Empty(): Seq[String] = Seq(
     "",
     "",
     "",
     ""
   )
   
-  def buildOptionV3(
+  def buildOptionV4(
                       taxAvoidance: String = "yes",
                       optionsExercised: String = "yes",
                       sharesListedOnSE: String = "yes",
@@ -102,7 +102,7 @@ object OTHER {
     "no"
   )
 
-  def buildAquisitionV3(
+  def buildAquisitionV4(
                          taxAvoidance: String = "yes",
                          sharesPartOfLargestClass: String = "yes",
                          sharesListedOnSE: String = "yes",
@@ -153,7 +153,7 @@ object OTHER {
     "yes"
   )
 
-  def buildRestrictedSecuritiesV3(
+  def buildRestrictedSecuritiesV4(
                                  taxAvoidance: String = "yes",
                                  sharesListedOnSE: String = "yes",
                                  agreedHMRC: String = "yes"
@@ -180,7 +180,7 @@ object OTHER {
     "no"
   )
 
-  def buildBenefitsV3(taxAvoidance: String = "yes"): Seq[String] = Seq(
+  def buildBenefitsV4(taxAvoidance: String = "yes"): Seq[String] = Seq(
     "2015-08-19",
     taxAvoidance,
     if(taxAvoidance == "yes") "12345678" else "",
@@ -196,7 +196,7 @@ object OTHER {
     "yes"
   )
 
-  def buildConvertableV3(taxAvoidance: String = "yes"): Seq[String] = Seq(
+  def buildConvertableV4(taxAvoidance: String = "yes"): Seq[String] = Seq(
     "2015-08-19",
     taxAvoidance,
     if(taxAvoidance == "yes") "12345678" else "",
@@ -214,7 +214,7 @@ object OTHER {
     "yes"
   )
 
-  def buildNotionalV3(taxAvoidance: String = "yes"): Seq[String] = Seq(
+  def buildNotionalV4(taxAvoidance: String = "yes"): Seq[String] = Seq(
     "2015-08-19",
     taxAvoidance,
     if(taxAvoidance == "yes") "12345678" else "",
@@ -230,7 +230,7 @@ object OTHER {
     "no"
   )
 
-  def buildEnchancementV3(taxAvoidance: String = "yes"): Seq[String] = Seq(
+  def buildEnchancementV4(taxAvoidance: String = "yes"): Seq[String] = Seq(
     "2015-08-19",
     taxAvoidance,
     if(taxAvoidance == "yes") "12345678" else "",
@@ -247,7 +247,7 @@ object OTHER {
     "no"
   )
 
-  def buildSoldV3(taxAvoidance: String = "yes"): Seq[String] = Seq(
+  def buildSoldV4(taxAvoidance: String = "yes"): Seq[String] = Seq(
     "2015-08-19",
     taxAvoidance,
     if(taxAvoidance == "yes") "12345678" else "",
