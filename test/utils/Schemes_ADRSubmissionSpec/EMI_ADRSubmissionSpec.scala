@@ -174,11 +174,11 @@ class EMI_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfter {
       ).thenReturn(
         Future.successful(
           List(
-            SchemeData(EMI.schemeInfo, "EMI40_Adjustments_V3", None, Some(ListBuffer(EMI.buildAdjustmentsV3(true, "yes")))),
-            SchemeData(EMI.schemeInfo, "EMI40_Replaced_V3", None, Some(ListBuffer(EMI.buildReplacedV3(true)))),
-            SchemeData(EMI.schemeInfo, "EMI40_RLC_V3", None, Some(ListBuffer(EMI.buildRLCV3(true, "yes", "yes")))),
-            SchemeData(EMI.schemeInfo, "EMI40_NonTaxable_V3", None, Some(ListBuffer(EMI.buildNonTaxableV3(true, "yes", "yes")))),
-            SchemeData(EMI.schemeInfo, "EMI40_Taxable_V3", None, Some(ListBuffer(EMI.buildTaxableV3(true, "yes", "yes", "yes"))))
+            SchemeData(EMI.schemeInfo, "EMI40_Adjustments_V4", None, Some(ListBuffer(EMI.buildAdjustmentsV4(true, "yes")))),
+            SchemeData(EMI.schemeInfo, "EMI40_Replaced_V4", None, Some(ListBuffer(EMI.buildReplacedV4(true)))),
+            SchemeData(EMI.schemeInfo, "EMI40_RLC_V4", None, Some(ListBuffer(EMI.buildRLCV4(true, "yes", "yes")))),
+            SchemeData(EMI.schemeInfo, "EMI40_NonTaxable_V4", None, Some(ListBuffer(EMI.buildNonTaxableV4(true, "yes", "yes")))),
+            SchemeData(EMI.schemeInfo, "EMI40_Taxable_V4", None, Some(ListBuffer(EMI.buildTaxableV4(true, "yes", "yes", "yes"))))
           )
         )
       )
@@ -367,16 +367,16 @@ class EMI_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfter {
       ).thenReturn(
         Future.successful(
           List(
-            SchemeData(EMI.schemeInfo, "EMI40_Adjustments_V3", None, Some(ListBuffer(EMI.buildAdjustmentsV3(true, "yes")))),
-            SchemeData(EMI.schemeInfo, "EMI40_Adjustments_V3", None, Some(ListBuffer(EMI.buildAdjustmentsV3(true, "yes")))),
-            SchemeData(EMI.schemeInfo, "EMI40_Replaced_V3", None, Some(ListBuffer(EMI.buildReplacedV3(true)))),
-            SchemeData(EMI.schemeInfo, "EMI40_Replaced_V3", None, Some(ListBuffer(EMI.buildReplacedV3(true)))),
-            SchemeData(EMI.schemeInfo, "EMI40_RLC_V3", None, Some(ListBuffer(EMI.buildRLCV3(true, "yes", "yes")))),
-            SchemeData(EMI.schemeInfo, "EMI40_RLC_V3", None, Some(ListBuffer(EMI.buildRLCV3(true, "yes", "yes")))),
-            SchemeData(EMI.schemeInfo, "EMI40_NonTaxable_V3", None, Some(ListBuffer(EMI.buildNonTaxableV3(true, "yes", "yes")))),
-            SchemeData(EMI.schemeInfo, "EMI40_NonTaxable_V3", None, Some(ListBuffer(EMI.buildNonTaxableV3(true, "yes", "yes")))),
-            SchemeData(EMI.schemeInfo, "EMI40_Taxable_V3", None, Some(ListBuffer(EMI.buildTaxableV3(true, "yes", "yes", "yes")))),
-            SchemeData(EMI.schemeInfo, "EMI40_Taxable_V3", None, Some(ListBuffer(EMI.buildTaxableV3(true, "yes", "yes", "yes"))))
+            SchemeData(EMI.schemeInfo, "EMI40_Adjustments_V4", None, Some(ListBuffer(EMI.buildAdjustmentsV4(true, "yes")))),
+            SchemeData(EMI.schemeInfo, "EMI40_Adjustments_V4", None, Some(ListBuffer(EMI.buildAdjustmentsV4(true, "yes")))),
+            SchemeData(EMI.schemeInfo, "EMI40_Replaced_V4", None, Some(ListBuffer(EMI.buildReplacedV4(true)))),
+            SchemeData(EMI.schemeInfo, "EMI40_Replaced_V4", None, Some(ListBuffer(EMI.buildReplacedV4(true)))),
+            SchemeData(EMI.schemeInfo, "EMI40_RLC_V4", None, Some(ListBuffer(EMI.buildRLCV4(true, "yes", "yes")))),
+            SchemeData(EMI.schemeInfo, "EMI40_RLC_V4", None, Some(ListBuffer(EMI.buildRLCV4(true, "yes", "yes")))),
+            SchemeData(EMI.schemeInfo, "EMI40_NonTaxable_V4", None, Some(ListBuffer(EMI.buildNonTaxableV4(true, "yes", "yes")))),
+            SchemeData(EMI.schemeInfo, "EMI40_NonTaxable_V4", None, Some(ListBuffer(EMI.buildNonTaxableV4(true, "yes", "yes")))),
+            SchemeData(EMI.schemeInfo, "EMI40_Taxable_V4", None, Some(ListBuffer(EMI.buildTaxableV4(true, "yes", "yes", "yes")))),
+            SchemeData(EMI.schemeInfo, "EMI40_Taxable_V4", None, Some(ListBuffer(EMI.buildTaxableV4(true, "yes", "yes", "yes"))))
           )
         )
       )
@@ -659,7 +659,7 @@ class EMI_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfter {
       ).thenReturn(
         Future.successful(
           List(
-            SchemeData(EMI.schemeInfo, "EMI40_Adjustments_V3", None, Some(ListBuffer(EMI.buildAdjustmentsV3(true, "yes"))))
+            SchemeData(EMI.schemeInfo, "EMI40_Adjustments_V4", None, Some(ListBuffer(EMI.buildAdjustmentsV4(true, "yes"))))
           )
         )
       )
@@ -752,8 +752,8 @@ class EMI_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfter {
       ).thenReturn(
         Future.successful(
           List(
-            SchemeData(EMI.schemeInfo, "EMI40_Adjustments_V3", None, Some(ListBuffer(EMI.buildAdjustmentsV3(true, "yes")))),
-            SchemeData(EMI.schemeInfo, "EMI40_Adjustments_V3", None, Some(ListBuffer(EMI.buildAdjustmentsV3(true, "yes"))))
+            SchemeData(EMI.schemeInfo, "EMI40_Adjustments_V4", None, Some(ListBuffer(EMI.buildAdjustmentsV4(true, "yes")))),
+            SchemeData(EMI.schemeInfo, "EMI40_Adjustments_V4", None, Some(ListBuffer(EMI.buildAdjustmentsV4(true, "yes"))))
           )
         )
       )
@@ -860,7 +860,7 @@ class EMI_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfter {
       ).thenReturn(
         Future.successful(
           List(
-            SchemeData(EMI.schemeInfo, "EMI40_RLC_V3", None, Some(ListBuffer(EMI.buildRLCV3(true, "yes", "yes"))))
+            SchemeData(EMI.schemeInfo, "EMI40_RLC_V4", None, Some(ListBuffer(EMI.buildRLCV4(true, "yes", "yes"))))
           )
         )
       )
@@ -952,8 +952,8 @@ class EMI_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfter {
       ).thenReturn(
         Future.successful(
           List(
-            SchemeData(EMI.schemeInfo, "EMI40_RLC_V3", None, Some(ListBuffer(EMI.buildRLCV3(true, "yes", "yes")))),
-            SchemeData(EMI.schemeInfo, "EMI40_RLC_V3", None, Some(ListBuffer(EMI.buildRLCV3(true, "yes", "yes"))))
+            SchemeData(EMI.schemeInfo, "EMI40_RLC_V4", None, Some(ListBuffer(EMI.buildRLCV4(true, "yes", "yes")))),
+            SchemeData(EMI.schemeInfo, "EMI40_RLC_V4", None, Some(ListBuffer(EMI.buildRLCV4(true, "yes", "yes"))))
           )
         )
       )
@@ -1061,7 +1061,7 @@ class EMI_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfter {
       ).thenReturn(
         Future.successful(
           List(
-            SchemeData(EMI.schemeInfo, "EMI40_RLC_V3", None, Some(ListBuffer(EMI.buildRLCV3(true, "yes", "yes"))))
+            SchemeData(EMI.schemeInfo, "EMI40_RLC_V4", None, Some(ListBuffer(EMI.buildRLCV4(true, "yes", "yes"))))
           )
         )
       )
@@ -1153,8 +1153,8 @@ class EMI_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfter {
       ).thenReturn(
         Future.successful(
           List(
-            SchemeData(EMI.schemeInfo, "EMI40_RLC_V3", None, Some(ListBuffer(EMI.buildRLCV3(true, "yes", "yes")))),
-            SchemeData(EMI.schemeInfo, "EMI40_RLC_V3", None, Some(ListBuffer(EMI.buildRLCV3(true, "yes", "yes"))))
+            SchemeData(EMI.schemeInfo, "EMI40_RLC_V4", None, Some(ListBuffer(EMI.buildRLCV4(true, "yes", "yes")))),
+            SchemeData(EMI.schemeInfo, "EMI40_RLC_V4", None, Some(ListBuffer(EMI.buildRLCV4(true, "yes", "yes"))))
           )
         )
       )
@@ -1262,7 +1262,7 @@ class EMI_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfter {
       ).thenReturn(
         Future.successful(
           List(
-            SchemeData(EMI.schemeInfo, "EMI40_NonTaxable_V3", None, Some(ListBuffer(EMI.buildNonTaxableV3(true, "yes", "yes"))))
+            SchemeData(EMI.schemeInfo, "EMI40_NonTaxable_V4", None, Some(ListBuffer(EMI.buildNonTaxableV4(true, "yes", "yes"))))
           )
         )
       )
@@ -1355,8 +1355,8 @@ class EMI_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfter {
       ).thenReturn(
         Future.successful(
           List(
-            SchemeData(EMI.schemeInfo, "EMI40_NonTaxable_V3", None, Some(ListBuffer(EMI.buildNonTaxableV3(true, "yes", "yes")))),
-            SchemeData(EMI.schemeInfo, "EMI40_NonTaxable_V3", None, Some(ListBuffer(EMI.buildNonTaxableV3(true, "yes", "yes"))))
+            SchemeData(EMI.schemeInfo, "EMI40_NonTaxable_V4", None, Some(ListBuffer(EMI.buildNonTaxableV4(true, "yes", "yes")))),
+            SchemeData(EMI.schemeInfo, "EMI40_NonTaxable_V4", None, Some(ListBuffer(EMI.buildNonTaxableV4(true, "yes", "yes"))))
           )
         )
       )
@@ -1466,7 +1466,7 @@ class EMI_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfter {
       ).thenReturn(
         Future.successful(
           List(
-            SchemeData(EMI.schemeInfo, "EMI40_Taxable_V3", None, Some(ListBuffer(EMI.buildTaxableV3(true, "yes", "yes", "yes"))))
+            SchemeData(EMI.schemeInfo, "EMI40_Taxable_V4", None, Some(ListBuffer(EMI.buildTaxableV4(true, "yes", "yes", "yes"))))
           )
         )
       )
@@ -1564,8 +1564,8 @@ class EMI_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfter {
       ).thenReturn(
         Future.successful(
           List(
-            SchemeData(EMI.schemeInfo, "EMI40_Taxable_V3", None, Some(ListBuffer(EMI.buildTaxableV3(true, "yes", "yes", "yes")))),
-            SchemeData(EMI.schemeInfo, "EMI40_Taxable_V3", None, Some(ListBuffer(EMI.buildTaxableV3(true, "yes", "yes", "yes"))))
+            SchemeData(EMI.schemeInfo, "EMI40_Taxable_V4", None, Some(ListBuffer(EMI.buildTaxableV4(true, "yes", "yes", "yes")))),
+            SchemeData(EMI.schemeInfo, "EMI40_Taxable_V4", None, Some(ListBuffer(EMI.buildTaxableV4(true, "yes", "yes", "yes"))))
           )
         )
       )
@@ -1680,17 +1680,17 @@ class EMI_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfter {
 
   }
 
-  "calling generateJson for Adjustments V3" should {
+  "calling generateJson for Adjustments V4" should {
 
-    val configData: Config = Common.loadConfiguration(EMI.schemeType, "EMI40_Adjustments_V3", mockConfigUtils)
+    val configData: Config = Common.loadConfiguration(EMI.schemeType, "EMI40_Adjustments_V4", mockConfigUtils)
 
     "create valid JSON with disqualifyingEvent = \"yes\"" in {
 
       val result = mockAdrSubmission.buildJson(
         configData,
         ListBuffer(
-          EMI.buildAdjustmentsV3(withAllFields = true, disqualifyingEvent = "yes"),
-          EMI.buildAdjustmentsV3(withAllFields = false, disqualifyingEvent = "yes")
+          EMI.buildAdjustmentsV4(withAllFields = true, disqualifyingEvent = "yes"),
+          EMI.buildAdjustmentsV4(withAllFields = false, disqualifyingEvent = "yes")
         )
       )
 
@@ -1737,8 +1737,8 @@ class EMI_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfter {
       val result = mockAdrSubmission.buildJson(
         configData,
         ListBuffer(
-          EMI.buildAdjustmentsV3(withAllFields = true, disqualifyingEvent = "no"),
-          EMI.buildAdjustmentsV3(withAllFields = false, disqualifyingEvent = "no")
+          EMI.buildAdjustmentsV4(withAllFields = true, disqualifyingEvent = "no"),
+          EMI.buildAdjustmentsV4(withAllFields = false, disqualifyingEvent = "no")
         )
       )
 
@@ -1780,17 +1780,17 @@ class EMI_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfter {
     }
   }
 
-  "calling generateJson for Replaced V3" should {
+  "calling generateJson for Replaced V4" should {
 
-    val configData: Config = Common.loadConfiguration(EMI.schemeType, "EMI40_Replaced_V3", mockConfigUtils)
+    val configData: Config = Common.loadConfiguration(EMI.schemeType, "EMI40_Replaced_V4", mockConfigUtils)
 
     "create valid JSON" in {
 
       val result = mockAdrSubmission.buildJson(
         configData,
         ListBuffer(
-          EMI.buildReplacedV3(withAllFields = true),
-          EMI.buildReplacedV3(withAllFields = false)
+          EMI.buildReplacedV4(withAllFields = true),
+          EMI.buildReplacedV4(withAllFields = false)
         )
       )
 
@@ -1849,17 +1849,17 @@ class EMI_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfter {
 
   }
 
-  "calling generateJson for RLC V3" should {
+  "calling generateJson for RLC V4" should {
 
-    val configData: Config = Common.loadConfiguration(EMI.schemeType, "EMI40_RLC_V3", mockConfigUtils)
+    val configData: Config = Common.loadConfiguration(EMI.schemeType, "EMI40_RLC_V4", mockConfigUtils)
 
     "create valid JSON for withAllFields = (true or false), disqualifyingEvent = \"yes\" and moneyValueReceived = \"yes\"" in {
 
       val result = mockAdrSubmission.buildJson(
         configData,
         ListBuffer(
-          EMI.buildRLCV3(withAllFields = true, disqualifyingEvent = "yes", moneyValueReceived = "yes"),
-          EMI.buildRLCV3(withAllFields = false, disqualifyingEvent = "yes", moneyValueReceived = "yes")
+          EMI.buildRLCV4(withAllFields = true, disqualifyingEvent = "yes", moneyValueReceived = "yes"),
+          EMI.buildRLCV4(withAllFields = false, disqualifyingEvent = "yes", moneyValueReceived = "yes")
         )
       )
 
@@ -1907,8 +1907,8 @@ class EMI_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfter {
       val result = mockAdrSubmission.buildJson(
         configData,
         ListBuffer(
-          EMI.buildRLCV3(withAllFields = true, disqualifyingEvent = "yes", moneyValueReceived = "yes"),
-          EMI.buildRLCV3(withAllFields = true, disqualifyingEvent = "no", moneyValueReceived = "yes")
+          EMI.buildRLCV4(withAllFields = true, disqualifyingEvent = "yes", moneyValueReceived = "yes"),
+          EMI.buildRLCV4(withAllFields = true, disqualifyingEvent = "no", moneyValueReceived = "yes")
         )
       )
 
@@ -1957,8 +1957,8 @@ class EMI_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfter {
       val result = mockAdrSubmission.buildJson(
         configData,
         ListBuffer(
-          EMI.buildRLCV3(withAllFields = true, disqualifyingEvent = "yes", moneyValueReceived = "yes"),
-          EMI.buildRLCV3(withAllFields = true, disqualifyingEvent = "yes", moneyValueReceived = "no")
+          EMI.buildRLCV4(withAllFields = true, disqualifyingEvent = "yes", moneyValueReceived = "yes"),
+          EMI.buildRLCV4(withAllFields = true, disqualifyingEvent = "yes", moneyValueReceived = "no")
         )
       )
 
@@ -2003,17 +2003,17 @@ class EMI_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfter {
 
   }
 
-  "calling generateJson for NonTaxable V3" should {
+  "calling generateJson for NonTaxable V4" should {
 
-    val configData: Config = Common.loadConfiguration(EMI.schemeType, "EMI40_NonTaxable_V3", mockConfigUtils)
+    val configData: Config = Common.loadConfiguration(EMI.schemeType, "EMI40_NonTaxable_V4", mockConfigUtils)
 
     "create valid JSON for withAllFields = (true or false), sharesListedOnSE = \"yes\" and marketValueAgreedHMRC = \"yes\"" in {
 
       val result = mockAdrSubmission.buildJson(
         configData,
         ListBuffer(
-          EMI.buildNonTaxableV3(withAllFields = true, sharesListedOnSE = "yes", marketValueAgreedHMRC = "yes"),
-          EMI.buildNonTaxableV3(withAllFields = false, sharesListedOnSE = "yes", marketValueAgreedHMRC = "yes")
+          EMI.buildNonTaxableV4(withAllFields = true, sharesListedOnSE = "yes", marketValueAgreedHMRC = "yes"),
+          EMI.buildNonTaxableV4(withAllFields = false, sharesListedOnSE = "yes", marketValueAgreedHMRC = "yes")
         )
       )
 
@@ -2062,8 +2062,8 @@ class EMI_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfter {
       val result = mockAdrSubmission.buildJson(
         configData,
         ListBuffer(
-          EMI.buildNonTaxableV3(withAllFields = true, sharesListedOnSE = "yes", marketValueAgreedHMRC = "yes"),
-          EMI.buildNonTaxableV3(withAllFields = true, sharesListedOnSE = "no", marketValueAgreedHMRC = "yes")
+          EMI.buildNonTaxableV4(withAllFields = true, sharesListedOnSE = "yes", marketValueAgreedHMRC = "yes"),
+          EMI.buildNonTaxableV4(withAllFields = true, sharesListedOnSE = "no", marketValueAgreedHMRC = "yes")
         )
       )
 
@@ -2116,8 +2116,8 @@ class EMI_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfter {
       val result = mockAdrSubmission.buildJson(
         configData,
         ListBuffer(
-          EMI.buildNonTaxableV3(withAllFields = true, sharesListedOnSE = "no", marketValueAgreedHMRC = "yes"),
-          EMI.buildNonTaxableV3(withAllFields = true, sharesListedOnSE = "no", marketValueAgreedHMRC = "no")
+          EMI.buildNonTaxableV4(withAllFields = true, sharesListedOnSE = "no", marketValueAgreedHMRC = "yes"),
+          EMI.buildNonTaxableV4(withAllFields = true, sharesListedOnSE = "no", marketValueAgreedHMRC = "no")
         )
       )
 
@@ -2167,17 +2167,17 @@ class EMI_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfter {
     }
   }
 
-  "calling generateJson for Taxable V3" should {
+  "calling generateJson for Taxable V4" should {
 
-    val configData: Config = Common.loadConfiguration(EMI.schemeType, "EMI40_Taxable_V3", mockConfigUtils)
+    val configData: Config = Common.loadConfiguration(EMI.schemeType, "EMI40_Taxable_V4", mockConfigUtils)
 
     "create valid JSON for withAllFields = (true or false), disqualifyingEvent = \"yes\", sharesListedOnSE = \"yes\" and marketValueAgreedHMRC = \"yes\"" in {
 
       val result = mockAdrSubmission.buildJson(
         configData,
         ListBuffer(
-          EMI.buildTaxableV3(withAllFields = true, disqualifyingEvent = "yes", sharesListedOnSE = "yes", marketValueAgreedHMRC = "yes"),
-          EMI.buildTaxableV3(withAllFields = false, disqualifyingEvent = "yes", sharesListedOnSE = "yes", marketValueAgreedHMRC = "yes")
+          EMI.buildTaxableV4(withAllFields = true, disqualifyingEvent = "yes", sharesListedOnSE = "yes", marketValueAgreedHMRC = "yes"),
+          EMI.buildTaxableV4(withAllFields = false, disqualifyingEvent = "yes", sharesListedOnSE = "yes", marketValueAgreedHMRC = "yes")
         )
       )
 
@@ -2236,8 +2236,8 @@ class EMI_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfter {
       val result = mockAdrSubmission.buildJson(
         configData,
         ListBuffer(
-          EMI.buildTaxableV3(withAllFields = true, disqualifyingEvent = "yes", sharesListedOnSE = "yes", marketValueAgreedHMRC = "yes"),
-          EMI.buildTaxableV3(withAllFields = true, disqualifyingEvent = "no", sharesListedOnSE = "yes", marketValueAgreedHMRC = "yes")
+          EMI.buildTaxableV4(withAllFields = true, disqualifyingEvent = "yes", sharesListedOnSE = "yes", marketValueAgreedHMRC = "yes"),
+          EMI.buildTaxableV4(withAllFields = true, disqualifyingEvent = "no", sharesListedOnSE = "yes", marketValueAgreedHMRC = "yes")
         )
       )
 
@@ -2297,8 +2297,8 @@ class EMI_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfter {
       val result = mockAdrSubmission.buildJson(
         configData,
         ListBuffer(
-          EMI.buildTaxableV3(withAllFields = true, disqualifyingEvent = "yes", sharesListedOnSE = "yes", marketValueAgreedHMRC = "yes"),
-          EMI.buildTaxableV3(withAllFields = true, disqualifyingEvent = "yes", sharesListedOnSE = "no", marketValueAgreedHMRC = "yes")
+          EMI.buildTaxableV4(withAllFields = true, disqualifyingEvent = "yes", sharesListedOnSE = "yes", marketValueAgreedHMRC = "yes"),
+          EMI.buildTaxableV4(withAllFields = true, disqualifyingEvent = "yes", sharesListedOnSE = "no", marketValueAgreedHMRC = "yes")
         )
       )
 
@@ -2361,8 +2361,8 @@ class EMI_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfter {
       val result = mockAdrSubmission.buildJson(
         configData,
         ListBuffer(
-          EMI.buildTaxableV3(withAllFields = true, disqualifyingEvent = "yes", sharesListedOnSE = "no", marketValueAgreedHMRC = "yes"),
-          EMI.buildTaxableV3(withAllFields = true, disqualifyingEvent = "yes", sharesListedOnSE = "no", marketValueAgreedHMRC = "no")
+          EMI.buildTaxableV4(withAllFields = true, disqualifyingEvent = "yes", sharesListedOnSE = "no", marketValueAgreedHMRC = "yes"),
+          EMI.buildTaxableV4(withAllFields = true, disqualifyingEvent = "yes", sharesListedOnSE = "no", marketValueAgreedHMRC = "no")
         )
       )
 

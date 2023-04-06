@@ -322,7 +322,7 @@ class CSOP_ADRSubmissionSpec
         mockPresubmissionService.getJson(any[SchemeInfo]())
       ).thenReturn(
         Future.successful(
-          List(SchemeData(CSOP.schemeInfo, "CSOP_OptionsGranted_V3", None, Some(ListBuffer(CSOP.buildGrantedV3("yes", "yes")))))
+          List(SchemeData(CSOP.schemeInfo, "CSOP_OptionsGranted_V4", None, Some(ListBuffer(CSOP.buildGrantedV4("yes", "yes")))))
         )
       )
 
@@ -412,8 +412,8 @@ class CSOP_ADRSubmissionSpec
       ).thenReturn(
         Future.successful(
           List(
-            SchemeData(CSOP.schemeInfo, "CSOP_OptionsGranted_V3", None, Some(ListBuffer(CSOP.buildGrantedV3("yes", "yes")))),
-            SchemeData(CSOP.schemeInfo, "CSOP_OptionsGranted_V3", None, Some(ListBuffer(CSOP.buildGrantedV3("yes", "yes"))))
+            SchemeData(CSOP.schemeInfo, "CSOP_OptionsGranted_V4", None, Some(ListBuffer(CSOP.buildGrantedV4("yes", "yes")))),
+            SchemeData(CSOP.schemeInfo, "CSOP_OptionsGranted_V4", None, Some(ListBuffer(CSOP.buildGrantedV4("yes", "yes"))))
           )
         )
       )
@@ -512,7 +512,7 @@ class CSOP_ADRSubmissionSpec
         mockPresubmissionService.getJson(any[SchemeInfo]())
       ).thenReturn(
         Future.successful(
-          List(SchemeData(CSOP.schemeInfo, "CSOP_OptionsRCL_V3", None, Some(ListBuffer(CSOP.buildOptionsRCL(true, "yes")))))
+          List(SchemeData(CSOP.schemeInfo, "CSOP_OptionsRCL_V4", None, Some(ListBuffer(CSOP.buildOptionsRCL(true, "yes")))))
         )
       )
 
@@ -606,8 +606,8 @@ class CSOP_ADRSubmissionSpec
       ).thenReturn(
         Future.successful(
           List(
-            SchemeData(CSOP.schemeInfo, "CSOP_OptionsRCL_V3", None, Some(ListBuffer(CSOP.buildOptionsRCL(true, "yes")))),
-            SchemeData(CSOP.schemeInfo, "CSOP_OptionsRCL_V3", None, Some(ListBuffer(CSOP.buildOptionsRCL(false, "no"))))
+            SchemeData(CSOP.schemeInfo, "CSOP_OptionsRCL_V4", None, Some(ListBuffer(CSOP.buildOptionsRCL(true, "yes")))),
+            SchemeData(CSOP.schemeInfo, "CSOP_OptionsRCL_V4", None, Some(ListBuffer(CSOP.buildOptionsRCL(false, "no"))))
           )
         )
       )
@@ -711,7 +711,7 @@ class CSOP_ADRSubmissionSpec
         mockPresubmissionService.getJson(any[SchemeInfo]())
       ).thenReturn(
         Future.successful(
-          List(SchemeData(CSOP.schemeInfo, "CSOP_OptionsExercised_V3", None, Some(ListBuffer(CSOP.buildOptionsExercised(withAllFields = true, sharesListedOnSE = "yes", marketValueAgreedHMRC = "yes", payeOperated = "yes")))))
+          List(SchemeData(CSOP.schemeInfo, "CSOP_OptionsExercised_V4", None, Some(ListBuffer(CSOP.buildOptionsExercised(withAllFields = true, sharesListedOnSE = "yes", marketValueAgreedHMRC = "yes", payeOperated = "yes")))))
         )
       )
 
@@ -814,8 +814,8 @@ class CSOP_ADRSubmissionSpec
       ).thenReturn(
         Future.successful(
           List(
-            SchemeData(CSOP.schemeInfo, "CSOP_OptionsExercised_V3", None, Some(ListBuffer(CSOP.buildOptionsExercised(withAllFields = true, sharesListedOnSE = "yes", marketValueAgreedHMRC = "yes", payeOperated = "yes")))),
-            SchemeData(CSOP.schemeInfo, "CSOP_OptionsExercised_V3", None, Some(ListBuffer(CSOP.buildOptionsExercised(withAllFields = true, sharesListedOnSE = "yes", marketValueAgreedHMRC = "yes", payeOperated = "yes"))))
+            SchemeData(CSOP.schemeInfo, "CSOP_OptionsExercised_V4", None, Some(ListBuffer(CSOP.buildOptionsExercised(withAllFields = true, sharesListedOnSE = "yes", marketValueAgreedHMRC = "yes", payeOperated = "yes")))),
+            SchemeData(CSOP.schemeInfo, "CSOP_OptionsExercised_V4", None, Some(ListBuffer(CSOP.buildOptionsExercised(withAllFields = true, sharesListedOnSE = "yes", marketValueAgreedHMRC = "yes", payeOperated = "yes"))))
           )
         )
       )
@@ -941,9 +941,9 @@ class CSOP_ADRSubmissionSpec
       ).thenReturn(
         Future.successful(
           List(
-            SchemeData(CSOP.schemeInfo, "CSOP_OptionsGranted_V3", None, Some(ListBuffer(CSOP.buildGrantedV3("yes", "yes")))),
-            SchemeData(CSOP.schemeInfo, "CSOP_OptionsRCL_V3", None, Some(ListBuffer(CSOP.buildOptionsRCL(true, "yes")))),
-            SchemeData(CSOP.schemeInfo, "CSOP_OptionsExercised_V3", None, Some(ListBuffer(CSOP.buildOptionsExercised(withAllFields = true, sharesListedOnSE = "yes", marketValueAgreedHMRC = "yes", payeOperated = "yes"))))
+            SchemeData(CSOP.schemeInfo, "CSOP_OptionsGranted_V4", None, Some(ListBuffer(CSOP.buildGrantedV4("yes", "yes")))),
+            SchemeData(CSOP.schemeInfo, "CSOP_OptionsRCL_V4", None, Some(ListBuffer(CSOP.buildOptionsRCL(true, "yes")))),
+            SchemeData(CSOP.schemeInfo, "CSOP_OptionsExercised_V4", None, Some(ListBuffer(CSOP.buildOptionsExercised(withAllFields = true, sharesListedOnSE = "yes", marketValueAgreedHMRC = "yes", payeOperated = "yes"))))
           )
         )
       )
@@ -1096,12 +1096,12 @@ class CSOP_ADRSubmissionSpec
       ).thenReturn(
         Future.successful(
           List(
-            SchemeData(CSOP.schemeInfo, "CSOP_OptionsGranted_V3", None, Some(ListBuffer(CSOP.buildGrantedV3("yes", "yes")))),
-            SchemeData(CSOP.schemeInfo, "CSOP_OptionsGranted_V3", None, Some(ListBuffer(CSOP.buildGrantedV3("no", "no")))),
-            SchemeData(CSOP.schemeInfo, "CSOP_OptionsRCL_V3", None, Some(ListBuffer(CSOP.buildOptionsRCL(true, "yes")))),
-            SchemeData(CSOP.schemeInfo, "CSOP_OptionsRCL_V3", None, Some(ListBuffer(CSOP.buildOptionsRCL(true, "no")))),
-            SchemeData(CSOP.schemeInfo, "CSOP_OptionsExercised_V3", None, Some(ListBuffer(CSOP.buildOptionsExercised(withAllFields = true, sharesListedOnSE = "yes", marketValueAgreedHMRC = "yes", payeOperated = "yes")))),
-            SchemeData(CSOP.schemeInfo, "CSOP_OptionsExercised_V3", None, Some(ListBuffer(CSOP.buildOptionsExercised(withAllFields = true, sharesListedOnSE = "no", marketValueAgreedHMRC = "yes", payeOperated = "yes"))))
+            SchemeData(CSOP.schemeInfo, "CSOP_OptionsGranted_V4", None, Some(ListBuffer(CSOP.buildGrantedV4("yes", "yes")))),
+            SchemeData(CSOP.schemeInfo, "CSOP_OptionsGranted_V4", None, Some(ListBuffer(CSOP.buildGrantedV4("no", "no")))),
+            SchemeData(CSOP.schemeInfo, "CSOP_OptionsRCL_V4", None, Some(ListBuffer(CSOP.buildOptionsRCL(true, "yes")))),
+            SchemeData(CSOP.schemeInfo, "CSOP_OptionsRCL_V4", None, Some(ListBuffer(CSOP.buildOptionsRCL(true, "no")))),
+            SchemeData(CSOP.schemeInfo, "CSOP_OptionsExercised_V4", None, Some(ListBuffer(CSOP.buildOptionsExercised(withAllFields = true, sharesListedOnSE = "yes", marketValueAgreedHMRC = "yes", payeOperated = "yes")))),
+            SchemeData(CSOP.schemeInfo, "CSOP_OptionsExercised_V4", None, Some(ListBuffer(CSOP.buildOptionsExercised(withAllFields = true, sharesListedOnSE = "no", marketValueAgreedHMRC = "yes", payeOperated = "yes"))))
           )
         )
       )
@@ -1295,18 +1295,18 @@ class CSOP_ADRSubmissionSpec
 
   }
 
-  // CSOP_OptionsGranted_V3
-  "calling generateJson for OptionsGranted_V3" should {
+  // CSOP_OptionsGranted_V4
+  "calling generateJson for OptionsGranted_V4" should {
 
-    val configData: Config = Common.loadConfiguration(CSOP.schemeType, "CSOP_OptionsGranted_V3", mockConfigUtils)
+    val configData: Config = Common.loadConfiguration(CSOP.schemeType, "CSOP_OptionsGranted_V4", mockConfigUtils)
 
     "create valid JSON with sharesListedOnSE = (\"yes\" or \"no\"), marketValueAgreedHMRC = \"yes\"" in {
 
       val result = adrSubmission.buildJson(
         configData,
         ListBuffer(
-          CSOP.buildGrantedV3(sharesListedOnSE = "yes", marketValueAgreedHMRC = "yes"),
-          CSOP.buildGrantedV3(sharesListedOnSE = "no", marketValueAgreedHMRC = "yes")
+          CSOP.buildGrantedV4(sharesListedOnSE = "yes", marketValueAgreedHMRC = "yes"),
+          CSOP.buildGrantedV4(sharesListedOnSE = "no", marketValueAgreedHMRC = "yes")
         )
       )
 
@@ -1344,8 +1344,8 @@ class CSOP_ADRSubmissionSpec
       val result = adrSubmission.buildJson(
         configData,
         ListBuffer(
-          CSOP.buildGrantedV3(sharesListedOnSE = "no", marketValueAgreedHMRC = "yes"),
-          CSOP.buildGrantedV3(sharesListedOnSE = "no", marketValueAgreedHMRC = "no")
+          CSOP.buildGrantedV4(sharesListedOnSE = "no", marketValueAgreedHMRC = "yes"),
+          CSOP.buildGrantedV4(sharesListedOnSE = "no", marketValueAgreedHMRC = "no")
         )
       )
 
@@ -1380,10 +1380,10 @@ class CSOP_ADRSubmissionSpec
     }
   }
 
-  // CSOP_OptionsRCL_V3
-  "calling generateJson for OptionsRCL_V3" should {
+  // CSOP_OptionsRCL_V4
+  "calling generateJson for OptionsRCL_V4" should {
 
-    val configData: Config = Common.loadConfiguration(CSOP.schemeType, "CSOP_OptionsRCL_V3", mockConfigUtils)
+    val configData: Config = Common.loadConfiguration(CSOP.schemeType, "CSOP_OptionsRCL_V4", mockConfigUtils)
 
     "create valid JSON with withAllFields = (true or false), moneyExchanged = \"yes\"" in {
 
@@ -1473,10 +1473,10 @@ class CSOP_ADRSubmissionSpec
     }
   }
 
-  // CSOP_OptionsExercised_V3
-  "calling generateJson for OptionsExercised_V3" should {
+  // CSOP_OptionsExercised_V4
+  "calling generateJson for OptionsExercised_V4" should {
 
-    val configData: Config = Common.loadConfiguration(CSOP.schemeType, "CSOP_OptionsExercised_V3", mockConfigUtils)
+    val configData: Config = Common.loadConfiguration(CSOP.schemeType, "CSOP_OptionsExercised_V4", mockConfigUtils)
 
     "create valid JSON with withAllFields = (true or false), sharesListedOnSE = \"yes\", marketValueAgreedHMRC = \"yes\", payeOperated = \"yes\"" in {
 

@@ -145,7 +145,7 @@ class SubmissionCommonSpec extends ERSTestHelper {
 
   "mergeSheetData" should {
 
-    val configData: Config = Common.loadConfiguration("SIP", "SIP_Awards_V3", mockConfigUtils)
+    val configData: Config = Common.loadConfiguration("SIP", "SIP_Awards_V4", mockConfigUtils)
 
     "return json that contains merged sheet data" in {
       val oldJson: JsObject = Json.obj(

@@ -27,7 +27,7 @@ object SIP {
   val schemeRef: String = "XA1100000000000"
   val timestamp: DateTime = DateTime.now
 
-  // SIP_Awards_V3
+  // SIP_Awards_V4
   def buildAwards(withAllFields: Boolean = true, sharesListedOnSE: String, marketValueAgreedHMRC: String): Seq[String] = Seq(
     "2015-12-09",
     "1000",
@@ -57,7 +57,7 @@ object SIP {
     if(sharesListedOnSE == "no" && marketValueAgreedHMRC == "yes") "aa12345678" else ""
   )
 
-  // SIP_Out_V3
+  // SIP_Out_V4
   def buildOutOfPlan(withAllFields: Boolean = true, sharesHeld: String, payeApplied: String): Seq[String] = Seq(
     "2011-10-13",
     "First",

@@ -29,7 +29,7 @@ object SAYE {
   val timestamp: DateTime = DateTime.now
 
 
-  def buildExercisedV3(allFields: Boolean, sharesListedOnSE: String, marketValueAgreedHMRC: String): Seq[String] = Seq(
+  def buildExercisedV4(allFields: Boolean, sharesListedOnSE: String, marketValueAgreedHMRC: String): Seq[String] = Seq(
     "2014-01-01",
     "First",
     {
@@ -54,7 +54,7 @@ object SAYE {
     "yes"
   )
 
-  def buildGrantedV3(sharesListedOnSE: String, marketValueAgreedHMRC: String): Seq[String] = Seq(
+  def buildGrantedV4(sharesListedOnSE: String, marketValueAgreedHMRC: String): Seq[String] = Seq(
     "2015-12-31",
     "123456",
     "100.00",
@@ -65,7 +65,7 @@ object SAYE {
     if(sharesListedOnSE == "no" && marketValueAgreedHMRC == "yes") "aa12345678" else ""
   )
 
-  def buildRCLV3(wasMoneyOrValueGiven:String="yes",secondName:String="Second",nino:String="NINO"): Seq[String] = Seq(
+  def buildRCLV4(wasMoneyOrValueGiven:String="yes",secondName:String="Second",nino:String="NINO"): Seq[String] = Seq(
     "2015-12-31",
     wasMoneyOrValueGiven,
     if(wasMoneyOrValueGiven == "yes") "10.1234" else "",
