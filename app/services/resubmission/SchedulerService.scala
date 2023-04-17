@@ -40,7 +40,9 @@ class SchedulerService @Inject()(val applicationConfig: ApplicationConfig,
   val hc: HeaderCarrier = HeaderCarrier()
 
   def run(): Cancellable = {
+    logger.info("resubPresubmissionService running...")
     val lock = TimePeriodLockService(lockRepository, applicationConfig.schedulerLockName, applicationConfig.schedulerLockExpireMin.minutes)
+    logger.info(s"Using lock: ${lock.lockId} (repository: ${lock.lockRepository}, timeout: ${lock.ttl})")
     actorSystem.scheduler.schedule(delay.milliseconds, repeat.seconds) {
       if ((schedulerStartTime.isEqualNow || schedulerStartTime.isBeforeNow) && schedulerEndTime.isAfterNow) {
         lock.withRenewedLock {
