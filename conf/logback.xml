@@ -59,7 +59,9 @@
         <appender-ref ref="STDOUT"/>
     </logger>
 
-    <root level="DEBUG">
+    <logger name="utils.LoggingAndRexceptions" level="INFO"/>
+
+    <root level="INFO">
         <appender-ref ref="FILE"/>
         <appender-ref ref="STDOUT"/>
     </root>

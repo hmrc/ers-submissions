@@ -52,23 +52,4 @@ trait SchedulerConfig {
 
   val resubmitSuccessStatus: String = applicationConfig.schedulerSuccessStatus
   val isResubmitBeforeDate: Boolean = applicationConfig.isSchedulerResubmitBeforeDate
-
-  val r: Random.type = scala.util.Random
-  val delay: Int = r.nextInt(applicationConfig.schedulerMaxDelayInMilliseconds) + applicationConfig.schedulerInitialDelayInMilliseconds
-  val repeat: Int = r.nextInt(applicationConfig.schedulerMaxRepeatIntervalInSeconds) + applicationConfig.schedulerRepeatIntervalInSeconds
-
-  def schedulerStartTime: DateTime = getTime(applicationConfig.schedulerStartHour, applicationConfig.schedulerStartMinute)
-
-  def schedulerEndTime: DateTime = {
-    val endTime = getTime(applicationConfig.schedulerEndHour, applicationConfig.schedulerEndMinute)
-    if (applicationConfig.schedulerStartHour > applicationConfig.schedulerEndHour) {
-      endTime.plusDays(1)
-    } else {
-      endTime
-    }
-  }
-
-  def getTime(hour: Int, minuteOfHour: Int): DateTime = {
-    DateTime.now.withZone(DateTimeZone.UTC).withHourOfDay(hour).withMinuteOfHour(minuteOfHour).withSecondOfMinute(0)
-  }
 }

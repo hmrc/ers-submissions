@@ -73,7 +73,7 @@ class MetadataMongoRepository @Inject()(val applicationConfig: ApplicationConfig
 
     val baseSelector: BsonDocument = BsonDocument(
       "transferStatus" -> BsonDocument(
-        "$in" -> statusList
+        "$in" -> statusList.map(Some(_))
       )
     )
 
