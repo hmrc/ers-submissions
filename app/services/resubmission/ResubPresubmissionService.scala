@@ -48,7 +48,7 @@ class ResubPresubmissionService @Inject()(metadataRepository: MetadataMongoRepos
         Some(res)
       })
       case None =>
-        schedulerLoggingAndAuditing.logWarn("No data found for resubmission")
+        schedulerLoggingAndAuditing.logWarn(NoDataToResubmitMessage.message)
         Future(None)
     }.recover {
       case rex: ResubmissionException => throw rex
@@ -64,6 +64,7 @@ class ResubPresubmissionService @Inject()(metadataRepository: MetadataMongoRepos
   }
 
   def startResubmission(ersSummary: ErsSummary)(implicit request: Request[_], hc: HeaderCarrier): Future[Boolean] = {
+    schedulerLoggingAndAuditing.logInfo(ProcessingResubmitMessage.message + Some(ersSummary))
     submissionCommonService.callProcessData(ersSummary, failedStatus, resubmitSuccessStatus).map(res => res).recover {
       case aex: ADRTransferException =>
         auditEvents.sendToAdrEvent("ErsTransferToAdrFailed", ersSummary, source = Some("scheduler"))

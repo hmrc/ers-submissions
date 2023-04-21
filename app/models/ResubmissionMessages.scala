@@ -32,3 +32,19 @@ case class LockMessage(lockService: LockService) extends ResubmissionMessages {
 case object FinishedResubmissionJob extends ResubmissionMessages {
   override val message: String = s"$prefix Finished resubmission job"
 }
+
+case object ResubmissionSuccessMessage extends ResubmissionMessages {
+  override val message: String = s"$prefix Resubmission was successful"
+}
+
+case object ResubmissionFailedMessage extends ResubmissionMessages {
+  override val message: String = s"$prefix Resubmission failed"
+}
+
+case object NoDataToResubmitMessage extends ResubmissionMessages {
+  override val message: String = s"$prefix No data found for resubmission"
+}
+
+case object ProcessingResubmitMessage extends ResubmissionMessages {
+  override val message: String = s"$prefix Processing resubmission event"
+}

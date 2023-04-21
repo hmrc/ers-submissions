@@ -17,7 +17,7 @@
 package services.resubmission
 
 import config.ApplicationConfig
-import models.{FinishedResubmissionJob, LockMessage}
+import models.{FinishedResubmissionJob, LockMessage, NoDataToResubmitMessage, ResubmissionFailedMessage, ResubmissionSuccessMessage}
 import play.api.Logging
 import play.api.libs.json.JsObject
 import play.api.mvc.Request
@@ -45,7 +45,12 @@ class ReSubmissionSchedulerService @Inject()(lockRepositoryProvider: LockReposit
 
   def resubmit()(implicit request: Request[_], hc: HeaderCarrier): Future[Boolean] = {
     resubPresubmissionService.processFailedSubmissions().map { result: Option[Boolean] =>
-      schedulerLoggingAndAuditing.handleResult(result, Some("Resubmission was successful"), Some("Resubmission failed"))
+      schedulerLoggingAndAuditing.handleResult(
+        result,
+        ResubmissionSuccessMessage.message,
+        ResubmissionFailedMessage.message,
+        NoDataToResubmitMessage.message
+      )
       result.getOrElse(false)
     }.recover {
       case ex: Exception =>

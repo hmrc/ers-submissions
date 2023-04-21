@@ -38,11 +38,16 @@ class ErsLoggingAndAuditing @Inject()(auditEvents: AuditEvents) extends ErsLogge
 
   def handleSuccess(data: Object, message: String): Unit = logWarn(message, Some(data))
 
-  def handleResult(result: Option[Boolean], successMsg: Option[String], errorMsg: Option[String], data: Option[Object] = None): Unit = {
+  def handleResult(
+                    result: Option[Boolean],
+                    successMsg: String,
+                    errorMsg: String,
+                    noDataMsg: String,
+                    data: Option[Object] = None): Unit = {
     result match {
-      case Some(true) if successMsg.isDefined => logWarn(successMsg.get, data)
-      case Some(false) if errorMsg.isDefined => logError(errorMsg.get, data)
-      case None => logInfo("No data found for resubmission")
+      case Some(true) => logInfo(successMsg, data)
+      case Some(false) => logError(errorMsg, data)
+      case None => logInfo(noDataMsg)
     }
   }
 }
