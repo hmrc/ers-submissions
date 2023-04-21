@@ -42,7 +42,7 @@ class ErsLoggingAndAuditing @Inject()(auditEvents: AuditEvents) extends ErsLogge
     result match {
       case Some(true) if successMsg.isDefined => logWarn(successMsg.get, data)
       case Some(false) if errorMsg.isDefined => logError(errorMsg.get, data)
-      case None => logWarn("Nothing to submit")
+      case None => logInfo("No data found for resubmission")
     }
   }
 }

@@ -26,7 +26,7 @@ import org.scalatest.BeforeAndAfterEach
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 import repositories.PresubmissionMongoRepository
-import scheduler.UpdateCreatedAtFieldsJob
+import scheduler.UpdateCreatedAtFieldsJobImpl
 import services.DocumentUpdateService
 
 import java.util.concurrent.TimeUnit
@@ -34,11 +34,7 @@ import scala.collection.mutable.ListBuffer
 
 class PresubmissionMongoRepositorySpec extends AnyWordSpecLike with Matchers with BeforeAndAfterEach {
 
-  lazy val app: Application = new GuiceApplicationBuilder()
-    .overrides(
-    bind[DocumentUpdateService].to[FakeDocumentUpdateService],
-    bind[UpdateCreatedAtFieldsJob].to[FakeUpdateCreatedAtFieldsJob]
-  ).configure(
+  lazy val app: Application = new GuiceApplicationBuilder().configure(
     Map(
       "microservice.services.auth.port" -> "18500",
       "settings.presubmission-collection-ttl-days" -> 365)

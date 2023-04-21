@@ -27,11 +27,10 @@ import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 import scala.concurrent.duration.{Duration, SECONDS}
 import scala.concurrent.{ExecutionContext, Future}
 
-trait DocumentUpdateService extends ScheduledService[Boolean] with Logging
-class DefaultDocumentUpdateService @Inject()(repository: PresubmissionMongoRepository,
+class DocumentUpdateService @Inject()(repository: PresubmissionMongoRepository,
                                              lockRepositoryProvider: LockRepositoryProvider,
                                              servicesConfig: ServicesConfig
-                                            )(implicit ec: ExecutionContext) extends DocumentUpdateService {
+                                            )(implicit ec: ExecutionContext) extends ScheduledService[Boolean] with Logging {
 
   override val jobName: String = "update-created-at-field-job"
   private val updateLimit: Int = servicesConfig.getInt(s"schedules.$jobName.updateLimit")

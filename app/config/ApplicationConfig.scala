@@ -39,14 +39,6 @@ class ApplicationConfig @Inject()(serviceConfig: ServicesConfig) {
 
   lazy val isSchedulerEnabled: Boolean = serviceConfig.getBoolean("scheduling.enabled")
   lazy val schedulerStatuses: List[String] = Try(serviceConfig.getString("scheduling.statuses").split(",").toList).getOrElse(List())
-  lazy val schedulerRepeatIntervalInSeconds: Int = serviceConfig.getInt("scheduling.repeat-interval-sec")
-  lazy val schedulerMaxRepeatIntervalInSeconds: Int = serviceConfig.getInt("scheduling.max-repeat-interval-sec")
-  lazy val schedulerInitialDelayInMilliseconds: Int = serviceConfig.getInt("scheduling.initial-delay-ms")
-  lazy val schedulerMaxDelayInMilliseconds: Int = serviceConfig.getInt("scheduling.max-delay-ms")
-  lazy val schedulerStartHour: Int = serviceConfig.getInt("scheduling.start-hour")
-  lazy val schedulerStartMinute: Int = serviceConfig.getInt("scheduling.start-minute")
-  lazy val schedulerEndHour: Int = serviceConfig.getInt("scheduling.end-hour")
-  lazy val schedulerEndMinute: Int = serviceConfig.getInt("scheduling.end-minute")
   lazy val schedulerLockExpireMin: Int = serviceConfig.getInt("scheduling.lock-expire-min")
   lazy val schedulerLockName: String = serviceConfig.getString("scheduling.lock-name")
 
