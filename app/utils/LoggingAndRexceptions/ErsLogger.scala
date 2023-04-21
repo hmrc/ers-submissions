@@ -43,4 +43,8 @@ trait ErsLogger extends ErsDataMessages with ErsExceptionMessages with Logging {
     logger.warn(buildMessage(message, data))
   }
 
+  def logInfo(message: String, data: Option[Object] = None): Unit = {
+    logger.info(buildMessage(message, data))
+  }
+
 }
