@@ -26,11 +26,10 @@ import com.github.tomakehurst.wiremock.core.WireMockConfiguration._
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.{BeforeAndAfterAll, Suite}
 import scheduler.SchedulingActor.UpdateDocumentsClass
-import scheduler.{SchedulingActor, UpdateCreatedAtFieldsJob}
+import scheduler.{ScheduledJob, SchedulingActor}
 import services.DocumentUpdateService
 
 import javax.inject.Inject
-import scala.concurrent.{ExecutionContext, Future}
 
 trait FakeAuthService extends BeforeAndAfterAll with ScalaFutures {
   this: Suite =>
@@ -84,17 +83,11 @@ trait FakeErsStubService extends BeforeAndAfterAll with ScalaFutures {
   stubServer.stubFor(WireMock.post(urlMatching("/.*")).willReturn(WireMock.aResponse().withStatus(202)))
 }
 
-class FakeDocumentUpdateService extends DocumentUpdateService {
-  override val jobName: String = "update-created-at-field-job"
-
-  override def invoke(implicit ec: ExecutionContext): Future[Boolean] = Future.successful(true)
-}
-
 class FakeUpdateCreatedAtFieldsJob @Inject()(
                                               val config: Configuration,
-                                              val service: FakeDocumentUpdateService,
+                                              val service: DocumentUpdateService,
                                               val applicationLifecycle: ApplicationLifecycle
-                                            ) extends UpdateCreatedAtFieldsJob {
+                                            ) extends ScheduledJob {
   override def jobName: String = "update-created-at-field-job"
   override val scheduledMessage: SchedulingActor.ScheduledMessage[_] = UpdateDocumentsClass(service)
   override val actorSystem: ActorSystem = ActorSystem(jobName)
