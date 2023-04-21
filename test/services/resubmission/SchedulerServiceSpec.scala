@@ -19,14 +19,13 @@ package services.resubmission
 import akka.actor.ActorSystem
 import config.ApplicationConfig
 import helpers.ERSTestHelper
-import org.joda.time.DateTime
 import org.mockito.Mockito._
 import org.scalatest.BeforeAndAfterEach
 import play.api.mvc.Request
 import play.api.test.FakeRequest
-import repositories.Repositories
+import repositories.{DefaultLockRepositoryProvider, Repositories}
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.mongo.lock.MongoLockRepository
+import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 import utils.LoggingAndRexceptions.ErsLoggingAndAuditing
 
 import scala.concurrent.Future
@@ -38,103 +37,45 @@ class SchedulerServiceSpec extends ERSTestHelper with BeforeAndAfterEach {
   val mockSchedulerLoggingAndAuditing: ErsLoggingAndAuditing = app.injector.instanceOf[ErsLoggingAndAuditing]
   val mockApplicationConfig: ApplicationConfig = app.injector.instanceOf[ApplicationConfig]
   val mockRepositories: Repositories = mock[Repositories]
-  val mockMongoLockRepository: MongoLockRepository = mock[MongoLockRepository]
+  val mockMongoLockRepository: DefaultLockRepositoryProvider = mock[DefaultLockRepositoryProvider]
   val mockResubPresubmissionService: ResubPresubmissionService = mock[ResubPresubmissionService]
   val mockActorSystem: ActorSystem = mock[ActorSystem]
+  val mockServicesConfig: ServicesConfig = mock[ServicesConfig]
+  val mockErsLoggingAndAuditing: ErsLoggingAndAuditing = mock[ErsLoggingAndAuditing]
+
 
   override def beforeEach(): Unit = {
     super.beforeEach()
     reset(mockResubPresubmissionService)
   }
 
-  "getTime" should {
-    println("GET TIME")
-    val schedulerService: SchedulerService = new SchedulerService(
-      mockApplicationConfig,
-      mockMongoLockRepository,
-      mockResubPresubmissionService,
-      mockSchedulerLoggingAndAuditing,
-      mockActorSystem) {
-      println("SchedulerService start")
-    }
-
-    "return current date with given time" in {
-      val hour = 15
-      val minutes = 5
-      val result = schedulerService.getTime(hour, minutes)
-      result.getYear shouldBe DateTime.now.getYear
-      result.getMonthOfYear shouldBe DateTime.now.getMonthOfYear
-      result.getDayOfMonth shouldBe DateTime.now.getDayOfMonth
-      result.getHourOfDay shouldBe hour
-      result.getMinuteOfHour shouldBe minutes
-    }
-  }
-
-  "schedulerStartTime" should {
-    val schedulerServiceTest: SchedulerService = new SchedulerService(
-      mockApplicationConfig,
-      mockMongoLockRepository,
-      mockResubPresubmissionService,
-      mockSchedulerLoggingAndAuditing,
-      mockActorSystem)
-
-    "return current date with given time" in {
-      val result = schedulerServiceTest.schedulerStartTime
-      result.getYear shouldBe DateTime.now.getYear
-      result.getMonthOfYear shouldBe DateTime.now.getMonthOfYear
-      result.getDayOfMonth shouldBe DateTime.now.getDayOfMonth
-      result.getHourOfDay shouldBe 7
-      result.getMinuteOfHour shouldBe 0
-    }
-  }
-
-  "schedulerEndTime" should {
-    val schedulerService: SchedulerService = new SchedulerService(
-      mockApplicationConfig,
-      mockMongoLockRepository,
-      mockResubPresubmissionService,
-      mockSchedulerLoggingAndAuditing,
-      mockActorSystem)
-
-    "return current date with given time" in {
-      val result = schedulerService.schedulerEndTime
-      result.getYear shouldBe DateTime.now.getYear
-      result.getMonthOfYear shouldBe DateTime.now.getMonthOfYear
-      result.getDayOfMonth shouldBe DateTime.now.getDayOfMonth
-      result.getHourOfDay shouldBe 18
-      result.getMinuteOfHour shouldBe 0
-    }
-  }
-
   "resubmit" should {
 
     "return the result of processFailedGridFSSubmissions" in {
-      val schedulerService: SchedulerService = new SchedulerService(
-        mockApplicationConfig,
+      val schedulerService: ReSubmissionSchedulerService = new ReSubmissionSchedulerService(
         mockMongoLockRepository,
         mockResubPresubmissionService,
-        mockSchedulerLoggingAndAuditing,
-        mockActorSystem)
+        mockServicesConfig,
+        mockErsLoggingAndAuditing)
 
       when(mockResubPresubmissionService.processFailedSubmissions())
         .thenReturn(Future.successful(Some(true)))
 
       val result = await(schedulerService.resubmit())
-      result shouldBe Some(true)
+      result shouldBe true
     }
 
     "return false if resubmitting gridFS data throws exception" in {
-      val schedulerService: SchedulerService = new SchedulerService(
-        mockApplicationConfig,
+      val schedulerService: ReSubmissionSchedulerService = new ReSubmissionSchedulerService(
         mockMongoLockRepository,
         mockResubPresubmissionService,
-        mockSchedulerLoggingAndAuditing,
-        mockActorSystem)
+        mockServicesConfig,
+        mockErsLoggingAndAuditing)
 
       when(mockResubPresubmissionService.processFailedSubmissions()).thenReturn(Future.failed(new RuntimeException))
 
       val result = await(schedulerService.resubmit())
-      result shouldBe Some(false)
+      result shouldBe false
     }
   }
 }

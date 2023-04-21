@@ -19,17 +19,22 @@ package scheduler
 import akka.actor.{ActorRef, ActorSystem}
 import com.typesafe.akka.extension.quartz.QuartzSchedulerExtension
 import org.quartz.CronExpression
+import play.api.inject.ApplicationLifecycle
 import play.api.{Configuration, Logging}
 import scheduler.SchedulingActor.ScheduledMessage
 
 import java.time.ZoneId
 import java.util.TimeZone
 
+import scala.concurrent.Future
+
 trait ScheduledJob extends Logging {
   val scheduledMessage: ScheduledMessage[_]
   val config: Configuration
   val actorSystem: ActorSystem
   def jobName: String
+
+  val applicationLifecycle: ApplicationLifecycle
 
   lazy val scheduler: QuartzSchedulerExtension = QuartzSchedulerExtension(actorSystem)
 
@@ -59,5 +64,10 @@ trait ScheduledJob extends Logging {
         logger.info(s"Scheduler for $jobName is disabled by configuration")
         false
     }
+  }
+
+  applicationLifecycle.addStopHook { () =>
+    Future.successful(scheduler.cancelJob(jobName))
+    Future.successful(scheduler.shutdown(waitForJobsToComplete = false))
   }
 }

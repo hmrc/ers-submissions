@@ -14,15 +14,21 @@
  * limitations under the License.
  */
 
-package config
+package models
 
-import play.api.inject.{Binding, Module}
-import play.api.{Configuration, Environment}
-import repositories.{DefaultLockRepositoryProvider, LockRepositoryProvider}
+import uk.gov.hmrc.mongo.lock.LockService
 
-class ModuleBindings extends Module {
+trait ResubmissionMessages {
+  val prefix: String = "[ResubmissionService]"
+  val message: String
+}
 
-  override def bindings(environment: Environment, configuration: Configuration): Seq[Binding[_]] = Seq(
-    bind[LockRepositoryProvider].to[DefaultLockRepositoryProvider]
-  )
+case class LockMessage(lockService: LockService) extends ResubmissionMessages {
+  override val message: String = s"$prefix Searching for records to resubmit " +
+    s"using database lock with id: ${lockService.lockId} " +
+    s"(duration: ${lockService.ttl} and repository: ${lockService.lockRepository}"
+}
+
+case object FinishedResubmissionJob extends ResubmissionMessages {
+  override val message: String = s"$prefix Finished resubmission job"
 }

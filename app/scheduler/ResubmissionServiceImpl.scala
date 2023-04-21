@@ -19,19 +19,19 @@ package scheduler
 import akka.actor.ActorSystem
 import com.google.inject.Inject
 import play.api.Configuration
-import scheduler.SchedulingActor.UpdateDocumentsClass
-import services.DocumentUpdateService
+import play.api.inject.ApplicationLifecycle
+import scheduler.SchedulingActor.ResubmissionServiceClass
+import services.resubmission.ReSubmissionSchedulerService
 
-trait UpdateCreatedAtFieldsJob extends ScheduledJob
-
-class UpdateCreatedAtFieldsJobImpl @Inject()(
+class ResubmissionServiceImpl @Inject()(
                                               val config: Configuration,
-                                              val documentUpdateService: DocumentUpdateService
-                                            ) extends UpdateCreatedAtFieldsJob {
+                                              val resubmissionService: ReSubmissionSchedulerService,
+                                              val applicationLifecycle: ApplicationLifecycle
+                                            ) extends ScheduledJob {
 
-  override def jobName: String = "update-created-at-field-job"
+  override def jobName: String = "resubmission-service"
   val actorSystem: ActorSystem = ActorSystem(jobName)
-  val scheduledMessage: UpdateDocumentsClass = UpdateDocumentsClass(documentUpdateService)
+  val scheduledMessage: ResubmissionServiceClass = ResubmissionServiceClass(resubmissionService)
 
   schedule
 }
