@@ -48,3 +48,7 @@ case object NoDataToResubmitMessage extends ResubmissionMessages {
 case object ProcessingResubmitMessage extends ResubmissionMessages {
   override val message: String = s"$prefix Processing resubmission event"
 }
+
+case class NumberOfFailedJobsMessage(numberOfFailedJobs: Long, failedStatuses: List[String]) extends ResubmissionMessages {
+  val message: String = s"$prefix There are $numberOfFailedJobs failed jobs with statuses ${failedStatuses.mkString(", ")}"
+}

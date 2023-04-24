@@ -37,6 +37,16 @@ class ResubPresubmissionService @Inject()(metadataRepository: MetadataMongoRepos
                                          (implicit ec: ExecutionContext) extends SchedulerConfig {
 
   def processFailedSubmissions()(implicit request: Request[_], hc: HeaderCarrier): Future[Option[Boolean]] = {
+    metadataRepository
+      .getNumberOfFailedJobs(searchStatusList).map(
+        numberOfRecords =>
+          schedulerLoggingAndAuditing.logInfo(
+            NumberOfFailedJobsMessage(
+              numberOfFailedJobs = numberOfRecords,
+              failedStatuses = searchStatusList
+            ).message
+          )
+      )
     metadataRepository.findAndUpdateByStatus(
       searchStatusList,
       isResubmitBeforeDate,

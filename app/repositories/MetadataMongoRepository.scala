@@ -66,6 +66,17 @@ class MetadataMongoRepository @Inject()(val applicationConfig: ApplicationConfig
     }
   }
 
+  def getNumberOfFailedJobs(statusList: List[String]): Future[Long] = {
+    val baseSelector: BsonDocument = BsonDocument(
+      "transferStatus" -> BsonDocument(
+        "$in" -> statusList.map(Some(_))
+      )
+    )
+    collection.countDocuments(
+      filter = baseSelector
+    ).toFuture()
+  }
+
   def findAndUpdateByStatus(statusList: List[String],
                             isResubmitBeforeDate: Boolean = true,
                             schemeRefList: Option[List[String]],
