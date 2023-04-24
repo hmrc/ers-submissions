@@ -59,11 +59,11 @@ class ErsLoggingAndAuditingSpec extends ERSTestHelper {
 
   "calling handleResult" should {
     "log warnrning with success message if result is true" in {
-      val result = mockErsLoggingAndAuditing.handleResult(Some(true), Some("Success message"), None, None)
+      val result = mockErsLoggingAndAuditing.handleResult(Some(true), "Success message", "Error message", "No data found for resubmission", None)
       result shouldBe (())
     }
     "log error with error message if result is false" in {
-      val result = mockErsLoggingAndAuditing.handleResult(Some(false), None, Some("Error message"), None)
+      val result = mockErsLoggingAndAuditing.handleResult(Some(false), "Success message", "Error message", "No data found for resubmission", None)
       result shouldBe (())
     }
   }

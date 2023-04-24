@@ -36,7 +36,7 @@ class DocumentUpdateServiceSpec extends ERSTestHelper with BeforeAndAfterEach wi
   val mockServicesConfig: ServicesConfig = mock[ServicesConfig]
 
   class Setup() {
-    val documentUpdateService: DefaultDocumentUpdateService = new DefaultDocumentUpdateService(
+    val documentUpdateService: DocumentUpdateService = new DocumentUpdateService(
       mockPresubmissionMongo,
       mockLockKeeper,
       mockServicesConfig

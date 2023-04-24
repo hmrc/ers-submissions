@@ -32,7 +32,7 @@ import org.scalatest.wordspec.AnyWordSpecLike
 import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach}
 import org.scalatestplus.play.guice.GuiceOneServerPerSuite
 import repositories.PresubmissionMongoRepository
-import scheduler.{ScheduledJob, UpdateCreatedAtFieldsJob}
+import scheduler.{ScheduledJob, UpdateCreatedAtFieldsJobImpl}
 
 import scala.concurrent.ExecutionContext
 
@@ -89,7 +89,7 @@ class UpdateCreatedAtFieldsJobISpec extends AnyWordSpecLike
     )
   }
 
-  def getJob: ScheduledJob = app.injector.instanceOf[UpdateCreatedAtFieldsJob]
+  def getJob: ScheduledJob = app.injector.instanceOf[UpdateCreatedAtFieldsJobImpl]
 
   "UpdateCreatedAtFieldsJob" should {
     "update the documents where the createdAt is missing and return true" in new Setup {

@@ -28,9 +28,9 @@ import play.api.inject.ApplicationLifecycle
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.mvc.{ControllerComponents, Result}
 import play.api.test.Helpers.stubControllerComponents
-import play.api.{Application, Configuration, Play, inject}
+import play.api.{Application, Configuration, Logging, Play, inject}
 import scheduler.SchedulingActor.UpdateDocumentsClass
-import scheduler.{SchedulingActor, UpdateCreatedAtFieldsJob}
+import scheduler.{ScheduledJob, ScheduledService, SchedulingActor}
 import services.DocumentUpdateService
 
 import java.nio.charset.Charset
@@ -42,10 +42,6 @@ trait ERSTestHelper extends AnyWordSpecLike with Matchers with OptionValues with
 
   override def fakeApplication(): Application =
     new GuiceApplicationBuilder()
-      .overrides(
-        inject.bind[DocumentUpdateService].to[FakeDocumentUpdateService],
-        inject.bind[UpdateCreatedAtFieldsJob].to[FakeUpdateCreatedAtFieldsJob]
-      )
       .build()
 
   val mockCc: ControllerComponents = stubControllerComponents()
@@ -65,21 +61,4 @@ trait ERSTestHelper extends AnyWordSpecLike with Matchers with OptionValues with
 
   def await[T](future: Future[T], timeout: FiniteDuration = 10.seconds): T = Await.result(future, timeout)
 
-}
-
-class FakeDocumentUpdateService extends DocumentUpdateService {
-  override val jobName: String = "update-created-at-field-job"
-
-  override def invoke(implicit ec: ExecutionContext): Future[Boolean] = Future.successful(true)
-}
-
-class FakeUpdateCreatedAtFieldsJob @Inject()(
-                                              val config: Configuration,
-                                              val service: FakeDocumentUpdateService,
-                                              val applicationLifecycle: ApplicationLifecycle
-) extends UpdateCreatedAtFieldsJob {
-
-  override def jobName: String = "update-created-at-field-job"
-  override val scheduledMessage: SchedulingActor.ScheduledMessage[_] = UpdateDocumentsClass(service)
-  override val actorSystem: ActorSystem = ActorSystem(jobName)
 }

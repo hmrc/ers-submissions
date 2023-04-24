@@ -16,13 +16,12 @@
 
 package config
 
-import play.api.inject.{Binding, Module}
-import play.api.{Configuration, Environment}
-import repositories.{DefaultLockRepositoryProvider, LockRepositoryProvider}
+import com.google.inject.AbstractModule
+import scheduler.{ResubmissionServiceImpl, UpdateCreatedAtFieldsJobImpl}
 
-class ModuleBindings extends Module {
-
-  override def bindings(environment: Environment, configuration: Configuration): Seq[Binding[_]] = Seq(
-    bind[LockRepositoryProvider].to[DefaultLockRepositoryProvider]
-  )
+class SchedulerModule extends AbstractModule {
+  override def configure(): Unit = {
+    bind(classOf[UpdateCreatedAtFieldsJobImpl]).asEagerSingleton()
+    bind(classOf[ResubmissionServiceImpl]).asEagerSingleton()
+  }
 }

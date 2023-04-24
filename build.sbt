@@ -22,6 +22,12 @@ lazy val scoverageSettings = {
   )
 }
 
+lazy val testSettings = Seq(
+  javaOptions ++= Seq(
+    "-Dconfig.resource=test.application.conf"
+  )
+)
+
 lazy val microservice = Project(appName, file("."))
   .enablePlugins(play.sbt.PlayScala, SbtDistributablesPlugin)
   .settings(scoverageSettings : _*)
@@ -35,6 +41,7 @@ lazy val microservice = Project(appName, file("."))
   )
   .configs(IntegrationTest)
   .settings(integrationTestSettings())
+  .settings(inConfig(Test)(testSettings): _*)
   .settings(majorVersion := 1)
   .settings(PlayKeys.playDefaultPort := 9292)
   .disablePlugins(JUnitXmlReportPlugin) //Required to prevent https://github.com/scalatest/scalatest/issues/1427
