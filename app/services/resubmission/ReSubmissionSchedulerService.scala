@@ -62,6 +62,7 @@ class ReSubmissionSchedulerService @Inject()(lockRepositoryProvider: LockReposit
   override def invoke(implicit ec: ExecutionContext): Future[Boolean] = {
     val request: Request[JsObject] = ERSRequest.createERSRequest()
     val hc: HeaderCarrier = HeaderCarrier()
+    resubPresubmissionService.logFailedSubmissionCount()
     logger.info(LockMessage(lockService).message)
     lockService
       .withLock(resubmit()(request, hc)).map {

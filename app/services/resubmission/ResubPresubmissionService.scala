@@ -36,17 +36,17 @@ class ResubPresubmissionService @Inject()(metadataRepository: MetadataMongoRepos
                                           resubmissionExceptionEmiter: ResubmissionExceptionEmitter)
                                          (implicit ec: ExecutionContext) extends SchedulerConfig {
 
+  def logFailedSubmissionCount(): Future[Unit] =
+    for {
+      numberOfRecords: Long <- metadataRepository
+        .getNumberOfFailedJobs(searchStatusList)
+      countToLog = NumberOfFailedJobsMessage(
+        numberOfFailedJobs = numberOfRecords,
+        failedStatuses = searchStatusList
+      ).message
+    } yield schedulerLoggingAndAuditing.logInfo(countToLog)
+
   def processFailedSubmissions()(implicit request: Request[_], hc: HeaderCarrier): Future[Option[Boolean]] = {
-    metadataRepository
-      .getNumberOfFailedJobs(searchStatusList).map(
-        numberOfRecords =>
-          schedulerLoggingAndAuditing.logInfo(
-            NumberOfFailedJobsMessage(
-              numberOfFailedJobs = numberOfRecords,
-              failedStatuses = searchStatusList
-            ).message
-          )
-      )
     metadataRepository.findAndUpdateByStatus(
       searchStatusList,
       isResubmitBeforeDate,
