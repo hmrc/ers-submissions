@@ -49,6 +49,10 @@ case object ProcessingResubmitMessage extends ResubmissionMessages {
   override val message: String = s"$prefix Processing resubmission event"
 }
 
-case class NumberOfFailedJobsMessage(numberOfFailedJobs: Long, failedStatuses: List[String]) extends ResubmissionMessages {
-  val message: String = s"$prefix There are $numberOfFailedJobs failed jobs with statuses ${failedStatuses.mkString(", ")}"
+case class TotalNumberOfFailedJobsMessage(numberOfFailedJobs: Long, failedStatuses: List[String]) extends ResubmissionMessages {
+  val message: String = s"$prefix There are $numberOfFailedJobs failed jobs in total with statuses ${failedStatuses.mkString(", ")}"
+}
+
+case class NumberOfFailedToBeProcessedMessage(numberOfFailedJobs: Long) extends ResubmissionMessages {
+  val message: String = s"$prefix $numberOfFailedJobs failed jobs will be processed by this job"
 }

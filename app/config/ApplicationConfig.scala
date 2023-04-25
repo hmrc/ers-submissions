@@ -69,4 +69,13 @@ class ApplicationConfig @Inject()(serviceConfig: ServicesConfig) {
   def ersQuery: ERSQuery = {
     ERSQuery(Some(ersQuerySchemeType),Some(ersQueryStartDate),Some(ersQueryEndDate),None,schedulerSchemeRefList)
   }
+
+  //  Date filter parameters
+  lazy val dateTimeFilterEnabled: Boolean = serviceConfig.getBoolean(s"schedules.resubmission-service.dateTimeFilter.enabled")
+  lazy val dateFilter: Option[String] =
+    if (dateTimeFilterEnabled)
+      Some(serviceConfig.getString(s"schedules.resubmission-service.dateTimeFilter.dateFilter"))
+    else
+      None
+
 }

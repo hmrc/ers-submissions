@@ -22,6 +22,7 @@ import akka.actor.ActorSystem
 import com.github.tomakehurst.wiremock.WireMockServer
 import com.github.tomakehurst.wiremock.client.WireMock
 import com.github.tomakehurst.wiremock.client.WireMock._
+import com.github.tomakehurst.wiremock.core.WireMockConfiguration
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration._
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.{BeforeAndAfterAll, Suite}
@@ -30,6 +31,24 @@ import scheduler.{ScheduledJob, SchedulingActor}
 import services.DocumentUpdateService
 
 import javax.inject.Inject
+
+trait WiremockHelper {
+  val wiremockPort = 11111
+  val wiremockHost = "localhost"
+  val url = s"http://$wiremockHost:$wiremockPort"
+
+  lazy val wmConfig: WireMockConfiguration = wireMockConfig().port(wiremockPort)
+  lazy val wireMockServer = new WireMockServer(wmConfig)
+
+  def startWiremock(): Unit = {
+    wireMockServer.start()
+    WireMock.configureFor(wiremockHost, wiremockPort)
+  }
+
+  def stopWiremock(): Unit = wireMockServer.stop()
+
+  def resetWiremock(): Unit = WireMock.reset()
+}
 
 trait FakeAuthService extends BeforeAndAfterAll with ScalaFutures {
   this: Suite =>

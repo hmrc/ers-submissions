@@ -18,9 +18,6 @@ package services.resubmission
 
 import config.ApplicationConfig
 import models.Statuses
-import org.joda.time.{DateTime, DateTimeZone}
-
-import scala.util.Random
 
 trait SchedulerConfig {
   val applicationConfig: ApplicationConfig
@@ -52,4 +49,6 @@ trait SchedulerConfig {
 
   val resubmitSuccessStatus: String = applicationConfig.schedulerSuccessStatus
   val isResubmitBeforeDate: Boolean = applicationConfig.isSchedulerResubmitBeforeDate
+
+  val dateTimeFilter: Option[String] = applicationConfig.dateFilter
 }

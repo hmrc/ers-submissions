@@ -19,6 +19,7 @@ package services.resubmission
 import akka.actor.ActorSystem
 import config.ApplicationConfig
 import helpers.ERSTestHelper
+import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito._
 import org.scalatest.BeforeAndAfterEach
 import play.api.mvc.Request
@@ -58,8 +59,7 @@ class SchedulerServiceSpec extends ERSTestHelper with BeforeAndAfterEach {
         mockServicesConfig,
         mockErsLoggingAndAuditing)
 
-      when(mockResubPresubmissionService.processFailedSubmissions())
-        .thenReturn(Future.successful(Some(true)))
+      when(mockResubPresubmissionService.processFailedSubmissions(any())(any(), any())).thenReturn(Future.successful(true))
 
       val result = await(schedulerService.resubmit())
       result shouldBe true
@@ -72,7 +72,7 @@ class SchedulerServiceSpec extends ERSTestHelper with BeforeAndAfterEach {
         mockServicesConfig,
         mockErsLoggingAndAuditing)
 
-      when(mockResubPresubmissionService.processFailedSubmissions()).thenReturn(Future.failed(new RuntimeException))
+      when(mockResubPresubmissionService.processFailedSubmissions(any())(any(), any())).thenReturn(Future.failed(new RuntimeException))
 
       val result = await(schedulerService.resubmit())
       result shouldBe false

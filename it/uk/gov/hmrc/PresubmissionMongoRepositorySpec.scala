@@ -57,61 +57,73 @@ class PresubmissionMongoRepositorySpec extends AnyWordSpecLike with Matchers wit
 
   "storeJson" should {
     "successfully insert the scheme data" in {
-      await(presubmissionRepository.storeJson(Fixtures.schemeData)) shouldBe  true
-      await(presubmissionRepository.count(Fixtures.schemeInfo)) shouldBe 1
+      val schemeData = Fixtures.schemeData
+      val schemeInfo = schemeData.schemeInfo
+      await(presubmissionRepository.storeJson(schemeData)) shouldBe  true
+      await(presubmissionRepository.count(schemeInfo)) shouldBe 1
     }
   }
 
   "storeJson2" should {
     "successfully insert the scheme data" in {
-      await(presubmissionRepository.storeJsonV2(Fixtures.schemeInfo.toString, Fixtures.schemeData)) shouldBe true
-      await(presubmissionRepository.count(Fixtures.schemeInfo)) shouldBe 1
+      val schemeData = Fixtures.schemeData
+      val schemeInfo = schemeData.schemeInfo
+      await(presubmissionRepository.storeJsonV2(schemeInfo.toString, schemeData)) shouldBe true
+      await(presubmissionRepository.count(schemeInfo)) shouldBe 1
     }
   }
 
   "getJson" should {
     "successfully return the scheme data" in {
-      await(presubmissionRepository.storeJson(Fixtures.schemeData))
+      val schemeData = Fixtures.schemeData
+      val schemeInfo = schemeData.schemeInfo
+      await(presubmissionRepository.storeJson(schemeData))
 
-      val result = await(presubmissionRepository.getJson(Fixtures.schemeInfo)).head
+      val result = await(presubmissionRepository.getJson(schemeInfo)).head
 
-      (result \ "schemeInfo").as[JsObject] shouldBe Json.toJsObject(Fixtures.schemeInfo)
-      (result \ "sheetName").as[String] shouldBe Fixtures.schemeData.sheetName
-      (result \ "numberOfParts").asOpt[Int] shouldBe Fixtures.schemeData.numberOfParts
-      (result \ "data").asOpt[ListBuffer[Seq[String]]] shouldBe Fixtures.schemeData.data
+      (result \ "schemeInfo").as[JsObject] shouldBe Json.toJsObject(schemeInfo)
+      (result \ "sheetName").as[String] shouldBe schemeData.sheetName
+      (result \ "numberOfParts").asOpt[Int] shouldBe schemeData.numberOfParts
+      (result \ "data").asOpt[ListBuffer[Seq[String]]] shouldBe schemeData.data
     }
   }
 
   "count" should {
     "successfully return number of documents for given scheme info" in {
-      await(presubmissionRepository.storeJson(Fixtures.schemeData))
-      await(presubmissionRepository.count(Fixtures.schemeData.schemeInfo)) shouldBe 1
+      val schemeData = Fixtures.schemeData
+      val schemeInfo = schemeData.schemeInfo
+      await(presubmissionRepository.storeJson(schemeData))
+      await(presubmissionRepository.count(schemeInfo)) shouldBe 1
     }
   }
 
   "removeJson" should {
     "successfully remove the documents for given scheme info" in {
-      await(presubmissionRepository.storeJson(Fixtures.schemeData))
-      await(presubmissionRepository.count(Fixtures.schemeData.schemeInfo)) shouldBe 1
-      await(presubmissionRepository.removeJson(Fixtures.schemeData.schemeInfo)) shouldBe true
-      await(presubmissionRepository.count(Fixtures.schemeData.schemeInfo)) shouldBe 0
+      val schemeData = Fixtures.schemeData
+      val schemeInfo = schemeData.schemeInfo
+      await(presubmissionRepository.storeJson(schemeData))
+      await(presubmissionRepository.count(schemeInfo)) shouldBe 1
+      await(presubmissionRepository.removeJson(schemeInfo)) shouldBe true
+      await(presubmissionRepository.count(schemeInfo)) shouldBe 0
     }
   }
 
   "getDocumentIdsWithoutCreatedAtField" should {
     "return list of document ids without createdAt field" in {
-      await(presubmissionRepository.storeJson(Fixtures.schemeData)) //document with createdAt
+      val schemeData = Fixtures.schemeData
+      await(presubmissionRepository.storeJson(schemeData)) //document with createdAt
 
       val testDocumentId = await(
-        presubmissionRepository.collection.insertOne(Json.toJsObject(Fixtures.schemeData)).toFuture()
+        presubmissionRepository.collection.insertOne(Json.toJsObject(schemeData)).toFuture()
       ).getInsertedId.asObjectId().getValue //document without createdAt
 
       await(presubmissionRepository.getDocumentIdsWithoutCreatedAtField(2)).head shouldBe testDocumentId
     }
 
     "return empty list of document ids if createdAt exists for every record" in {
-      await(presubmissionRepository.storeJson(Fixtures.schemeData)) //document with createdAt
-      await(presubmissionRepository.storeJson(Fixtures.schemeData)) //document with createdAt
+      val schemeData = Fixtures.schemeData
+      await(presubmissionRepository.storeJson(schemeData)) //document with createdAt
+      await(presubmissionRepository.storeJson(schemeData)) //document with createdAt
 
       await(presubmissionRepository.getDocumentIdsWithoutCreatedAtField(2)) shouldBe Seq.empty
     }
@@ -119,10 +131,11 @@ class PresubmissionMongoRepositorySpec extends AnyWordSpecLike with Matchers wit
 
   "addCreatedAtField" should {
     "add createdAt field to documents without this field" in {
-      await(presubmissionRepository.storeJson(Fixtures.schemeData)) //document with createdAt
+      val schemeData = Fixtures.schemeData
+      await(presubmissionRepository.storeJson(schemeData)) //document with createdAt
 
       val testDocumentId = await(
-        presubmissionRepository.collection.insertOne(Json.toJsObject(Fixtures.schemeData)).toFuture()
+        presubmissionRepository.collection.insertOne(Json.toJsObject(schemeData)).toFuture()
       ).getInsertedId.asObjectId().getValue //document without createdAt
 
       await(presubmissionRepository.addCreatedAtField(Seq(testDocumentId))) shouldBe 1

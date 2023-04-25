@@ -18,7 +18,6 @@ package services.resubmission
 
 import java.net.{InetAddress, URI}
 import java.security.cert.X509Certificate
-
 import play.api.libs.json.{JsObject, Json}
 import play.api.libs.typedmap.{TypedEntry, TypedKey, TypedMap}
 import play.api.mvc.request.{RemoteConnection, RequestTarget}

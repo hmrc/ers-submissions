@@ -18,6 +18,8 @@ package services.resubmission
 
 import config.ApplicationConfig
 import models._
+import org.mongodb.scala.bson.{BsonDocument, ObjectId}
+import org.mongodb.scala.result.UpdateResult
 import play.api.mvc.Request
 import repositories.MetadataMongoRepository
 import services.SubmissionService
@@ -40,37 +42,53 @@ class ResubPresubmissionService @Inject()(metadataRepository: MetadataMongoRepos
     for {
       numberOfRecords: Long <- metadataRepository
         .getNumberOfFailedJobs(searchStatusList)
-      countToLog = NumberOfFailedJobsMessage(
+      countToLog = TotalNumberOfFailedJobsMessage(
         numberOfFailedJobs = numberOfRecords,
         failedStatuses = searchStatusList
       ).message
     } yield schedulerLoggingAndAuditing.logInfo(countToLog)
 
-  def processFailedSubmissions()(implicit request: Request[_], hc: HeaderCarrier): Future[Option[Boolean]] = {
-    metadataRepository.findAndUpdateByStatus(
+  def processFailedSubmissions(resubmissionLimit: Int)(implicit request: Request[_], hc: HeaderCarrier): Future[Boolean] = {
+
+    val failedJobSelector: BsonDocument = metadataRepository.createFailedJobSelector(
       searchStatusList,
-      isResubmitBeforeDate,
       schemeRefList,
-      resubmitScheme
-    ).flatMap {
-      case Some(ersSummary) => startResubmission(ersSummary).map(res => {
-        auditEvents.resubmissionResult(ersSummary.metaData.schemeInfo, res)
-        Some(res)
-      })
-      case None =>
+      resubmitScheme,
+      dateTimeFilter
+    )
+    for {
+      failedJobIds: Seq[ObjectId] <- metadataRepository.getFailedJobs(failedJobSelector, resubmissionLimit)
+      _ = resubmissionExceptionEmiter.logInfo(NumberOfFailedToBeProcessedMessage(failedJobIds.length).message)
+      updateResult: UpdateResult <- metadataRepository
+        .findAndUpdateByStatus(failedJobIds)
+        .recover {
+          case rex: ResubmissionException => throw rex
+          case ex: Exception => resubmissionExceptionEmiter.emitFrom(
+            Map(
+              "message" -> "Searching for data to be resubmitted",
+              "context" -> "ResubPresubmissionService.processFailedSubmissions.findAndUpdateByStatus"
+            ),
+            Some(ex),
+            None
+          )
+        }
+      ersSummaries: Seq[ErsSummary] <- metadataRepository.findErsSummaries(failedJobIds)
+      resubmissionResults: Seq[Boolean] <- if (updateResult.wasAcknowledged()) {
+          Future.sequence(
+            ersSummaries.map {
+              ersSummary =>
+                startResubmission(ersSummary).map(res => {
+                  auditEvents.resubmissionResult(ersSummary.metaData.schemeInfo, res)
+                  res
+                })
+            }
+          )
+        }
+      else {
         schedulerLoggingAndAuditing.logWarn(NoDataToResubmitMessage.message)
-        Future(None)
-    }.recover {
-      case rex: ResubmissionException => throw rex
-      case ex: Exception => resubmissionExceptionEmiter.emitFrom(
-        Map(
-          "message" -> "Searching for data to be resubmitted",
-          "context" -> "ResubPresubmissionService.processFailedSubmissions.findAndUpdateByStatus"
-        ),
-        Some(ex),
-        None
-      )
-    }
+        Future(Seq.empty[Boolean])
+      }
+    } yield resubmissionResults.forall(identity)
   }
 
   def startResubmission(ersSummary: ErsSummary)(implicit request: Request[_], hc: HeaderCarrier): Future[Boolean] = {

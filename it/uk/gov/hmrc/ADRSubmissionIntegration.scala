@@ -24,10 +24,15 @@ import _root_.play.api.mvc.Result
 import _root_.play.api.test.FakeRequest
 import _root_.play.api.test.Helpers._
 import controllers.SubmissionController
+import models.ErsSummary
+import org.mongodb.scala.bson.BsonDocument
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 import repositories.{MetadataMongoRepository, PresubmissionMongoRepository}
+import uk.gov.hmrc.Fixtures.buildErsSummary
+
+import scala.concurrent.Future
 
 class ADRSubmissionIntegration extends AnyWordSpecLike with Matchers
  with BeforeAndAfterEach with FakeErsStubService {
@@ -53,15 +58,24 @@ class ADRSubmissionIntegration extends AnyWordSpecLike with Matchers
     await(metadataMongoRepository.collection.drop.toFuture)
   }
 
+  def getJson(selector: BsonDocument): Future[Seq[ErsSummary]] =
+    metadataMongoRepository.collection.find(
+       filter = selector
+    ).batchSize(Int.MaxValue)
+      .map(_.as[ErsSummary])
+      .toFuture()
+
   //submit-metadata
   "Receiving data for submission" should {
 
     "return OK if valid metadata is received, filedata is extracted from database and it's successfully sent to ADR" in {
-      val data = Fixtures.buildErsSummaryPayload(false)
+      val ersSummary = buildErsSummary(isNilReturn = false)
+      val schemaInfo = ersSummary.metaData.schemeInfo
+      val selector = metadataMongoRepository.buildSelector(schemaInfo)
+      val data = Fixtures.buildErsSummaryPayload(ersSummary)
 
-      await(metadataMongoRepository.storeErsSummary(Fixtures.buildErsSummary(false)))
-      val test = Fixtures.schemeInfo
-      val metadataAfterSave = await(metadataMongoRepository.getJson(test))
+      await(metadataMongoRepository.storeErsSummary(ersSummary))
+      val metadataAfterSave: Seq[ErsSummary] = await(getJson(selector))
 
       metadataAfterSave.length shouldBe 1
       metadataAfterSave.head.transferStatus.get shouldBe "saved"
@@ -70,16 +84,19 @@ class ADRSubmissionIntegration extends AnyWordSpecLike with Matchers
         .apply(FakeRequest().withBody(data.as[JsObject])))
       res.header.status shouldBe OK
 
-      val metadata = await(metadataMongoRepository.getJson(Fixtures.schemeInfo))
+      val metadata = await(getJson(selector))
       metadata.length shouldBe 1
       metadata.head.transferStatus.get shouldBe "sent"
     }
 
     "return OK if valid metadata is received for nil return and it's successfully sent to ADR" in {
-      val data = Fixtures.buildErsSummaryPayload(true)
+      val ersSummary = buildErsSummary(isNilReturn = false)
+      val schemaInfo = ersSummary.metaData.schemeInfo
+      val selector = metadataMongoRepository.buildSelector(schemaInfo)
+      val data = Fixtures.buildErsSummaryPayload(ersSummary)
 
-      await(metadataMongoRepository.storeErsSummary(Fixtures.buildErsSummary(true)))
-      val metadataAfterSave = await(metadataMongoRepository.getJson(Fixtures.schemeInfo))
+      await(metadataMongoRepository.storeErsSummary(ersSummary))
+      val metadataAfterSave = await(getJson(selector))
       metadataAfterSave.length shouldBe 1
       metadataAfterSave.head.transferStatus.get shouldBe "saved"
 
@@ -87,7 +104,7 @@ class ADRSubmissionIntegration extends AnyWordSpecLike with Matchers
         .apply(FakeRequest().withBody(data.as[JsObject])))
       res.header.status shouldBe OK
 
-      val metadata = await(metadataMongoRepository.getJson(Fixtures.schemeInfo))
+      val metadata = await(getJson(selector))
       metadata.length shouldBe 1
       metadata.head.transferStatus.get shouldBe "sent"
     }
@@ -102,14 +119,17 @@ class ADRSubmissionIntegration extends AnyWordSpecLike with Matchers
   "Calling /save-metadata" should {
 
     "return OK and save metadata if valid metadata is sent" in {
+      val ersSummary = buildErsSummary(isNilReturn = true)
+      val schemaInfo = ersSummary.metaData.schemeInfo
+      val selector = metadataMongoRepository.buildSelector(schemaInfo)
 
       val response: Result = await(submissionController.saveMetadata()
-        .apply(FakeRequest().withBody(Fixtures.buildErsSummaryPayload( true).as[JsObject])))
+        .apply(FakeRequest().withBody(Fixtures.buildErsSummaryPayload(ersSummary).as[JsObject])))
       response.header.status shouldBe OK
-      val result = await(metadataMongoRepository.getJson(Fixtures.schemeInfo))
+      val result = await(getJson(selector))
 
       result.length shouldBe 1
-      result.head.toString shouldBe Fixtures.buildErsSummary(true).toString
+      result.head.toString shouldBe ersSummary.toString
     }
   }
 
