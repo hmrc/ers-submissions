@@ -16,7 +16,7 @@
 
 package services.resubmission
 
-import models.{FinishedResubmissionJob, LockMessage, ResubmissionFailedMessage, ResubmissionSuccessMessage}
+import models._
 import play.api.Logging
 import play.api.libs.json.JsObject
 import play.api.mvc.Request
@@ -44,6 +44,7 @@ class ReSubmissionSchedulerService @Inject()(lockRepositoryProvider: LockReposit
     ttl = Duration.create(lockoutTimeout, SECONDS))
 
   def resubmit()(implicit request: Request[_], hc: HeaderCarrier): Future[Boolean] = {
+    schedulerLoggingAndAuditing.logInfo(ResubmissionLimitMessage(resubmissionLimit).message)
     resubPresubmissionService.processFailedSubmissions(resubmissionLimit).map { result: Boolean =>
       schedulerLoggingAndAuditing.handleResult(
         result,
@@ -62,10 +63,10 @@ class ReSubmissionSchedulerService @Inject()(lockRepositoryProvider: LockReposit
     val request: Request[JsObject] = ERSRequest.createERSRequest()
     val hc: HeaderCarrier = HeaderCarrier()
     resubPresubmissionService.logFailedSubmissionCount()
-    logger.info(LockMessage(lockService).message)
+    schedulerLoggingAndAuditing.logInfo(LockMessage(lockService).message)
     lockService
       .withLock(resubmit()(request, hc)).map {
-      case Some(_) => logger.info(FinishedResubmissionJob.message)
+      case Some(_) => schedulerLoggingAndAuditing.logInfo(FinishedResubmissionJob.message)
         true
       case None => false
     }

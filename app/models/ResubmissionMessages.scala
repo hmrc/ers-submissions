@@ -56,3 +56,7 @@ case class TotalNumberOfFailedJobsMessage(numberOfFailedJobs: Long, failedStatus
 case class NumberOfFailedToBeProcessedMessage(numberOfFailedJobs: Long) extends ResubmissionMessages {
   val message: String = s"$prefix $numberOfFailedJobs failed jobs will be processed by this job"
 }
+
+case class ResubmissionLimitMessage(resubmissionLimit: Long) extends ResubmissionMessages {
+  val message: String = s"$prefix Running resubmission job with a batch size of: $resubmissionLimit"
+}
