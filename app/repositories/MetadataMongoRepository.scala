@@ -16,29 +16,39 @@
 
 package repositories
 
+import com.fasterxml.jackson.databind.JsonNode
 import config.ApplicationConfig
 import models._
 import org.joda.time.DateTime
-import org.mongodb.scala.bson.{BsonDocument, BsonInt64, BsonString}
-import org.mongodb.scala.model.FindOneAndUpdateOptions
+import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
+import org.mongodb.scala.FindObservable
+import org.mongodb.scala.bson.{BsonDocument, BsonInt64, BsonString, ObjectId}
+import org.mongodb.scala.model.{Filters, Projections}
+import org.mongodb.scala.result.UpdateResult
 import play.api.Logging
+import play.api.libs.json.{Format, JsObject}
 import repositories.helpers.BaseVerificationRepository
-import repositories.helpers.BsonDocumentHelper.BsonOps
 import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
+import uk.gov.hmrc.mongo.play.json.formats.MongoFormats
 
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
+import models.{ErsSummary, Statuses}
+import play.api.libs.json.Json
+import repositories.helpers.BsonDocumentHelper.BsonOps
 
 @Singleton
 class MetadataMongoRepository @Inject()(val applicationConfig: ApplicationConfig, mc: MongoComponent)
                                        (implicit ec: ExecutionContext)
-  extends PlayMongoRepository[ErsSummary](
+  extends PlayMongoRepository[JsObject](
     mongoComponent = mc,
     collectionName = applicationConfig.metadataCollection,
-    domainFormat = ErsSummary.format,
+    domainFormat = implicitly[Format[JsObject]],
     indexes = Seq.empty
   ) with BaseVerificationRepository with Logging {
+
+  private val objectIdKey: String = "_id"
 
   def buildSelector(schemeInfo: SchemeInfo): BsonDocument = BsonDocument(
     "metaData.schemeInfo.schemeRef" -> BsonString(schemeInfo.schemeRef),
@@ -46,15 +56,9 @@ class MetadataMongoRepository @Inject()(val applicationConfig: ApplicationConfig
   )
 
   def storeErsSummary(ersSummary: ErsSummary): Future[Boolean] = {
-    collection.insertOne(ersSummary).toFuture.map { res =>
+    collection.insertOne(Json.toJsObject(ersSummary)).toFuture.map { res =>
       res.wasAcknowledged()
     }
-  }
-
-  def getJson(schemeInfo: SchemeInfo): Future[Seq[ErsSummary]] = {
-    collection.find(
-      buildSelector(schemeInfo)
-    ).batchSize(Int.MaxValue).toFuture()
   }
 
   def updateStatus(schemeInfo: SchemeInfo, status: String): Future[Boolean] = {
@@ -66,22 +70,10 @@ class MetadataMongoRepository @Inject()(val applicationConfig: ApplicationConfig
     }
   }
 
-  def getNumberOfFailedJobs(statusList: List[String]): Future[Long] = {
-    val baseSelector: BsonDocument = BsonDocument(
-      "transferStatus" -> BsonDocument(
-        "$in" -> statusList.map(Some(_))
-      )
-    )
-    collection.countDocuments(
-      filter = baseSelector
-    ).toFuture()
-  }
-
-  def findAndUpdateByStatus(statusList: List[String],
-                            isResubmitBeforeDate: Boolean = true,
-                            schemeRefList: Option[List[String]],
-                            schemeType: Option[String]): Future[Option[ErsSummary]] = {
-
+  def createFailedJobSelector(statusList: List[String],
+                              schemeRefList: Option[List[String]],
+                              schemeType: Option[String],
+                              dateFilter: Option[String]): BsonDocument = {
     val baseSelector: BsonDocument = BsonDocument(
       "transferStatus" -> BsonDocument(
         "$in" -> statusList.map(Some(_))
@@ -96,26 +88,61 @@ class MetadataMongoRepository @Inject()(val applicationConfig: ApplicationConfig
       schemeType.map(scheme => "metaData.schemeInfo.schemeType" -> BsonString(scheme))
     )
 
-    val dateRangeSelector: BsonDocument = BsonDocument(
-      Some("metaData.schemeInfo.timestamp" -> BsonDocument(
-        "$gte" -> DateTime.parse(applicationConfig.scheduleStartDate).getMillis,
-        "$lte" -> DateTime.parse(applicationConfig.scheduleEndDate).getMillis
-      )).filter(_ => isResubmitBeforeDate)
+    val formatter: DateTimeFormatter = DateTimeFormat.forPattern("dd/MM/yyyy");
+
+    val dateRangeSelector: BsonDocument = BsonDocument(dateFilter.map(date =>
+      "metaData.schemeInfo.timestamp" -> BsonDocument("$gte" -> DateTime.parse(date, formatter).getMillis))
     )
 
+    Seq(baseSelector, schemeRefSelector, schemeSelector, dateRangeSelector).foldLeft(BsonDocument())(_ +:+ _)
+  }
+
+  def getFailedJobs(failedJobSelector: BsonDocument,
+                    updateLimit: Int): Future[Seq[ObjectId]] = {
+
+    val projection = Projections.include(objectIdKey)
+    val ersSubmissionsWithObjectIds: FindObservable[JsObject] = collection
+      .find(failedJobSelector)
+      .projection(projection)
+      .limit(updateLimit)
+
+    ersSubmissionsWithObjectIds
+      .map(json => (json \ objectIdKey).as[ObjectId](MongoFormats.objectIdFormat))
+      .toFuture()
+  }
+
+  def findAndUpdateByStatus(jobIdsToUpdate: Seq[ObjectId]): Future[UpdateResult] = {
+    val selector = Filters.in(objectIdKey, jobIdsToUpdate: _*)
     val modifier: BsonDocument = BsonDocument(
       "$set" -> BsonDocument(
         "transferStatus" -> Statuses.Process.toString
       )
     )
-
-    val selector = Seq(baseSelector, schemeRefSelector, schemeSelector, dateRangeSelector).foldLeft(BsonDocument())(_ +:+ _)
-
-    collection.findOneAndUpdate(
+    collection.updateMany(
       filter = selector,
-      update = Seq(modifier),
-      options = FindOneAndUpdateOptions().sort(BsonDocument("metaData.schemeInfo.timestamp" -> 1))
-    ).toFutureOption()
+      update = Seq(modifier)
+    )
+      .toFuture()
+  }
+
+  def findErsSummaries(jobIdsToUpdate: Seq[ObjectId]): Future[Seq[ErsSummary]] = {
+    val selector = Filters.in(objectIdKey, jobIdsToUpdate: _*)
+    collection.find(
+      filter = selector
+    )
+      .map(_.as[ErsSummary])
+      .toFuture()
+  }
+
+  def getNumberOfFailedJobs(statusList: List[String]): Future[Long] = {
+    val baseSelector: BsonDocument = BsonDocument(
+      "transferStatus" -> BsonDocument(
+        "$in" -> statusList.map(Some(_))
+      )
+    )
+    collection.countDocuments(
+      filter = baseSelector
+    ).toFuture()
   }
 
 }

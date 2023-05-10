@@ -20,10 +20,6 @@ import _root_.play.api.Application
 import _root_.play.api.inject.guice.GuiceApplicationBuilder
 import _root_.play.api.libs.json.{JsObject, Json}
 import _root_.play.api.test.Helpers._
-import com.github.tomakehurst.wiremock.WireMockServer
-import com.github.tomakehurst.wiremock.client.WireMock
-import com.github.tomakehurst.wiremock.core.WireMockConfiguration
-import com.github.tomakehurst.wiremock.core.WireMockConfiguration._
 import models.SchemeData
 import org.mongodb.scala.model.Filters
 import org.mongodb.scala.result.InsertOneResult
@@ -119,22 +115,4 @@ class UpdateCreatedAtFieldsJobISpec extends AnyWordSpecLike
 
     updateCompleted shouldBe true
   }
-}
-
-trait WiremockHelper {
-  val wiremockPort = 11111
-  val wiremockHost = "localhost"
-  val url = s"http://$wiremockHost:$wiremockPort"
-
-  lazy val wmConfig: WireMockConfiguration = wireMockConfig().port(wiremockPort)
-  lazy val wireMockServer = new WireMockServer(wmConfig)
-
-  def startWiremock(): Unit = {
-    wireMockServer.start()
-    WireMock.configureFor(wiremockHost, wiremockPort)
-  }
-
-  def stopWiremock(): Unit = wireMockServer.stop()
-
-  def resetWiremock(): Unit = WireMock.reset()
 }

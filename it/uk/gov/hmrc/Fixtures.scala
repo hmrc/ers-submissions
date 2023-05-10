@@ -18,35 +18,42 @@ package uk.gov.hmrc
 
 import _root_.play.api.libs.json.{JsObject, JsValue, Json}
 import models._
+import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
 import org.joda.time.{DateTime, DateTimeZone}
+import org.mongodb.scala.bson.BsonDocument
+import org.mongodb.scala.bson.conversions.Bson
+import org.mongodb.scala.model.Filters
+import org.scalatest.Assertion
+import scheduler.{ResubmissionServiceImpl, ScheduledJob}
+import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
 
 import scala.collection.mutable.ListBuffer
+import scala.concurrent.Future
+import scala.util.Random
 
 object Fixtures {
   val invalidPayload: JsObject = Json.obj("invalid data" -> "test")
 
-  val timestamp: DateTime = DateTime.now(DateTimeZone.UTC)
-
-  val schemeInfo: SchemeInfo = SchemeInfo (
+  def schemeInfo(schemaType: String = "EMI", timestamp: DateTime = DateTime.now(DateTimeZone.UTC)): SchemeInfo = SchemeInfo (
     schemeRef = "XA1100000000000",
     timestamp = timestamp,
     schemeId = "123PA12345678",
     taxYear = "2014/15",
     schemeName = "EMI",
-    schemeType = "EMI"
+    schemeType = schemaType
   )
-  val schemeInfoPayload: JsValue = Json.toJson(schemeInfo)
+  def schemeInfoPayload(schemeInfo: SchemeInfo): JsValue = Json.toJson(schemeInfo)
 
   val submissionsSchemeData: SubmissionsSchemeData = SubmissionsSchemeData(
-    schemeInfo,
+    schemeInfo(),
     "EMI40_Adjustments_V4",
     UpscanCallback("EMI40_Adjustments_V4", "http://localhost:19000/fakeDownload"),
     1
   )
-  val submissionsSchemeDataJson: JsObject = Json.toJson(submissionsSchemeData).as[JsObject]
+  def submissionsSchemeDataJson(submissionsSchemeData: SubmissionsSchemeData): JsObject = Json.toJson(submissionsSchemeData).as[JsObject]
 
-  val ersMetaData: ErsMetaData = ErsMetaData(
-    schemeInfo = schemeInfo,
+  def ersMetaData(schemaType: String, timestamp: DateTime): ErsMetaData = ErsMetaData(
+    schemeInfo = schemeInfo(schemaType, timestamp),
     ipRef = "127.0.0.0",
     aoRef = Some("123PA12345678"),
     empRef = "EMI - MyScheme - XA1100000000000 - 2014/15",
@@ -55,7 +62,7 @@ object Fixtures {
   )
 
   val schemeData: SchemeData = SchemeData(
-    schemeInfo,
+    schemeInfo(),
     "EMI40_Adjustments_V4",
     None,
     Some(
@@ -81,12 +88,16 @@ object Fixtures {
     Some("1234567890")
   )
 
-  def buildErsSummary(isNilReturn: Boolean): ErsSummary = ErsSummary(
-    bundleRef = "testbundle",
+  def buildErsSummary(isNilReturn: Boolean = false,
+                      transferStatus: Option[String] = Some("saved"),
+                      schemaType: String = "EMI",
+                      bundleRef: String = "testbundle",
+                      timestamp: DateTime = DateTime.now(DateTimeZone.UTC)): ErsSummary = ErsSummary(
+    bundleRef = bundleRef,
     isNilReturn = if(isNilReturn) "2" else "1",
     fileType = Some("ods"),
-    confirmationDateTime = timestamp,
-    metaData = ersMetaData,
+    confirmationDateTime = DateTime.now(DateTimeZone.UTC),
+    metaData = ersMetaData(schemaType, timestamp),
     altAmendsActivity = None,
     alterationAmends = None,
     groupService = Some(
@@ -103,10 +114,60 @@ object Fixtures {
     ),
     trustees = None,
     nofOfRows = None,
-    transferStatus = Some("saved")
+    transferStatus = transferStatus
   )
 
-  def buildErsSummaryPayload(isNilReturn: Boolean): JsValue = Json.toJson(
-    buildErsSummary(isNilReturn)
+  def buildErsSummaryPayload(ersSummary: ErsSummary): JsValue = Json.toJson(
+    ersSummary
   )
+
+  def generateListOfErsSummaries(numberRecords: Int,
+                                 isNilReturn: Boolean = false,
+                                 transferStatus: Option[String] = Some("failed"),
+                                 schemaType: String = "CSOP",
+                                 bundleRef: String = "testbundle"
+                                ): Seq[ErsSummary] = {
+    val random = new Random()
+    Seq.fill(numberRecords)(
+      Fixtures.buildErsSummary(
+        isNilReturn = isNilReturn,
+        transferStatus = transferStatus,
+        schemaType = schemaType,
+        bundleRef = bundleRef,
+        timestamp = DateTime.now(DateTimeZone.UTC).minus(random.nextLong())
+      )
+    )
+  }
+
+  def generateListOfErsSummaries(): Seq[JsObject] = {
+
+    val failedJobs: Seq[ErsSummary] = generateListOfErsSummaries(
+      numberRecords = 20
+    )
+
+    val failedJobsWithWrongSchema: Seq[ErsSummary] = generateListOfErsSummaries(
+      numberRecords = 10,
+      schemaType = "NOT_A_VALID_SCHEMA"
+    )
+    val passedJobs: Seq[ErsSummary] = generateListOfErsSummaries(
+      numberRecords = 10,
+      schemaType = "passed"
+    )
+
+    (failedJobs ++ failedJobsWithWrongSchema ++ passedJobs).map(Json.toJsObject(_))
+  }
+
+  val failedJobsWithDifferentBundleRef: Seq[JsObject] = generateListOfErsSummaries(
+    numberRecords = 10
+  ).map(Json.toJsObject(_))
+
+  val formatter: DateTimeFormatter = DateTimeFormat.forPattern("dd/MM/yyyy");
+  val ersSummaries: Seq[JsObject] = Seq(
+    Fixtures.buildErsSummary(transferStatus = Some("passed"), schemaType = "CSOP"), // wrong status for resubmission
+    Fixtures.buildErsSummary(transferStatus = Some("successResubmit"), schemaType = "CSOP"), // wrong status for resubmission (already resubmitted)
+    Fixtures.buildErsSummary(transferStatus = Some("failed"), schemaType = "NOT_CSOP"), // wrong schema type for resubmission
+    Fixtures.buildErsSummary(transferStatus = Some("failed"), schemaType = "CSOP" , timestamp = DateTime.parse("30/04/2023", formatter)), // wrong date for resubmission
+    Fixtures.buildErsSummary(transferStatus = Some("failed"), schemaType = "CSOP", timestamp = DateTime.parse("10/05/2023", formatter)), // should resubmit
+    Fixtures.buildErsSummary(transferStatus = Some("failed"), schemaType = "CSOP", timestamp = DateTime.parse("20/05/2023", formatter)), // should resubmit
+  ).map(Json.toJsObject(_))
 }
