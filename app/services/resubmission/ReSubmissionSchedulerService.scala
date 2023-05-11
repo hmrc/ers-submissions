@@ -16,6 +16,7 @@
 
 package services.resubmission
 
+import config.ApplicationConfig
 import models._
 import play.api.Logging
 import play.api.libs.json.JsObject
@@ -24,28 +25,30 @@ import repositories.LockRepositoryProvider
 import scheduler.ScheduledService
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.mongo.lock.LockService
-import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 import utils.LoggingAndRexceptions.ErsLoggingAndAuditing
 
 import javax.inject.Inject
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
 
-class ReSubmissionSchedulerService @Inject()(lockRepositoryProvider: LockRepositoryProvider,
+class ReSubmissionSchedulerService @Inject()(val applicationConfig: ApplicationConfig,
+                                             lockRepositoryProvider: LockRepositoryProvider,
                                              resubPresubmissionService: ResubPresubmissionService,
-                                             servicesConfig: ServicesConfig,
                                              schedulerLoggingAndAuditing: ErsLoggingAndAuditing)(implicit ec: ExecutionContext)
-  extends ScheduledService[Boolean] with Logging {
+  extends ScheduledService[Boolean]
+    with Logging
+    with SchedulerConfig {
 
   override val jobName: String = "resubmission-service"
-  private lazy val lockoutTimeout: Int = servicesConfig.getInt(s"schedules.$jobName.lockTimeout")
-  private lazy val resubmissionLimit: Int = servicesConfig.getInt(s"schedules.$jobName.resubmissionLimit")
+  private val resubmissionLimit = getResubmissionLimit(jobName)
+  private val lockoutTimeout = getLockoutTimeout(jobName)
   private val lockService: LockService = LockService(lockRepositoryProvider.repo, lockId = "resubmission-service-job-lock",
     ttl = Duration.create(lockoutTimeout, SECONDS))
+  implicit val processFailedSubmissionsConfig: ProcessFailedSubmissionsConfig = getProcessFailedSubmissionsConfig(resubmissionLimit)
 
   def resubmit()(implicit request: Request[_], hc: HeaderCarrier): Future[Boolean] = {
     schedulerLoggingAndAuditing.logInfo(ResubmissionLimitMessage(resubmissionLimit).message)
-    resubPresubmissionService.processFailedSubmissions(resubmissionLimit).map { result: Boolean =>
+    resubPresubmissionService.processFailedSubmissions().map { result: Boolean =>
       schedulerLoggingAndAuditing.handleResult(
         result,
         ResubmissionSuccessMessage.message,

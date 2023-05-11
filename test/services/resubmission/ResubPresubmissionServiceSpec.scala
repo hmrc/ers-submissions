@@ -17,7 +17,6 @@
 package services.resubmission
 
 import org.mongodb.scala.result.UpdateResult
-import config.ApplicationConfig
 import fixtures.Fixtures
 import helpers.ERSTestHelper
 import models.{ADRTransferException, ErsMetaData, ErsSummary, ResubmissionException, SchemeInfo}
@@ -44,7 +43,6 @@ class ResubPresubmissionServiceSpec extends ERSTestHelper with BeforeAndAfterEac
   val metadataMongoRepositoryResubmission: MetadataMongoRepository = mock[MetadataMongoRepository]
   val mockSchedulerLoggingAndAuditing: ErsLoggingAndAuditing = mock[ErsLoggingAndAuditing]
   val mockSubmissionService: SubmissionService = mock[SubmissionService]
-  val mockApplicationConfig: ApplicationConfig = app.injector.instanceOf[ApplicationConfig]
   val mockAuditEvents: AuditEvents = mock[AuditEvents]
   val mockResubmissionExceptionEmitter: ResubmissionExceptionEmitter = app.injector.instanceOf[ResubmissionExceptionEmitter]
 
@@ -96,13 +94,22 @@ class ResubPresubmissionServiceSpec extends ERSTestHelper with BeforeAndAfterEac
     transferStatus  = None
   )
 
+  implicit val processFailedSubmissionsConfig: ProcessFailedSubmissionsConfig = ProcessFailedSubmissionsConfig(
+    resubmissionLimit = 100,
+    searchStatusList = List.empty[String],
+    schemeRefList = None,
+    resubmitScheme = None,
+    dateTimeFilter = None,
+    failedStatus = "failed",
+    resubmitSuccessStatus = "resubmisionSucess"
+  )
+
   "processFailedSubmissions" should {
 
     val resubPresubmissionService: ResubPresubmissionService = new ResubPresubmissionService(
       metadataMongoRepositoryResubmission,
       mockSchedulerLoggingAndAuditing,
       mockSubmissionService,
-      mockApplicationConfig,
       mockAuditEvents,
       mockResubmissionExceptionEmitter
     )
@@ -110,35 +117,35 @@ class ResubPresubmissionServiceSpec extends ERSTestHelper with BeforeAndAfterEac
     "return the result of startResubmission if findAndUpdateByStatus is successful and returns a record" in {
       when(metadataMongoRepositoryResubmission.findAndUpdateByStatus(any[List[ObjectId]]()))
         .thenReturn(Future.successful(updateResult))
-      when(metadataMongoRepositoryResubmission.getFailedJobs(any(), any()))
+      when(metadataMongoRepositoryResubmission.getFailedJobs(any())(any()))
         .thenReturn(Future.successful(Seq(new ObjectId())))
       when(metadataMongoRepositoryResubmission.findErsSummaries(any()))
         .thenReturn(Future.successful(Seq(ersSummary)))
       when(mockSubmissionService.callProcessData(any(), any(), any())(any(), any()))
         .thenReturn(Future.successful(false))
 
-      val result = await(resubPresubmissionService.processFailedSubmissions(100))
+      val result = await(resubPresubmissionService.processFailedSubmissions())
       result shouldBe false
     }
 
     "return None if findAndUpdateByStatus is successful but returns None" in {
       when(metadataMongoRepositoryResubmission.findAndUpdateByStatus(any[List[ObjectId]]()))
         .thenReturn(Future.successful(updateResult))
-      when(metadataMongoRepositoryResubmission.getFailedJobs(any(), any()))
+      when(metadataMongoRepositoryResubmission.getFailedJobs(any())(any()))
         .thenReturn(Future.successful(Seq(new ObjectId())))
       when(metadataMongoRepositoryResubmission.findErsSummaries(any()))
         .thenReturn(Future.successful(Seq(ersSummary)))
       when(mockSubmissionService.callProcessData(any(), any(), any())(any(), any()))
         .thenReturn(Future.successful(false))
 
-      val result = await(resubPresubmissionService.processFailedSubmissions(100))
+      val result = await(resubPresubmissionService.processFailedSubmissions())
       result shouldBe false
     }
 
     "rethrow ResubmissionException if such one occurs" in {
       when(metadataMongoRepositoryResubmission.findAndUpdateByStatus(any()))
         .thenReturn(Future.failed(ResubmissionException("test message", "test context", Some(Fixtures.schemeInfo))))
-      when(metadataMongoRepositoryResubmission.getFailedJobs(any(), any()))
+      when(metadataMongoRepositoryResubmission.getFailedJobs(any())(any()))
         .thenReturn(Future.successful(Seq(new ObjectId())))
       when(metadataMongoRepositoryResubmission.findErsSummaries(any()))
         .thenReturn(Future.successful(Seq(ersSummary)))
@@ -146,7 +153,7 @@ class ResubPresubmissionServiceSpec extends ERSTestHelper with BeforeAndAfterEac
         .thenReturn(Future.successful(false))
 
       val result = intercept[ResubmissionException] {
-        await(resubPresubmissionService.processFailedSubmissions(100))
+        await(resubPresubmissionService.processFailedSubmissions())
       }
       result.message shouldBe "test message"
       result.context shouldBe "test context"
@@ -156,7 +163,7 @@ class ResubPresubmissionServiceSpec extends ERSTestHelper with BeforeAndAfterEac
     "throw ResubmissionException if Exception occurs" in {
       when(metadataMongoRepositoryResubmission.findAndUpdateByStatus(any()))
         .thenReturn(Future.failed(new Exception("test message")))
-      when(metadataMongoRepositoryResubmission.getFailedJobs(any(), any()))
+      when(metadataMongoRepositoryResubmission.getFailedJobs(any())(any()))
         .thenReturn(Future.successful(Seq(new ObjectId())))
       when(metadataMongoRepositoryResubmission.findErsSummaries(any()))
         .thenReturn(Future.successful(Seq(ersSummary)))
@@ -164,7 +171,7 @@ class ResubPresubmissionServiceSpec extends ERSTestHelper with BeforeAndAfterEac
         .thenReturn(Future.successful(false))
 
       val result = intercept[ResubmissionException] {
-        await(resubPresubmissionService.processFailedSubmissions(100))
+        await(resubPresubmissionService.processFailedSubmissions())
       }
       result.message shouldBe "Searching for data to be resubmitted"
       result.context shouldBe "ResubPresubmissionService.processFailedSubmissions.findAndUpdateByStatus"
@@ -183,7 +190,7 @@ class ResubPresubmissionServiceSpec extends ERSTestHelper with BeforeAndAfterEac
           val secondErsSummary = ersSummary.copy(bundleRef = "456")
           val failedJobIds = Seq(new ObjectId("6450e4f47e56c12cd1259908"), new ObjectId("6450e4f47e56c12cd1259910"))
           val ersSummaries = Seq(firstErsSummary, secondErsSummary)
-          when(metadataMongoRepositoryResubmission.getFailedJobs(any(), any()))
+          when(metadataMongoRepositoryResubmission.getFailedJobs(any())(any()))
             .thenReturn(Future.successful(failedJobIds))
           when(metadataMongoRepositoryResubmission.findAndUpdateByStatus(failedJobIds))
             .thenReturn(Future.successful(updateResult))
@@ -196,7 +203,7 @@ class ResubPresubmissionServiceSpec extends ERSTestHelper with BeforeAndAfterEac
 
           val result = await(
             resubPresubmissionService
-              .processFailedSubmissions(100)
+              .processFailedSubmissions()
           )
           result shouldBe expectedResult
         }
@@ -209,7 +216,6 @@ class ResubPresubmissionServiceSpec extends ERSTestHelper with BeforeAndAfterEac
       metadataMongoRepositoryResubmission,
       mockSchedulerLoggingAndAuditing,
       mockSubmissionService,
-      mockApplicationConfig,
       mockAuditEvents,
       mockResubmissionExceptionEmitter
     )

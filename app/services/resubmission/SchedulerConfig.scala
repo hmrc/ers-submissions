@@ -22,33 +22,47 @@ import models.Statuses
 trait SchedulerConfig {
   val applicationConfig: ApplicationConfig
 
-  val failedStatus: String = if(applicationConfig.schedulerSchemeRefListEnabled) {
+  val failedStatus: String = if (applicationConfig.schedulerSchemeRefListEnabled) {
     applicationConfig.schedulerSchemeRefFailStatus
   } else {
     Statuses.FailedScheduler.toString
   }
 
-  val searchStatusList: List[String] = if(applicationConfig.schedulerSchemeRefListEnabled) {
+  val searchStatusList: List[String] = if (applicationConfig.schedulerSchemeRefListEnabled) {
     applicationConfig.schedulerSchemeRefStatusList
   } else {
     applicationConfig.schedulerStatuses
   }
 
-  val schemeRefList: Option[List[String]] = if(applicationConfig.schedulerSchemeRefListEnabled) {
+  val schemeRefList: Option[List[String]] = if (applicationConfig.schedulerSchemeRefListEnabled) {
     Some(applicationConfig.schedulerSchemeRefList)
   } else {
     None
   }
 
   val resubmitBySchemeEnabled: Boolean = applicationConfig.schedulerEnableResubmitByScheme
-  val resubmitScheme: Option[String] = if(resubmitBySchemeEnabled) {
+  val resubmitScheme: Option[String] = if (resubmitBySchemeEnabled) {
     Some(applicationConfig.schedulerResubmitScheme)
   } else {
     None
   }
 
   val resubmitSuccessStatus: String = applicationConfig.schedulerSuccessStatus
-  val isResubmitBeforeDate: Boolean = applicationConfig.isSchedulerResubmitBeforeDate
 
   val dateTimeFilter: Option[String] = applicationConfig.dateFilter
+
+  def getResubmissionLimit(jobName: String): Int = applicationConfig.resubmissionLimit(jobName)
+
+  def getLockoutTimeout(jobName: String): Int = applicationConfig.lockoutTimeout(jobName)
+  
+  def getProcessFailedSubmissionsConfig(resubmissionLimit: Int): ProcessFailedSubmissionsConfig = ProcessFailedSubmissionsConfig(
+    resubmissionLimit,
+    searchStatusList,
+    schemeRefList,
+    resubmitScheme,
+    dateTimeFilter,
+    failedStatus,
+    resubmitSuccessStatus
+  )
+
 }

@@ -16,7 +16,6 @@
 
 package services.resubmission
 
-import config.ApplicationConfig
 import models._
 import org.mongodb.scala.bson.{BsonDocument, ObjectId}
 import org.mongodb.scala.result.UpdateResult
@@ -33,12 +32,12 @@ import scala.concurrent.{ExecutionContext, Future}
 class ResubPresubmissionService @Inject()(metadataRepository: MetadataMongoRepository,
                                           val schedulerLoggingAndAuditing: ErsLoggingAndAuditing,
                                           submissionCommonService: SubmissionService,
-                                          val applicationConfig: ApplicationConfig,
                                           auditEvents: AuditEvents,
                                           resubmissionExceptionEmiter: ResubmissionExceptionEmitter)
-                                         (implicit ec: ExecutionContext) extends SchedulerConfig {
+                                         (implicit ec: ExecutionContext) {
 
-  def logFailedSubmissionCount(): Future[Unit] =
+  def logFailedSubmissionCount()(implicit processFailedSubmissionsConfig: ProcessFailedSubmissionsConfig): Future[Unit] = {
+    val searchStatusList = processFailedSubmissionsConfig.searchStatusList
     for {
       numberOfRecords: Long <- metadataRepository
         .getNumberOfFailedJobs(searchStatusList)
@@ -47,17 +46,15 @@ class ResubPresubmissionService @Inject()(metadataRepository: MetadataMongoRepos
         failedStatuses = searchStatusList
       ).message
     } yield schedulerLoggingAndAuditing.logInfo(countToLog)
+  }
 
-  def processFailedSubmissions(resubmissionLimit: Int)(implicit request: Request[_], hc: HeaderCarrier): Future[Boolean] = {
+  def processFailedSubmissions()(implicit request: Request[_],
+                                 hc: HeaderCarrier,
+                                 processFailedSubmissionsConfig: ProcessFailedSubmissionsConfig): Future[Boolean] = {
 
-    val failedJobSelector: BsonDocument = metadataRepository.createFailedJobSelector(
-      searchStatusList,
-      schemeRefList,
-      resubmitScheme,
-      dateTimeFilter
-    )
+    val failedJobSelector: BsonDocument = metadataRepository.createFailedJobSelector()
     for {
-      failedJobIds: Seq[ObjectId] <- metadataRepository.getFailedJobs(failedJobSelector, resubmissionLimit)
+      failedJobIds: Seq[ObjectId] <- metadataRepository.getFailedJobs(failedJobSelector)
       _ = resubmissionExceptionEmiter.logInfo(NumberOfFailedToBeProcessedMessage(failedJobIds.length).message)
       updateResult: UpdateResult <- metadataRepository
         .findAndUpdateByStatus(failedJobIds)
@@ -91,9 +88,13 @@ class ResubPresubmissionService @Inject()(metadataRepository: MetadataMongoRepos
     } yield resubmissionResults.forall(identity)
   }
 
-  def startResubmission(ersSummary: ErsSummary)(implicit request: Request[_], hc: HeaderCarrier): Future[Boolean] = {
+  def startResubmission(ersSummary: ErsSummary)(implicit request: Request[_],
+                                                hc: HeaderCarrier,
+                                                processFailedSubmissionsConfig: ProcessFailedSubmissionsConfig): Future[Boolean] = {
     schedulerLoggingAndAuditing.logInfo(ProcessingResubmitMessage.message + Some(ersSummary))
-    submissionCommonService.callProcessData(ersSummary, failedStatus, resubmitSuccessStatus).map(res => res).recover {
+    submissionCommonService.callProcessData(ersSummary,
+      processFailedSubmissionsConfig.failedStatus,
+      processFailedSubmissionsConfig.resubmitSuccessStatus).map(res => res).recover {
       case aex: ADRTransferException =>
         auditEvents.sendToAdrEvent("ErsTransferToAdrFailed", ersSummary, source = Some("scheduler"))
         resubmissionExceptionEmiter.emitFrom(

@@ -37,29 +37,18 @@ class ApplicationConfig @Inject()(serviceConfig: ServicesConfig) {
   lazy val UrlHeaderEnvironment: String = serviceConfig.getString("microservice.services.ers-stub.environment")
   lazy val UrlHeaderAuthorization: String = s"Bearer ${serviceConfig.getString("microservice.services.ers-stub.authorization-token")}"
 
-  lazy val isSchedulerEnabled: Boolean = serviceConfig.getBoolean("scheduling.enabled")
-  lazy val schedulerStatuses: List[String] = Try(serviceConfig.getString("scheduling.statuses").split(",").toList).getOrElse(List())
-  lazy val schedulerLockExpireMin: Int = serviceConfig.getInt("scheduling.lock-expire-min")
-  lazy val schedulerLockName: String = serviceConfig.getString("scheduling.lock-name")
+  lazy val schedulerStatuses: List[String] = Try(serviceConfig.getString("schedules.resubmission-service.statuses").split(",").toList).getOrElse(List())
 
-  lazy val schedulerSchemeRefListEnabled: Boolean = serviceConfig.getBoolean("scheduling.resubmit-list-enable")
-  lazy val schedulerSchemeRefList: List[String] = Try(serviceConfig.getString("scheduling.resubmit-list-schemeRefs").split(",").toList).getOrElse(List())
-  lazy val schedulerSchemeRefStatusList: List[String] = Try(serviceConfig.getString("scheduling.resubmit-list-statuses").split(",").toList).getOrElse(List())
-  lazy val schedulerSchemeRefFailStatus: String = serviceConfig.getConfString("scheduling.resubmit-list-failStatus", "failedScheduler")
+  lazy val schedulerSchemeRefListEnabled: Boolean = serviceConfig.getBoolean("schedules.resubmission-service.schemaRefsFilter.enable")
+  lazy val schedulerSchemeRefList: List[String] = Try(serviceConfig.getString("schedules.resubmission-service.schemaRefsFilter.filter").split(",").toList).getOrElse(List())
+  lazy val schedulerSchemeRefStatusList: List[String] = Try(serviceConfig.getString("schedules.resubmission-service.resubmit-list-statuses").split(",").toList).getOrElse(List())
+  lazy val schedulerSchemeRefFailStatus: String = serviceConfig.getConfString("schedules.resubmission-service.resubmit-list-failStatus", "failedScheduler")
 
-  lazy val schedulerEnableResubmitByScheme: Boolean = serviceConfig.getBoolean("scheduling.resubmit-scheme-enable")
-  lazy val schedulerResubmitScheme: String = serviceConfig.getString("scheduling.resubmit-scheme")
-  lazy val schedulerSuccessStatus: String = serviceConfig.getString("scheduling.resubmit-successful-status")
-  lazy val isSchedulerResubmitBeforeDate: Boolean = serviceConfig.getBoolean("scheduling.resubmit-scheme-before-date")
+  lazy val schedulerEnableResubmitByScheme: Boolean = serviceConfig.getBoolean("schedules.resubmission-service.schemaFilter.enabled")
+  lazy val schedulerResubmitScheme: String = serviceConfig.getString("schedules.resubmission-service.schemaFilter.filter")
+  lazy val schedulerSuccessStatus: String = serviceConfig.getString("schedules.resubmission-service.resubmit-successful-status")
 
-  lazy val defaultScheduleStartDate: String = serviceConfig.getString("scheduling.default-resubmit-start-date")
-  lazy val rescheduleStartDate: String = serviceConfig.getString("scheduling.resubmit-start-date")
-  lazy val scheduleEndDate: String = serviceConfig.getString("scheduling.resubmit-end-date")
-  lazy val scheduleStartDate:String = if(isSchedulerResubmitBeforeDate){
-    defaultScheduleStartDate
-  } else {
-    rescheduleStartDate
-  }
+  lazy val defaultScheduleStartDate: String = serviceConfig.getString("schedules.resubmission-service.default-resubmit-start-date")
 
   lazy val isErsQueryEnabled: Boolean = serviceConfig.getBoolean("ers-query.enabled")
   lazy val ersQuerySchemeType: String = serviceConfig.getString("ers-query.schemetype")
@@ -74,8 +63,11 @@ class ApplicationConfig @Inject()(serviceConfig: ServicesConfig) {
   lazy val dateTimeFilterEnabled: Boolean = serviceConfig.getBoolean(s"schedules.resubmission-service.dateTimeFilter.enabled")
   lazy val dateFilter: Option[String] =
     if (dateTimeFilterEnabled)
-      Some(serviceConfig.getString(s"schedules.resubmission-service.dateTimeFilter.dateFilter"))
+      Some(serviceConfig.getString(s"schedules.resubmission-service.dateTimeFilter.filter"))
     else
       None
+
+  def lockoutTimeout(jobName: String): Int = serviceConfig.getInt(s"schedules.$jobName.lockTimeout")
+  def resubmissionLimit(jobName: String): Int = serviceConfig.getInt(s"schedules.$jobName.resubmissionLimit")
 
 }

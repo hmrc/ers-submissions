@@ -16,19 +16,11 @@
 
 package uk.gov.hmrc
 
-import _root_.play.api.libs.json.{JsObject, JsValue, Json}
+import _root_.play.api.libs.json._
 import models._
 import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
 import org.joda.time.{DateTime, DateTimeZone}
-import org.mongodb.scala.bson.BsonDocument
-import org.mongodb.scala.bson.conversions.Bson
-import org.mongodb.scala.model.Filters
-import org.scalatest.Assertion
-import scheduler.{ResubmissionServiceImpl, ScheduledJob}
-import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
-
 import scala.collection.mutable.ListBuffer
-import scala.concurrent.Future
 import scala.util.Random
 
 object Fixtures {
