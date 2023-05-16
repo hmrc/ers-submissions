@@ -23,20 +23,22 @@ import org.scalatestplus.play.guice.GuiceOneServerPerSuite
 import _root_.play.api.Application
 import _root_.play.api.inject.guice.GuiceApplicationBuilder
 import _root_.play.api.test.Helpers._
-import org.mongodb.scala.bson.BsonDocument
 
 class ResubJobWithDateFilterEnabledSpec extends AnyWordSpecLike
   with Matchers
   with GuiceOneServerPerSuite
   with FakeErsStubService {
 
-  val dateFilter = "1/5/2023"
-
   val applicationConfig: Map[String, Any] = Map(
     "microservice.services.ers-stub.port" -> "19339",
     "schedules.resubmission-service.dateTimeFilter.enabled" -> true,
-    "schedules.resubmission-service.dateTimeFilter.dateFilter" -> dateFilter,
-    "schedules.resubmission-service.resubmissionLimit" -> 10
+    "schedules.resubmission-service.dateTimeFilter.filter" -> "1/5/2023",
+    "schedules.resubmission-service.schemaRefsFilter.enabled" -> false,
+    "schedules.resubmission-service.schemaFilter.enabled" -> true,
+    "schedules.resubmission-service.schemaFilter.filter" -> "CSOP",
+    "schedules.resubmission-service.resubmissionLimit" -> 10,
+    "schedules.resubmission-service.resubmit-list-statuses" -> "failed",
+    "schedules.resubmission-service.resubmit-successful-status" -> "successResubmit"
   )
 
   override lazy val app: Application = new GuiceApplicationBuilder()
@@ -48,7 +50,6 @@ class ResubJobWithDateFilterEnabledSpec extends AnyWordSpecLike
   "With dateTimeFiltering enabled ResubPresubmissionServiceJob" should {
     "resubmit failed jobs with the correct transfer status, schema type and submitted after dateTimeFilter" in new ResubmissionJobSetUp(app = app) {
 
-      val failedJobSelector: BsonDocument = createFailedJobSelector(Some(dateFilter))
       val storeDocs: Boolean = await(storeMultipleErsSummary(Fixtures.ersSummaries))
       storeDocs shouldBe true
 

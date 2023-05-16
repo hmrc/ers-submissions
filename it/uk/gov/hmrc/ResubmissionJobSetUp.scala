@@ -18,13 +18,14 @@ package uk.gov.hmrc
 
 import org.mongodb.scala.model.Filters
 import repositories.MetadataMongoRepository
-import scheduler.{ResubmissionServiceImpl, ScheduledJob}
+import scheduler.ResubmissionServiceImpl
 import _root_.play.api.Application
-import _root_.play.api.libs.json.{JsObject, Json}
+import _root_.play.api.libs.json.JsObject
 import _root_.play.api.test.Helpers._
 import org.mongodb.scala.MongoCollection
 import org.mongodb.scala.bson.BsonDocument
 import org.mongodb.scala.bson.conversions.Bson
+import services.resubmission.ProcessFailedSubmissionsConfig
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -34,7 +35,7 @@ case class ResubmissionJobSetUp(app: Application) {
   val collection: MongoCollection[JsObject] = metadataMongoRepository.collection
   await(collection.drop().toFuture())
 
-  def getJob: ScheduledJob = app.injector.instanceOf[ResubmissionServiceImpl]
+  def getJob: ResubmissionServiceImpl = app.injector.instanceOf[ResubmissionServiceImpl]
 
   implicit val ec: ExecutionContext = app.injector.instanceOf[ExecutionContext]
 
@@ -49,12 +50,12 @@ case class ResubmissionJobSetUp(app: Application) {
     }
   }
 
-  def createFailedJobSelector(dateFilter: Option[String]): BsonDocument = metadataMongoRepository.createFailedJobSelector(
-    statusList = List("failed"),
-    schemeRefList = None,
-    schemeType = Some("CSOP"),
-    dateFilter
-  )
+  implicit val processFailedSubmissionsConfig: ProcessFailedSubmissionsConfig =
+    getJob.resubmissionService.getProcessFailedSubmissionsConfig(
+      app.configuration.get[Int]("schedules.resubmission-service.resubmissionLimit")
+    )
+
+  val failedJobSelector: BsonDocument = metadataMongoRepository.createFailedJobSelector()
 
   val successResubmitTransferStatusSelector: Bson = Filters.eq("transferStatus", "successResubmit")
 }

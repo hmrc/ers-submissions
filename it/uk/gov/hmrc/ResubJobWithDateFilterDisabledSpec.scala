@@ -23,7 +23,6 @@ import org.scalatestplus.play.guice.GuiceOneServerPerSuite
 import _root_.play.api.Application
 import _root_.play.api.inject.guice.GuiceApplicationBuilder
 import _root_.play.api.test.Helpers._
-import org.mongodb.scala.bson.BsonDocument
 
 class ResubJobWithDateFilterDisabledSpec extends AnyWordSpecLike
   with Matchers
@@ -33,7 +32,12 @@ class ResubJobWithDateFilterDisabledSpec extends AnyWordSpecLike
   val applicationConfig: Map[String, Any] = Map(
     "microservice.services.ers-stub.port" -> "19339",
     "schedules.resubmission-service.dateTimeFilter.enabled" -> false,
-    "schedules.resubmission-service.resubmissionLimit" -> 10
+    "schedules.resubmission-service.schemaRefsFilter.enabled" -> false,
+    "schedules.resubmission-service.schemaFilter.enabled" -> true,
+    "schedules.resubmission-service.schemaFilter.filter" -> "CSOP",
+    "schedules.resubmission-service.resubmissionLimit" -> 10,
+    "schedules.resubmission-service.resubmit-list-statuses" -> "failed",
+    "schedules.resubmission-service.resubmit-successful-status" -> "successResubmit"
   )
 
   override lazy val app: Application = new GuiceApplicationBuilder()
@@ -45,7 +49,6 @@ class ResubJobWithDateFilterDisabledSpec extends AnyWordSpecLike
   "With dateTimeFiltering not enabled ResubPresubmissionServiceJob" should {
 
     "resubmit failed jobs with the correct transfer status and schema type" in new ResubmissionJobSetUp(app = app) {
-      val failedJobSelector: BsonDocument = createFailedJobSelector(None)
       val storeDocs: Boolean = await(storeMultipleErsSummary(Fixtures.ersSummaries))
       storeDocs shouldBe true
 
@@ -62,7 +65,6 @@ class ResubJobWithDateFilterDisabledSpec extends AnyWordSpecLike
     }
 
     "resubmit failed jobs in batches with the correct transfer status and schema type" in new ResubmissionJobSetUp(app = app) {
-      val failedJobSelector: BsonDocument = createFailedJobSelector(None)
       val storeDocs: Boolean = await(storeMultipleErsSummary(Fixtures.generateListOfErsSummaries()))
       storeDocs shouldBe true
 

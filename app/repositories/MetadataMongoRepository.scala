@@ -37,6 +37,7 @@ import scala.concurrent.{ExecutionContext, Future}
 import models.{ErsSummary, Statuses}
 import play.api.libs.json.Json
 import repositories.helpers.BsonDocumentHelper.BsonOps
+import services.resubmission.ProcessFailedSubmissionsConfig
 
 @Singleton
 class MetadataMongoRepository @Inject()(val applicationConfig: ApplicationConfig, mc: MongoComponent)
@@ -70,41 +71,37 @@ class MetadataMongoRepository @Inject()(val applicationConfig: ApplicationConfig
     }
   }
 
-  def createFailedJobSelector(statusList: List[String],
-                              schemeRefList: Option[List[String]],
-                              schemeType: Option[String],
-                              dateFilter: Option[String]): BsonDocument = {
+  def createFailedJobSelector()(implicit processFailedSubmissionsConfig: ProcessFailedSubmissionsConfig): BsonDocument = {
     val baseSelector: BsonDocument = BsonDocument(
       "transferStatus" -> BsonDocument(
-        "$in" -> statusList.map(Some(_))
+        "$in" -> processFailedSubmissionsConfig.searchStatusList.map(Some(_))
       )
     )
 
     val schemeRefSelector: BsonDocument = BsonDocument(
-      schemeRefList.map(schemeList => "metaData.schemeInfo.schemeRef" -> BsonDocument("$in" -> schemeList))
+      processFailedSubmissionsConfig.schemeRefList.map(schemeList => "metaData.schemeInfo.schemeRef" -> BsonDocument("$in" -> schemeList))
     )
 
     val schemeSelector: BsonDocument = BsonDocument(
-      schemeType.map(scheme => "metaData.schemeInfo.schemeType" -> BsonString(scheme))
+      processFailedSubmissionsConfig.resubmitScheme.map(scheme => "metaData.schemeInfo.schemeType" -> BsonString(scheme))
     )
 
     val formatter: DateTimeFormatter = DateTimeFormat.forPattern("dd/MM/yyyy");
 
-    val dateRangeSelector: BsonDocument = BsonDocument(dateFilter.map(date =>
+    val dateRangeSelector: BsonDocument = BsonDocument(processFailedSubmissionsConfig.dateTimeFilter.map(date =>
       "metaData.schemeInfo.timestamp" -> BsonDocument("$gte" -> DateTime.parse(date, formatter).getMillis))
     )
 
     Seq(baseSelector, schemeRefSelector, schemeSelector, dateRangeSelector).foldLeft(BsonDocument())(_ +:+ _)
   }
 
-  def getFailedJobs(failedJobSelector: BsonDocument,
-                    updateLimit: Int): Future[Seq[ObjectId]] = {
+  def getFailedJobs(failedJobSelector: BsonDocument)(implicit processFailedSubmissionsConfig: ProcessFailedSubmissionsConfig): Future[Seq[ObjectId]] = {
 
     val projection = Projections.include(objectIdKey)
     val ersSubmissionsWithObjectIds: FindObservable[JsObject] = collection
       .find(failedJobSelector)
       .projection(projection)
-      .limit(updateLimit)
+      .limit(processFailedSubmissionsConfig.resubmissionLimit)
 
     ersSubmissionsWithObjectIds
       .map(json => (json \ objectIdKey).as[ObjectId](MongoFormats.objectIdFormat))
