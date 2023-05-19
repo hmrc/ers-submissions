@@ -71,7 +71,7 @@ class SubmissionCommonServiceSpec extends ERSTestHelper with BeforeAndAfterEach 
         new SubmissionService(repositories, adrConnector, adrSubmission, submissionCommon, ersLoggingAndAuditing, adrExceptionEmmiter, auditEvents, metrics) {
 
         override lazy val metadataRepository: MetadataMongoRepository = mockMetadataRepository
-        override def processData(ersSummary: ErsSummary, failedStatus: String, successStatus: String)
+        override def processData(ersSummary: ErsSummary, failedStatus: String, successStatus: String, legacySchemaRefs: Seq[String])
                                 (implicit request: Request[_], hc: HeaderCarrier): Future[Boolean] = {
           Future.successful(true)
         }
@@ -89,7 +89,7 @@ class SubmissionCommonServiceSpec extends ERSTestHelper with BeforeAndAfterEach 
         when(mockMetadataRepository.updateStatus( any[SchemeInfo](), anyString()))
           .thenReturn(Future.successful(true))
 
-        override def processData(ersSummary: ErsSummary, failedStatus: String, successStatus: String)
+        override def processData(ersSummary: ErsSummary, failedStatus: String, successStatus: String, legacySchemaRefs: Seq[String])
                                 (implicit request: Request[_], hc: HeaderCarrier): Future[Boolean] = {
           Future.failed(ADRTransferException(Fixtures.EMIMetaData, "test message", "text context"))
         }
@@ -111,7 +111,7 @@ class SubmissionCommonServiceSpec extends ERSTestHelper with BeforeAndAfterEach 
           when(mockMetadataRepository.updateStatus( any[SchemeInfo](), anyString()))
             .thenReturn(Future.successful(true))
 
-        override def processData(ersSummary: ErsSummary, failedStatus: String, successStatus: String)
+        override def processData(ersSummary: ErsSummary, failedStatus: String, successStatus: String, legacySchemaRefs: Seq[String])
                                 (implicit request: Request[_], hc: HeaderCarrier): Future[Boolean] = {
           Future.failed(new Exception("test message"))
         }
@@ -130,7 +130,7 @@ class SubmissionCommonServiceSpec extends ERSTestHelper with BeforeAndAfterEach 
     val submissionCommonService: SubmissionService =
     new SubmissionService(repositories, adrConnector, adrSubmission, submissionCommon, ersLoggingAndAuditing, adrExceptionEmmiter, auditEvents, metrics) {
 
-      override def transformData(ersSummary: ErsSummary)(implicit request: Request[_], hc: HeaderCarrier): Future[JsObject] = {
+      override def transformData(ersSummary: ErsSummary, legacySchemaRefs: Seq[String])(implicit request: Request[_], hc: HeaderCarrier): Future[JsObject] = {
         Future.successful(Json.obj())
       }
       override def sendToADRUpdatePostData(ersSummary: ErsSummary, adrData: JsObject, failedStatus: String, successStatus: String)
@@ -152,7 +152,7 @@ class SubmissionCommonServiceSpec extends ERSTestHelper with BeforeAndAfterEach 
     }
 
     "return json created by adrSubmission.generateSubmission" in {
-      when(adrSubmission.generateSubmission()(any[Request[_]](), any[HeaderCarrier], any[ErsSummary]()))
+      when(adrSubmission.generateSubmission(any())(any[Request[_]](), any[HeaderCarrier], any[ErsSummary]()))
         .thenReturn(Future.successful(Fixtures.schemeDataJson))
 
       val result = await(submissionCommonService.transformData(Fixtures.metadata))
@@ -161,7 +161,7 @@ class SubmissionCommonServiceSpec extends ERSTestHelper with BeforeAndAfterEach 
     }
 
     "rethrows ADR exception" in {
-      when(adrSubmission.generateSubmission()(any[Request[_]](), any[HeaderCarrier], any[ErsSummary]()))
+      when(adrSubmission.generateSubmission(any())(any[Request[_]](), any[HeaderCarrier], any[ErsSummary]()))
         .thenReturn(Future.failed(ADRTransferException(mock[ErsMetaData], "ADRTransferException", "")))
 
       val result = intercept[ADRTransferException] {
@@ -172,7 +172,7 @@ class SubmissionCommonServiceSpec extends ERSTestHelper with BeforeAndAfterEach 
     }
 
     "throws ADR exception" in {
-      when(adrSubmission.generateSubmission()(any[Request[_]](), any[HeaderCarrier], any[ErsSummary]()))
+      when(adrSubmission.generateSubmission(any())(any[Request[_]](), any[HeaderCarrier], any[ErsSummary]()))
         .thenReturn(Future.failed(new Exception("Exception")))
 
       val result = intercept[Exception] {

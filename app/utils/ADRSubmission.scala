@@ -35,37 +35,40 @@ class ADRSubmission @Inject()(submissionCommon: SubmissionCommon,
                               configUtils: ConfigUtils)
                              (implicit ec: ExecutionContext) extends Logging {
 
-  def generateSubmission()(implicit request: Request[_], hc: HeaderCarrier, ersSummary: ErsSummary): Future[JsObject] = {
+  def generateSubmission(legacySchemaRefs: Seq[String] = Seq.empty[String])
+                        (implicit request: Request[_], hc: HeaderCarrier, ersSummary: ErsSummary): Future[JsObject] = {
     logger.debug("LFP -> 1. generateSubmission :START ")
     implicit val schemeType: String = ersSummary.metaData.schemeInfo.schemeType.toUpperCase()
 
     if (ersSummary.isNilReturn == IsNilReturn.False.toString) {
-      createSubmissionJson() map {res => res}
+      createSubmissionJson(legacySchemaRefs) map {res => res}
     }
     else {
-      Future(createRootJson(Json.obj())).map(res => res)
+      Future(createRootJson(Json.obj(), legacySchemaRefs)).map(res => res)
     }
   }
 
-  def createSubmissionJson()(implicit request: Request[_], hc: HeaderCarrier, ersSummary: ErsSummary, schemeType: String): Future[JsObject] = {
-    createSheetsJson(Json.obj()) flatMap { sheetsDataJson =>
+  def createSubmissionJson(legacySchemaRefs: Seq[String] = Seq.empty[String])
+                          (implicit request: Request[_], hc: HeaderCarrier, ersSummary: ErsSummary, schemeType: String): Future[JsObject] = {
+    createSheetsJson(Json.obj(), legacySchemaRefs) flatMap { sheetsDataJson =>
       logger.debug("LFP -> 7. Json Creation complete --> ")
-      Future(createRootJson(sheetsDataJson)) map { res => res}
+      Future(createRootJson(sheetsDataJson, legacySchemaRefs)) map { res => res}
     }
   }
 
-  def createSheetsJson(sheetsJson: JsObject)(implicit request: Request[_], hc: HeaderCarrier, ersSummary: ErsSummary, schemeType: String): Future[JsObject] = {
+  def createSheetsJson(sheetsJson: JsObject, legacySchemaRefs: Seq[String] = Seq.empty[String])
+                      (implicit request: Request[_], hc: HeaderCarrier, ersSummary: ErsSummary, schemeType: String): Future[JsObject] = {
     var result = sheetsJson
     logger.debug("LFP -> 2. createSheetsJson () ")
-    presubmissionService.getJson(ersSummary.metaData.schemeInfo).map { fileDataList =>
-      logger.debug("LFP -> 5. Json retireved + list = " + fileDataList.size)
-      for(fileData <- fileDataList) {
-        logger.debug(s" LFP -> 6. data record  is --> ${fileData.sheetName}" )
+    presubmissionService.getJson(ersSummary.metaData.schemeInfo).map { fileDataList: Seq[SchemeData] =>
+      for (fileData: SchemeData <- fileDataList) {
+        logger.debug(s" LFP -> 6. data record  is --> ${fileData.sheetName}")
+        val useLegacySchema = legacySchemaRefs.contains(fileData.schemeInfo.schemeRef)
         val sheetName: String = fileData.sheetName
-        val configData: Config = configUtils.getConfigData(s"${schemeType}/${sheetName}", sheetName)
+        val configData: Config = configUtils.getConfigData(s"${schemeType}/${sheetName}", sheetName, useLegacySchema)
         val data: JsObject = buildJson(configData, fileData.data.get)
         result = result ++ submissionCommon.mergeSheetData(configData.getConfig("data_location"), result, data)
-      }
+    }
       result
     }.recover {
       case ex: Exception => adrExceptionEmitter.emitFrom(
@@ -79,8 +82,10 @@ class ADRSubmission @Inject()(submissionCommon: SubmissionCommon,
     }
   }
 
-  def createRootJson(sheetsJson: JsObject)(implicit request: Request[_], hc: HeaderCarrier, ersSummary: ErsSummary, schemeType: String): JsObject = {
-    val rootConfigData: Config = configUtils.getConfigData(s"${schemeType}/${schemeType}", schemeType)
+  def createRootJson(sheetsJson: JsObject, legacySchemaRefs: Seq[String] = Seq.empty[String])
+                    (implicit request: Request[_], hc: HeaderCarrier, ersSummary: ErsSummary, schemeType: String): JsObject = {
+    val useLegacySchema = legacySchemaRefs.contains(ersSummary.metaData.schemeInfo.schemeRef)
+    val rootConfigData: Config = configUtils.getConfigData(s"${schemeType}/${schemeType}", schemeType, useLegacySchema)
     buildRoot(rootConfigData, ersSummary, sheetsJson)
   }
 
@@ -131,7 +136,7 @@ class ADRSubmission @Inject()(submissionCommon: SubmissionCommon,
         }
         case "common" => {
           val loadConfig: String = elem.getString("load")
-          val configData: Config = configUtils.getConfigData(s"common/${loadConfig}", loadConfig)
+          val configData: Config = configUtils.getConfigData(s"common/${loadConfig}", loadConfig, false)
           json ++= buildRoot(configData, metadata, sheetsJson)
         }
         case "sheetData" => {
