@@ -16,7 +16,7 @@
 
 package repositories.helpers
 
-import collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import org.mongodb.scala.bson.{BsonDocument, BsonValue}
 
 object BsonDocumentHelper {

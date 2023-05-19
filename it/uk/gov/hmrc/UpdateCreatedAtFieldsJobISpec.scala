@@ -75,7 +75,7 @@ class UpdateCreatedAtFieldsJobISpec extends AnyWordSpecLike
     )
 
     def count: Long = await(
-      repository.collection.countDocuments(Filters.empty)
+      repository.collection.countDocuments(Filters.empty())
         .toFuture()
     )
 

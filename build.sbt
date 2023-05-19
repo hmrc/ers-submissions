@@ -1,13 +1,13 @@
 
 import scoverage.ScoverageKeys
 import play.routes.compiler.InjectedRoutesGenerator
-import sbt.Keys._
-import sbt._
+import sbt.Keys.*
+import sbt.*
 import uk.gov.hmrc.DefaultBuildSettings.{defaultSettings, scalaSettings}
 import uk.gov.hmrc.sbtdistributables.SbtDistributablesPlugin
 
-import uk.gov.hmrc._
-import DefaultBuildSettings._
+import uk.gov.hmrc.*
+import DefaultBuildSettings.*
 import play.sbt.routes.RoutesKeys.routesGenerator
 import uk.gov.hmrc.versioning.SbtGitVersioning.autoImport.majorVersion
 
@@ -30,24 +30,24 @@ lazy val testSettings = Seq(
 
 lazy val microservice = Project(appName, file("."))
   .enablePlugins(play.sbt.PlayScala, SbtDistributablesPlugin)
-  .settings(scoverageSettings : _*)
-  .settings(scalaSettings: _*)
-  .settings(defaultSettings(): _*)
+  .disablePlugins(JUnitXmlReportPlugin) //Required to prevent https://github.com/scalatest/scalatest/issues/1427
+  .settings(scoverageSettings *)
+  .settings(scalaSettings *)
+  .settings(defaultSettings() *)
   .settings(
-    targetJvm := "jvm-1.8",
-    scalaVersion := "2.12.16",
-    libraryDependencies ++= AppDependencies(),
+    scalaVersion := "2.13.10",
+    libraryDependencies ++= AppDependencies.all,
+    libraryDependencySchemes ++= Seq("org.scala-lang.modules" %% "scala-xml" % VersionScheme.Always),
     routesGenerator := InjectedRoutesGenerator
   )
   .configs(IntegrationTest)
   .settings(integrationTestSettings())
-  .settings(inConfig(Test)(testSettings): _*)
+  .settings(inConfig(Test)(testSettings) *)
   .settings(majorVersion := 1)
   .settings(PlayKeys.playDefaultPort := 9292)
-  .disablePlugins(JUnitXmlReportPlugin) //Required to prevent https://github.com/scalatest/scalatest/issues/1427
 
 scalacOptions ++= Seq(
-  "-P:silencer:pathFilters=views;routes"
+  "-Wconf:src=routes/.*:s"
 )
 
 addCommandAlias("scalastyleAll", "all scalastyle test:scalastyle")

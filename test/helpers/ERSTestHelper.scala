@@ -16,7 +16,6 @@
 
 package helpers
 
-import akka.actor.ActorSystem
 import akka.stream.Materializer
 import akka.util.ByteString
 import org.scalatest.OptionValues
@@ -24,17 +23,12 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
-import play.api.inject.ApplicationLifecycle
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.mvc.{ControllerComponents, Result}
 import play.api.test.Helpers.stubControllerComponents
-import play.api.{Application, Configuration, Logging, Play, inject}
-import scheduler.SchedulingActor.UpdateDocumentsClass
-import scheduler.{ScheduledJob, ScheduledService, SchedulingActor}
-import services.DocumentUpdateService
+import play.api.{Application, Play}
 
 import java.nio.charset.Charset
-import javax.inject.Inject
 import scala.concurrent.duration.{DurationInt, FiniteDuration}
 import scala.concurrent.{Await, ExecutionContext, Future}
 

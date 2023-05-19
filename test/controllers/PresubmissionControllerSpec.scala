@@ -67,7 +67,7 @@ class PresubmissionControllerSpec extends ERSTestHelper with BeforeAndAfterEach 
       val presubmissionController = buildPresubmissionController(validationResult = false)
       val result = presubmissionController.removePresubmissionJson()(FakeRequest().withBody(ersSchemeInfo))
       status(result) shouldBe BAD_REQUEST
-      verify(mockMetrics, VerificationModeFactory.times(0)).removePresubmission(_, _)
+      verify(mockMetrics, VerificationModeFactory.times(0)).removePresubmission(anyLong(), any())
       verify(mockMetrics, VerificationModeFactory.times(0)).failedRemovePresubmission()
     }
 
@@ -75,7 +75,7 @@ class PresubmissionControllerSpec extends ERSTestHelper with BeforeAndAfterEach 
       val presubmissionController = buildPresubmissionController(removeJsonResult = false)
       val result = presubmissionController.removePresubmissionJson()(FakeRequest().withBody(ersSchemeInfo))
       status(result) shouldBe INTERNAL_SERVER_ERROR
-      verify(mockMetrics, VerificationModeFactory.times(0)).removePresubmission(_, _)
+      verify(mockMetrics, VerificationModeFactory.times(0)).removePresubmission(anyLong(), any())
       verify(mockMetrics, VerificationModeFactory.times(1)).failedRemovePresubmission()
     }
 
@@ -83,7 +83,7 @@ class PresubmissionControllerSpec extends ERSTestHelper with BeforeAndAfterEach 
       val presubmissionController = buildPresubmissionController()
       val result = presubmissionController.removePresubmissionJson()(FakeRequest().withBody(ersSchemeInfo))
       status(result) shouldBe OK
-      verify(mockMetrics, VerificationModeFactory.times(1)).removePresubmission(_, _)
+      verify(mockMetrics, VerificationModeFactory.times(1)).removePresubmission(anyLong(), any())
       verify(mockMetrics, VerificationModeFactory.times(0)).failedRemovePresubmission()
     }
 

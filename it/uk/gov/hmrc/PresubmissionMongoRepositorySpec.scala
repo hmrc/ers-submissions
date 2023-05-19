@@ -17,7 +17,6 @@
 package uk.gov.hmrc
 
 import _root_.play.api.Application
-import _root_.play.api.inject.bind
 import _root_.play.api.inject.guice.GuiceApplicationBuilder
 import _root_.play.api.libs.json.{JsObject, Json}
 import _root_.play.api.libs.ws.WSClient
@@ -26,8 +25,6 @@ import org.scalatest.BeforeAndAfterEach
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 import repositories.PresubmissionMongoRepository
-import scheduler.UpdateCreatedAtFieldsJobImpl
-import services.DocumentUpdateService
 
 import java.util.concurrent.TimeUnit
 import scala.collection.mutable.ListBuffer
@@ -44,9 +41,9 @@ class PresubmissionMongoRepositorySpec extends AnyWordSpecLike with Matchers wit
 
   private lazy val presubmissionRepository = app.injector.instanceOf[PresubmissionMongoRepository]
 
-  override protected def afterEach: Unit = {
-    super.afterEach
-    await(presubmissionRepository.collection.drop.toFuture)
+  override protected def afterEach(): Unit = {
+    super.afterEach()
+    await(presubmissionRepository.collection.drop().toFuture())
   }
 
   "presubmissionRepository" should {

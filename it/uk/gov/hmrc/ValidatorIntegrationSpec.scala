@@ -42,9 +42,9 @@ class ValidatorIntegrationSpec extends AnyWordSpecLike with Matchers
 
   val presubmissionController: PresubmissionController = app.injector.instanceOf[PresubmissionController]
 
-  override protected def afterEach: Unit = {
-    super.afterEach
-    await(presubmissionRepository.collection.drop.toFuture)
+  override protected def afterEach(): Unit = {
+    super.afterEach()
+    await(presubmissionRepository.collection.drop().toFuture())
   }
 
   // /submit-presubmission

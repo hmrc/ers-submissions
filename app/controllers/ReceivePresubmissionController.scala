@@ -76,7 +76,7 @@ class ReceivePresubmissionController @Inject()(presubmissionService: Presubmissi
 
     fileSource.mapAsyncUnordered(appConfig.submissionParallelism)(chunkedRowsWithIndex => {
       val (chunkedRows, index) = chunkedRowsWithIndex
-      val checkedData: Option[ListBuffer[Seq[String]]] = Option(chunkedRows.map(_.map(_.utf8String)).to[ListBuffer]).filter(_.nonEmpty)
+      val checkedData: Option[ListBuffer[Seq[String]]] = Option(chunkedRows.map(_.map(_.utf8String)).to(ListBuffer)).filter(_.nonEmpty)
 
       presubmissionService.storeJsonV2(submissionsSchemeData,
         SchemeData(submissionsSchemeData.schemeInfo,

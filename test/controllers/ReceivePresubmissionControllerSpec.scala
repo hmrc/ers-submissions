@@ -125,7 +125,7 @@ class ReceivePresubmissionControllerSpec extends TestKit(ActorSystem("ReceivePre
       val presubmissionController = buildPresubmissionController(validationResult = false)
       val result = presubmissionController.receivePresubmissionJson("")(FakeRequest().withBody(Fixtures.invalidJson))
       status(result) shouldBe BAD_REQUEST
-      verify(mockMetrics, VerificationModeFactory.times(0)).storePresubmission(_, _)
+      verify(mockMetrics, VerificationModeFactory.times(0)).storePresubmission(anyLong(), any())
       verify(mockMetrics, VerificationModeFactory.times(0)).failedStorePresubmission()
     }
 
@@ -133,7 +133,7 @@ class ReceivePresubmissionControllerSpec extends TestKit(ActorSystem("ReceivePre
       val presubmissionController = buildPresubmissionController(storeJsonResult = false)
       val result = presubmissionController.receivePresubmissionJson("")(FakeRequest().withBody(Fixtures.schemeDataJson))
       status(result) shouldBe INTERNAL_SERVER_ERROR
-      verify(mockMetrics, VerificationModeFactory.times(0)).storePresubmission(_, _)
+      verify(mockMetrics, VerificationModeFactory.times(0)).storePresubmission(anyLong(), any())
       verify(mockMetrics, VerificationModeFactory.times(1)).failedStorePresubmission()
     }
 
@@ -141,7 +141,7 @@ class ReceivePresubmissionControllerSpec extends TestKit(ActorSystem("ReceivePre
       val presubmissionController = buildPresubmissionController()
       val result = presubmissionController.receivePresubmissionJson("")(FakeRequest().withBody(Fixtures.schemeDataJson))
       status(result) shouldBe OK
-      verify(mockMetrics, VerificationModeFactory.times(1)).storePresubmission(_, _)
+      verify(mockMetrics, VerificationModeFactory.times(1)).storePresubmission(anyLong(), any())
       verify(mockMetrics, VerificationModeFactory.times(0)).failedStorePresubmission()
     }
   }
@@ -152,7 +152,7 @@ class ReceivePresubmissionControllerSpec extends TestKit(ActorSystem("ReceivePre
       val presubmissionController = buildPresubmissionController(validationResult = false)
       val result = presubmissionController.receivePresubmissionJsonV2("")(FakeRequest().withBody(Fixtures.invalidJson))
       status(result) shouldBe BAD_REQUEST
-      verify(mockMetrics, VerificationModeFactory.times(0)).storePresubmission(_, _)
+      verify(mockMetrics, VerificationModeFactory.times(0)).storePresubmission(anyLong(), any())
       verify(mockMetrics, VerificationModeFactory.times(0)).failedStorePresubmission()
     }
 
@@ -161,7 +161,7 @@ class ReceivePresubmissionControllerSpec extends TestKit(ActorSystem("ReceivePre
       when(mockPresubmissionService.removeJson(any())(any())).thenReturn(Future(true))
       val result = presubmissionController.receivePresubmissionJsonV2("")(FakeRequest().withBody(Fixtures.submissionsSchemeDataJson))
       status(result) shouldBe INTERNAL_SERVER_ERROR
-      verify(mockMetrics, VerificationModeFactory.times(0)).storePresubmission(_, _)
+      verify(mockMetrics, VerificationModeFactory.times(0)).storePresubmission(anyLong(), any())
       verify(mockMetrics, VerificationModeFactory.times(1)).failedStorePresubmission()
     }
 
@@ -170,7 +170,7 @@ class ReceivePresubmissionControllerSpec extends TestKit(ActorSystem("ReceivePre
       when(mockPresubmissionService.removeJson(any())(any())).thenReturn(Future(false))
       val result = presubmissionController.receivePresubmissionJsonV2("")(FakeRequest().withBody(Fixtures.submissionsSchemeDataJson))
       status(result) shouldBe INTERNAL_SERVER_ERROR
-      verify(mockMetrics, VerificationModeFactory.times(0)).storePresubmission(_, _)
+      verify(mockMetrics, VerificationModeFactory.times(0)).storePresubmission(anyLong(), any())
       verify(mockMetrics, VerificationModeFactory.times(1)).failedStorePresubmission()
     }
 
@@ -178,7 +178,7 @@ class ReceivePresubmissionControllerSpec extends TestKit(ActorSystem("ReceivePre
       val presubmissionController = buildPresubmissionController()
       val result = presubmissionController.receivePresubmissionJsonV2("")(FakeRequest().withBody(Fixtures.submissionsSchemeDataJson))
       status(result) shouldBe OK
-      verify(mockMetrics, VerificationModeFactory.times(1)).storePresubmission(_, _)
+      verify(mockMetrics, VerificationModeFactory.times(1)).storePresubmission(anyLong(), any())
       verify(mockMetrics, VerificationModeFactory.times(0)).failedStorePresubmission()
     }
 

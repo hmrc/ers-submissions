@@ -69,7 +69,7 @@ class FileDownloadServiceSpec extends TestKit(ActorSystem("FileDownloadServiceSp
     "extract body of request" in {
       val testService = new FileDownloadService(mockAppConfig) {
         override def extractEntityData(response: HttpResponse): Source[ByteString, _] =
-          Source.fromIterator(() => Seq(ByteString("aSingleRow,withTwoEntries\n"), ByteString("anotherRow")).toIterator)
+          Source.fromIterator(() => Seq(ByteString("aSingleRow,withTwoEntries\n"), ByteString("anotherRow")).iterator)
       }
       val response: HttpResponse = HttpResponse(StatusCodes.OK, entity = HttpEntity.apply("gotABody"))
 
@@ -98,7 +98,7 @@ class FileDownloadServiceSpec extends TestKit(ActorSystem("FileDownloadServiceSp
                 ByteString("three"),
                 ByteString("four"),
                 ByteString("five"))
-            ).toIterator)
+            ).iterator)
         }
 
         override def streamFile(downloadUrl: String): Source[HttpResponse, _] =

@@ -62,7 +62,7 @@ class ADRSubmission @Inject()(submissionCommon: SubmissionCommon,
       for(fileData <- fileDataList) {
         logger.debug(s" LFP -> 6. data record  is --> ${fileData.sheetName}" )
         val sheetName: String = fileData.sheetName
-        val configData: Config = configUtils.getConfigData(s"${schemeType}/${sheetName}", sheetName)
+        val configData: Config = configUtils.getConfigData(s"$schemeType/$sheetName", sheetName)
         val data: JsObject = buildJson(configData, fileData.data.get)
         result = result ++ submissionCommon.mergeSheetData(configData.getConfig("data_location"), result, data)
       }
@@ -80,13 +80,13 @@ class ADRSubmission @Inject()(submissionCommon: SubmissionCommon,
   }
 
   def createRootJson(sheetsJson: JsObject)(implicit request: Request[_], hc: HeaderCarrier, ersSummary: ErsSummary, schemeType: String): JsObject = {
-    val rootConfigData: Config = configUtils.getConfigData(s"${schemeType}/${schemeType}", schemeType)
+    val rootConfigData: Config = configUtils.getConfigData(s"$schemeType/$schemeType", schemeType)
     buildRoot(rootConfigData, ersSummary, sheetsJson)
   }
 
   def buildRoot(configData: Config, metadata: Object, sheetsJson: JsObject)
                (implicit request: Request[_], hc: HeaderCarrier, ersSummary: ErsSummary, schemeType: String): JsObject = {
-    import scala.collection.JavaConverters._
+    import scala.jdk.CollectionConverters._
 
     var json: JsObject = Json.obj()
 
@@ -94,11 +94,10 @@ class ADRSubmission @Inject()(submissionCommon: SubmissionCommon,
 
     for (elem <- fieldsConfigList) {
       elem.getString("type") match {
-        case "object" => {
+        case "object" =>
           val elemVal = buildRoot(elem, metadata, sheetsJson)
           json ++= submissionCommon.addObjectValue(elem, elemVal)
-        }
-        case "array" => {
+        case "array" =>
           if (elem.hasPath("values")) {
             val elVal = for (el <- elem.getConfigList("values").asScala) yield {
               val ev = configUtils.extractField(el, metadata)
@@ -123,20 +122,19 @@ class ADRSubmission @Inject()(submissionCommon: SubmissionCommon,
           }
           else {
             val arrayData = configUtils.extractField(elem, metadata)
-            if (arrayData.isInstanceOf[List[Object @unchecked]]) {
-              val elemVal = for (el <- arrayData.asInstanceOf[List[Object]]) yield buildRoot(elem, el, sheetsJson)
-              json ++= submissionCommon.addArrayValue(elem, elemVal)
+            arrayData match {
+              case value: List[Object@unchecked] =>
+                val elemVal = for (el <- value) yield buildRoot(elem, el, sheetsJson)
+                json ++= submissionCommon.addArrayValue(elem, elemVal)
+              case _ =>
             }
           }
-        }
-        case "common" => {
+        case "common" =>
           val loadConfig: String = elem.getString("load")
-          val configData: Config = configUtils.getConfigData(s"common/${loadConfig}", loadConfig)
+          val configData: Config = configUtils.getConfigData(s"common/$loadConfig", loadConfig)
           json ++= buildRoot(configData, metadata, sheetsJson)
-        }
-        case "sheetData" => {
+        case "sheetData" =>
           json ++= sheetsJson
-        }
         case _ => json ++= submissionCommon.getMetadataValue(elem, metadata)
       }
     }
@@ -145,18 +143,17 @@ class ADRSubmission @Inject()(submissionCommon: SubmissionCommon,
   }
 
   def buildJson(configData: Config, fileData: ListBuffer[Seq[String]], row: Option[Int] = None)(implicit request: Request[_], hc: HeaderCarrier): JsObject = {
-    import scala.collection.JavaConverters._
+    import scala.jdk.CollectionConverters._
 
     var json: JsObject = Json.obj()
 
     val fieldsConfigList = configData.getConfigList("fields").asScala
     for (elem <- fieldsConfigList) {
       elem.getString("type") match {
-        case "object" => {
+        case "object" =>
           val elemVal = buildJson(elem, fileData, row)
           json ++= submissionCommon.addObjectValue(elem, elemVal)
-        }
-        case "array" => {
+        case "array" =>
           if (fileData.nonEmpty) {
             if(row.isEmpty) {
               val elemVal: List[JsObject] = for (row <- fileData.indices.toList) yield buildJson(elem, fileData, Some(row))
@@ -167,7 +164,6 @@ class ADRSubmission @Inject()(submissionCommon: SubmissionCommon,
               json ++= submissionCommon.addArrayValue(elem, List(elemVal))
             }
           }
-        }
         case _ => json ++= submissionCommon.getFileDataValue(elem, fileData, row)
       }
     }

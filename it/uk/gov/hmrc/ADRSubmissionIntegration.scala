@@ -44,7 +44,7 @@ class ADRSubmissionIntegration extends AnyWordSpecLike with Matchers
   private lazy val presubmissionRepository = app.injector.instanceOf[PresubmissionMongoRepository]
   private lazy val metadataMongoRepository = app.injector.instanceOf[MetadataMongoRepository]
 
-  override protected def beforeEach: Unit = {
+  override protected def beforeEach(): Unit = {
     super.beforeEach()
     await(presubmissionRepository.storeJsonV2(
       Fixtures.submissionsSchemeData.schemeInfo.toString,
@@ -52,10 +52,10 @@ class ADRSubmissionIntegration extends AnyWordSpecLike with Matchers
     ))
   }
 
-  override protected def afterEach: Unit = {
-    super.afterEach
-    await(presubmissionRepository.collection.drop.toFuture)
-    await(metadataMongoRepository.collection.drop.toFuture)
+  override protected def afterEach(): Unit = {
+    super.afterEach()
+    await(presubmissionRepository.collection.drop().toFuture())
+    await(metadataMongoRepository.collection.drop().toFuture())
   }
 
   def getJson(selector: BsonDocument): Future[Seq[ErsSummary]] =
@@ -69,7 +69,7 @@ class ADRSubmissionIntegration extends AnyWordSpecLike with Matchers
   "Receiving data for submission" should {
 
     "return OK if valid metadata is received, filedata is extracted from database and it's successfully sent to ADR" in {
-      val ersSummary = buildErsSummary(isNilReturn = false)
+      val ersSummary = buildErsSummary()
       val schemaInfo = ersSummary.metaData.schemeInfo
       val selector = metadataMongoRepository.buildSelector(schemaInfo)
       val data = Fixtures.buildErsSummaryPayload(ersSummary)
@@ -90,7 +90,7 @@ class ADRSubmissionIntegration extends AnyWordSpecLike with Matchers
     }
 
     "return OK if valid metadata is received for nil return and it's successfully sent to ADR" in {
-      val ersSummary = buildErsSummary(isNilReturn = false)
+      val ersSummary = buildErsSummary()
       val schemaInfo = ersSummary.metaData.schemeInfo
       val selector = metadataMongoRepository.buildSelector(schemaInfo)
       val data = Fixtures.buildErsSummaryPayload(ersSummary)
