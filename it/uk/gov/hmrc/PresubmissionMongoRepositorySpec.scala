@@ -28,6 +28,7 @@ import org.scalatest.wordspec.AnyWordSpecLike
 import repositories.PresubmissionMongoRepository
 import scheduler.UpdateCreatedAtFieldsJobImpl
 import services.DocumentUpdateService
+import uk.gov.hmrc.Fixtures.schemeInfo
 
 import java.util.concurrent.TimeUnit
 import scala.collection.mutable.ListBuffer
@@ -57,7 +58,7 @@ class PresubmissionMongoRepositorySpec extends AnyWordSpecLike with Matchers wit
 
   "storeJson" should {
     "successfully insert the scheme data" in {
-      val schemeData = Fixtures.schemeData
+      val schemeData = Fixtures.schemeData(Fixtures.schemeInfo())
       val schemeInfo = schemeData.schemeInfo
       await(presubmissionRepository.storeJson(schemeData)) shouldBe  true
       await(presubmissionRepository.count(schemeInfo)) shouldBe 1
@@ -66,7 +67,7 @@ class PresubmissionMongoRepositorySpec extends AnyWordSpecLike with Matchers wit
 
   "storeJson2" should {
     "successfully insert the scheme data" in {
-      val schemeData = Fixtures.schemeData
+      val schemeData = Fixtures.schemeData(Fixtures.schemeInfo())
       val schemeInfo = schemeData.schemeInfo
       await(presubmissionRepository.storeJsonV2(schemeInfo.toString, schemeData)) shouldBe true
       await(presubmissionRepository.count(schemeInfo)) shouldBe 1
@@ -75,7 +76,7 @@ class PresubmissionMongoRepositorySpec extends AnyWordSpecLike with Matchers wit
 
   "getJson" should {
     "successfully return the scheme data" in {
-      val schemeData = Fixtures.schemeData
+      val schemeData = Fixtures.schemeData(Fixtures.schemeInfo())
       val schemeInfo = schemeData.schemeInfo
       await(presubmissionRepository.storeJson(schemeData))
 
@@ -90,7 +91,7 @@ class PresubmissionMongoRepositorySpec extends AnyWordSpecLike with Matchers wit
 
   "count" should {
     "successfully return number of documents for given scheme info" in {
-      val schemeData = Fixtures.schemeData
+      val schemeData = Fixtures.schemeData(Fixtures.schemeInfo())
       val schemeInfo = schemeData.schemeInfo
       await(presubmissionRepository.storeJson(schemeData))
       await(presubmissionRepository.count(schemeInfo)) shouldBe 1
@@ -99,7 +100,7 @@ class PresubmissionMongoRepositorySpec extends AnyWordSpecLike with Matchers wit
 
   "removeJson" should {
     "successfully remove the documents for given scheme info" in {
-      val schemeData = Fixtures.schemeData
+      val schemeData = Fixtures.schemeData(Fixtures.schemeInfo())
       val schemeInfo = schemeData.schemeInfo
       await(presubmissionRepository.storeJson(schemeData))
       await(presubmissionRepository.count(schemeInfo)) shouldBe 1
@@ -110,7 +111,7 @@ class PresubmissionMongoRepositorySpec extends AnyWordSpecLike with Matchers wit
 
   "getDocumentIdsWithoutCreatedAtField" should {
     "return list of document ids without createdAt field" in {
-      val schemeData = Fixtures.schemeData
+      val schemeData = Fixtures.schemeData(schemeInfo())
       await(presubmissionRepository.storeJson(schemeData)) //document with createdAt
 
       val testDocumentId = await(
@@ -121,7 +122,7 @@ class PresubmissionMongoRepositorySpec extends AnyWordSpecLike with Matchers wit
     }
 
     "return empty list of document ids if createdAt exists for every record" in {
-      val schemeData = Fixtures.schemeData
+      val schemeData = Fixtures.schemeData(schemeInfo())
       await(presubmissionRepository.storeJson(schemeData)) //document with createdAt
       await(presubmissionRepository.storeJson(schemeData)) //document with createdAt
 
@@ -131,7 +132,7 @@ class PresubmissionMongoRepositorySpec extends AnyWordSpecLike with Matchers wit
 
   "addCreatedAtField" should {
     "add createdAt field to documents without this field" in {
-      val schemeData = Fixtures.schemeData
+      val schemeData = Fixtures.schemeData(schemeInfo())
       await(presubmissionRepository.storeJson(schemeData)) //document with createdAt
 
       val testDocumentId = await(

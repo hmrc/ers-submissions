@@ -94,7 +94,8 @@ class ResubPresubmissionService @Inject()(metadataRepository: MetadataMongoRepos
     schedulerLoggingAndAuditing.logInfo(ProcessingResubmitMessage.message + Some(ersSummary))
     submissionCommonService.callProcessData(ersSummary,
       processFailedSubmissionsConfig.failedStatus,
-      processFailedSubmissionsConfig.resubmitSuccessStatus).map(res => res).recover {
+      processFailedSubmissionsConfig.resubmitSuccessStatus,
+      processFailedSubmissionsConfig.legacyRefList).map(res => res).recover {
       case aex: ADRTransferException =>
         auditEvents.sendToAdrEvent("ErsTransferToAdrFailed", ersSummary, source = Some("scheduler"))
         resubmissionExceptionEmiter.emitFrom(
