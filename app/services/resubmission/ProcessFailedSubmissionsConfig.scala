@@ -23,6 +23,5 @@ case class ProcessFailedSubmissionsConfig(
                                            resubmitScheme: Option[String],
                                            dateTimeFilter: Option[String],
                                            failedStatus: String,
-                                           resubmitSuccessStatus: String,
-                                           legacyRefList: Seq[String]
+                                           resubmitSuccessStatus: String
                                          )

@@ -101,8 +101,7 @@ class ResubPresubmissionServiceSpec extends ERSTestHelper with BeforeAndAfterEac
     resubmitScheme = None,
     dateTimeFilter = None,
     failedStatus = "failed",
-    resubmitSuccessStatus = "resubmisionSucess",
-    legacyRefList = Seq.empty[String]
+    resubmitSuccessStatus = "resubmisionSucess"
   )
 
   "processFailedSubmissions" should {
@@ -122,7 +121,7 @@ class ResubPresubmissionServiceSpec extends ERSTestHelper with BeforeAndAfterEac
         .thenReturn(Future.successful(Seq(new ObjectId())))
       when(metadataMongoRepositoryResubmission.findErsSummaries(any()))
         .thenReturn(Future.successful(Seq(ersSummary)))
-      when(mockSubmissionService.callProcessData(any(), any(), any(), any())(any(), any()))
+      when(mockSubmissionService.callProcessData(any(), any(), any())(any(), any()))
         .thenReturn(Future.successful(false))
 
       val result = await(resubPresubmissionService.processFailedSubmissions())
@@ -136,7 +135,7 @@ class ResubPresubmissionServiceSpec extends ERSTestHelper with BeforeAndAfterEac
         .thenReturn(Future.successful(Seq(new ObjectId())))
       when(metadataMongoRepositoryResubmission.findErsSummaries(any()))
         .thenReturn(Future.successful(Seq(ersSummary)))
-      when(mockSubmissionService.callProcessData(any(), any(), any(), any())(any(), any()))
+      when(mockSubmissionService.callProcessData(any(), any(), any())(any(), any()))
         .thenReturn(Future.successful(false))
 
       val result = await(resubPresubmissionService.processFailedSubmissions())
@@ -150,7 +149,7 @@ class ResubPresubmissionServiceSpec extends ERSTestHelper with BeforeAndAfterEac
         .thenReturn(Future.successful(Seq(new ObjectId())))
       when(metadataMongoRepositoryResubmission.findErsSummaries(any()))
         .thenReturn(Future.successful(Seq(ersSummary)))
-      when(mockSubmissionService.callProcessData(any(), any(), any(), any())(any(), any()))
+      when(mockSubmissionService.callProcessData(any(), any(), any())(any(), any()))
         .thenReturn(Future.successful(false))
 
       val result = intercept[ResubmissionException] {
@@ -168,7 +167,7 @@ class ResubPresubmissionServiceSpec extends ERSTestHelper with BeforeAndAfterEac
         .thenReturn(Future.successful(Seq(new ObjectId())))
       when(metadataMongoRepositoryResubmission.findErsSummaries(any()))
         .thenReturn(Future.successful(Seq(ersSummary)))
-      when(mockSubmissionService.callProcessData(any(), any(), any(), any())(any(), any()))
+      when(mockSubmissionService.callProcessData(any(), any(), any())(any(), any()))
         .thenReturn(Future.successful(false))
 
       val result = intercept[ResubmissionException] {
@@ -197,9 +196,9 @@ class ResubPresubmissionServiceSpec extends ERSTestHelper with BeforeAndAfterEac
             .thenReturn(Future.successful(updateResult))
           when(metadataMongoRepositoryResubmission.findErsSummaries(failedJobIds))
             .thenReturn(Future.successful(ersSummaries))
-          when(mockSubmissionService.callProcessData(mockEq(firstErsSummary), any(), any(), any())(any(), any()))
+          when(mockSubmissionService.callProcessData(mockEq(firstErsSummary), any(), any())(any(), any()))
             .thenReturn(Future.successful(firstResult))
-          when(mockSubmissionService.callProcessData(mockEq(secondErsSummary), any(), any(), any())(any(), any()))
+          when(mockSubmissionService.callProcessData(mockEq(secondErsSummary), any(), any())(any(), any()))
             .thenReturn(Future.successful(secondResult))
 
           val result = await(
@@ -222,7 +221,7 @@ class ResubPresubmissionServiceSpec extends ERSTestHelper with BeforeAndAfterEac
     )
 
     "return the result of callProcessData if ErsSubmissions is successfully extracted" in {
-      when(mockSubmissionService.callProcessData(any[ErsSummary](), anyString(), anyString(), any())(any(), any()))
+      when(mockSubmissionService.callProcessData(any[ErsSummary](), anyString(), anyString())(any(), any()))
         .thenReturn(Future.successful(true))
 
       val result = await(resubPresubmissionService.startResubmission(Fixtures.metadata))
@@ -230,7 +229,7 @@ class ResubPresubmissionServiceSpec extends ERSTestHelper with BeforeAndAfterEac
     }
 
     "audit failed submission if callProcessData throws exception" in {
-      when(mockSubmissionService.callProcessData(any[ErsSummary](), anyString(), anyString(), any())(any(), any()))
+      when(mockSubmissionService.callProcessData(any[ErsSummary](), anyString(), anyString())(any(), any()))
         .thenReturn(Future.failed(new RuntimeException("test message")))
 
       val result = intercept[ResubmissionException] {
@@ -242,7 +241,7 @@ class ResubPresubmissionServiceSpec extends ERSTestHelper with BeforeAndAfterEac
     }
 
     "throw ResubmissionException if ADRTransferException occurs" in {
-      when(mockSubmissionService.callProcessData(any[ErsSummary](), anyString(), anyString(), any())(any(), any()))
+      when(mockSubmissionService.callProcessData(any[ErsSummary](), anyString(), anyString())(any(), any()))
         .thenReturn(Future.failed(ADRTransferException(Fixtures.EMIMetaData, "test message", "test context")))
 
       val result = intercept[ResubmissionException] {
@@ -254,7 +253,7 @@ class ResubPresubmissionServiceSpec extends ERSTestHelper with BeforeAndAfterEac
     }
 
     "throw ResubmissionException if Exception occurs" in {
-      when(mockSubmissionService.callProcessData(any[ErsSummary](), anyString(), anyString(), any())(any(), any()))
+      when(mockSubmissionService.callProcessData(any[ErsSummary](), anyString(), anyString())(any(), any()))
         .thenReturn(Future.failed(new Exception("test message")))
 
       val result = intercept[ResubmissionException] {

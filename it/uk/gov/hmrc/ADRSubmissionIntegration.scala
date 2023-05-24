@@ -30,7 +30,7 @@ import org.scalatest.BeforeAndAfterEach
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 import repositories.{MetadataMongoRepository, PresubmissionMongoRepository}
-import uk.gov.hmrc.Fixtures.{buildErsSummary, schemeInfo}
+import uk.gov.hmrc.Fixtures.buildErsSummary
 
 import scala.concurrent.Future
 
@@ -48,7 +48,7 @@ class ADRSubmissionIntegration extends AnyWordSpecLike with Matchers
     super.beforeEach()
     await(presubmissionRepository.storeJsonV2(
       Fixtures.submissionsSchemeData.schemeInfo.toString,
-      Fixtures.schemeData(schemeInfo())
+      Fixtures.schemeData
     ))
   }
 

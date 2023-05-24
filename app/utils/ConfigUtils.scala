@@ -25,22 +25,16 @@ import javax.inject.Inject
 
 class ConfigUtils @Inject()(adrExceptionEmitter: ADRExceptionEmitter) {
 
-  def getConfigData(configPath: String, configValue: String, useV3Config: Boolean = false)(implicit hc: HeaderCarrier, ersSummary: ErsSummary): Config = {
-    val correctConfigValue: String = if (useV3Config) {
-      configValue.replace("V4", "V3")
-    } else {
-      configValue
-    }
-
+  def getConfigData(configPath: String, configValue: String)(implicit hc: HeaderCarrier, ersSummary: ErsSummary): Config = {
     try {
-      ConfigFactory.load(s"schemes/${configPath}").getConfig(correctConfigValue)
+      ConfigFactory.load(s"schemes/${configPath}").getConfig(configValue)
     }
     catch {
       case ex: Exception => {
         adrExceptionEmitter.emitFrom(
           ersSummary.metaData,
           Map(
-            "message" -> s"Trying to load invalid configuration. Path: ${configPath}, value: ${correctConfigValue}",
+            "message" -> s"Trying to load invalid configuration. Path: ${configPath}, value: ${configValue}",
             "context" -> "ConfigUtils.getConfigData"
           ),
           Some(ex)

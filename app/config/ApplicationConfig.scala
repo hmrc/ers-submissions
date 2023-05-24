@@ -72,6 +72,4 @@ class ApplicationConfig @Inject()(serviceConfig: ServicesConfig) {
   def lockoutTimeout(jobName: String): Int = serviceConfig.getInt(s"schedules.$jobName.lockTimeout")
   def resubmissionLimit(jobName: String): Int = serviceConfig.getInt(s"schedules.$jobName.resubmissionLimit")
 
-  lazy val legacyResubmitByScheme: Boolean = serviceConfig.getBoolean("schedules.resubmission-service.legacySchemaFilter.enabled")
-  lazy val legacyResubmitBySchemeFilter: List[String] = serviceConfig.getString("schedules.resubmission-service.legacySchemaFilter.filter").split(",").toList
 }

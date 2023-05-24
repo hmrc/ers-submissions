@@ -44,7 +44,7 @@ class ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach {
   when(mockConfig.getConfig(anyString())).thenReturn(mock[Config])
 
   val mockConfigUtils: ConfigUtils = mock[ConfigUtils]
-  when(mockConfigUtils.getConfigData(anyString(), anyString(), anyBoolean())(any[HeaderCarrier](), any[ErsSummary]()))
+  when(mockConfigUtils.getConfigData(anyString(), anyString())(any[HeaderCarrier](), any[ErsSummary]()))
     .thenReturn(mockConfig)
 
   override def beforeEach(): Unit = {
@@ -89,12 +89,10 @@ class ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach {
       mockConfigUtils
     ) {
 
-      override def createSubmissionJson(legacySchemaRefs: Seq[String])
-                                       (implicit request: Request[_], hc: HeaderCarrier, ersSummary: ErsSummary, schemeType: String): Future[JsObject] =
+      override def createSubmissionJson()(implicit request: Request[_], hc: HeaderCarrier, ersSummary: ErsSummary, schemeType: String): Future[JsObject] =
         Future.successful(notNilReturnJson)
 
-      override def createRootJson(sheetsJson: JsObject, legacySchemaRefs: Seq[String] = Seq.empty[String])
-                                 (implicit request: Request[_], hc: HeaderCarrier, ersSummary: ErsSummary, schemeType: String): JsObject =
+      override def createRootJson(sheetsJson: JsObject)(implicit request: Request[_], hc: HeaderCarrier, ersSummary: ErsSummary, schemeType: String): JsObject =
         nilReturnJson
 
     }
@@ -119,12 +117,10 @@ class ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach {
       mockAdrExceptionEmitter,
       mockConfigUtils
     ) {
-      override def createSheetsJson(sheetsJson: JsObject, legacySchemaRefs: Seq[String])
-                                   (implicit request: Request[_], hc: HeaderCarrier, ersSummary: ErsSummary, schemeType: String): Future[JsObject] =
+      override def createSheetsJson(sheetsJson: JsObject)(implicit request: Request[_], hc: HeaderCarrier, ersSummary: ErsSummary, schemeType: String): Future[JsObject] =
         Future.successful(sheetsJson)
 
-      override def createRootJson(sheetsJson: JsObject, legacySchemaRefs: Seq[String] = Seq.empty[String])
-                                 (implicit request: Request[_], hc: HeaderCarrier, ersSummary: ErsSummary, schemeType: String): JsObject =
+      override def createRootJson(sheetsJson: JsObject)(implicit request: Request[_], hc: HeaderCarrier, ersSummary: ErsSummary, schemeType: String): JsObject =
         notNilReturnJson
     }
 
