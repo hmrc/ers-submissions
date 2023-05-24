@@ -66,7 +66,7 @@ class ValidatorIntegrationSpec extends AnyWordSpecLike with Matchers
 
       val presubmissionData = await(presubmissionRepository.getJson(submissionsSchemeData.schemeInfo))
       presubmissionData.length shouldBe 1
-      presubmissionData.head.equals(Fixtures.schemeData(submissionsSchemeData.schemeInfo))
+      presubmissionData.head.equals(Fixtures.schemeData)
     }
 
   }
@@ -85,7 +85,7 @@ class ValidatorIntegrationSpec extends AnyWordSpecLike with Matchers
 
       val presubmissionData = await(presubmissionRepository.getJson(submissionsSchemeData.schemeInfo))
       presubmissionData.length shouldBe 1
-      presubmissionData.head.equals(Fixtures.schemeData(schemeInfo))
+      presubmissionData.head.equals(Fixtures.schemeData)
 
       val removeResponse = await(presubmissionController.removePresubmissionJson()
         .apply(FakeRequest().withBody(Fixtures.schemeInfoPayload(schemeInfo).as[JsObject])))
@@ -110,7 +110,7 @@ class ValidatorIntegrationSpec extends AnyWordSpecLike with Matchers
       response.header.status shouldBe OK
       val presubmissionData = await(presubmissionRepository.getJson(schemeInfo))
       presubmissionData.length shouldBe 1
-      presubmissionData.head.equals(Fixtures.schemeData(schemeInfo))
+      presubmissionData.head.equals(Fixtures.schemeData)
 
       val checkResponse = await(presubmissionController.checkForExistingPresubmission(1)
         .apply(FakeRequest().withBody(Fixtures.schemeInfoPayload(schemeInfo).as[JsObject])))
@@ -128,7 +128,7 @@ class ValidatorIntegrationSpec extends AnyWordSpecLike with Matchers
       response.header.status shouldBe OK
       val presubmissionData = await(presubmissionRepository.getJson(schemeInfo))
       presubmissionData.length shouldBe 1
-      presubmissionData.head.equals(Fixtures.schemeData(schemeInfo))
+      presubmissionData.head.equals(Fixtures.schemeData)
 
       val checkResponse = await(presubmissionController.checkForExistingPresubmission(2)
         .apply(FakeRequest().withBody(Fixtures.schemeInfoPayload(schemeInfo).as[JsObject])))

@@ -68,7 +68,7 @@ class SubmissionControllerSpec extends ERSTestHelper with BeforeAndAfterEach {
       )
 
       when(
-        mockSubmissionCommonService.callProcessData(any[ErsSummary], anyString(), anyString(), any())(any[Request[_]](), any[HeaderCarrier]())
+        mockSubmissionCommonService.callProcessData(any[ErsSummary], anyString(), anyString())(any[Request[_]](), any[HeaderCarrier]())
       ).thenReturn(
         expectedResult
       )
@@ -103,7 +103,7 @@ class SubmissionControllerSpec extends ERSTestHelper with BeforeAndAfterEach {
       val submissionController = buildSubmissionController()
 
         when(
-          mockSubmissionCommonService.callProcessData(any[ErsSummary], anyString(), anyString(), any())(any[Request[_]](), any[HeaderCarrier]())
+          mockSubmissionCommonService.callProcessData(any[ErsSummary], anyString(), anyString())(any[Request[_]](), any[HeaderCarrier]())
         ).thenThrow(
           new RuntimeException
         )

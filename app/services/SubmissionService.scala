@@ -45,9 +45,8 @@ class SubmissionService @Inject()(repositories: Repositories,
 
   lazy val metadataRepository: MetadataMongoRepository = repositories.metadataRepository
 
-  def callProcessData(ersSummary: ErsSummary, failedStatus: String, successStatus: String, legacySchemaRefs: Seq[String] = Seq.empty[String])
-                     (implicit request: Request[_], hc: HeaderCarrier): Future[Boolean] = {
-    processData(ersSummary, failedStatus, successStatus, legacySchemaRefs).map {
+  def callProcessData(ersSummary: ErsSummary, failedStatus: String, successStatus: String)(implicit request: Request[_], hc: HeaderCarrier): Future[Boolean] = {
+    processData(ersSummary, failedStatus, successStatus).map {
       res => res
     }.recover {
       case aex: ADRTransferException =>
@@ -68,20 +67,18 @@ class SubmissionService @Inject()(repositories: Repositories,
     }
   }
 
-  def processData(ersSummary: ErsSummary, failedStatus: String, successStatus: String, legacySchemaRefs: Seq[String] = Seq.empty[String])
-                 (implicit request: Request[_], hc: HeaderCarrier): Future[Boolean] = {
+  def processData(ersSummary: ErsSummary, failedStatus: String, successStatus: String)(implicit request: Request[_], hc: HeaderCarrier): Future[Boolean] = {
     ersLoggingAndAuditing.logWarn(s"Submission journey 3. start processing data: ${DateTime.now}", Some(ersSummary))
     logger.info(s"Start processing data for ${ersLoggingAndAuditing.buildDataMessage(ersSummary)}")
-    transformData(ersSummary, legacySchemaRefs).flatMap { adrData =>
+    transformData(ersSummary).flatMap { adrData =>
       sendToADRUpdatePostData(ersSummary, adrData, failedStatus, successStatus) map {res => res}
     }
   }
 
-  def transformData(ersSummary: ErsSummary, legacySchemaRefs: Seq[String] = Seq.empty[String])
-                   (implicit request: Request[_], hc: HeaderCarrier): Future[JsObject] = {
+  def transformData(ersSummary: ErsSummary)(implicit request: Request[_], hc: HeaderCarrier): Future[JsObject] = {
     ersLoggingAndAuditing.logWarn(s"Submission journey 4. start creating json: ${DateTime.now}", Some(ersSummary))
     val startTime = System.currentTimeMillis()
-    adrSubmission.generateSubmission(legacySchemaRefs)(request, hc, ersSummary).map { json =>
+    adrSubmission.generateSubmission()(request, hc, ersSummary).map { json =>
       ersLoggingAndAuditing.logWarn(s"Submission journey 5. json is created: ${DateTime.now}", Some(ersSummary))
       logger.debug("LFP -> 8. Json created () In PostsubmissionService.transformData method " + json.fields.size)
       metrics.generateJson(System.currentTimeMillis() - startTime, TimeUnit.MILLISECONDS)

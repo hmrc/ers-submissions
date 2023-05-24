@@ -26,10 +26,8 @@ import scala.util.Random
 object Fixtures {
   val invalidPayload: JsObject = Json.obj("invalid data" -> "test")
 
-  def schemeInfo(schemaType: String = "EMI",
-                 timestamp: DateTime = DateTime.now(DateTimeZone.UTC),
-                 schemeRef: String = "XA1100000000000"): SchemeInfo = SchemeInfo (
-    schemeRef = schemeRef,
+  def schemeInfo(schemaType: String = "EMI", timestamp: DateTime = DateTime.now(DateTimeZone.UTC)): SchemeInfo = SchemeInfo (
+    schemeRef = "XA1100000000000",
     timestamp = timestamp,
     schemeId = "123PA12345678",
     taxYear = "2014/15",
@@ -46,8 +44,8 @@ object Fixtures {
   )
   def submissionsSchemeDataJson(submissionsSchemeData: SubmissionsSchemeData): JsObject = Json.toJson(submissionsSchemeData).as[JsObject]
 
-  def ersMetaData(schemaType: String, timestamp: DateTime, schemeRef: String): ErsMetaData = ErsMetaData(
-    schemeInfo = schemeInfo(schemaType, timestamp, schemeRef),
+  def ersMetaData(schemaType: String, timestamp: DateTime): ErsMetaData = ErsMetaData(
+    schemeInfo = schemeInfo(schemaType, timestamp),
     ipRef = "127.0.0.0",
     aoRef = Some("123PA12345678"),
     empRef = "EMI - MyScheme - XA1100000000000 - 2014/15",
@@ -55,10 +53,9 @@ object Fixtures {
     sapNumber = Some("sap-123456")
   )
 
-  def schemeData(schemeInfo: SchemeInfo,
-                 sheetName: String = "EMI40_Adjustments_V4"): SchemeData = SchemeData(
-    schemeInfo = schemeInfo,
-    sheetName = sheetName,
+  val schemeData: SchemeData = SchemeData(
+    schemeInfo(),
+    "EMI40_Adjustments_V4",
     None,
     Some(
       ListBuffer(
@@ -68,6 +65,8 @@ object Fixtures {
       )
     )
   )
+
+  val schemeDataPayload: JsValue = Json.toJson(schemeData)
 
   val companyDetails: CompanyDetails = CompanyDetails(
     "testCompany",
@@ -85,13 +84,12 @@ object Fixtures {
                       transferStatus: Option[String] = Some("saved"),
                       schemaType: String = "EMI",
                       bundleRef: String = "testbundle",
-                      timestamp: DateTime = DateTime.now(DateTimeZone.UTC),
-                      schemeRef: String = "XA1100000000000"): ErsSummary = ErsSummary(
+                      timestamp: DateTime = DateTime.now(DateTimeZone.UTC)): ErsSummary = ErsSummary(
     bundleRef = bundleRef,
     isNilReturn = if(isNilReturn) "2" else "1",
     fileType = Some("ods"),
-    confirmationDateTime = timestamp,
-    metaData = ersMetaData(schemaType, timestamp, schemeRef),
+    confirmationDateTime = DateTime.now(DateTimeZone.UTC),
+    metaData = ersMetaData(schemaType, timestamp),
     altAmendsActivity = None,
     alterationAmends = None,
     groupService = Some(

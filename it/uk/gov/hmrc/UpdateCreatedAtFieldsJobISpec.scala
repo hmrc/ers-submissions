@@ -29,7 +29,6 @@ import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach}
 import org.scalatestplus.play.guice.GuiceOneServerPerSuite
 import repositories.PresubmissionMongoRepository
 import scheduler.{ScheduledJob, UpdateCreatedAtFieldsJobImpl}
-import uk.gov.hmrc.Fixtures.schemeInfo
 
 import scala.concurrent.ExecutionContext
 
@@ -90,9 +89,9 @@ class UpdateCreatedAtFieldsJobISpec extends AnyWordSpecLike
 
   "UpdateCreatedAtFieldsJob" should {
     "update the documents where the createdAt is missing and return true" in new Setup {
-      insert(Fixtures.schemeData(schemeInfo())) //with createdAt
-      insertAsJson(Fixtures.schemeData(schemeInfo())) //without createdAt
-      insertAsJson(Fixtures.schemeData(schemeInfo())) //without createdAt
+      insert(Fixtures.schemeData) //with createdAt
+      insertAsJson(Fixtures.schemeData) //without createdAt
+      insertAsJson(Fixtures.schemeData) //without createdAt
 
       count shouldBe 3
       getDocsWithCreatedAtField.size shouldBe 1
@@ -105,9 +104,9 @@ class UpdateCreatedAtFieldsJobISpec extends AnyWordSpecLike
   }
 
   "return true if there is nothing to update" in new Setup {
-    insert(Fixtures.schemeData(schemeInfo())) //with createdAt
-    insert(Fixtures.schemeData(schemeInfo())) //with createdAt
-    insert(Fixtures.schemeData(schemeInfo())) //with createdAt
+    insert(Fixtures.schemeData) //with createdAt
+    insert(Fixtures.schemeData) //with createdAt
+    insert(Fixtures.schemeData) //with createdAt
 
     count shouldBe 3
     getDocsWithCreatedAtField.size shouldBe 3

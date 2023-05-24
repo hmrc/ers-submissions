@@ -54,12 +54,6 @@ trait SchedulerConfig {
   def getResubmissionLimit(jobName: String): Int = applicationConfig.resubmissionLimit(jobName)
 
   def getLockoutTimeout(jobName: String): Int = applicationConfig.lockoutTimeout(jobName)
-
-  val legacyRefList: Seq[String] = if(applicationConfig.legacyResubmitByScheme) {
-    applicationConfig.legacyResubmitBySchemeFilter
-  } else {
-    Seq.empty[String]
-  }
   
   def getProcessFailedSubmissionsConfig(resubmissionLimit: Int): ProcessFailedSubmissionsConfig = ProcessFailedSubmissionsConfig(
     resubmissionLimit,
@@ -68,8 +62,7 @@ trait SchedulerConfig {
     resubmitScheme,
     dateTimeFilter,
     failedStatus,
-    resubmitSuccessStatus,
-    legacyRefList
+    resubmitSuccessStatus
   )
 
 }
