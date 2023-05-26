@@ -131,14 +131,9 @@ class MetadataMongoRepository @Inject()(val applicationConfig: ApplicationConfig
       .toFuture()
   }
 
-  def getNumberOfFailedJobs(statusList: List[String]): Future[Long] = {
-    val baseSelector: BsonDocument = BsonDocument(
-      "transferStatus" -> BsonDocument(
-        "$in" -> statusList.map(Some(_))
-      )
-    )
+  def getNumberOfFailedJobs(failedJobSelector: BsonDocument): Future[Long] = {
     collection.countDocuments(
-      filter = baseSelector
+      filter = failedJobSelector
     ).toFuture()
   }
 

@@ -37,13 +37,12 @@ class ResubPresubmissionService @Inject()(metadataRepository: MetadataMongoRepos
                                          (implicit ec: ExecutionContext) {
 
   def logFailedSubmissionCount()(implicit processFailedSubmissionsConfig: ProcessFailedSubmissionsConfig): Future[Unit] = {
-    val searchStatusList = processFailedSubmissionsConfig.searchStatusList
+    val failedJobSelector: BsonDocument = metadataRepository.createFailedJobSelector()
     for {
       numberOfRecords: Long <- metadataRepository
-        .getNumberOfFailedJobs(searchStatusList)
-      countToLog = TotalNumberOfFailedJobsMessage(
-        numberOfFailedJobs = numberOfRecords,
-        failedStatuses = searchStatusList
+        .getNumberOfFailedJobs(failedJobSelector)
+      countToLog = TotalNumberSubmissionsToProcessMessage(
+        numberOfFailedJobs = numberOfRecords
       ).message
     } yield schedulerLoggingAndAuditing.logInfo(countToLog)
   }
