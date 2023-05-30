@@ -16,6 +16,7 @@
 
 package models
 
+import services.resubmission.AggregatedLog
 import uk.gov.hmrc.mongo.lock.LockService
 
 trait ResubmissionMessages {
@@ -59,4 +60,8 @@ case class NumberOfFailedToBeProcessedMessage(numberOfFailedJobs: Long) extends 
 
 case class ResubmissionLimitMessage(resubmissionLimit: Long) extends ResubmissionMessages {
   val message: String = s"$prefix Running resubmission job with a batch size of: $resubmissionLimit"
+}
+
+case class AggregatedLogs(aggregatedLogs: Seq[AggregatedLog]) extends ResubmissionMessages {
+  val message: String = s"$prefix Aggregated view of submissions: ${aggregatedLogs.map(_.logLine).mkString("\n", "\n", "\n")}"
 }

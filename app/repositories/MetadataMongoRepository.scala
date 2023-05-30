@@ -16,17 +16,16 @@
 
 package repositories
 
-import com.fasterxml.jackson.databind.JsonNode
 import config.ApplicationConfig
 import models._
 import org.joda.time.DateTime
 import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
 import org.mongodb.scala.FindObservable
-import org.mongodb.scala.bson.{BsonDocument, BsonInt64, BsonString, ObjectId}
+import org.mongodb.scala.bson.{BsonDocument, BsonInt64, BsonString, Document, ObjectId}
 import org.mongodb.scala.model.{Filters, Projections}
 import org.mongodb.scala.result.UpdateResult
 import play.api.Logging
-import play.api.libs.json.{Format, JsObject}
+import play.api.libs.json.{Format, JsObject, Json}
 import repositories.helpers.BaseVerificationRepository
 import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
@@ -35,7 +34,9 @@ import uk.gov.hmrc.mongo.play.json.formats.MongoFormats
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 import models.{ErsSummary, Statuses}
-import play.api.libs.json.Json
+import org.mongodb.scala.model.Accumulators._
+import org.mongodb.scala.model.Aggregates
+import play.api.libs.json.Format.GenericFormat
 import repositories.helpers.BsonDocumentHelper.BsonOps
 import services.resubmission.ProcessFailedSubmissionsConfig
 
@@ -137,4 +138,16 @@ class MetadataMongoRepository @Inject()(val applicationConfig: ApplicationConfig
     ).toFuture()
   }
 
+  def getAggregateCountOfSubmissions(): Future[Seq[JsObject]] =
+    collection.aggregate(
+      pipeline = Seq(
+        Aggregates.group(
+          Document("schemeType" -> "$metaData.schemeInfo.schemeType", "transferStatus" -> "$transferStatus"),
+          sum("count", 1),
+          push("submissionInfo",
+            Document("timestamp" -> "$metaData.schemeInfo.timestamp", "schemeRef" -> "$metaData.schemeInfo.schemeRef")
+          )
+        )
+      )
+    ).toFuture()
 }
