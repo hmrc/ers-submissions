@@ -18,19 +18,12 @@ package services.resubmission
 
 import play.api.libs.json.{Format, Json}
 
-case class SubmissionInfo(timestamp: Long, schemeRef: String){
-  val logLine = s"($schemeRef, $timestamp)"
-}
 case class Id(schemeType: String, transferStatus: String)
-case class AggregatedLog(_id: Id, count: Int, submissionInfo: Seq[SubmissionInfo]){
-  val logLine: String = s"schemaType: ${_id.schemeType}, " +
-    s"transferStatus: ${_id.transferStatus}, " +
-    s"count: $count, " +
-    s"submissionInfo: ${submissionInfo.map(_.logLine).mkString(",")}"
+case class AggregatedLog(_id: Id, count: Int){
+  val logLine: String = s"schemaType: ${_id.schemeType}, transferStatus: ${_id.transferStatus}, count: $count"
 }
 
 object AggregatedLog {
-  implicit val submissionInfoFormat: Format[SubmissionInfo] = Json.format[SubmissionInfo]
   implicit val idFormat: Format[Id] = Json.format[Id]
   implicit val dataFormat: Format[AggregatedLog] = Json.format[AggregatedLog]
 }
