@@ -143,10 +143,7 @@ class MetadataMongoRepository @Inject()(val applicationConfig: ApplicationConfig
       pipeline = Seq(
         Aggregates.group(
           Document("schemeType" -> "$metaData.schemeInfo.schemeType", "transferStatus" -> "$transferStatus"),
-          sum("count", 1),
-          push("submissionInfo",
-            Document("timestamp" -> "$metaData.schemeInfo.timestamp", "schemeRef" -> "$metaData.schemeInfo.schemeRef")
-          )
+          sum("count", 1)
         )
       )
     ).toFuture()
