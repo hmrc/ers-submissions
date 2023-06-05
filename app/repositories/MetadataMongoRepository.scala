@@ -22,23 +22,21 @@ import org.joda.time.DateTime
 import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
 import org.mongodb.scala.FindObservable
 import org.mongodb.scala.bson.{BsonDocument, BsonInt64, BsonString, Document, ObjectId}
-import org.mongodb.scala.model.{Filters, Projections}
+import org.mongodb.scala.model.Accumulators._
+import org.mongodb.scala.model.{Aggregates, Filters, Projections}
 import org.mongodb.scala.result.UpdateResult
 import play.api.Logging
+import play.api.libs.json.Format.GenericFormat
 import play.api.libs.json.{Format, JsObject, Json}
 import repositories.helpers.BaseVerificationRepository
+import repositories.helpers.BsonDocumentHelper.BsonOps
+import services.resubmission.ProcessFailedSubmissionsConfig
 import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
 import uk.gov.hmrc.mongo.play.json.formats.MongoFormats
 
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
-import models.{ErsSummary, Statuses}
-import org.mongodb.scala.model.Accumulators._
-import org.mongodb.scala.model.Aggregates
-import play.api.libs.json.Format.GenericFormat
-import repositories.helpers.BsonDocumentHelper.BsonOps
-import services.resubmission.ProcessFailedSubmissionsConfig
 
 @Singleton
 class MetadataMongoRepository @Inject()(val applicationConfig: ApplicationConfig, mc: MongoComponent)
@@ -58,7 +56,7 @@ class MetadataMongoRepository @Inject()(val applicationConfig: ApplicationConfig
   )
 
   def storeErsSummary(ersSummary: ErsSummary): Future[Boolean] = {
-    collection.insertOne(Json.toJsObject(ersSummary)).toFuture.map { res =>
+    collection.insertOne(Json.toJsObject(ersSummary)).toFuture().map { res =>
       res.wasAcknowledged()
     }
   }
@@ -67,7 +65,7 @@ class MetadataMongoRepository @Inject()(val applicationConfig: ApplicationConfig
     val selector = buildSelector(schemeInfo)
     val update = BsonDocument("$set" -> BsonDocument("transferStatus" ->  status))
 
-    collection.updateOne(selector, update).toFuture.map { res =>
+    collection.updateOne(selector, update).toFuture().map { res =>
       res.wasAcknowledged()
     }
   }
@@ -87,7 +85,7 @@ class MetadataMongoRepository @Inject()(val applicationConfig: ApplicationConfig
       processFailedSubmissionsConfig.resubmitScheme.map(scheme => "metaData.schemeInfo.schemeType" -> BsonString(scheme))
     )
 
-    val formatter: DateTimeFormatter = DateTimeFormat.forPattern("dd/MM/yyyy");
+    val formatter: DateTimeFormatter = DateTimeFormat.forPattern("dd/MM/yyyy")
 
     val dateRangeSelector: BsonDocument = BsonDocument(processFailedSubmissionsConfig.dateTimeFilter.map(date =>
       "metaData.schemeInfo.timestamp" -> BsonDocument("$gte" -> DateTime.parse(date, formatter).getMillis))

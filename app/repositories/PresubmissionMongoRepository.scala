@@ -64,7 +64,7 @@ class PresubmissionMongoRepository @Inject()(applicationConfig: ApplicationConfi
       Json.toJsObject(presubmissionData) ++
         Json.obj("createdAt" -> Json.obj("$date" -> Instant.now.toEpochMilli))
 
-    collection.insertOne(document).toFuture.map { res =>
+    collection.insertOne(document).toFuture().map { res =>
       res.wasAcknowledged()
     }
   }
@@ -74,7 +74,7 @@ class PresubmissionMongoRepository @Inject()(applicationConfig: ApplicationConfi
       Json.toJsObject(presubmissionData) ++
         Json.obj("createdAt" -> Json.obj("$date" -> Instant.now.toEpochMilli))
 
-      collection.insertOne(document).toFuture.map { res =>
+      collection.insertOne(document).toFuture().map { res =>
       res.wasAcknowledged()
     }.recover {
       case e: Throwable =>
@@ -98,7 +98,7 @@ class PresubmissionMongoRepository @Inject()(applicationConfig: ApplicationConfi
 
   def removeJson(schemeInfo: SchemeInfo): Future[Boolean] = {
     val selector = buildSelector(schemeInfo)
-    collection.deleteOne(selector).toFuture.map { res =>
+    collection.deleteOne(selector).toFuture().map { res =>
       res.wasAcknowledged()
     }
   }

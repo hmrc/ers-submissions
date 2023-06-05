@@ -45,7 +45,7 @@ case class ResubmissionJobSetUp(app: Application) {
   )
 
   def storeMultipleErsSummary(ersSummaries: Seq[JsObject])(implicit ec: ExecutionContext): Future[Boolean] = {
-    collection.insertMany(ersSummaries).toFuture.map { res =>
+    collection.insertMany(ersSummaries).toFuture().map { res =>
       res.wasAcknowledged()
     }
   }

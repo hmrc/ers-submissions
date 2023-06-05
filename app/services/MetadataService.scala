@@ -34,16 +34,15 @@ class MetadataService @Inject()(metadataMongoRepository: MetadataMongoRepository
 
   def storeErsSummary(ersSummary: ErsSummary)(implicit hc: HeaderCarrier): Future[Boolean] = {
     metadataRepository.storeErsSummary(ersSummary).recover {
-      case ex: Exception => {
+      case ex: Exception =>
         ersLoggingAndAuditing.handleException(ersSummary, ex, "Exception during storing ersSummary")
         false
-      }
     }
   }
 
   def validateErsSummaryFromJson(json: JsObject): Option[ErsSummary] = {
     json.validate[ErsSummary] match {
-      case ersSummary: JsSuccess[ErsSummary] => {
+      case ersSummary: JsSuccess[ErsSummary] =>
         val isMetadataValid: (Boolean, Option[String]) = validateErsSummary(ersSummary.value)
         if(isMetadataValid._1) {
           Some(ersSummary.value)
@@ -52,37 +51,23 @@ class MetadataService @Inject()(metadataMongoRepository: MetadataMongoRepository
           logger.info("Invalid metadata. Json: " + json.toString() + ", errors: " + isMetadataValid._2.getOrElse(""))
           None
         }
-      }
-      case e: JsError => {
+      case e: JsError =>
         logger.info("Invalid request. Json: " + json.toString() + ", errors: " + JsError.toJson(e).toString())
         None
-      }
     }
   }
 
-  def validateErsSummary(ersSummary: ErsSummary): (Boolean, Option[String])  = {
+  def validateErsSummary(ersSummary: ErsSummary): (Boolean, Option[String]) = {
+    val nilReturnInvalid = ersSummary.isNilReturn != "1" && ersSummary.isNilReturn != "2"
+    val schemeRefEmpty = ersSummary.metaData.schemeInfo.schemeRef.isEmpty
+    val schemeTypeEmpty = ersSummary.metaData.schemeInfo.schemeType.isEmpty
 
-    val metaDataMap = Map(
-      "isNilReturn" -> ersSummary.isNilReturn,
-      "schemeRef" -> ersSummary.metaData.schemeInfo.schemeRef,
-      "schemeType" -> ersSummary.metaData.schemeInfo.schemeType
-    )
-
-    for((metaDataKey, metaDataValue) <- metaDataMap) {
-      metaDataKey match {
-        case "isNilReturn"  =>  {
-          if(metaDataValue != "1" && metaDataValue != "2") {
-            return (false, Some(metaDataKey))
-          }
-        }
-        case _ => {
-          if (metaDataValue.isEmpty) {
-            return (false, Some(metaDataKey))
-          }
-        }
-      }
+    (nilReturnInvalid, schemeRefEmpty,schemeTypeEmpty) match {
+      case (true, _, _) => (false, Some("isNilReturn"))
+      case (_, true, _) => (false, Some("schemeRef"))
+      case (_, _, true) => (false, Some("schemeType"))
+      case _ => (true, None)
     }
-    (true, None)
   }
 
 }

@@ -18,7 +18,6 @@ package scheduler
 
 import akka.actor.ActorSystem
 import com.typesafe.akka.extension.quartz.QuartzSchedulerExtension
-import org.mockito.Mockito.reset
 import org.quartz.CronExpression
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
@@ -41,11 +40,6 @@ class ScheduledJobSpec extends AnyWordSpecLike with Matchers with MockitoSugar {
       s"schedules.$jobNameTest.enabled" -> enabled,
       s"schedules.$jobNameTest.description" -> "testDescription"
     )
-
-    reset(
-      mockQuartzSchedulerExtension,
-      mockService,
-      mockActorSystem)
 
     val job: ScheduledJob = new ScheduledJob {
       override lazy val scheduledMessage: SchedulingActor.ScheduledMessage[_] = UpdateDocumentsClass(mockService)
