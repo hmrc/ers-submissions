@@ -59,7 +59,7 @@ class OTHER_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfter {
     "create valid json for NilReturn" in {
 
       when(
-        mockPresubmissionService.getJson(any[SchemeInfo]())
+        mockPresubmissionService.getJson(any[SchemeInfo]())(any())
       ).thenReturn(
         Future.successful(List())
       )
@@ -101,7 +101,7 @@ class OTHER_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfter {
     "create valid json for not NilReturn without data" in {
 
       when(
-        mockPresubmissionService.getJson(any[SchemeInfo]())
+        mockPresubmissionService.getJson(any[SchemeInfo]())(any())
       ).thenReturn(
         Future.successful(List())
       )
@@ -166,7 +166,7 @@ class OTHER_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfter {
     "create valid json for not Nil return with all sheets" in {
 
       when(
-        mockPresubmissionService.getJson(any[SchemeInfo]())
+        mockPresubmissionService.getJson(any[SchemeInfo]())(any())
       ).thenReturn(
         Future.successful(
           List(
@@ -491,7 +491,7 @@ class OTHER_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfter {
     "create valid json for not Nil return with all sheets from 2 records of sheet data" in {
 
       when(
-        mockPresubmissionService.getJson(any[SchemeInfo]())
+        mockPresubmissionService.getJson(any[SchemeInfo]())(any())
       ).thenReturn(
         Future.successful(
           List(

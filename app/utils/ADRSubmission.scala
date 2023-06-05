@@ -49,8 +49,8 @@ class ADRSubmission @Inject()(submissionCommon: SubmissionCommon,
 
   def createSubmissionJson()(implicit request: Request[_], hc: HeaderCarrier, ersSummary: ErsSummary, schemeType: String): Future[JsObject] = {
     createSheetsJson(Json.obj()) flatMap { sheetsDataJson =>
-      logger.debug("LFP -> 7. Json Creation complete --> ")
-      Future(createRootJson(sheetsDataJson)) map { res => res}
+      logger.info(s"Completed creating submission Json from pre-submission data, for schemeRef: ${ersSummary.metaData.schemeInfo.schemeRef}")
+      Future(createRootJson(sheetsDataJson)) map { res => res }
     }
   }
 
@@ -58,7 +58,7 @@ class ADRSubmission @Inject()(submissionCommon: SubmissionCommon,
     var result = sheetsJson
     logger.debug("LFP -> 2. createSheetsJson () ")
     presubmissionService.getJson(ersSummary.metaData.schemeInfo).map { fileDataList =>
-      logger.debug("LFP -> 5. Json retireved + list = " + fileDataList.size)
+      logger.info(s"Found data in pre-submission repository, mapped successfully. File data list size: ${fileDataList.size}, schemeRef: ${ersSummary.metaData.schemeInfo.schemeRef}")
       for(fileData <- fileDataList) {
         logger.debug(s" LFP -> 6. data record  is --> ${fileData.sheetName}" )
         val sheetName: String = fileData.sheetName

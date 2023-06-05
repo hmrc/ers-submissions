@@ -146,14 +146,14 @@ class ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach {
     }
 
     "return given json as parameter if there is no data in the database" in {
-      when(mockPresubmissionService.getJson(any[SchemeInfo]())).thenReturn(Future.successful(List()))
+      when(mockPresubmissionService.getJson(any[SchemeInfo]())(any())).thenReturn(Future.successful(List()))
 
       val result = await(mockAdrSubmission.createSheetsJson(sheetsJson)(request, hc, Fixtures.metadata, Fixtures.schemeType))
       result shouldBe sheetsJson
     }
 
     "return merged data json if there is data in the database" in {
-      when(mockPresubmissionService.getJson(any[SchemeInfo]()))
+      when(mockPresubmissionService.getJson(any[SchemeInfo]())(any()))
         .thenReturn(Future.successful(List(Fixtures.schemeData)))
 
       val result = await(mockAdrSubmission.createSheetsJson(Json.obj())(request, hc, Fixtures.metadata, Fixtures.schemeType))
@@ -161,7 +161,7 @@ class ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach {
     }
 
     "throws adrException if retrieving data throws exception" in {
-      when(mockPresubmissionService.getJson(any[SchemeInfo]()))
+      when(mockPresubmissionService.getJson(any[SchemeInfo]())(any()))
         .thenReturn(Future.failed(new Exception("errorMessage")))
 
       intercept[ADRTransferException] {

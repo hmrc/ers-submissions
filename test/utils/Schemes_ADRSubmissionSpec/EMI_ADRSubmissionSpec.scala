@@ -59,7 +59,7 @@ class EMI_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfter {
 
     "create valid json for NilReturn" in {
 
-      when(mockPresubmissionService.getJson(any[SchemeInfo]()))
+      when(mockPresubmissionService.getJson(any[SchemeInfo]())(any()))
         .thenReturn(Future.successful(List()))
 
       val result = await(mockAdrSubmission.generateSubmission()(request, hc, EMI.metadataNilReturn))
@@ -102,7 +102,7 @@ class EMI_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfter {
     "create valid json for not NulReturn without data with participants" in {
 
       when(
-        mockPresubmissionService.getJson(any[SchemeInfo]())
+        mockPresubmissionService.getJson(any[SchemeInfo]())(any())
       ).thenReturn(
         Future.successful(List())
       )
@@ -170,7 +170,7 @@ class EMI_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfter {
     "create valid json for not NilReturn with all sheets and participants" in {
 
       when(
-        mockPresubmissionService.getJson(any[SchemeInfo]())
+        mockPresubmissionService.getJson(any[SchemeInfo]())(any())
       ).thenReturn(
         Future.successful(
           List(
@@ -363,7 +363,7 @@ class EMI_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfter {
     "create valid json for not NilReturn with all sheets and participants from 2 records of sheet data" in {
 
       when(
-        mockPresubmissionService.getJson(any[SchemeInfo]())
+        mockPresubmissionService.getJson(any[SchemeInfo]())(any())
       ).thenReturn(
         Future.successful(
           List(
@@ -655,7 +655,7 @@ class EMI_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfter {
     "create valid json for not NilReturn with Adjustments and participants" in {
 
       when(
-        mockPresubmissionService.getJson(any[SchemeInfo]())
+        mockPresubmissionService.getJson(any[SchemeInfo]())(any())
       ).thenReturn(
         Future.successful(
           List(
@@ -748,7 +748,7 @@ class EMI_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfter {
     "create valid json for not NilReturn with Adjustments and participants from 2 records of sheet data" in {
 
       when(
-        mockPresubmissionService.getJson(any[SchemeInfo]())
+        mockPresubmissionService.getJson(any[SchemeInfo]())(any())
       ).thenReturn(
         Future.successful(
           List(
@@ -856,7 +856,7 @@ class EMI_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfter {
     "create valid json for not NilReturn with Released and participants" in {
 
       when(
-        mockPresubmissionService.getJson(any[SchemeInfo]())
+        mockPresubmissionService.getJson(any[SchemeInfo]())(any())
       ).thenReturn(
         Future.successful(
           List(
@@ -948,7 +948,7 @@ class EMI_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfter {
     "create valid json for not NilReturn with Released and participants from 2 records of sheet data" in {
 
       when(
-        mockPresubmissionService.getJson(any[SchemeInfo]())
+        mockPresubmissionService.getJson(any[SchemeInfo]())(any())
       ).thenReturn(
         Future.successful(
           List(
@@ -1057,7 +1057,7 @@ class EMI_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfter {
     "create valid json for not NilReturn with RLC and participants" in {
 
       when(
-        mockPresubmissionService.getJson(any[SchemeInfo]())
+        mockPresubmissionService.getJson(any[SchemeInfo]())(any())
       ).thenReturn(
         Future.successful(
           List(
@@ -1149,7 +1149,7 @@ class EMI_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfter {
     "create valid json for not NilReturn with RLC and participants from 2 records of sheet data" in {
 
       when(
-        mockPresubmissionService.getJson(any[SchemeInfo]())
+        mockPresubmissionService.getJson(any[SchemeInfo]())(any())
       ).thenReturn(
         Future.successful(
           List(
@@ -1258,7 +1258,7 @@ class EMI_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfter {
     "create valid json for not NilReturn with NonTaxable and participants" in {
 
       when(
-        mockPresubmissionService.getJson(any[SchemeInfo]())
+        mockPresubmissionService.getJson(any[SchemeInfo]())(any())
       ).thenReturn(
         Future.successful(
           List(
@@ -1351,7 +1351,7 @@ class EMI_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfter {
     "create valid json for not NilReturn with NonTaxable and participants from 2 records of sheet data" in {
 
       when(
-        mockPresubmissionService.getJson(any[SchemeInfo]())
+        mockPresubmissionService.getJson(any[SchemeInfo]())(any())
       ).thenReturn(
         Future.successful(
           List(
@@ -1462,7 +1462,7 @@ class EMI_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfter {
     "create valid json for not NilReturn with Taxable and participants" in {
 
       when(
-        mockPresubmissionService.getJson(any[SchemeInfo]())
+        mockPresubmissionService.getJson(any[SchemeInfo]())(any())
       ).thenReturn(
         Future.successful(
           List(
@@ -1560,7 +1560,7 @@ class EMI_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfter {
     "create valid json for not NilReturn with Taxable and participants from 2 records of sheet data" in {
 
       when(
-        mockPresubmissionService.getJson(any[SchemeInfo]())
+        mockPresubmissionService.getJson(any[SchemeInfo]())(any())
       ).thenReturn(
         Future.successful(
           List(

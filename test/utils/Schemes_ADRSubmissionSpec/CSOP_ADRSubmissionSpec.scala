@@ -60,7 +60,7 @@ class CSOP_ADRSubmissionSpec
     "return a valid NilReturn without ammends" in {
 
       when(
-        mockPresubmissionService.getJson(any[SchemeInfo]())
+        mockPresubmissionService.getJson(any[SchemeInfo]())(any())
       ).thenReturn(
         Future.successful(List())
       )
@@ -111,7 +111,7 @@ class CSOP_ADRSubmissionSpec
     "return a valid NilReturn without some ammends" in {
 
       when(
-        mockPresubmissionService.getJson(any[SchemeInfo]())
+        mockPresubmissionService.getJson(any[SchemeInfo]())(any())
       ).thenReturn(
         Future.successful(List())
       )
@@ -175,7 +175,7 @@ class CSOP_ADRSubmissionSpec
     "return a valid NilReturn with list of all ammends" in {
 
       when(
-        mockPresubmissionService.getJson(any[SchemeInfo]())
+        mockPresubmissionService.getJson(any[SchemeInfo]())(any())
       ).thenReturn(
         Future.successful(List())
       )
@@ -245,7 +245,7 @@ class CSOP_ADRSubmissionSpec
     "create valid json for not NulReturn without data with participants" in {
 
       when(
-        mockPresubmissionService.getJson(any[SchemeInfo]())
+        mockPresubmissionService.getJson(any[SchemeInfo]())(any())
       ).thenReturn(
         Future.successful(List())
       )
@@ -319,7 +319,7 @@ class CSOP_ADRSubmissionSpec
     "create valid json for not NulReturn with OptinsGranted and participants" in {
 
       when(
-        mockPresubmissionService.getJson(any[SchemeInfo]())
+        mockPresubmissionService.getJson(any[SchemeInfo]())(any())
       ).thenReturn(
         Future.successful(
           List(SchemeData(CSOP.schemeInfo, "CSOP_OptionsGranted_V4", None, Some(ListBuffer(CSOP.buildGrantedV4("yes", "yes")))))
@@ -408,7 +408,7 @@ class CSOP_ADRSubmissionSpec
     "create valid json for not NulReturn with OptinsGranted and participants from 2 records of sheet data" in {
 
       when(
-        mockPresubmissionService.getJson(any[SchemeInfo]())
+        mockPresubmissionService.getJson(any[SchemeInfo]())(any())
       ).thenReturn(
         Future.successful(
           List(
@@ -509,7 +509,7 @@ class CSOP_ADRSubmissionSpec
     "create valid json for not NilReturn with Released and participants" in {
 
       when(
-        mockPresubmissionService.getJson(any[SchemeInfo]())
+        mockPresubmissionService.getJson(any[SchemeInfo]())(any())
       ).thenReturn(
         Future.successful(
           List(SchemeData(CSOP.schemeInfo, "CSOP_OptionsRCL_V4", None, Some(ListBuffer(CSOP.buildOptionsRCL(true, "yes")))))
@@ -602,7 +602,7 @@ class CSOP_ADRSubmissionSpec
     "create valid json for not NilReturn with Released and participants from 2 records of sheet data" in {
 
       when(
-        mockPresubmissionService.getJson(any[SchemeInfo]())
+        mockPresubmissionService.getJson(any[SchemeInfo]())(any())
       ).thenReturn(
         Future.successful(
           List(
@@ -708,7 +708,7 @@ class CSOP_ADRSubmissionSpec
     "create valid json for not NilReturn with OptionsExercised and participants" in {
 
       when(
-        mockPresubmissionService.getJson(any[SchemeInfo]())
+        mockPresubmissionService.getJson(any[SchemeInfo]())(any())
       ).thenReturn(
         Future.successful(
           List(SchemeData(CSOP.schemeInfo, "CSOP_OptionsExercised_V4", None, Some(ListBuffer(CSOP.buildOptionsExercised(withAllFields = true, sharesListedOnSE = "yes", marketValueAgreedHMRC = "yes", payeOperated = "yes")))))
@@ -810,7 +810,7 @@ class CSOP_ADRSubmissionSpec
     "create valid json for not NilReturn with OptionsExercised and participants from 2 records of sheet data" in {
 
       when(
-        mockPresubmissionService.getJson(any[SchemeInfo]())
+        mockPresubmissionService.getJson(any[SchemeInfo]())(any())
       ).thenReturn(
         Future.successful(
           List(
@@ -937,7 +937,7 @@ class CSOP_ADRSubmissionSpec
     "create valid json for not NilReturn with participants, ammends, OptinsGranted, Released and OptionsExercised" in {
 
       when(
-        mockPresubmissionService.getJson(any[SchemeInfo]())
+        mockPresubmissionService.getJson(any[SchemeInfo]())(any())
       ).thenReturn(
         Future.successful(
           List(
@@ -1092,7 +1092,7 @@ class CSOP_ADRSubmissionSpec
     "create valid json for not NilReturn with participants, ammends, OptinsGranted, Released and OptionsExercised from 2 records for each sheet" in {
 
       when(
-        mockPresubmissionService.getJson(any[SchemeInfo]())
+        mockPresubmissionService.getJson(any[SchemeInfo]())(any())
       ).thenReturn(
         Future.successful(
           List(

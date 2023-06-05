@@ -59,7 +59,7 @@ class SIP_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfter {
     "create valid NilReturn" in {
 
       when(
-        mockPresubmissionService.getJson(any[SchemeInfo]())
+        mockPresubmissionService.getJson(any[SchemeInfo]())(any())
       ).thenReturn(
         Future.successful(List())
       )
@@ -104,7 +104,7 @@ class SIP_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfter {
 
     "create valid NilReturn with some ammends" in {
 
-      when(mockPresubmissionService.getJson(any[SchemeInfo]())).thenReturn(Future.successful(List()))
+      when(mockPresubmissionService.getJson(any[SchemeInfo]())(any())).thenReturn(Future.successful(List()))
 
       val result = await(mockAdrSubmission.generateSubmission()(request, hc, SIP.metadataNilReturnWithSomeAltAmmends))
       result - "acknowledgementReference" shouldBe Json.parse("""{
@@ -160,7 +160,7 @@ class SIP_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfter {
     "create valid NilReturn with all ammends" in {
 
       when(
-        mockPresubmissionService.getJson(any[SchemeInfo]())
+        mockPresubmissionService.getJson(any[SchemeInfo]())(any())
       ).thenReturn(
         Future.successful(List())
       )
@@ -225,7 +225,7 @@ class SIP_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfter {
     "create valid not NilReturn with participants and trustees without data" in {
 
       when(
-        mockPresubmissionService.getJson(any[SchemeInfo]())
+        mockPresubmissionService.getJson(any[SchemeInfo]())(any())
       ).thenReturn(
         Future.successful(List())
       )
@@ -316,7 +316,7 @@ class SIP_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfter {
     "create valid not NilReturn with Awards_V4, participants and trustees without data" in {
 
       when(
-        mockPresubmissionService.getJson(any[SchemeInfo]())
+        mockPresubmissionService.getJson(any[SchemeInfo]())(any())
       ).thenReturn(
         Future.successful(
           List(
@@ -438,7 +438,7 @@ class SIP_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfter {
     "create valid not NilReturn with Awards_V4, participants and trustees without data from 2 records of sheet data" in {
 
       when(
-        mockPresubmissionService.getJson(any[SchemeInfo]())
+        mockPresubmissionService.getJson(any[SchemeInfo]())(any())
       ).thenReturn(
         Future.successful(
           List(
@@ -584,7 +584,7 @@ class SIP_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfter {
     "create valid not NilReturn with Out_V4, participants and trustees without data" in {
 
       when(
-        mockPresubmissionService.getJson(any[SchemeInfo]())
+        mockPresubmissionService.getJson(any[SchemeInfo]())(any())
       ).thenReturn(
         Future.successful(
           List(
@@ -702,7 +702,7 @@ class SIP_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfter {
     "create valid not NilReturn with Out_V4, participants and trustees without data from 2 records of sheet data" in {
 
       when(
-        mockPresubmissionService.getJson(any[SchemeInfo]())
+        mockPresubmissionService.getJson(any[SchemeInfo]())(any())
       ).thenReturn(
         Future.successful(
           List(
@@ -840,7 +840,7 @@ class SIP_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfter {
     "create valid not NilReturn with Awards_V4, Out_V4, participants and trustees without data" in {
 
       when(
-        mockPresubmissionService.getJson(any[SchemeInfo]())
+        mockPresubmissionService.getJson(any[SchemeInfo]())(any())
       ).thenReturn(
         Future.successful(
           List(
@@ -986,7 +986,7 @@ class SIP_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfter {
     "create valid not NilReturn with Awards_V4, Out_V4, participants and trustees without data from 2 records of sheet data" in {
 
       when(
-        mockPresubmissionService.getJson(any[SchemeInfo]())
+        mockPresubmissionService.getJson(any[SchemeInfo]())(any())
       ).thenReturn(
         Future.successful(
           List(

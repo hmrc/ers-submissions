@@ -112,7 +112,15 @@ class ResubPresubmissionService @Inject()(metadataRepository: MetadataMongoRepos
     schedulerLoggingAndAuditing.logInfo(ProcessingResubmitMessage.message + Some(ersSummary.confirmationDateTime))
     submissionCommonService.callProcessData(ersSummary,
       Statuses.FailedResubmission.toString,
-      processFailedSubmissionsConfig.resubmitSuccessStatus).map(res => res).recover {
+      processFailedSubmissionsConfig.resubmitSuccessStatus).map { result =>
+      val schemeRef = ersSummary.metaData.schemeInfo.schemeRef
+      if (result) {
+        schedulerLoggingAndAuditing.logInfo(s"Resubmission completed successfully for schemeRef: $schemeRef")
+      } else {
+        schedulerLoggingAndAuditing.logInfo(s"Resubmission failed for schemeRef: $schemeRef")
+      }
+      result
+    }.recover {
       case aex: ADRTransferException =>
         auditEvents.sendToAdrEvent("ErsTransferToAdrFailed", ersSummary, source = Some("scheduler"))
         resubmissionExceptionEmiter.emitFrom(

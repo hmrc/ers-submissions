@@ -84,7 +84,12 @@ class PresubmissionMongoRepository @Inject()(applicationConfig: ApplicationConfi
   }
 
   def getJson(schemeInfo: SchemeInfo): Future[Seq[JsObject]] = {
-    logger.debug("LFP -> 4. PresubmissionMongoRepository.getJson () ")
+    logger.info(s"Searching for pre-submission data for " +
+      s"scheme reference: ${schemeInfo.schemeRef}, " +
+      s"timestamp: ${schemeInfo.timestamp}, " +
+      s"taxYear: ${schemeInfo.taxYear}," +
+      s"schemeType: ${schemeInfo.schemeType}")
+
     collection.find(
       buildSelector(schemeInfo)
     ).batchSize(Int.MaxValue).toFuture()
