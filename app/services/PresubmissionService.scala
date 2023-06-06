@@ -18,6 +18,7 @@ package services
 
 import models.{SchemeData, SchemeInfo, SubmissionsSchemeData}
 import play.api.Logging
+import play.api.libs.json.JsResultException
 import repositories.{PresubmissionMongoRepository, Repositories}
 import uk.gov.hmrc.http.HeaderCarrier
 import utils.LoggingAndRexceptions.ErsLoggingAndAuditing
@@ -50,9 +51,25 @@ class PresubmissionService @Inject()(repositories: Repositories, ersLoggingAndAu
 
   }
 
-  def getJson(schemeInfo: SchemeInfo): Future[Seq[SchemeData]] = {
-    logger.debug("LFP -> 3. PresubmissionService.getJson () ")
-    presubmissionRepository.getJson(schemeInfo).map(_.map(_.as[SchemeData]))
+  def getJson(schemeInfo: SchemeInfo)(implicit hc: HeaderCarrier): Future[Seq[SchemeData]] = {
+    presubmissionRepository.getJson(schemeInfo).map { result =>
+      if (result.nonEmpty) {
+        logger.info(s"Found data in pre-submission repository for: ${schemeInfo.schemeRef}, mapping to scheme data.")
+        val schemeData = result.map(_.as[SchemeData])
+        logger.info(s"Sheet name and version: ${schemeData.headOption.map(_.sheetName).getOrElse("Sheet name missing.")}, schemeRef: ${schemeInfo.schemeRef}")
+        schemeData
+      } else {
+        logger.info(s"No data found in pre-submission repository for: ${schemeInfo.schemeRef}")
+        Seq()
+      }
+    }.recover {
+      case jex: JsResultException =>
+        ersLoggingAndAuditing.handleException(schemeInfo, jex, s"Exception when mapping json data to scheme data, schemeRef: ${schemeInfo.schemeRef}")
+        throw jex
+      case ex: Exception =>
+        ersLoggingAndAuditing.handleException(schemeInfo, ex, s"Other type of exception occurred, schemeRef: ${schemeInfo.schemeRef}")
+        throw ex
+    }
   }
 
   def removeJson(schemeInfo: SchemeInfo)(implicit hc: HeaderCarrier): Future[Boolean] = {

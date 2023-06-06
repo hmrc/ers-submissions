@@ -60,7 +60,7 @@ class SAYE_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfter {
     "return a valid NilReturn without ammends" in {
 
       when(
-        mockPresubmissionService.getJson(any[SchemeInfo]())
+        mockPresubmissionService.getJson(any[SchemeInfo]())(any())
       ).thenReturn(
         Future.successful(List())
       )
@@ -113,7 +113,7 @@ class SAYE_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfter {
     "return a valid NilReturn with some ammends" in {
 
       when(
-        mockPresubmissionService.getJson(any[SchemeInfo]())
+        mockPresubmissionService.getJson(any[SchemeInfo]())(any())
       ).thenReturn(
         Future.successful(List())
       )
@@ -179,7 +179,7 @@ class SAYE_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfter {
     "return a valid NilReturn with all ammends" in {
 
       when(
-        mockPresubmissionService.getJson(any[SchemeInfo]())
+        mockPresubmissionService.getJson(any[SchemeInfo]())(any())
       ).thenReturn(
         Future.successful(List())
       )
@@ -251,7 +251,7 @@ class SAYE_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfter {
     "return a valid not NilReturn with ammends and participants without data" in {
 
       when(
-        mockPresubmissionService.getJson(any[SchemeInfo]())
+        mockPresubmissionService.getJson(any[SchemeInfo]())(any())
       ).thenReturn(
         Future.successful(List())
       )
@@ -346,7 +346,7 @@ class SAYE_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfter {
     "return a valid not NilReturn with Granted, ammends and participants" in {
 
       when(
-        mockPresubmissionService.getJson(any[SchemeInfo]())
+        mockPresubmissionService.getJson(any[SchemeInfo]())(any())
       ).thenReturn(
         Future.successful(
           List(
@@ -457,7 +457,7 @@ class SAYE_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfter {
     "return a valid not NilReturn with Granted, ammends and participants from 2 records of sheet data" in {
 
       when(
-        mockPresubmissionService.getJson(any[SchemeInfo]())
+        mockPresubmissionService.getJson(any[SchemeInfo]())(any())
       ).thenReturn(
         Future.successful(
           List(
@@ -577,7 +577,7 @@ class SAYE_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfter {
     "return a valid not NilReturn with RCL, amends and participants" in {
 
       when(
-        mockPresubmissionService.getJson(any[SchemeInfo]())
+        mockPresubmissionService.getJson(any[SchemeInfo]())(any())
       ).thenReturn(
         Future.successful(
           List(
@@ -693,7 +693,7 @@ class SAYE_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfter {
     "return a valid not NilReturn with RCL, amends and participants from 2 records of sheet data" in {
 
       when(
-        mockPresubmissionService.getJson(any[SchemeInfo]())
+        mockPresubmissionService.getJson(any[SchemeInfo]())(any())
       ).thenReturn(
         Future.successful(
           List(
@@ -823,7 +823,7 @@ class SAYE_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfter {
     "return a valid not NilReturn with Exercised, amends and participants" in {
 
       when(
-        mockPresubmissionService.getJson(any[SchemeInfo]())
+        mockPresubmissionService.getJson(any[SchemeInfo]())(any())
       ).thenReturn(
         Future.successful(
           List(
@@ -944,7 +944,7 @@ class SAYE_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfter {
     "return a valid not NilReturn with Exercised, amends and participants from 2 records of sheet data" in {
 
       when(
-        mockPresubmissionService.getJson(any[SchemeInfo]())
+        mockPresubmissionService.getJson(any[SchemeInfo]())(any())
       ).thenReturn(
         Future.successful(
           List(
@@ -1084,7 +1084,7 @@ class SAYE_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfter {
     "return valid json with Granted, RCL, exercised, ammends and participants" in {
 
       when(
-        mockPresubmissionService.getJson(any[SchemeInfo]())
+        mockPresubmissionService.getJson(any[SchemeInfo]())(any())
       ).thenReturn(
         Future.successful(
           List(
@@ -1236,7 +1236,7 @@ class SAYE_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfter {
     "return valid json with Granted, RCL, exercised, ammends and participants from 2 records of sheet data" in {
 
       when(
-        mockPresubmissionService.getJson(any[SchemeInfo]())
+        mockPresubmissionService.getJson(any[SchemeInfo]())(any())
       ).thenReturn(
         Future.successful(
           List(
