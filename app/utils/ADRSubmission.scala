@@ -54,20 +54,26 @@ class ADRSubmission @Inject()(submissionCommon: SubmissionCommon,
     }
   }
 
+  def extractDataFromFileData(fileData: SchemeData, schemeType: String)
+                             (implicit request: Request[_], hc: HeaderCarrier, ersSummary: ErsSummary): (JsObject, String) = {
+    logger.debug(s" LFP -> 6. data record  is --> ${fileData.sheetName}" )
+    val sheetName: String = fileData.sheetName
+    val configData: Config = configUtils.getConfigData(s"$schemeType/$sheetName", sheetName)
+    (buildJson(configData, fileData.data.get), sheetName)
+  }
+
   def createSheetsJson(sheetsJson: JsObject)(implicit request: Request[_], hc: HeaderCarrier, ersSummary: ErsSummary, schemeType: String): Future[JsObject] = {
-    var result = sheetsJson
     logger.debug("LFP -> 2. createSheetsJson () ")
-    presubmissionService.getJson(ersSummary.metaData.schemeInfo).map { fileDataList =>
-      logger.info(s"Found data in pre-submission repository, mapped successfully. File data list size: ${fileDataList.size}, schemeRef: ${ersSummary.metaData.schemeInfo.schemeRef}")
-      for(fileData <- fileDataList) {
-        logger.debug(s" LFP -> 6. data record  is --> ${fileData.sheetName}" )
-        val sheetName: String = fileData.sheetName
+    val mergedJsonOutput = for {
+      schemeData: Seq[SchemeData] <- presubmissionService.getJson(ersSummary.metaData.schemeInfo)
+      fileData: Seq[(JsObject, String)] = schemeData.map(data => extractDataFromFileData(data, schemeType))
+      mergedJson = fileData.foldLeft(sheetsJson)((result: JsObject, dataWithSheetName: (JsObject, String)) => {
+        val (data, sheetName) = dataWithSheetName
         val configData: Config = configUtils.getConfigData(s"$schemeType/$sheetName", sheetName)
-        val data: JsObject = buildJson(configData, fileData.data.get)
-        result = result ++ submissionCommon.mergeSheetData(configData.getConfig("data_location"), result, data)
-      }
-      result
-    }.recover {
+        submissionCommon.mergeSheetData(configData.getConfig("data_location"), result, data)
+      })
+    } yield mergedJson
+    mergedJsonOutput.recover {
       case ex: Exception => adrExceptionEmitter.emitFrom(
         ersSummary.metaData,
         Map(
