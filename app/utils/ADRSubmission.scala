@@ -58,7 +58,11 @@ class ADRSubmission @Inject()(submissionCommon: SubmissionCommon,
     var result = sheetsJson
     logger.debug("LFP -> 2. createSheetsJson () ")
     presubmissionService.getJson(ersSummary.metaData.schemeInfo).map { fileDataList =>
-      logger.info(s"Found data in pre-submission repository, mapped successfully. File data list size: ${fileDataList.size}, schemeRef: ${ersSummary.metaData.schemeInfo.schemeRef}")
+      if (fileDataList.nonEmpty) {
+        logger.info(s"Found data in pre-submission repository, mapped successfully. File data list size: ${fileDataList.size}, schemeRef: ${ersSummary.metaData.schemeInfo.schemeRef}")
+      } else {
+        logger.warn(s"No data returned from pre-submission repository, schemeRef: ${ersSummary.metaData.schemeInfo.schemeRef}")
+      }
       for(fileData <- fileDataList) {
         logger.debug(s" LFP -> 6. data record  is --> ${fileData.sheetName}" )
         val sheetName: String = fileData.sheetName
