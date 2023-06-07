@@ -56,7 +56,7 @@ class PresubmissionService @Inject()(repositories: Repositories, ersLoggingAndAu
       if (result.nonEmpty) {
         logger.info(s"Found data in pre-submission repository for: ${schemeInfo.schemeRef}, mapping to scheme data.")
         val schemeData = result.map(_.as[SchemeData])
-        logger.info(s"Sheet name and version: ${schemeData.headOption.map(_.sheetName).getOrElse("Sheet name missing.")}, schemeRef: ${schemeInfo.schemeRef}")
+        logger.info(s"Scheme data size: ${schemeData.size}, first sheet name and version: ${schemeData.headOption.map(_.sheetName).getOrElse("Sheet name missing.")}, schemeRef: ${schemeInfo.schemeRef}")
         schemeData
       } else {
         logger.info(s"No data found in pre-submission repository for: ${schemeInfo.schemeRef}")
