@@ -50,7 +50,7 @@ class PresubmissionMongoRepository @Inject()(applicationConfig: ApplicationConfi
           .expireAfter(applicationConfig.presubmissionCollectionTTL, TimeUnit.DAYS)
       )
     ),
-    replaceIndexes = true
+    replaceIndexes = applicationConfig.presubmissionCollectionIndexReplace
   ) with Logging {
 
   private val objectIdKey: String = "_id"
