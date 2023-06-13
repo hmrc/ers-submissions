@@ -18,16 +18,16 @@ package services.audit
 
 import org.joda.time.DateTime
 import uk.gov.hmrc.http.{HeaderCarrier, HeaderNames}
-import uk.gov.hmrc.play.audit.http.connector.AuditConnector
+import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
 import uk.gov.hmrc.play.audit.model.DataEvent
 
 import javax.inject.Inject
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
 
 class AuditService @Inject()(auditConnector: AuditConnector)(implicit ec: ExecutionContext) {
   val auditSource = "ers-submissions"
 
-  def sendEvent(transactionName : String, details: Map[String, String])(implicit hc: HeaderCarrier): Unit =
+  def sendEvent(transactionName : String, details: Map[String, String])(implicit hc: HeaderCarrier): Future[AuditResult] =
     auditConnector.sendEvent(buildEvent(transactionName, details))
 
   def buildEvent(transactionName: String,  details: Map[String, String])(implicit hc: HeaderCarrier): DataEvent =
@@ -43,5 +43,4 @@ class AuditService @Inject()(auditConnector: AuditConnector)(implicit ec: Execut
       Map("dateTime" ->  getDateTime.toString)
 
   def getDateTime: DateTime = new DateTime
-
 }

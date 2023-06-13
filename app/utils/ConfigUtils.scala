@@ -25,7 +25,7 @@ import javax.inject.Inject
 
 class ConfigUtils @Inject()(adrExceptionEmitter: ADRExceptionEmitter) {
 
-  def getConfigData(configPath: String, configValue: String)(implicit hc: HeaderCarrier, ersSummary: ErsSummary): Config = {
+  def getConfigData(configPath: String, configValue: String, ersSummary: ErsSummary)(implicit hc: HeaderCarrier): Config = {
     try {
       ConfigFactory.load(s"schemes/${configPath}").getConfig(configValue)
     }

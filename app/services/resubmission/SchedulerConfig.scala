@@ -40,8 +40,7 @@ trait SchedulerConfig {
     None
   }
 
-  val resubmitBySchemeEnabled: Boolean = applicationConfig.schedulerEnableResubmitByScheme
-  val resubmitScheme: Option[String] = if (resubmitBySchemeEnabled) {
+  val resubmitScheme: Option[String] = if (applicationConfig.schedulerEnableResubmitByScheme) {
     Some(applicationConfig.schedulerResubmitScheme)
   } else {
     None
@@ -64,5 +63,4 @@ trait SchedulerConfig {
     failedStatus,
     resubmitSuccessStatus
   )
-
 }

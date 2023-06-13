@@ -16,20 +16,22 @@
 
 package services
 
-import fixtures.{Fixtures, SIP}
+import common.ERSEnvelope
+import fixtures.Fixtures
 import helpers.ERSTestHelper
-import models.{SchemeData, SchemeInfo, SubmissionsSchemeData, UpscanCallback}
+import models.{MongoGenericError, SchemeData, SchemeDataMappingError, SchemeInfo}
 import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
-import play.api.libs.json.{JsObject, JsResultException, Json}
+import org.scalatest.EitherValues
+import play.api.libs.json.{JsObject, Json}
 import play.api.test.FakeRequest
 import repositories.{PresubmissionMongoRepository, Repositories}
 import uk.gov.hmrc.http.HeaderCarrier
 import utils.LoggingAndRexceptions.ErsLoggingAndAuditing
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.ExecutionContext
 
-class PresubmissionServiceSpec extends ERSTestHelper {
+class PresubmissionServiceSpec extends ERSTestHelper with EitherValues {
 
   implicit val hc: HeaderCarrier = HeaderCarrier()
   implicit val request: FakeRequest[JsObject] = FakeRequest().withBody(Fixtures.metadataJson)
@@ -45,137 +47,103 @@ class PresubmissionServiceSpec extends ERSTestHelper {
     new PresubmissionService(mockRepositories, mockErsLoggingAndAuditing) {
 
       override lazy val presubmissionRepository: PresubmissionMongoRepository = mockPresubmissionRepository
-      when(mockPresubmissionRepository.storeJson(any[SchemeData])).thenReturn(
-        if (storeJsonResult.isDefined) Future(storeJsonResult.get) else Future.failed(new RuntimeException))
-      when(mockPresubmissionRepository.storeJsonV2(any[String], any[SchemeData])).thenReturn(
-        if (storeJsonResult.isDefined) Future(storeJsonResult.get) else Future.failed(new RuntimeException("here's a message")))
-      when(mockPresubmissionRepository.getJson(any[SchemeInfo]))
-        .thenReturn(Future(
-          if (getJsonResult) {
-            List(Json.toJsObject(Fixtures.schemeData))
-          }
-          else if (getJsonResultFailedMapping) {
-          List(Json.toJsObject(Fixtures.schemeData) - "sheetName")
-        }
-        else {
-            List()
-          }
-        ))
-      when(mockPresubmissionRepository.removeJson(any[SchemeInfo]))
-        .thenReturn(if (removeJsonResult.isDefined) Future(removeJsonResult.get) else Future.failed(new RuntimeException))
+      when(mockPresubmissionRepository.storeJson(any[SchemeData], any())).thenReturn(
+        ERSEnvelope(storeJsonResult.toRight(MongoGenericError("Mongo operation failed"))))
+      when(mockPresubmissionRepository.getJson(any[SchemeInfo], any()))
+        .thenReturn(ERSEnvelope((getJsonResult, getJsonResultFailedMapping) match {
+            case (true, _) => Seq(Json.toJsObject(Fixtures.schemeData))
+            case (_, true) => Seq(Json.toJsObject(Fixtures.schemeData) - "sheetName")
+            case _ => Seq()
+          }))
+      when(mockPresubmissionRepository.removeJson(any[SchemeInfo], any()))
+        .thenReturn(ERSEnvelope(removeJsonResult.toRight(MongoGenericError("Mongo operation failed"))))
     }
 
   "calling storeJson" should {
-
     "return true if storage is successful" in {
       val presubmissionService = buildPresubmissionService(Some(true))
-      val result = await(presubmissionService.storeJson(Fixtures.schemeData))
-      result shouldBe true
+      val result = await(presubmissionService.storeJson(Fixtures.schemeData).value)
+      result.value shouldBe true
     }
 
     "return false if storage fails" in {
       val presubmissionService = buildPresubmissionService(Some(false))
-      val result = await(presubmissionService.storeJson(Fixtures.schemeData))
-      result shouldBe false
+      val result = await(presubmissionService.storeJson(Fixtures.schemeData).value)
+      result.value shouldBe false
     }
 
-    "return false if exception" in {
+    "return false if error occured" in {
       val presubmissionService = buildPresubmissionService(None)
-      val result = await(presubmissionService.storeJson(Fixtures.schemeData))
-      result shouldBe false
-    }
-  }
-
-  "calling storeJsonV2" should {
-    val submissionsSchemeData: SubmissionsSchemeData = SubmissionsSchemeData(SIP.schemeInfo, "sip sheet name",
-      UpscanCallback("name", "/download/url"), 1)
-
-    val testSchemeData: SchemeData = SchemeData(SIP.schemeInfo, "sip sheet name", None, None)
-
-    "return true if storage is successful" in {
-      val presubmissionService = buildPresubmissionService(Some(true))
-      val result = await(presubmissionService.storeJsonV2(submissionsSchemeData, testSchemeData))
-      result shouldBe true
-    }
-
-    "return false if storage fails" in {
-      val presubmissionService = buildPresubmissionService(Some(false))
-      val result = await(presubmissionService.storeJsonV2(submissionsSchemeData, testSchemeData))
-      result shouldBe false
-    }
-
-    "return false if exception" in {
-      val presubmissionService = buildPresubmissionService(None)
-      val result = await(presubmissionService.storeJsonV2(submissionsSchemeData, testSchemeData))
-      result shouldBe false
+      val result = await(presubmissionService.storeJson(Fixtures.schemeData).value)
+      result.value shouldBe false
     }
   }
 
   "calling getJson" should {
-
     "return List[SchemeData] if finding succeeds" in {
       val presubmissionService = buildPresubmissionService(Some(true))
-      val result = await(presubmissionService.getJson(Fixtures.EMISchemeInfo))
-      result.isEmpty shouldBe false
+      val result = await(presubmissionService.getJson(Fixtures.EMISchemeInfo).value)
+      result.value.isEmpty shouldBe false
     }
 
     "return empty list if finding fails" in {
       val presubmissionService = buildPresubmissionService(Some(true), getJsonResult = false)
-      val result = await(presubmissionService.getJson(Fixtures.EMISchemeInfo))
-      result.isEmpty shouldBe true
+      val result = await(presubmissionService.getJson(Fixtures.EMISchemeInfo).value)
+      result.value.isEmpty shouldBe true
     }
 
-    "throw an exception if mapping to SchemeData fails" in {
+    "return SchemeDataMappingError if mapping to SchemeData fails" in {
       val presubmissionService = buildPresubmissionService(Some(true), getJsonResult = false, getJsonResultFailedMapping = true)
-      an[JsResultException] should be thrownBy await(presubmissionService.getJson(Fixtures.EMISchemeInfo))
+      val result  = await(presubmissionService.getJson(Fixtures.EMISchemeInfo).value)
+
+      result.swap.value shouldBe a[SchemeDataMappingError]
     }
   }
 
   "calling removeJson" should {
-
     "return true if removing is sussessful" in {
       val presubmissionService = buildPresubmissionService(Some(true), getJsonResult = true, Some(true))
-      val result = await(presubmissionService.removeJson(Fixtures.EMISchemeInfo))
-      result shouldBe true
+      val result = await(presubmissionService.removeJson(Fixtures.EMISchemeInfo).value)
+      result.value shouldBe true
     }
 
-    "return false if removing fails" in {
+    "return false if remove returns false" in {
       val presubmissionService = buildPresubmissionService(Some(true), getJsonResult = true, Some(false))
-      val result = await(presubmissionService.removeJson(Fixtures.EMISchemeInfo))
-      result shouldBe false
+      val result = await(presubmissionService.removeJson(Fixtures.EMISchemeInfo).value)
+      result.value shouldBe false
     }
 
-    "return false if exception" in {
+    "return false if error returned" in {
       val presubmissionService = buildPresubmissionService(Some(true), getJsonResult = true, None)
-      val result = await(presubmissionService.removeJson(Fixtures.EMISchemeInfo))
-      result shouldBe false
+      val result = await(presubmissionService.removeJson(Fixtures.EMISchemeInfo).value)
+      result.value shouldBe false
     }
   }
 
   "calling compareSheetsNumber" should {
 
     def buildPresubmissionService(foundSheets: Option[Int]): PresubmissionService = new PresubmissionService(mockRepositories, mockErsLoggingAndAuditing) {
-      override lazy val presubmissionRepository = mockPresubmissionRepository
-      when(mockPresubmissionRepository.count(any[SchemeInfo]()))
-        .thenReturn(if (foundSheets.isDefined) Future.successful(foundSheets.get.toLong) else Future.failed(new RuntimeException))
+      override lazy val presubmissionRepository: PresubmissionMongoRepository = mockPresubmissionRepository
+      when(mockPresubmissionRepository.count(any[SchemeInfo](), any()))
+        .thenReturn(ERSEnvelope(foundSheets.map(_.toLong).toRight(MongoGenericError("Mongo operation failed"))))
     }
 
     "return true if expected number of sheets is equal to found ones" in {
       val presubmissionService = buildPresubmissionService(Some(1))
-      val result = await(presubmissionService.compareSheetsNumber(expectedSheets = 1, schemeInfo = Fixtures.EMISchemeInfo))
-      result shouldBe true
+      val result = await(presubmissionService.compareSheetsNumber(expectedSheets = 1, schemeInfo = Fixtures.EMISchemeInfo).value)
+      result.value shouldBe true
     }
 
     "return false if expected number of sheets is not equal to found ones" in {
       val presubmissionService = buildPresubmissionService(Some(-1))
-      val result = await(presubmissionService.compareSheetsNumber(expectedSheets = 1, schemeInfo = Fixtures.EMISchemeInfo))
-      result shouldBe false
+      val result = await(presubmissionService.compareSheetsNumber(expectedSheets = 1, schemeInfo = Fixtures.EMISchemeInfo).value)
+      result.value shouldBe false
     }
 
-    "return false if exception is thrown" in {
+    "return false if error is returned" in {
       val presubmissionService = buildPresubmissionService(None)
-      val result = await(presubmissionService.compareSheetsNumber(expectedSheets = 1, schemeInfo = Fixtures.EMISchemeInfo))
-      result shouldBe false
+      val result = await(presubmissionService.compareSheetsNumber(expectedSheets = 1, schemeInfo = Fixtures.EMISchemeInfo).value)
+      result.value shouldBe false
     }
   }
 }

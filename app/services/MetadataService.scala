@@ -16,44 +16,45 @@
 
 package services
 
+import common.ERSEnvelope.ERSEnvelope
 import models.ErsSummary
 import play.api.Logging
-import play.api.libs.json.{JsError, JsObject, JsSuccess}
+import play.api.libs.json.{JsError, JsObject, JsResult, JsSuccess}
 import repositories.MetadataMongoRepository
+import services.audit.AuditEvents
 import uk.gov.hmrc.http.HeaderCarrier
-import utils.LoggingAndRexceptions.ErsLoggingAndAuditing
+import utils.Session
 
 import javax.inject.Inject
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.ExecutionContext
 
 class MetadataService @Inject()(metadataMongoRepository: MetadataMongoRepository,
-                                ersLoggingAndAuditing: ErsLoggingAndAuditing)(implicit ec: ExecutionContext)
-  extends Logging {
+                                auditEvents: AuditEvents)(implicit ec: ExecutionContext) extends Logging {
 
   lazy val metadataRepository: MetadataMongoRepository = metadataMongoRepository
 
-  def storeErsSummary(ersSummary: ErsSummary)(implicit hc: HeaderCarrier): Future[Boolean] = {
-    metadataRepository.storeErsSummary(ersSummary).recover {
-      case ex: Exception =>
-        ersLoggingAndAuditing.handleException(ersSummary, ex, "Exception during storing ersSummary")
+  def storeErsSummary(ersSummary: ErsSummary)(implicit hc: HeaderCarrier): ERSEnvelope[Boolean] =
+    metadataRepository.storeErsSummary(ersSummary, Session.id(hc)).recover {
+      case error =>
+        logger.error(s"Storing data in metadata repository failed with error: [$error] for: ${ersSummary.metaData.schemeInfo}")
+        auditEvents.auditError("storeErsSummary", s"Storing data in metadata repository failed with error: [$error]")
         false
     }
-  }
 
-  def validateErsSummaryFromJson(json: JsObject): Option[ErsSummary] = {
+  def validateErsSummaryFromJson(json: JsObject): JsResult[ErsSummary] = {
     json.validate[ErsSummary] match {
       case ersSummary: JsSuccess[ErsSummary] =>
         val isMetadataValid: (Boolean, Option[String]) = validateErsSummary(ersSummary.value)
-        if(isMetadataValid._1) {
-          Some(ersSummary.value)
+        if (isMetadataValid._1) {
+          ersSummary
         }
         else {
-          logger.info("Invalid metadata. Json: " + json.toString() + ", errors: " + isMetadataValid._2.getOrElse(""))
-          None
+          logger.info("Invalid metadata. Errors: " + isMetadataValid._2.getOrElse(""))
+          JsError(s"Metadata invalid: ${isMetadataValid._2.getOrElse("")}")
         }
-      case e: JsError =>
-        logger.info("Invalid request. Json: " + json.toString() + ", errors: " + JsError.toJson(e).toString())
-        None
+      case error: JsError =>
+        logger.info("Invalid request. Errors: " + JsError.toJson(error).toString())
+        error
     }
   }
 
@@ -69,5 +70,4 @@ class MetadataService @Inject()(metadataMongoRepository: MetadataMongoRepository
       case _ => (true, None)
     }
   }
-
 }

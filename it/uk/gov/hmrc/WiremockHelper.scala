@@ -16,9 +16,6 @@
 
 package uk.gov.hmrc
 
-import _root_.play.api.Configuration
-import _root_.play.api.inject.ApplicationLifecycle
-import akka.actor.ActorSystem
 import com.github.tomakehurst.wiremock.WireMockServer
 import com.github.tomakehurst.wiremock.client.WireMock
 import com.github.tomakehurst.wiremock.client.WireMock._
@@ -26,11 +23,6 @@ import com.github.tomakehurst.wiremock.core.WireMockConfiguration
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration._
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.{BeforeAndAfterAll, Suite}
-import scheduler.SchedulingActor.UpdateDocumentsClass
-import scheduler.{ScheduledJob, SchedulingActor}
-import services.DocumentUpdateService
-
-import javax.inject.Inject
 
 trait WiremockHelper {
   val wiremockPort = 11111
@@ -100,14 +92,4 @@ trait FakeErsStubService extends BeforeAndAfterAll with ScalaFutures {
   }
 
   stubServer.stubFor(WireMock.post(urlMatching("/.*")).willReturn(WireMock.aResponse().withStatus(202)))
-}
-
-class FakeUpdateCreatedAtFieldsJob @Inject()(
-                                              val config: Configuration,
-                                              val service: DocumentUpdateService,
-                                              val applicationLifecycle: ApplicationLifecycle
-                                            ) extends ScheduledJob {
-  override def jobName: String = "update-created-at-field-job"
-  override val scheduledMessage: SchedulingActor.ScheduledMessage[_] = UpdateDocumentsClass(service)
-  override val actorSystem: ActorSystem = ActorSystem(jobName)
 }

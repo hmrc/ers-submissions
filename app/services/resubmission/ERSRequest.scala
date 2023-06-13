@@ -62,7 +62,5 @@ object ERSRequest {
 
       override def version: String = ""
     }
-
   }
-
 }

@@ -50,12 +50,12 @@ case class ResubmissionJobSetUp(app: Application) {
     }
   }
 
-  implicit val processFailedSubmissionsConfig: ProcessFailedSubmissionsConfig =
+  val processFailedSubmissionsConfig: ProcessFailedSubmissionsConfig =
     getJob.resubmissionService.getProcessFailedSubmissionsConfig(
       app.configuration.get[Int]("schedules.resubmission-service.resubmissionLimit")
     )
 
-  val failedJobSelector: BsonDocument = metadataMongoRepository.createFailedJobSelector()
+  val failedJobSelector: BsonDocument = metadataMongoRepository.createFailedJobSelector(processFailedSubmissionsConfig)
 
   val successResubmitTransferStatusSelector: Bson = Filters.eq("transferStatus", "successResubmit")
 }

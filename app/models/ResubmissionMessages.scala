@@ -47,7 +47,7 @@ case object NoDataToResubmitMessage extends ResubmissionMessages {
 }
 
 case object ProcessingResubmitMessage extends ResubmissionMessages {
-  override val message: String = s"$prefix Processing resubmission event"
+  override val message: String = s"$prefix Processing resubmission event "
 }
 
 case class TotalNumberSubmissionsToProcessMessage(numberOfFailedJobs: Long) extends ResubmissionMessages {

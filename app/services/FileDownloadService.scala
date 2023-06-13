@@ -31,9 +31,7 @@ import uk.gov.hmrc.http.UpstreamErrorResponse
 import javax.inject.Inject
 import scala.concurrent.Future
 
-class FileDownloadService @Inject()(
-                                   appConfig: ApplicationConfig
-                                   )(implicit actorSystem: ActorSystem) extends Logging {
+class FileDownloadService @Inject()(appConfig: ApplicationConfig)(implicit actorSystem: ActorSystem) extends Logging {
 
   def extractEntityData(response: HttpResponse): Source[ByteString, _] = {
     val uploadCsvSizeLimit = appConfig.uploadCsvSizeLimit
@@ -64,5 +62,4 @@ class FileDownloadService @Inject()(
   }
 
   private[services] def makeRequest(request: HttpRequest): Future[HttpResponse] = Http()(actorSystem).singleRequest(request)
-
 }

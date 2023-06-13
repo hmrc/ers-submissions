@@ -16,8 +16,9 @@
 
 package controllers
 
-import java.util.concurrent.TimeUnit
-
+import common.ERSEnvelope
+import fixtures.Fixtures
+import helpers.ERSTestHelper
 import metrics.Metrics
 import models.SchemeInfo
 import org.mockito.ArgumentMatchers._
@@ -25,47 +26,40 @@ import org.mockito.Mockito._
 import org.mockito.internal.verification.VerificationModeFactory
 import org.scalatest.BeforeAndAfterEach
 import play.api.libs.json.{JsObject, Json}
-import play.api.test._
 import play.api.test.Helpers._
-import services.{PresubmissionService, ValidationService}
-import fixtures.Fixtures
-import helpers.ERSTestHelper
-import utils.LoggingAndRexceptions.ErsLoggingAndAuditing
-
-import scala.concurrent.Future
+import play.api.test._
+import services.PresubmissionService
+import services.audit.AuditEvents
 import uk.gov.hmrc.http.HeaderCarrier
+
+import java.util.concurrent.TimeUnit
 
 class PresubmissionControllerSpec extends ERSTestHelper with BeforeAndAfterEach {
 
   val mockMetrics: Metrics = mock[Metrics]
   val mockPresubmissionService: PresubmissionService = mock[PresubmissionService]
-  val mockValidationService: ValidationService = mock[ValidationService]
-  val mockErsLoggingAndAuditing: ErsLoggingAndAuditing = mock[ErsLoggingAndAuditing]
+  val auditEvents: AuditEvents = mock[AuditEvents]
 
   override def beforeEach(): Unit = {
     super.beforeEach()
     reset(mockMetrics)
-    reset(mockErsLoggingAndAuditing)
+    reset(auditEvents)
     reset(mockPresubmissionService)
-    reset(mockValidationService)
   }
 
   val ersSchemeInfo: JsObject = Json.toJson(Fixtures.EMISchemeInfo).as[JsObject]
 
   "calling removePresubmissionJson" should {
-
-    def buildPresubmissionController(validationResult: Boolean = true, removeJsonResult: Boolean = true): PresubmissionController = {
-      new PresubmissionController(mockPresubmissionService, mockValidationService, mockErsLoggingAndAuditing, mockMetrics, mockCc ) {
+    def buildPresubmissionController(removeJsonResult: Boolean = true): PresubmissionController = {
+      new PresubmissionController(mockPresubmissionService, auditEvents, mockMetrics, mockCc) {
         when(mockPresubmissionService.removeJson(any[SchemeInfo])(any[HeaderCarrier]()))
-          .thenReturn(Future(removeJsonResult))
-        when(mockValidationService.validateSchemeInfo(any[JsObject]))
-          .thenReturn(if (validationResult) Some(mock[SchemeInfo]) else None)
+          .thenReturn(ERSEnvelope(removeJsonResult))
       }
     }
 
     "return BadRequest if invalid json is given" in {
-      val presubmissionController = buildPresubmissionController(validationResult = false)
-      val result = presubmissionController.removePresubmissionJson()(FakeRequest().withBody(ersSchemeInfo))
+      val presubmissionController = buildPresubmissionController()
+      val result = presubmissionController.removePresubmissionJson()(FakeRequest().withBody(ersSchemeInfo - "schemeRef"))
       status(result) shouldBe BAD_REQUEST
       verify(mockMetrics, VerificationModeFactory.times(0)).removePresubmission(anyLong(), any())
       verify(mockMetrics, VerificationModeFactory.times(0)).failedRemovePresubmission()
@@ -90,18 +84,15 @@ class PresubmissionControllerSpec extends ERSTestHelper with BeforeAndAfterEach 
   }
 
   "calling checkForExistingPresubmission" should {
-
-    def buildPresubmissionController(validationResult: Boolean = true, checkResult: Boolean = true): PresubmissionController =
-      new PresubmissionController(mockPresubmissionService, mockValidationService, mockErsLoggingAndAuditing, mockMetrics, mockCc) {
+    def buildPresubmissionController(checkResult: Boolean = true): PresubmissionController =
+      new PresubmissionController(mockPresubmissionService, auditEvents, mockMetrics, mockCc) {
       when(mockPresubmissionService.compareSheetsNumber(anyInt(), any[SchemeInfo])(any[HeaderCarrier]()))
-        .thenReturn(Future(checkResult))
-      when(mockValidationService.validateSchemeInfo(any[JsObject]))
-        .thenReturn(if (validationResult) Some(mock[SchemeInfo]) else None)
+        .thenReturn(ERSEnvelope(checkResult))
     }
 
     "return BadRequest if invalid json is given" in {
-      val presubmissionController = buildPresubmissionController(validationResult = false)
-      val result = presubmissionController.checkForExistingPresubmission(5)(FakeRequest().withBody(ersSchemeInfo))
+      val presubmissionController = buildPresubmissionController()
+      val result = presubmissionController.checkForExistingPresubmission(5)(FakeRequest().withBody(ersSchemeInfo - "schemeRef"))
       status(result) shouldBe BAD_REQUEST
       verify(mockMetrics, VerificationModeFactory.times(0)).checkForPresubmission(anyLong(), any[TimeUnit]())
     }
@@ -120,5 +111,4 @@ class PresubmissionControllerSpec extends ERSTestHelper with BeforeAndAfterEach 
       verify(mockMetrics, VerificationModeFactory.times(1)).checkForPresubmission(anyLong(), any[TimeUnit]())
     }
   }
-
 }

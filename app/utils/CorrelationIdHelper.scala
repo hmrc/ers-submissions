@@ -27,7 +27,7 @@ trait CorrelationIdHelper {
     val hcFromRequest: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
     val hc: HeaderCarrier =
       hcFromRequest
-        .headers(Seq(HEADER_X_CORRELATION_ID)) match {
+        .headers(scala.Seq(HEADER_X_CORRELATION_ID)) match {
           case Nil =>
             hcFromRequest
               .withExtraHeaders((

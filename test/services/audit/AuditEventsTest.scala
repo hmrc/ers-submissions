@@ -22,13 +22,16 @@ import helpers.ERSTestHelper
 import models.{ErsMetaData, SchemeInfo}
 import org.joda.time.{DateTime, DateTimeZone}
 import org.mockito.ArgumentMatchers.any
-import org.mockito.Mockito.{reset, verify}
+import org.mockito.Mockito.{reset, verify, when}
 import org.mockito.internal.verification.VerificationModeFactory
 import org.scalatest.BeforeAndAfterEach
 import play.api.test.FakeRequest
 import services.audit.{AuditEvents, AuditService}
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.play.audit.http.connector.AuditConnector
+import uk.gov.hmrc.play.audit.http.connector.AuditResult.{Disabled, Failure, Success}
+import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
+
+import scala.concurrent.Future
 
 class AuditEventsTest
   extends ERSTestHelper with BeforeAndAfterEach {
@@ -46,46 +49,56 @@ class AuditEventsTest
     super.beforeEach()
   }
 
+for (eventResult <- Seq(Success, Failure("failed"), Disabled)) {
+  s"its should audit runtime errors with result $eventResult" in {
+    when(mockAuditService.sendEvent(any(), any())(any())).thenReturn(Future.successful(eventResult))
 
-  "its should audit runtime errors" in {
-    testAuditEvents.auditRunTimeError(new RuntimeException, "some context")
+    val result = await(testAuditEvents.auditRunTimeError(new RuntimeException, "some context"))
+
+    result shouldBe eventResult
 
     verify(mockAuditService, VerificationModeFactory.times(1))
       .sendEvent(any(), any())(any())
   }
 
-  "public to protected audit event" in {
+  s"public to protected audit event with result $eventResult" in {
+    when(mockAuditService.sendEvent(any(), any())(any())).thenReturn(Future.successful(eventResult))
 
-    val result: Boolean = testAuditEvents.publicToProtectedEvent(
+    val result = await(testAuditEvents.publicToProtectedEvent(
       schemeInfo = schemeData.schemeInfo,
       sheetName = schemeData.sheetName,
-      numRows = schemeData.data.getOrElse(Seq()).length.toString)
+      numRows = schemeData.data.getOrElse(Seq()).length.toString))
 
-    result shouldBe true
+    result shouldBe eventResult
 
     verify(mockAuditService, VerificationModeFactory.times(1))
       .sendEvent(any(), any())(any())
   }
 
-  "send To Adr Event audit event" in {
+  s"send To Adr Event audit event with result $eventResult" in {
+    when(mockAuditService.sendEvent(any(), any())(any())).thenReturn(Future.successful(eventResult))
 
-   val result: Boolean = testAuditEvents.sendToAdrEvent("send To Adr Event", Fixtures.EMISummaryDate)
+    val result = await(testAuditEvents.sendToAdrEvent("send To Adr Event", Fixtures.EMISummaryDate))
 
-    result shouldBe true
+    result shouldBe eventResult
+
     verify(mockAuditService, VerificationModeFactory.times(1))
       .sendEvent(any(), any())(any())
   }
 
-  "send resubmissionResult Event audit event" in {
-    val result: Boolean = testAuditEvents.resubmissionResult(Fixtures.schemeInfo, res = true)
+  s"send resubmissionResult Event audit event with result $eventResult" in {
+    when(mockAuditService.sendEvent(any(), any())(any())).thenReturn(Future.successful(eventResult))
 
-    result shouldBe true
+    val result = await(testAuditEvents.resubmissionResult(Fixtures.schemeInfo, res = true))
+
+    result shouldBe eventResult
+
     verify(mockAuditService, VerificationModeFactory.times(1))
       .sendEvent(any(), any())(any())
   }
+}
 
   "eventMap should return the correct map when no additional maps are added" in {
-
     val timestamp: DateTime = new DateTime()
       .withDate(2015,12,5).withTime(12,50,55,0).withZone(DateTimeZone.UTC)
 

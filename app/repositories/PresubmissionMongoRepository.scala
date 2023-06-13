@@ -16,25 +16,24 @@
 
 package repositories
 
+import cats.data.EitherT
+import cats.syntax.all._
+import common.ERSEnvelope.ERSEnvelope
 import config.ApplicationConfig
 import models._
-import org.mongodb.scala.bson.{BsonDocument, BsonInt64, BsonString, ObjectId}
+import org.mongodb.scala.bson.{BsonDocument, BsonInt64, BsonString}
 import org.mongodb.scala.model.Sorts._
-import org.mongodb.scala.model.Updates.set
 import org.mongodb.scala.model._
-import org.mongodb.scala.result.UpdateResult
-import play.api.Logging
 import play.api.libs.json.OFormat.oFormatFromReadsAndOWrites
 import play.api.libs.json.{Format, JsObject, Json}
+import repositories.helpers.RepositoryHelper
 import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
-import uk.gov.hmrc.mongo.play.json.formats.MongoFormats
 
 import java.time.Instant
 import java.util.concurrent.TimeUnit
 import javax.inject.{Inject, Singleton}
-import scala.concurrent.{ExecutionContext, Future}
-import scala.util.Try
+import scala.concurrent.ExecutionContext
 
 @Singleton
 class PresubmissionMongoRepository @Inject()(applicationConfig: ApplicationConfig, mc: MongoComponent)
@@ -43,94 +42,89 @@ class PresubmissionMongoRepository @Inject()(applicationConfig: ApplicationConfi
     mongoComponent = mc,
     collectionName = applicationConfig.presubmissionCollection,
     domainFormat = implicitly[Format[JsObject]],
-    indexes = Seq(
+    indexes = scala.Seq(
       IndexModel(ascending("schemeInfo.schemeRef"), IndexOptions().name("schemeRef")),
       IndexModel(ascending("schemeInfo.timestamp"), IndexOptions().name("timestamp")),
       IndexModel(ascending("createdAt"), indexOptions = IndexOptions().name("timeToLive")
           .expireAfter(applicationConfig.presubmissionCollectionTTL, TimeUnit.DAYS)
       )
     )
-  ) with Logging {
+  ) with RepositoryHelper {
 
-  private val objectIdKey: String = "_id"
+  private val className = getClass.getSimpleName
 
   def buildSelector(schemeInfo: SchemeInfo): BsonDocument = BsonDocument(
     "schemeInfo.schemeRef" -> BsonString(schemeInfo.schemeRef),
     "schemeInfo.timestamp" -> BsonInt64(schemeInfo.timestamp.getMillis)
   )
 
-  def storeJson(presubmissionData: SchemeData): Future[Boolean] = {
-    val document: JsObject =
-      Json.toJsObject(presubmissionData) ++
-        Json.obj("createdAt" -> Json.obj("$date" -> Instant.now.toEpochMilli))
-
-    collection.insertOne(document).toFuture().map { res =>
-      res.wasAcknowledged()
-    }
-  }
-
-  def storeJsonV2(schemeInfo: String, presubmissionData: SchemeData): Future[Boolean] = {
-    val document: JsObject =
-      Json.toJsObject(presubmissionData) ++
-        Json.obj("createdAt" -> Json.obj("$date" -> Instant.now.toEpochMilli))
-
-      collection.insertOne(document).toFuture().map { res =>
-      res.wasAcknowledged()
-    }.recover {
-      case e: Throwable =>
-        logger.error(s"Failed storing presubmission data. Error: ${e.getMessage} for schemeInfo: $schemeInfo")
-        throw e
-    }
-  }
-
-  def getJson(schemeInfo: SchemeInfo): Future[Seq[JsObject]] = {
-    logger.info(s"Searching for pre-submission data for " +
-      s"scheme reference: ${schemeInfo.schemeRef}, " +
-      s"timestamp: ${schemeInfo.timestamp}, " +
-      s"taxYear: ${schemeInfo.taxYear}," +
-      s"schemeType: ${schemeInfo.schemeType}")
-
-    collection.find(
-      buildSelector(schemeInfo)
-    ).batchSize(Int.MaxValue).toFuture()
-  }
-
-  def count(schemeInfo: SchemeInfo): Future[Long] = {
-    collection.countDocuments(
-        buildSelector(schemeInfo)
-    ).toFuture()
-  }
-
-  def removeJson(schemeInfo: SchemeInfo): Future[Boolean] = {
-    val selector = buildSelector(schemeInfo)
-    collection.deleteOne(selector).toFuture().map { res =>
-      res.wasAcknowledged()
-    }
-  }
-
-  def getDocumentIdsWithoutCreatedAtField(updateLimit: Int): Future[Seq[ObjectId]] = {
-    val selector = Filters.exists("createdAt", exists = false)
-    val projection = Projections.include(objectIdKey)
-
+  def storeJson(presubmissionData: SchemeData, sessionId: String): ERSEnvelope[Boolean] = EitherT {
     collection
-      .find(selector)
-      .projection(projection)
-      .limit(updateLimit)
-      .map(json => (json \ objectIdKey).as[ObjectId](MongoFormats.objectIdFormat))
+      .insertOne(createDocumentToInsert(presubmissionData))
       .toFuture()
+      .map(_.wasAcknowledged())
+      .map(_.asRight)
+      .recover {
+        mongoRecover(
+          repository = className,
+          method = "storeJson",
+          sessionId = sessionId,
+          message = "operation failed due to exception from Mongo",
+          optSchemaRefs = Some(scala.Seq(presubmissionData.schemeInfo.schemeRef))
+        )
+      }
   }
 
-  def addCreatedAtField(documentIds: Seq[ObjectId]): Future[Long] = {
-    val selector = Filters.in(objectIdKey, documentIds: _*)
-    val update = Seq(set("createdAt", BsonDocument("$toDate" -> "$schemeInfo.timestamp")))
-    val options = UpdateOptions().upsert(false)
-
-    val result = collection.updateMany(selector, update, options).toFuture()
-
-    result.map { updateResult: UpdateResult =>
-      Try(updateResult.getModifiedCount).getOrElse(0L)
-    }.recover {
-      case e: Exception => throw new RuntimeException(s"Failed to add createdAt field: ${e.getMessage}")
-    }
+  def getJson(schemeInfo: SchemeInfo, sessionId: String): ERSEnvelope[scala.Seq[JsObject]] = EitherT {
+    collection
+      .find(buildSelector(schemeInfo))
+      .batchSize(Int.MaxValue)
+      .toFuture()
+      .map(_.asRight)
+      .recover {
+        mongoRecover(
+          repository = className,
+          method = "getJson",
+          sessionId = sessionId,
+          message = "operation failed due to exception from Mongo",
+          optSchemaRefs = Some(scala.Seq(schemeInfo.schemeRef))
+        )
+      }
   }
+
+  def count(schemeInfo: SchemeInfo, sessionId: String): ERSEnvelope[Long] = EitherT {
+    collection
+      .countDocuments(buildSelector(schemeInfo))
+      .toFuture()
+      .map(_.asRight)
+      .recover {
+        mongoRecover(
+          repository = className,
+          method = "count",
+          sessionId = sessionId,
+          message = "operation failed due to exception from Mongo",
+          optSchemaRefs = Some(scala.Seq(schemeInfo.schemeRef))
+        )
+      }
+  }
+
+  def removeJson(schemeInfo: SchemeInfo, sessionId: String): ERSEnvelope[Boolean] = EitherT {
+    collection.deleteOne(buildSelector(schemeInfo))
+      .toFuture()
+      .map(_.wasAcknowledged())
+      .map(_.asRight)
+      .recover {
+        mongoRecover(
+          repository = className,
+          method = "removeJson",
+          sessionId = sessionId,
+          message = "operation failed due to exception from Mongo",
+          optSchemaRefs = Some(scala.Seq(schemeInfo.schemeRef))
+        )
+      }
+  }
+
+  private def createDocumentToInsert(schemeData: SchemeData): JsObject =
+    Json.toJsObject(schemeData) ++
+      Json.obj("createdAt" -> Json.obj("$date" -> Instant.now.toEpochMilli))
 }

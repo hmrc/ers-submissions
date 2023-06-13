@@ -18,38 +18,61 @@ package services.audit
 
 import models.{ErsSummary, SchemeInfo}
 import org.apache.commons.lang3.exception.ExceptionUtils
+import play.api.Logging
 import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.play.audit.http.connector.AuditResult
+import uk.gov.hmrc.play.audit.http.connector.AuditResult.{Disabled, Failure, Success}
 
 import javax.inject.Inject
+import scala.concurrent.{ExecutionContext, Future}
 
-class AuditEvents @Inject()(auditService: AuditService) {
+class AuditEvents @Inject()(auditService: AuditService)(implicit ec: ExecutionContext) extends Logging {
 
-  def auditRunTimeError(exception: Throwable, contextInfo: String)(implicit hc: HeaderCarrier): Unit = {
+  def auditRunTimeError(exception: Throwable, contextInfo: String)(implicit hc: HeaderCarrier): Future[AuditResult] = {
+    val transactionName = "ERSRunTimeError"
     auditService.sendEvent(
-      "ERSRunTimeError",
+      transactionName,
       Map(
         "ErrorMessage" -> exception.getMessage,
         "Context" -> contextInfo,
         "StackTrace" -> ExceptionUtils.getStackTrace(exception)
       )
-    )
+    ).map(handleResponse(_, transactionName))
   }
 
-  def auditADRTransferFailure(schemeInfo: SchemeInfo, data: Map[String, String])(implicit hc: HeaderCarrier): Unit = {
-    auditService.sendEvent("ErsADRTransferFailure", eventMap(schemeInfo, data))
+  def auditError(contextInfo: String, message: String)(implicit hc: HeaderCarrier): Future[AuditResult] = {
+    val transactionName = "ERSRunTimeError"
+    auditService.sendEvent(
+      transactionName,
+      Map(
+        "ErrorMessage" -> message,
+        "Context" -> contextInfo
+      )
+    ).map(handleResponse(_, transactionName))
   }
 
-  def publicToProtectedEvent(schemeInfo: SchemeInfo, sheetName: String, numRows: String)(implicit hc: HeaderCarrier): Boolean = {
+  def auditADRTransferFailure(schemeInfo: SchemeInfo, data: Map[String, String])(implicit hc: HeaderCarrier): Future[AuditResult] = {
+    val transactionName = "ErsADRTransferFailure"
+    auditService.sendEvent(
+      transactionName,
+      eventMap(schemeInfo, data)
+    ).map(handleResponse(_, transactionName))
+  }
+
+  def publicToProtectedEvent(schemeInfo: SchemeInfo, sheetName: String, numRows: String)(implicit hc: HeaderCarrier): Future[AuditResult] = {
+    val transactionName = "ErsFileTransfer"
     val additionalData: Map[String, String] = Map(
       "sheetName" -> sheetName,
       "numberOfRows" -> numRows
     )
-    auditService.sendEvent("ErsFileTransfer", eventMap(schemeInfo, additionalData))
-    true
+    auditService.sendEvent(
+      "ErsFileTransfer",
+      eventMap(schemeInfo, additionalData)
+    ).map(handleResponse(_, transactionName))
   }
 
-  def sendToAdrEvent(context : String, ersSummaryData: ErsSummary, correlationId: Option[String] = None, source: Option[String] = None)
-                    (implicit hc: HeaderCarrier): Boolean = {
+  def sendToAdrEvent(transactionName: String, ersSummaryData: ErsSummary, correlationId: Option[String] = None, source: Option[String] = None)
+                    (implicit hc: HeaderCarrier): Future[AuditResult] = {
     val additionalData: Map[String, String] = Map(
       "sapNumber" -> ersSummaryData.metaData.sapNumber.getOrElse(""),
       "ipRef" -> ersSummaryData.metaData.ipRef,
@@ -63,13 +86,18 @@ class AuditEvents @Inject()(auditService: AuditService) {
       "numberOfRows" -> ersSummaryData.nofOfRows.getOrElse(-1).toString,
       "source" -> source.getOrElse("")
     )
-    auditService.sendEvent(context, eventMap(ersSummaryData.metaData.schemeInfo, additionalData))
-    true
+    auditService.sendEvent(
+      transactionName,
+      eventMap(ersSummaryData.metaData.schemeInfo, additionalData)
+    ).map(handleResponse(_, transactionName))
   }
 
-  def resubmissionResult(schemeInfo: SchemeInfo, res: Boolean)(implicit hc: HeaderCarrier): Boolean = {
-    auditService.sendEvent("resubmissionResult", eventMap(schemeInfo,Map("result"-> res.toString)))
-    true
+  def resubmissionResult(schemeInfo: SchemeInfo, res: Boolean)(implicit hc: HeaderCarrier): Future[AuditResult] = {
+    val transactionName = "resubmissionResult"
+    auditService.sendEvent(
+      "resubmissionResult",
+      eventMap(schemeInfo,Map("result"-> res.toString))
+    ).map(handleResponse(_, transactionName))
   }
 
   def eventMap(schemeInfo: SchemeInfo, additionalMap: Map[String, String] = Map.empty): Map[String,String] = {
@@ -81,5 +109,17 @@ class AuditEvents @Inject()(auditService: AuditService) {
       "timestamp" -> schemeInfo.timestamp.toString,
       "taxYear" -> schemeInfo.taxYear
     ) ++ additionalMap
+  }
+
+  private def handleResponse(result: AuditResult, transactionName: String): AuditResult = result match {
+    case Success =>
+      logger.debug(s"ers-submissions $transactionName audit successful")
+      Success
+    case Failure(err, _) =>
+      logger.warn(s"ers-submissions $transactionName audit error, message: $err")
+      Failure(err)
+    case Disabled =>
+      logger.warn(s"Auditing disabled")
+      Disabled
   }
 }

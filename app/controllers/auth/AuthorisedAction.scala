@@ -52,7 +52,7 @@ trait AuthAction extends AuthorisedFunctions with ActionBuilder[Request, AnyCont
         block(request)
       } recover {
         case ex: AuthorisationException =>
-          logger.warn(s"[AuthAction][invokeBlock] user is unauthorised for ${request.uri} with exception  ${ex.getMessage}", ex)
+          logger.warn(s"[AuthAction][invokeBlock] user is unauthorised for ${request.uri} with exception  ${ex.reason}", ex)
           Unauthorized
       }
     ).getOrElse {

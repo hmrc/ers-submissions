@@ -24,13 +24,13 @@ import org.scalatest.wordspec.AnyWordSpecLike
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.Configuration
 import play.api.inject.ApplicationLifecycle
-import scheduler.SchedulingActor.UpdateDocumentsClass
-import services.DocumentUpdateService
+import scheduler.SchedulingActor.ResubmissionServiceClass
+import services.resubmission.ReSubmissionSchedulerService
 
 class ScheduledJobSpec extends AnyWordSpecLike with Matchers with MockitoSugar {
   val jobNameTest = "testJobName"
   val mockActorSystem: ActorSystem = mock[ActorSystem]
-  val mockService: DocumentUpdateService = mock[DocumentUpdateService]
+  val mockService: ReSubmissionSchedulerService = mock[ReSubmissionSchedulerService]
   val mockApplicationLifecycle: ApplicationLifecycle = mock[ApplicationLifecycle]
   val mockQuartzSchedulerExtension: QuartzSchedulerExtension = mock[QuartzSchedulerExtension]
 
@@ -42,7 +42,7 @@ class ScheduledJobSpec extends AnyWordSpecLike with Matchers with MockitoSugar {
     )
 
     val job: ScheduledJob = new ScheduledJob {
-      override lazy val scheduledMessage: SchedulingActor.ScheduledMessage[_] = UpdateDocumentsClass(mockService)
+      override lazy val scheduledMessage: SchedulingActor.ScheduledMessage[_] = ResubmissionServiceClass(mockService)
       override val config: Configuration = testConfig
       override lazy val actorSystem: ActorSystem = mockActorSystem
       override lazy val jobName: String = jobNameTest

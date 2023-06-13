@@ -16,13 +16,14 @@
 
 package uk.gov.hmrc
 
+import _root_.play.api.Application
+import _root_.play.api.inject.guice.GuiceApplicationBuilder
+import _root_.play.api.test.Helpers._
+import models.ERSError
 import org.mongodb.scala.model.Filters
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 import org.scalatestplus.play.guice.GuiceOneServerPerSuite
-import _root_.play.api.Application
-import _root_.play.api.inject.guice.GuiceApplicationBuilder
-import _root_.play.api.test.Helpers._
 
 class ResubJobWithDateFilterDisabledSpec extends AnyWordSpecLike
   with Matchers
@@ -37,7 +38,8 @@ class ResubJobWithDateFilterDisabledSpec extends AnyWordSpecLike
     "schedules.resubmission-service.schemaFilter.filter" -> "CSOP",
     "schedules.resubmission-service.resubmissionLimit" -> 10,
     "schedules.resubmission-service.resubmit-list-statuses" -> "failed",
-    "schedules.resubmission-service.resubmit-successful-status" -> "successResubmit"
+    "schedules.resubmission-service.resubmit-successful-status" -> "successResubmit",
+    "auditing.enabled" -> false
   )
 
   override lazy val app: Application = new GuiceApplicationBuilder()
@@ -47,7 +49,6 @@ class ResubJobWithDateFilterDisabledSpec extends AnyWordSpecLike
     .build()
 
   "With dateTimeFiltering not enabled ResubPresubmissionServiceJob" should {
-
     "resubmit failed jobs with the correct transfer status and schema type" in new ResubmissionJobSetUp(app = app) {
       val storeDocs: Boolean = await(storeMultipleErsSummary(Fixtures.ersSummaries))
       storeDocs shouldBe true
@@ -56,8 +57,8 @@ class ResubJobWithDateFilterDisabledSpec extends AnyWordSpecLike
       countMetadataRecordsWithSelector(successResubmitTransferStatusSelector) shouldBe 1
       countMetadataRecordsWithSelector(failedJobSelector) shouldBe 3
 
-      val updateCompleted: Boolean = await(getJob.scheduledMessage.service.invoke.map(_.asInstanceOf[Boolean]))
-      updateCompleted shouldBe true
+      val updateCompleted: Either[ERSError, Boolean] = await(getJob.scheduledMessage.service.invoke.value)
+      updateCompleted shouldBe Right(true)
 
       countMetadataRecordsWithSelector(Filters.empty()) shouldBe 6
       countMetadataRecordsWithSelector(successResubmitTransferStatusSelector) shouldBe 4
@@ -71,15 +72,15 @@ class ResubJobWithDateFilterDisabledSpec extends AnyWordSpecLike
       countMetadataRecordsWithSelector(Filters.empty()) shouldBe 40
       countMetadataRecordsWithSelector(successResubmitTransferStatusSelector) shouldBe 0
       countMetadataRecordsWithSelector(failedJobSelector) shouldBe 20
-      val firstJobRunOutcome: Boolean = await(getJob.scheduledMessage.service.invoke.map(_.asInstanceOf[Boolean]))
-      firstJobRunOutcome shouldBe true
+      val firstJobRunOutcome: Either[ERSError, Boolean] = await(getJob.scheduledMessage.service.invoke.value)
+      firstJobRunOutcome shouldBe Right(true)
 
       countMetadataRecordsWithSelector(Filters.empty()) shouldBe 40
       countMetadataRecordsWithSelector(successResubmitTransferStatusSelector) shouldBe 10
       countMetadataRecordsWithSelector(failedJobSelector) shouldBe 10
 
-      val secondJobRunOutcome: Boolean = await(getJob.scheduledMessage.service.invoke.map(_.asInstanceOf[Boolean]))
-      secondJobRunOutcome shouldBe true
+      val secondJobRunOutcome: Either[ERSError, Boolean] = await(getJob.scheduledMessage.service.invoke.value)
+      secondJobRunOutcome shouldBe Right(true)
 
       countMetadataRecordsWithSelector(Filters.empty()) shouldBe 40
       countMetadataRecordsWithSelector(successResubmitTransferStatusSelector) shouldBe 20
@@ -90,8 +91,8 @@ class ResubJobWithDateFilterDisabledSpec extends AnyWordSpecLike
       countMetadataRecordsWithSelector(Filters.empty()) shouldBe 50
       countMetadataRecordsWithSelector(successResubmitTransferStatusSelector) shouldBe 20
       countMetadataRecordsWithSelector(failedJobSelector) shouldBe 10
-      val thirdJobRunOutcome: Boolean = await(getJob.scheduledMessage.service.invoke.map(_.asInstanceOf[Boolean]))
-      thirdJobRunOutcome shouldBe true
+      val thirdJobRunOutcome: Either[ERSError, Boolean] = await(getJob.scheduledMessage.service.invoke.value)
+      thirdJobRunOutcome shouldBe Right(true)
 
       countMetadataRecordsWithSelector(Filters.empty()) shouldBe 50
       countMetadataRecordsWithSelector(successResubmitTransferStatusSelector) shouldBe 30
