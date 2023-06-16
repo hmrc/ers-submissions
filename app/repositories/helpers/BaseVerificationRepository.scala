@@ -46,9 +46,17 @@ trait BaseVerificationRepository {
     }
   )
 
+  def singleSchemeRefSelector(schemeRef: String): BsonDocument = BsonDocument(
+    s"${mongoKeyPrefix}schemeInfo.schemeRef" -> BsonString(schemeRef)
+  )
+
+  lazy val transferStatusSelector: ERSQuery => BsonDocument = ersQuery => BsonDocument(
+    ersQuery.transferStatus.map(
+      ts => "transferStatus" -> BsonString(ts)
+    )
+  )
+
   def combineSelectors(listOfSelectors: Seq[ERSQuery => BsonDocument], ersQuery: ERSQuery): BsonDocument = {
     listOfSelectors.map(_ (ersQuery)).foldLeft(BsonDocument())(_ +:+ _)
   }
-
-
 }

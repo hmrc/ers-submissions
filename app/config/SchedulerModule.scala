@@ -17,11 +17,12 @@
 package config
 
 import com.google.inject.AbstractModule
-import scheduler.{ResubmissionServiceImpl, UpdateCreatedAtFieldsJobImpl}
+import scheduler.{ResubmissionServiceImpl, UpdateCreatedAtFieldsJobImpl, MetaDataVerificationServiceImpl}
 
 class SchedulerModule extends AbstractModule {
   override def configure(): Unit = {
     bind(classOf[UpdateCreatedAtFieldsJobImpl]).asEagerSingleton()
     bind(classOf[ResubmissionServiceImpl]).asEagerSingleton()
+    bind(classOf[MetaDataVerificationServiceImpl]).asEagerSingleton()
   }
 }

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package services.resubmission
+package services.query
 
 import play.api.libs.json.{Format, Json}
 

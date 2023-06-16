@@ -17,8 +17,9 @@
 package repositories
 
 import config.ApplicationConfig
-import models.{ERSDataResults, ERSQuery, SchemeData}
+import models.{ERSDataResults, ERSMetaDataResults, ERSQuery, SchemeData}
 import org.mongodb.scala.bson.BsonDocument
+import play.api.libs.json.{Format, JsObject}
 import repositories.helpers.BaseVerificationRepository
 import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
@@ -28,10 +29,10 @@ import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class DataVerificationMongoRepository @Inject()(val applicationConfig: ApplicationConfig, mc: MongoComponent)(implicit ec: ExecutionContext)
-  extends PlayMongoRepository[ERSQuery](
+  extends PlayMongoRepository[JsObject](
     mongoComponent = mc,
     collectionName = applicationConfig.presubmissionCollection,
-    domainFormat = ERSQuery.format,
+    domainFormat = implicitly[Format[JsObject]],
     indexes = Seq.empty
     ) with BaseVerificationRepository {
 
@@ -60,4 +61,10 @@ class DataVerificationMongoRepository @Inject()(val applicationConfig: Applicati
       }
     )
   }
+
+  def getPresubRecodFromMetadata(metaDataResult: ERSMetaDataResults): Future[(Boolean, String)] =
+    collection.find(
+      singleSchemeRefSelector(metaDataResult.schemeRef)
+    ).toFuture()
+    .map(records => (records.nonEmpty, metaDataResult.schemeRef))
 }

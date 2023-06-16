@@ -21,9 +21,8 @@ import models._
 import org.joda.time.DateTime
 import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
 import org.mongodb.scala.FindObservable
-import org.mongodb.scala.bson.{BsonDocument, BsonInt64, BsonString, Document, ObjectId}
-import org.mongodb.scala.model.Accumulators._
-import org.mongodb.scala.model.{Aggregates, Filters, Projections}
+import org.mongodb.scala.bson.{BsonDocument, BsonInt64, BsonString, ObjectId}
+import org.mongodb.scala.model.{Filters, Projections}
 import org.mongodb.scala.result.UpdateResult
 import play.api.Logging
 import play.api.libs.json.Format.GenericFormat
@@ -135,14 +134,4 @@ class MetadataMongoRepository @Inject()(val applicationConfig: ApplicationConfig
       filter = failedJobSelector
     ).toFuture()
   }
-
-  def getAggregateCountOfSubmissions(): Future[Seq[JsObject]] =
-    collection.aggregate(
-      pipeline = Seq(
-        Aggregates.group(
-          Document("schemeType" -> "$metaData.schemeInfo.schemeType", "transferStatus" -> "$transferStatus"),
-          sum("count", 1)
-        )
-      )
-    ).toFuture()
 }

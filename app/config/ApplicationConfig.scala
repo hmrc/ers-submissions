@@ -57,10 +57,25 @@ class ApplicationConfig @Inject()(serviceConfig: ServicesConfig) {
   lazy val ersQuerySchemeType: String = serviceConfig.getString("ers-query.schemetype")
   lazy val ersQueryStartDate: String = serviceConfig.getString("ers-query.start-date")
   lazy val ersQueryEndDate: String = serviceConfig.getString("ers-query.end-date")
+  lazy val ersQueryTransferStatus: String = serviceConfig.getString("ers-query.transfer-status")
 
   def ersQuery: ERSQuery = {
-    ERSQuery(Some(ersQuerySchemeType),Some(ersQueryStartDate),Some(ersQueryEndDate),None,schedulerSchemeRefList)
+    ERSQuery(
+      Some(ersQuerySchemeType),
+      Some(ersQueryStartDate),
+      Some(ersQueryEndDate),
+      Some(ersQueryTransferStatus),
+      schedulerSchemeRefList
+    )
   }
+
+  // metadata-verification-service logging
+  lazy val checkMetaDataHasPresubmissionFileEnabled: Boolean = serviceConfig.getBoolean("schedules.metadata-verification-service.check-metadata-has-presubmission-file-enabled")
+  lazy val getCountBySchemeTypeWithInDateRangeEnabled: Boolean = serviceConfig
+    .getBoolean("schedules.metadata-verification-service.get-count-by-scheme-type-with-in-date-range-enabled")
+  lazy val getBundleRefAndSchemeRefBySchemeTypeWithInDateRangeEnabled: Boolean = serviceConfig
+    .getBoolean("schedules.metadata-verification-service.get-bundle-ref-and-scheme-ref-by-scheme-type-with-in-date-range-enabled")
+  lazy val getSchemeRefsInfoEnabled: Boolean = serviceConfig.getBoolean("schedules.metadata-verification-service.get-scheme-refs-info-enabled")
 
   //  Date filter parameters
   lazy val dateTimeFilterEnabled: Boolean = serviceConfig.getBoolean(s"schedules.resubmission-service.dateTimeFilter.enabled")

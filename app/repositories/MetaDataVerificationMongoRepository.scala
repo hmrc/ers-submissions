@@ -18,7 +18,10 @@ package repositories
 
 import config.ApplicationConfig
 import models.{ERSMetaDataResults, ERSQuery, ErsSummary}
-import org.mongodb.scala.bson.BsonDocument
+import org.mongodb.scala.bson.{BsonDocument, Document}
+import org.mongodb.scala.model.Accumulators.sum
+import org.mongodb.scala.model.Aggregates
+import play.api.libs.json.{Format, JsObject}
 import repositories.helpers.BaseVerificationRepository
 import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
@@ -28,14 +31,24 @@ import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class MetaDataVerificationMongoRepository @Inject()(val applicationConfig: ApplicationConfig, mc: MongoComponent)(implicit ec: ExecutionContext)
-  extends PlayMongoRepository[ErsSummary](
+  extends PlayMongoRepository[JsObject](
     mongoComponent = mc,
     collectionName = applicationConfig.metadataCollection,
-    domainFormat = ErsSummary.format,
+    domainFormat = implicitly[Format[JsObject]],
     indexes = Seq.empty
   ) with BaseVerificationRepository {
 
   override val mongoKeyPrefix: String = "metadata."
+
+  def mapResultToERSMetaDataResults(ersSummary: ErsSummary): ERSMetaDataResults =
+    ERSMetaDataResults(
+      ersSummary.bundleRef,
+      ersSummary.metaData.schemeInfo.schemeRef,
+      ersSummary.transferStatus.getOrElse("Unknown"),
+      ersSummary.fileType.getOrElse(""),
+      ersSummary.metaData.schemeInfo.timestamp.toString,
+      ersSummary.metaData.schemeInfo.taxYear
+    )
 
   def getCountBySchemeTypeWithInDateRange(ersQuery: ERSQuery): Future[Long] = {
 
@@ -48,7 +61,7 @@ class MetaDataVerificationMongoRepository @Inject()(val applicationConfig: Appli
 
     val selector: BsonDocument = combineSelectors(Seq(schemeSelector, dateRangeSelector), ersQuery)
 
-    collection.find(selector).batchSize(Int.MaxValue).toFuture().map(
+    collection.find[ErsSummary](selector).batchSize(Int.MaxValue).toFuture().map(
       _.map { results =>
         (results.bundleRef, results.metaData.schemeInfo.schemeRef, results.transferStatus.getOrElse("Unknown"))
       }
@@ -57,15 +70,31 @@ class MetaDataVerificationMongoRepository @Inject()(val applicationConfig: Appli
 
   def getSchemeRefsInfo(ersQuery: ERSQuery): Future[Seq[ERSMetaDataResults]] = {
 
-    val selector: BsonDocument = combineSelectors(Seq(schemeSelector, dateRangeSelector, schemeRefsSelector), ersQuery)
+    val selector: BsonDocument = combineSelectors(Seq(schemeSelector, dateRangeSelector), ersQuery)
 
-    collection.find(selector).batchSize(Int.MaxValue).toFuture().map(
-      _.map { results =>
-        ERSMetaDataResults(results.bundleRef, results.metaData.schemeInfo.schemeRef,
-          results.transferStatus.getOrElse("Unknown"),
-          results.fileType.getOrElse(""), results.metaData.schemeInfo.timestamp.toString,
-          results.metaData.schemeInfo.taxYear)
-      }
+    collection.find[ErsSummary](selector).batchSize(Int.MaxValue).toFuture().map(
+      _.map(mapResultToERSMetaDataResults)
     )
   }
+
+  def getRecordsWithTransferStatus(ersQuery: ERSQuery): Future[Seq[ERSMetaDataResults]] = {
+
+    val selector: BsonDocument = combineSelectors(Seq(transferStatusSelector), ersQuery)
+
+    collection
+      .find[ErsSummary](selector)
+      .batchSize(Int.MaxValue).toFuture().map(
+        _.map(mapResultToERSMetaDataResults)
+      )
+  }
+
+  def getAggregateCountOfSubmissions: Future[Seq[JsObject]] =
+    collection
+      .aggregate(pipeline = Seq(
+        Aggregates.group(
+          Document("schemeType" -> "$metaData.schemeInfo.schemeType", "transferStatus" -> "$transferStatus"),
+          sum("count", 1)
+        )
+      ))
+      .toFuture()
 }

@@ -19,6 +19,7 @@ package scheduler
 import akka.actor.{Actor, ActorLogging, Props}
 import scheduler.SchedulingActor._
 import services.DocumentUpdateService
+import services.query.MetaDataVerificationService
 import services.resubmission.ReSubmissionSchedulerService
 
 class SchedulingActor extends Actor with ActorLogging {
@@ -40,4 +41,5 @@ object SchedulingActor {
 
   case class UpdateDocumentsClass(service: DocumentUpdateService) extends ScheduledMessage[Boolean]
   case class ResubmissionServiceClass(service: ReSubmissionSchedulerService) extends ScheduledMessage[Boolean]
+  case class MetaDataVerificationServiceClass(service: MetaDataVerificationService) extends ScheduledMessage[Boolean]
 }

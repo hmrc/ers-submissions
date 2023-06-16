@@ -19,7 +19,6 @@ package services.resubmission
 import models._
 import org.mongodb.scala.bson.{BsonDocument, ObjectId}
 import org.mongodb.scala.result.UpdateResult
-import play.api.libs.json.{JsError, JsObject, JsSuccess}
 import play.api.mvc.Request
 import repositories.MetadataMongoRepository
 import services.SubmissionService
@@ -36,24 +35,6 @@ class ResubPresubmissionService @Inject()(metadataRepository: MetadataMongoRepos
                                           auditEvents: AuditEvents,
                                           resubmissionExceptionEmiter: ResubmissionExceptionEmitter)
                                          (implicit ec: ExecutionContext) {
-
-  def mapJsonToAggregatedLog(record: JsObject): Option[AggregatedLog] =
-    record.validate[AggregatedLog] match {
-      case JsSuccess(obj, _) =>
-        Some(obj)
-      case JsError(_) =>
-        None
-    }
-
-  def logAggregateMetadataMetrics(): Future[Unit] = {
-    for {
-      aggregatedRecords: Seq[JsObject] <- metadataRepository
-        .getAggregateCountOfSubmissions()
-      aggregatedLogs = AggregatedLogs(
-        aggregatedRecords.flatMap(mapJsonToAggregatedLog)
-      ).message
-    } yield schedulerLoggingAndAuditing.logInfo(aggregatedLogs)
-  }
 
   def logFailedSubmissionCount()(implicit processFailedSubmissionsConfig: ProcessFailedSubmissionsConfig): Future[Unit] = {
     val failedJobSelector: BsonDocument = metadataRepository.createFailedJobSelector()

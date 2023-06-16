@@ -22,12 +22,18 @@ case class ERSQuery(schemeType: Option[String],
                     startDate: Option[String],
                     endDate: Option[String],
                     transferStatus:Option[String],
-                    schemeRefsList:List[String])
+                    schemeRefsList:List[String]
+                   )
 object ERSQuery {
   implicit val format: OFormat[ERSQuery] = Json.format[ERSQuery]
 }
 
-case class ERSMetaDataResults(bundleRef:String,schemeRef:String,transferStatus:String,fileType:String, timestamp:String, taxYear:String )
+case class ERSMetaDataResults(bundleRef:String,
+                              schemeRef:String,
+                              transferStatus:String,
+                              fileType:String,
+                              timestamp:String,
+                              taxYear:String )
 object ERSMetaDataResults {
   implicit val format: OFormat[ERSMetaDataResults] = Json.format[ERSMetaDataResults]
 }
