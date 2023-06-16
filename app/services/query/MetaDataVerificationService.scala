@@ -44,7 +44,7 @@ class MetaDataVerificationService @Inject()(val applicationConfig: ApplicationCo
     // TODO: Come back to.... should we break these services up?
     if (applicationConfig.checkMetaDataHasPresubmissionFileEnabled) {
       logAggregateMetadataMetrics
-      checkMetaDataHasPresubmissionFile
+//      logWhichMetadataRecordsHavePresubmissionRecords
     }
     if (applicationConfig.getCountBySchemeTypeWithInDateRangeEnabled) {
       getCountBySchemeTypeWithInDateRange
@@ -58,16 +58,21 @@ class MetaDataVerificationService @Inject()(val applicationConfig: ApplicationCo
     Future(true) // TODO: Come back to this
   }
 
-  def checkMetaDataHasPresubmissionFile: Future[Unit] = {
-    def logMatchingRecord(matchingRecordAndSchemaRef: (Boolean, String)): Unit = {
-      if (matchingRecordAndSchemaRef._1) {
-        logger.info(s"[MetaDataVerificationService]: Found presubmission record for: ${matchingRecordAndSchemaRef._2}")
+  def logWhichMetadataRecordsHavePresubmissionRecords(): Future[Seq[Unit]] = { // TODO: Change return type to Future[Unit]
+    checkMetaDataHasPresubmissionFile.map(
+      _.map {
+        case (matchingRecordAndSchemaRef: (Boolean, String)) =>
+          if (matchingRecordAndSchemaRef._1) {
+            logger.info(s"[MetaDataVerificationService]: Found presubmission record for: ${matchingRecordAndSchemaRef._2}")
+          }
+          else {
+            logger.info(s"[MetaDataVerificationService]: Missing presubmission record for: ${matchingRecordAndSchemaRef._2}")
+          }
       }
-      else {
-        logger.info(s"[MetaDataVerificationService]: Missing presubmission record for: ${matchingRecordAndSchemaRef._2}")
-      }
-    }
+    )
+  }
 
+  def checkMetaDataHasPresubmissionFile: Future[Seq[(Boolean, String)]] = {
     for {
       metaDataWithTransferStatus: Seq[ERSMetaDataResults] <- metaDataVerificationRepository.getRecordsWithTransferStatus(applicationConfig.ersQuery)
       _ = if (metaDataWithTransferStatus.isEmpty){
@@ -78,18 +83,24 @@ class MetaDataVerificationService @Inject()(val applicationConfig: ApplicationCo
           dataVerificationRepository.getPresubRecodFromMetadata(metaDataResult)
         })
       }
-    } yield matchingPresubmissionData.map(logMatchingRecord)
+    } yield matchingPresubmissionData
   }
 
-  def logAggregateMetadataMetrics: Future[Unit] = {
-    def logAggregatedMetric(log: AggregatedLog): Unit =
-      logger.info(s"[MetaDataVerificationService]: Aggregated view of submissions: ${log.logLine}")
+  def logAggregateMetadataMetrics: Future[Unit] = getAggregateMetadataMetrics.map(
+    _.map(log =>
+      logger.info(
+        s"[MetaDataVerificationService]: Aggregated view of submissions: ${log.logLine}"
+      )
+    )
+  )
+
+  def getAggregateMetadataMetrics: Future[Seq[AggregatedLog]] =
     for {
       aggregatedRecords: Seq[JsObject] <- metaDataVerificationRepository
         .getAggregateCountOfSubmissions
-      aggregatedLogs: Seq[AggregatedLog] = aggregatedRecords.flatMap(mapJsonToAggregatedLog)
-    } yield aggregatedLogs.map(logAggregatedMetric)
-  }
+      aggregatedLogs: Seq[AggregatedLog] = aggregatedRecords
+        .flatMap(mapJsonToAggregatedLog)
+    } yield aggregatedLogs
 
   def mapJsonToAggregatedLog(record: JsObject): Option[AggregatedLog] =
     record.validate[AggregatedLog] match {
