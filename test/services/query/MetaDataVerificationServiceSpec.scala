@@ -19,7 +19,6 @@ package services.query
 import config.ApplicationConfig
 import helpers.ERSTestHelper
 import org.mockito.Mockito.when
-import play.api.Logger
 import play.api.libs.json.{JsObject, Json}
 import repositories.{MetaDataVerificationMongoRepository, Repositories}
 
@@ -30,15 +29,9 @@ class MetaDataVerificationServiceSpec extends ERSTestHelper {
   val mockApplicationConfig: ApplicationConfig = app.injector.instanceOf[ApplicationConfig]
   val mockRepositories: Repositories = mock[Repositories]
   val mockMetadataMongoRepository: MetaDataVerificationMongoRepository = mock[MetaDataVerificationMongoRepository]
-  val mockLogger: Logger = mock[Logger]
-
-  def createMetadataMongoRepository(aggregatedSubmissions: Seq[JsObject]): MetaDataVerificationService =
-    new MetaDataVerificationService(mockApplicationConfig, mockRepositories) {
-     override lazy val metaDataVerificationRepository: MetaDataVerificationMongoRepository = mockMetadataMongoRepository
-     when(mockMetadataMongoRepository.getAggregateCountOfSubmissions)
-       .thenReturn(Future(aggregatedSubmissions))
-      override val logger: Logger = mockLogger
-    }
+  val mockMetaDataVerificationService: MetaDataVerificationService = new MetaDataVerificationService(mockApplicationConfig, mockRepositories){
+    override lazy val metaDataVerificationRepository: MetaDataVerificationMongoRepository = mockMetadataMongoRepository
+  }
 
   val validSipJsonObj: JsObject = Json
     .parse("""{"_id":{"schemeType":"SIP","transferStatus":"failedResubmission"},"count":2}""")
@@ -53,27 +46,35 @@ class MetaDataVerificationServiceSpec extends ERSTestHelper {
   "getAggregateMetadataMetrics" should {
 
     "map json valid json objects correctly to AggregatedLogs" in {
+      when(mockMetadataMongoRepository.getAggregateCountOfSubmissions)
+        .thenReturn(Future(Seq(validSipJsonObj, validEmiJsonObj)))
       val expectedAggregatedLogs = Seq(
         AggregatedLog(Id(schemeType = "SIP", transferStatus = "failedResubmission"), count = 2),
         AggregatedLog(Id(schemeType = "EMI", transferStatus = "process"), count = 1)
       )
-      val metadataMongoRepository: MetaDataVerificationService = createMetadataMongoRepository(Seq(validSipJsonObj, validEmiJsonObj))
-      metadataMongoRepository.getAggregateMetadataMetrics.map(
-        _ should contain theSameElementsAs(expectedAggregatedLogs)
-      )
+      mockMetaDataVerificationService
+        .getAggregateMetadataMetrics.map(
+          _ should contain theSameElementsAs(expectedAggregatedLogs)
+        )
     }
 
     "not return AgregatedLogs for invalid json" in {
+      when(mockMetadataMongoRepository.getAggregateCountOfSubmissions)
+        .thenReturn(Future(Seq(invalidEmiJsonObj)))
       val expectedAggregatedLogs = Seq.empty[AggregatedLog]
-      val metadataMongoRepository: MetaDataVerificationService = createMetadataMongoRepository(Seq(invalidEmiJsonObj))
-      metadataMongoRepository.getAggregateMetadataMetrics.map(
-        _ should contain theSameElementsAs(expectedAggregatedLogs)
-      )
+      mockMetaDataVerificationService
+        .getAggregateMetadataMetrics.map(
+          _ should contain theSameElementsAs(expectedAggregatedLogs)
+        )
     }
 
   }
 
   "checkMetaDataHasPresubmissionFile" should {
+
+    "do something cool..." in {
+      // TODO: Come back to...
+    }
 
   }
 

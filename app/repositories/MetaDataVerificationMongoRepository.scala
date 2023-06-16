@@ -78,9 +78,7 @@ class MetaDataVerificationMongoRepository @Inject()(val applicationConfig: Appli
   }
 
   def getRecordsWithTransferStatus(ersQuery: ERSQuery): Future[Seq[ERSMetaDataResults]] = {
-
     val selector: BsonDocument = combineSelectors(Seq(transferStatusSelector), ersQuery)
-
     collection
       .find[ErsSummary](selector)
       .batchSize(Int.MaxValue).toFuture().map(

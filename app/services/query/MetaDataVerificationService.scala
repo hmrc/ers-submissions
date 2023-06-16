@@ -61,12 +61,12 @@ class MetaDataVerificationService @Inject()(val applicationConfig: ApplicationCo
   def logWhichMetadataRecordsHavePresubmissionRecords(): Future[Seq[Unit]] = { // TODO: Change return type to Future[Unit]
     checkMetaDataHasPresubmissionFile.map(
       _.map {
-        case (matchingRecordAndSchemaRef: (Boolean, String)) =>
-          if (matchingRecordAndSchemaRef._1) {
-            logger.info(s"[MetaDataVerificationService]: Found presubmission record for: ${matchingRecordAndSchemaRef._2}")
+        case (matchingRecord: Boolean, schemaRef: String) =>
+          if (matchingRecord) {
+            logger.info(s"[MetaDataVerificationService]: Found presubmission record for: $schemaRef")
           }
           else {
-            logger.info(s"[MetaDataVerificationService]: Missing presubmission record for: ${matchingRecordAndSchemaRef._2}")
+            logger.info(s"[MetaDataVerificationService]: Missing presubmission record for: $schemaRef")
           }
       }
     )
@@ -74,10 +74,8 @@ class MetaDataVerificationService @Inject()(val applicationConfig: ApplicationCo
 
   def checkMetaDataHasPresubmissionFile: Future[Seq[(Boolean, String)]] = {
     for {
-      metaDataWithTransferStatus: Seq[ERSMetaDataResults] <- metaDataVerificationRepository.getRecordsWithTransferStatus(applicationConfig.ersQuery)
-      _ = if (metaDataWithTransferStatus.isEmpty){
-        logger.info(s"[MetaDataVerificationService]:  Cannot find any metadata records with transfer status: ${applicationConfig.ersQueryTransferStatus}")
-      }
+      metaDataWithTransferStatus: Seq[ERSMetaDataResults] <-
+        metaDataVerificationRepository.getRecordsWithTransferStatus(applicationConfig.ersQuery)
       matchingPresubmissionData: Seq[(Boolean, String)] <- Future.sequence {
         metaDataWithTransferStatus.map((metaDataResult: ERSMetaDataResults) => {
           dataVerificationRepository.getPresubRecodFromMetadata(metaDataResult)
