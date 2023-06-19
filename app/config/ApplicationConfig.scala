@@ -25,6 +25,7 @@ class ApplicationConfig @Inject()(serviceConfig: ServicesConfig) {
 
   lazy val presubmissionCollection: String = serviceConfig.getString("settings.presubmission-collection")
   lazy val presubmissionCollectionTTL: Int = serviceConfig.getInt("settings.presubmission-collection-ttl-days")
+  lazy val presubmissionCollectionIndexReplace: Boolean = serviceConfig.getBoolean("settings.presubmission-collection-index-replace")
   lazy val metadataCollection: String = serviceConfig.getString("settings.metadata-collection")
   lazy val uploadCsvSizeLimit: Int = serviceConfig.getInt("csv.uploadSizeLimit")
   lazy val maxGroupSize: Int = serviceConfig.getInt("csv.maxGroupSize")

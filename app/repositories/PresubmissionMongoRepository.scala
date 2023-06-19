@@ -48,7 +48,8 @@ class PresubmissionMongoRepository @Inject()(applicationConfig: ApplicationConfi
       IndexModel(ascending("createdAt"), indexOptions = IndexOptions().name("timeToLive")
           .expireAfter(applicationConfig.presubmissionCollectionTTL, TimeUnit.DAYS)
       )
-    )
+    ),
+    replaceIndexes = applicationConfig.presubmissionCollectionIndexReplace
   ) with RepositoryHelper {
 
   private val className = getClass.getSimpleName
