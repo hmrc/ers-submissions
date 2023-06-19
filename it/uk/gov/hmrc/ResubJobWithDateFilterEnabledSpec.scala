@@ -53,7 +53,9 @@ class ResubJobWithDateFilterEnabledSpec extends AnyWordSpecLike
     "resubmit failed jobs with the correct transfer status, schema type and submitted after dateTimeFilter" in new ResubmissionJobSetUp(app = app) {
 
       val storeDocs: Boolean = await(storeMultipleErsSummary(Fixtures.ersSummaries))
+      val storePresubmissions: Boolean = await(storeMultiplePresubmissionData(Fixtures.schemeData))
       storeDocs shouldBe true
+      storePresubmissions shouldBe true
 
       countMetadataRecordsWithSelector(Filters.empty()) shouldBe 6
       countMetadataRecordsWithSelector(successResubmitTransferStatusSelector) shouldBe 1
@@ -63,6 +65,7 @@ class ResubJobWithDateFilterEnabledSpec extends AnyWordSpecLike
       updateCompleted shouldBe Right(true)
 
       countMetadataRecordsWithSelector(Filters.empty()) shouldBe 6
+
       countMetadataRecordsWithSelector(successResubmitTransferStatusSelector) shouldBe 3
       countMetadataRecordsWithSelector(failedJobSelector) shouldBe 0
     }

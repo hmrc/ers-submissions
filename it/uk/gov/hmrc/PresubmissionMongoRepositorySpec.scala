@@ -21,9 +21,9 @@ import _root_.play.api.inject.guice.GuiceApplicationBuilder
 import _root_.play.api.libs.json.{JsObject, Json}
 import _root_.play.api.libs.ws.WSClient
 import _root_.play.api.test.Helpers._
-import org.scalatest.{BeforeAndAfterEach, EitherValues}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
+import org.scalatest.{BeforeAndAfterEach, EitherValues}
 import repositories.PresubmissionMongoRepository
 
 import java.util.concurrent.TimeUnit
@@ -54,7 +54,7 @@ class PresubmissionMongoRepositorySpec extends AnyWordSpecLike with Matchers wit
 
   "storeJson" should {
     "successfully insert the scheme data" in {
-      val schemeData = Fixtures.schemeData
+      val schemeData = Fixtures.schemeData()
       val schemeInfo = schemeData.schemeInfo
       await(presubmissionRepository.storeJson(schemeData, "").value).value shouldBe  true
       await(presubmissionRepository.count(schemeInfo, "").value).value shouldBe 1
@@ -63,7 +63,7 @@ class PresubmissionMongoRepositorySpec extends AnyWordSpecLike with Matchers wit
 
   "getJson" should {
     "successfully return the scheme data" in {
-      val schemeData = Fixtures.schemeData
+      val schemeData = Fixtures.schemeData()
       val schemeInfo = schemeData.schemeInfo
       await(presubmissionRepository.storeJson(schemeData, "").value)
 
@@ -78,7 +78,7 @@ class PresubmissionMongoRepositorySpec extends AnyWordSpecLike with Matchers wit
 
   "count" should {
     "successfully return number of documents for given scheme info" in {
-      val schemeData = Fixtures.schemeData
+      val schemeData = Fixtures.schemeData()
       val schemeInfo = schemeData.schemeInfo
       await(presubmissionRepository.storeJson(schemeData, "").value)
       await(presubmissionRepository.count(schemeInfo, "").value).value shouldBe 1
@@ -87,7 +87,7 @@ class PresubmissionMongoRepositorySpec extends AnyWordSpecLike with Matchers wit
 
   "removeJson" should {
     "successfully remove the documents for given scheme info" in {
-      val schemeData = Fixtures.schemeData
+      val schemeData = Fixtures.schemeData()
       val schemeInfo = schemeData.schemeInfo
       await(presubmissionRepository.storeJson(schemeData, "").value)
       await(presubmissionRepository.count(schemeInfo, "").value).value shouldBe 1

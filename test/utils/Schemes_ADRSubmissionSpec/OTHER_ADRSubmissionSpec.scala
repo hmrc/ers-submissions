@@ -184,8 +184,6 @@ class OTHER_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfter with Eit
         )
       )
 
-      println(SchemeData(OTHER.schemeInfo, "Other_Grants_V4", None, Some(ListBuffer(OTHER.buildGrantedV4()))))
-
       val result = await(mockAdrSubmission.generateSubmission(OTHER.metadata)(request, hc).value)
       result.value - ("acknowledgementReference") shouldBe Json.parse("""{
                                                                  |"regime":"ERS",

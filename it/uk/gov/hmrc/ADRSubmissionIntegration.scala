@@ -25,6 +25,7 @@ import _root_.play.api.test.FakeRequest
 import _root_.play.api.test.Helpers._
 import controllers.SubmissionController
 import models.ErsSummary
+import org.joda.time.{DateTime, DateTimeZone}
 import org.mongodb.scala.bson.BsonDocument
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.matchers.should.Matchers
@@ -47,11 +48,12 @@ class ADRSubmissionIntegration extends AnyWordSpecLike with Matchers
   private lazy val submissionController = app.injector.instanceOf[SubmissionController]
   private lazy val presubmissionRepository = app.injector.instanceOf[PresubmissionMongoRepository]
   private lazy val metadataMongoRepository = app.injector.instanceOf[MetadataMongoRepository]
+  val timestamp: DateTime = DateTime.now(DateTimeZone.UTC)
 
   override protected def beforeEach(): Unit = {
     super.beforeEach()
     await(presubmissionRepository.storeJson(
-      Fixtures.schemeData,
+      Fixtures.schemeData(Some(timestamp)),
       ""
     ).value)
   }
@@ -72,7 +74,7 @@ class ADRSubmissionIntegration extends AnyWordSpecLike with Matchers
   //submit-metadata
   "Receiving data for submission" should {
     "return OK if valid metadata is received, filedata is extracted from database and it's successfully sent to ADR" in {
-      val ersSummary = buildErsSummary()
+      val ersSummary = buildErsSummary(timestamp = timestamp)
       val schemaInfo = ersSummary.metaData.schemeInfo
       val selector = metadataMongoRepository.buildSelector(schemaInfo)
       val data = Fixtures.buildErsSummaryPayload(ersSummary)
@@ -93,7 +95,7 @@ class ADRSubmissionIntegration extends AnyWordSpecLike with Matchers
     }
 
     "return OK if valid metadata is received for nil return and it's successfully sent to ADR" in {
-      val ersSummary = buildErsSummary()
+      val ersSummary = buildErsSummary(timestamp = timestamp)
       val schemaInfo = ersSummary.metaData.schemeInfo
       val selector = metadataMongoRepository.buildSelector(schemaInfo)
       val data = Fixtures.buildErsSummaryPayload(ersSummary)

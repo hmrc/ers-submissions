@@ -48,7 +48,7 @@ class SubmissionService @Inject()(repositories: Repositories,
     processData(ersSummary, failedStatus, successStatus).recover {
       case error =>
         metadataRepository.updateStatus(ersSummary.metaData.schemeInfo, failedStatus, Session.id(hc))
-        logger.error(s"Processing data failed with error: [$error]. Updating transfer status to: [$failedStatus] for ${ersSummary.metaData.schemeInfo}")
+        logger.error(s"Processing data failed with error: [$error]. Updating transfer status to: [$failedStatus] for ${ersSummary.metaData.schemeInfo.basicLogMessage}")
         false
     }
 

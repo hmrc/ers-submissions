@@ -17,11 +17,13 @@
 package uk.gov.hmrc
 
 import org.mongodb.scala.model.Filters
-import repositories.MetadataMongoRepository
+import repositories.{MetadataMongoRepository, PresubmissionMongoRepository}
 import scheduler.ResubmissionServiceImpl
 import _root_.play.api.Application
 import _root_.play.api.libs.json.JsObject
 import _root_.play.api.test.Helpers._
+import _root_.play.api.libs.json._
+import models.SchemeData
 import org.mongodb.scala.MongoCollection
 import org.mongodb.scala.bson.BsonDocument
 import org.mongodb.scala.bson.conversions.Bson
@@ -33,7 +35,10 @@ case class ResubmissionJobSetUp(app: Application) {
 
   val metadataMongoRepository: MetadataMongoRepository = app.injector.instanceOf[MetadataMongoRepository]
   val collection: MongoCollection[JsObject] = metadataMongoRepository.collection
+  val presubmissionMongoRepository: PresubmissionMongoRepository = app.injector.instanceOf[PresubmissionMongoRepository]
+  val collectionPs: MongoCollection[JsObject] = presubmissionMongoRepository.collection
   await(collection.drop().toFuture())
+  await(collectionPs.drop().toFuture())
 
   def getJob: ResubmissionServiceImpl = app.injector.instanceOf[ResubmissionServiceImpl]
 
@@ -46,6 +51,12 @@ case class ResubmissionJobSetUp(app: Application) {
 
   def storeMultipleErsSummary(ersSummaries: Seq[JsObject])(implicit ec: ExecutionContext): Future[Boolean] = {
     collection.insertMany(ersSummaries).toFuture().map { res =>
+      res.wasAcknowledged()
+    }
+  }
+
+  def storeMultiplePresubmissionData(presubmissionData: Seq[JsObject])(implicit ec: ExecutionContext): Future[Boolean] = {
+    collectionPs.insertMany(presubmissionData).toFuture().map { res =>
       res.wasAcknowledged()
     }
   }

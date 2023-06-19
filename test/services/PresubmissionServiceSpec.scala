@@ -19,7 +19,7 @@ package services
 import common.ERSEnvelope
 import fixtures.Fixtures
 import helpers.ERSTestHelper
-import models.{MongoGenericError, SchemeData, SchemeDataMappingError, SchemeInfo}
+import models.{MongoGenericError, SchemeData, SchemeDataMappingError, SchemeInfo, NoData}
 import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
 import org.scalatest.EitherValues
@@ -86,10 +86,10 @@ class PresubmissionServiceSpec extends ERSTestHelper with EitherValues {
       result.value.isEmpty shouldBe false
     }
 
-    "return empty list if finding fails" in {
+    "return NoData() if finding fails" in {
       val presubmissionService = buildPresubmissionService(Some(true), getJsonResult = false)
       val result = await(presubmissionService.getJson(Fixtures.EMISchemeInfo).value)
-      result.value.isEmpty shouldBe true
+      result.swap.value shouldBe NoData()
     }
 
     "return SchemeDataMappingError if mapping to SchemeData fails" in {

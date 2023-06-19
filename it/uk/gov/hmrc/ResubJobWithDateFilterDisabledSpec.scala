@@ -18,8 +18,9 @@ package uk.gov.hmrc
 
 import _root_.play.api.Application
 import _root_.play.api.inject.guice.GuiceApplicationBuilder
+import _root_.play.api.libs.json._
 import _root_.play.api.test.Helpers._
-import models.ERSError
+import models.{ERSError, ErsSummary}
 import org.mongodb.scala.model.Filters
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
@@ -51,7 +52,9 @@ class ResubJobWithDateFilterDisabledSpec extends AnyWordSpecLike
   "With dateTimeFiltering not enabled ResubPresubmissionServiceJob" should {
     "resubmit failed jobs with the correct transfer status and schema type" in new ResubmissionJobSetUp(app = app) {
       val storeDocs: Boolean = await(storeMultipleErsSummary(Fixtures.ersSummaries))
+      val storePresubmissions: Boolean = await(storeMultiplePresubmissionData(Fixtures.schemeData))
       storeDocs shouldBe true
+      storePresubmissions shouldBe true
 
       countMetadataRecordsWithSelector(Filters.empty()) shouldBe 6
       countMetadataRecordsWithSelector(successResubmitTransferStatusSelector) shouldBe 1
@@ -66,8 +69,13 @@ class ResubJobWithDateFilterDisabledSpec extends AnyWordSpecLike
     }
 
     "resubmit failed jobs in batches with the correct transfer status and schema type" in new ResubmissionJobSetUp(app = app) {
-      val storeDocs: Boolean = await(storeMultipleErsSummary(Fixtures.generateListOfErsSummaries()))
+      val ersSummaries: Seq[ErsSummary] = Fixtures.generateListOfErsSummaries()
+
+      val storeDocs: Boolean = await(storeMultipleErsSummary(ersSummaries.map(Json.toJsObject(_))))
       storeDocs shouldBe true
+
+      val storePresubmissionDocs: Boolean = await(storeMultiplePresubmissionData(Fixtures.generatePresubmissionRecordsForMetadata(ersSummaries).map(Json.toJsObject(_))))
+      storePresubmissionDocs shouldBe true
 
       countMetadataRecordsWithSelector(Filters.empty()) shouldBe 40
       countMetadataRecordsWithSelector(successResubmitTransferStatusSelector) shouldBe 0
@@ -85,8 +93,13 @@ class ResubJobWithDateFilterDisabledSpec extends AnyWordSpecLike
       countMetadataRecordsWithSelector(Filters.empty()) shouldBe 40
       countMetadataRecordsWithSelector(successResubmitTransferStatusSelector) shouldBe 20
       countMetadataRecordsWithSelector(failedJobSelector) shouldBe 0
-      val secondStoreDocs: Boolean = await(storeMultipleErsSummary(Fixtures.failedJobsWithDifferentBundleRef))
+
+      val ersSummariesSecondStore = Fixtures.failedJobsWithDifferentBundleRef
+      val secondStoreDocs: Boolean = await(storeMultipleErsSummary(ersSummariesSecondStore.map(Json.toJsObject(_))))
       secondStoreDocs shouldBe true
+
+      val presubmissionDocsSecondStore: Boolean = await(storeMultiplePresubmissionData(Fixtures.generatePresubmissionRecordsForMetadata(ersSummariesSecondStore).map(Json.toJsObject(_))))
+      presubmissionDocsSecondStore shouldBe true
 
       countMetadataRecordsWithSelector(Filters.empty()) shouldBe 50
       countMetadataRecordsWithSelector(successResubmitTransferStatusSelector) shouldBe 20

@@ -18,9 +18,8 @@ package services
 
 import cats.implicits.catsStdInstancesForFuture
 import common.ERSEnvelope
-import models.SchemeDataMappingError
+import models.{NoData, SchemeData, SchemeDataMappingError, SchemeInfo}
 import common.ERSEnvelope.ERSEnvelope
-import models.{SchemeData, SchemeInfo}
 import play.api.Logging
 import repositories.{PresubmissionMongoRepository, Repositories}
 import uk.gov.hmrc.http.HeaderCarrier
@@ -57,7 +56,7 @@ class PresubmissionService @Inject()(repositories: Repositories, ersLoggingAndAu
         }
       } else {
         logger.info(s"No data found in pre-submission repository for: ${schemeInfo.basicLogMessage}")
-        ERSEnvelope(scala.Seq())
+        ERSEnvelope(NoData())
       }
     }
   }

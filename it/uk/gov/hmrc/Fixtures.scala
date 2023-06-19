@@ -20,6 +20,7 @@ import _root_.play.api.libs.json._
 import models._
 import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
 import org.joda.time.{DateTime, DateTimeZone}
+
 import scala.collection.mutable.ListBuffer
 import scala.util.Random
 
@@ -53,8 +54,8 @@ object Fixtures {
     sapNumber = Some("sap-123456")
   )
 
-  val schemeData: SchemeData = SchemeData(
-    schemeInfo(),
+  def schemeData(timestamp: Option[DateTime] = None): SchemeData = SchemeData(
+    timestamp.fold(schemeInfo())(ts => schemeInfo(timestamp = ts)),
     "EMI40_Adjustments_V4",
     None,
     Some(
@@ -66,7 +67,7 @@ object Fixtures {
     )
   )
 
-  val schemeDataPayload: JsValue = Json.toJson(schemeData)
+  val schemeDataPayload: JsValue = Json.toJson(schemeData())
 
   val companyDetails: CompanyDetails = CompanyDetails(
     "testCompany",
@@ -109,9 +110,8 @@ object Fixtures {
     transferStatus = transferStatus
   )
 
-  def buildErsSummaryPayload(ersSummary: ErsSummary): JsValue = Json.toJson(
-    ersSummary
-  )
+  def buildErsSummaryPayload(ersSummary: ErsSummary): JsValue =
+    Json.toJson(ersSummary)
 
   def generateListOfErsSummaries(numberRecords: Int,
                                  isNilReturn: Boolean = false,
@@ -131,7 +131,7 @@ object Fixtures {
     )
   }
 
-  def generateListOfErsSummaries(): Seq[JsObject] = {
+  def generateListOfErsSummaries(): Seq[ErsSummary] = {
 
     val failedJobs: Seq[ErsSummary] = generateListOfErsSummaries(
       numberRecords = 20
@@ -146,14 +146,18 @@ object Fixtures {
       schemaType = "passed"
     )
 
-    (failedJobs ++ failedJobsWithWrongSchema ++ passedJobs).map(Json.toJsObject(_))
+    failedJobs ++ failedJobsWithWrongSchema ++ passedJobs
   }
 
-  val failedJobsWithDifferentBundleRef: Seq[JsObject] = generateListOfErsSummaries(
-    numberRecords = 10
-  ).map(Json.toJsObject(_))
+  def generatePresubmissionRecordsForMetadata(ersSummaries: Seq[ErsSummary]): Seq[SchemeData] = {
+    ersSummaries.map { summary =>
+      SchemeData(CSOP.schemeInfo.copy(timestamp = summary.metaData.schemeInfo.timestamp), "CSOP_OptionsRCL_V4", None, Some(ListBuffer(CSOP.buildOptionsRCL(true, "yes"))))
+    }
+  }
 
-  val formatter: DateTimeFormatter = DateTimeFormat.forPattern("dd/MM/yyyy");
+  val failedJobsWithDifferentBundleRef: Seq[ErsSummary] = generateListOfErsSummaries(numberRecords = 10)
+
+  val formatter: DateTimeFormatter = DateTimeFormat.forPattern("dd/MM/yyyy")
   val ersSummaries: Seq[JsObject] = Seq(
     Fixtures.buildErsSummary(transferStatus = Some("passed"), schemaType = "CSOP"), // wrong status for resubmission
     Fixtures.buildErsSummary(transferStatus = Some("successResubmit"), schemaType = "CSOP"), // wrong status for resubmission (already resubmitted)
@@ -161,5 +165,11 @@ object Fixtures {
     Fixtures.buildErsSummary(transferStatus = Some("failed"), schemaType = "CSOP" , timestamp = DateTime.parse("30/04/2023", formatter)), // wrong date for resubmission
     Fixtures.buildErsSummary(transferStatus = Some("failed"), schemaType = "CSOP", timestamp = DateTime.parse("10/05/2023", formatter)), // should resubmit
     Fixtures.buildErsSummary(transferStatus = Some("failed"), schemaType = "CSOP", timestamp = DateTime.parse("20/05/2023", formatter)), // should resubmit
+  ).map(Json.toJsObject(_))
+
+  val schemeData: Seq[JsObject] = Seq(
+    SchemeData(CSOP.schemeInfo.copy(timestamp = DateTime.parse("30/04/2023", formatter)), "CSOP_OptionsRCL_V4", None, Some(ListBuffer(CSOP.buildOptionsRCL(true, "yes")))),
+    SchemeData(CSOP.schemeInfo.copy(timestamp = DateTime.parse("10/05/2023", formatter)), "CSOP_OptionsRCL_V4", None, Some(ListBuffer(CSOP.buildOptionsRCL(true, "yes")))),
+    SchemeData(CSOP.schemeInfo.copy(timestamp = DateTime.parse("20/05/2023", formatter)), "CSOP_OptionsRCL_V4", None, Some(ListBuffer(CSOP.buildOptionsRCL(true, "yes"))))
   ).map(Json.toJsObject(_))
 }
