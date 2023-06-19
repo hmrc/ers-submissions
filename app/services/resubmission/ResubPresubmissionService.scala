@@ -102,7 +102,7 @@ class ResubPresubmissionService @Inject()(metadataRepository: MetadataMongoRepos
       if(result) {
         logger.info(s"Resubmission completed successfully for schemeRef: ${ersSummary.metaData.schemeInfo.schemeRef}")
       } else {
-        logger.info(s"Resubmission failed for ${ersSummary.metaData.schemeInfo.basicLogMessage}")
+        logger.error(s"Resubmission failed for ${ersSummary.metaData.schemeInfo.basicLogMessage}")
         auditEvents.sendToAdrEvent("ErsTransferToAdrFailed", ersSummary, source = Some("scheduler"))
       }
       result
