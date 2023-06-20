@@ -28,7 +28,7 @@ case class SchemeInfo (schemeRef: String,
                        schemeName: String,
                        schemeType: String) {
 
-  val basicLogMessage: String = List(schemeRef, schemeId, schemeType).mkString("[",",","]")
+  val basicLogMessage: String = List(schemeRef, schemeType, taxYear, timestamp.getMillis).mkString("[",",","]")
 }
 
 object SchemeInfo {
