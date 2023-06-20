@@ -50,12 +50,12 @@ class PresubmissionService @Inject()(repositories: Repositories, ersLoggingAndAu
           result.map(_.as[SchemeData])
         }.toEither match {
           case Left(value) =>
-            logger.info(s"Mapping data to SchemeData failed with error: [${value.getMessage}] for ${schemeInfo.basicLogMessage}")
+            logger.error(s"Mapping data to SchemeData failed with error: [${value.getMessage}] for ${schemeInfo.basicLogMessage}")
             ERSEnvelope(SchemeDataMappingError(value.getMessage))
           case Right(value) => ERSEnvelope(value)
         }
       } else {
-        logger.info(s"No data found in pre-submission repository for: ${schemeInfo.basicLogMessage}")
+        logger.error(s"No data found in pre-submission repository for: ${schemeInfo.basicLogMessage}")
         ERSEnvelope(NoData())
       }
     }

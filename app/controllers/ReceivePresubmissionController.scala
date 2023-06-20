@@ -74,8 +74,8 @@ class ReceivePresubmissionController @Inject()(presubmissionService: Presubmissi
     }
 
   def submitJson(fileSource: Source[(Seq[Seq[ByteString]], Long), _], submissionsSchemeData: SubmissionsSchemeData)
-                (implicit hc: HeaderCarrier): ERSEnvelope[(Boolean, Long)] = {
-    val submitResult: Future[(Either[ERSError, Boolean], Long)] = fileSource.mapAsyncUnordered(appConfig.submissionParallelism)(chunkedRowsWithIndex => {
+                (implicit hc: HeaderCarrier): ERSEnvelope[(Boolean, Long)] = EitherT {
+    fileSource.mapAsyncUnordered(appConfig.submissionParallelism)(chunkedRowsWithIndex => {
       val (chunkedRows, index) = chunkedRowsWithIndex
       val checkedData: Option[ListBuffer[scala.Seq[String]]] = Option(chunkedRows.map(_.map(_.utf8String)).to(ListBuffer)).filter(_.nonEmpty)
 
@@ -84,19 +84,14 @@ class ReceivePresubmissionController @Inject()(presubmissionService: Presubmissi
           submissionsSchemeData.sheetName,
           numberOfParts = None,
           data = checkedData))
-        .value.map(wasStoredSuccessfully => (wasStoredSuccessfully, index))
+        .value
+        .map(_.map((_, index)))
     })
-      .takeWhile(booleanAndIndex => {
-        val wasStoredSuccessfully: Boolean = booleanAndIndex._1.getOrElse(false)
+      .takeWhile((booleanAndIndex: Either[ERSError, (Boolean, Long)]) => {
+        val wasStoredSuccessfully: Boolean = booleanAndIndex.map(_._1).getOrElse(false)
         wasStoredSuccessfully
       }, inclusive = true)
       .runWith(Sink.last)
-
-    EitherT(submitResult.map {
-      case (Right(true), index) => Right((true, index))
-      case (Right(false), index) => Right((false, index))
-      case (Left(ersError), _) => Left(ersError)
-    })
   }
 
   def storePresubmission(submissionsSchemeData: SubmissionsSchemeData)(implicit hc: HeaderCarrier): Future[Result] = {

@@ -16,17 +16,15 @@
 
 package uk.gov.hmrc
 
-import org.mongodb.scala.model.Filters
-import repositories.{MetadataMongoRepository, PresubmissionMongoRepository}
-import scheduler.ResubmissionServiceImpl
 import _root_.play.api.Application
 import _root_.play.api.libs.json.JsObject
 import _root_.play.api.test.Helpers._
-import _root_.play.api.libs.json._
-import models.SchemeData
 import org.mongodb.scala.MongoCollection
 import org.mongodb.scala.bson.BsonDocument
 import org.mongodb.scala.bson.conversions.Bson
+import org.mongodb.scala.model.Filters
+import repositories.{MetadataMongoRepository, PresubmissionMongoRepository}
+import scheduler.ResubmissionServiceImpl
 import services.resubmission.ProcessFailedSubmissionsConfig
 
 import scala.concurrent.{ExecutionContext, Future}

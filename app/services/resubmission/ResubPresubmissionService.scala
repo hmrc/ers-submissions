@@ -16,6 +16,7 @@
 
 package services.resubmission
 
+import cats.implicits._
 import common.ERSEnvelope
 import common.ERSEnvelope.ERSEnvelope
 import models._
@@ -79,7 +80,6 @@ class ResubPresubmissionService @Inject()(metadataRepository: MetadataMongoRepos
       updateResult <- metadataRepository.findAndUpdateByStatus(failedJobIds, Session.id(hc))
       ersSummaries <- metadataRepository.findErsSummaries(failedJobIds, Session.id(hc))
       resubmissionResults <- if (updateResult.wasAcknowledged()) {
-        import cats.implicits._
         ersSummaries.map { ersSummary =>
           startResubmission(ersSummary, processFailedSubmissionsConfig).map { result =>
             auditEvents.resubmissionResult(ersSummary.metaData.schemeInfo, result)
@@ -102,7 +102,6 @@ class ResubPresubmissionService @Inject()(metadataRepository: MetadataMongoRepos
       if(result) {
         logger.info(s"Resubmission completed successfully for schemeRef: ${ersSummary.metaData.schemeInfo.schemeRef}")
       } else {
-        logger.error(s"Resubmission failed for ${ersSummary.metaData.schemeInfo.basicLogMessage}")
         auditEvents.sendToAdrEvent("ErsTransferToAdrFailed", ersSummary, source = Some("scheduler"))
       }
       result
