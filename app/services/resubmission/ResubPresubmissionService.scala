@@ -97,7 +97,7 @@ class ResubPresubmissionService @Inject()(metadataRepository: MetadataMongoRepos
                        (implicit request: Request[_], hc: HeaderCarrier): ERSEnvelope[Boolean] = {
     logger.info(ProcessingResubmitMessage.message + ersSummary.metaData.schemeInfo.basicLogMessage)
     submissionCommonService.callProcessData(ersSummary,
-      Statuses.FailedResubmission.toString,
+      processFailedSubmissionsConfig.failedStatus,
       processFailedSubmissionsConfig.resubmitSuccessStatus).map { result =>
       if(result) {
         logger.info(s"Resubmission completed successfully for schemeRef: ${ersSummary.metaData.schemeInfo.schemeRef}")
