@@ -95,7 +95,7 @@ class ResubPresubmissionService @Inject()(metadataRepository: MetadataMongoRepos
 
   def startResubmission(ersSummary: ErsSummary, processFailedSubmissionsConfig: ProcessFailedSubmissionsConfig)
                        (implicit request: Request[_], hc: HeaderCarrier): ERSEnvelope[Boolean] = {
-    logger.info(ProcessingResubmitMessage.message + ersSummary.confirmationDateTime)
+    logger.info(ProcessingResubmitMessage.message + ersSummary.metaData.schemeInfo.basicLogMessage)
     submissionCommonService.callProcessData(ersSummary,
       Statuses.FailedResubmission.toString,
       processFailedSubmissionsConfig.resubmitSuccessStatus).map { result =>
