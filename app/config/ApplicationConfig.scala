@@ -44,7 +44,7 @@ class ApplicationConfig @Inject()(serviceConfig: ServicesConfig) {
     .getOrElse(List())
   lazy val schedulerSchemeRefStatusList: List[String] = Try(serviceConfig.getString("schedules.resubmission-service.resubmit-list-statuses").split(",").toList)
     .getOrElse(List())
-  lazy val schedulerSchemeRefFailStatus: String = serviceConfig.getConfString("schedules.resubmission-service.resubmit-list-failStatus", "failedScheduler")
+  lazy val schedulerSchemeRefFailStatus: String = serviceConfig.getString("schedules.resubmission-service.resubmit-list-failStatus")
 
   lazy val schedulerEnableResubmitByScheme: Boolean = serviceConfig.getBoolean("schedules.resubmission-service.schemaFilter.enabled")
   lazy val schedulerResubmitScheme: String = serviceConfig.getString("schedules.resubmission-service.schemaFilter.filter")
