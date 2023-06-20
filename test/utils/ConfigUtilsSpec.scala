@@ -30,12 +30,12 @@ class ConfigUtilsSpec extends ERSTestHelper {
   val testConfigUtils = new ConfigUtils(mockADRExceptionEmitter)
   implicit val request: FakeRequest[AnyContent] = FakeRequest()
   implicit val hc: HeaderCarrier = HeaderCarrier()
-  implicit val ersSummary: ErsSummary = Fixtures.EMISummaryDate
+  val ersSummary: ErsSummary = Fixtures.EMISummaryDate
 
   "calling getConfigData" should {
 
     "return config object" in {
-      val result = testConfigUtils.getConfigData("common/Root", "Root")
+      val result = testConfigUtils.getConfigData("common/Root", "Root", ersSummary)
       val firstField = result.getConfigList("fields").get(0)
       firstField.getString("name") shouldBe "regime"
       firstField.getString("type") shouldBe "string"
@@ -44,7 +44,7 @@ class ConfigUtilsSpec extends ERSTestHelper {
 
     "throws ADRException if unexisting file is loaded" in {
       val result = intercept[ADRTransferException] {
-        testConfigUtils.getConfigData("nonexistent path", "Root")
+        testConfigUtils.getConfigData("nonexistent path", "Root", ersSummary)
       }
       result.message shouldBe "Trying to load invalid configuration. Path: nonexistent path, value: Root"
       result.context shouldBe "ConfigUtils.getConfigData"

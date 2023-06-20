@@ -16,24 +16,23 @@
 
 package services
 
+import common.ERSEnvelope
 import fixtures.Fixtures
 import helpers.ERSTestHelper
-import models.ErsSummary
+import models.{ErsSummary, MongoGenericError}
 import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
-import org.scalatest.BeforeAndAfterEach
+import org.scalatest.{BeforeAndAfterEach, EitherValues}
 import repositories.{MetadataMongoRepository, Repositories}
-import utils.LoggingAndRexceptions.ErsLoggingAndAuditing
-
-import scala.concurrent.Future
+import services.audit.AuditEvents
 import uk.gov.hmrc.http.HeaderCarrier
 
-class MetadataServiceSpec extends ERSTestHelper with BeforeAndAfterEach {
+class MetadataServiceSpec extends ERSTestHelper with BeforeAndAfterEach with EitherValues {
 
   implicit val hc: HeaderCarrier = new HeaderCarrier()
 
   val mockRepositories: Repositories = mock[Repositories]
-  val mockErsLoggingAndAuditing: ErsLoggingAndAuditing = mock[ErsLoggingAndAuditing]
+  val mockAuditEvents: AuditEvents = mock[AuditEvents]
   val mockMetadataRepository: MetadataMongoRepository = mock[MetadataMongoRepository]
 
   override def beforeEach(): Unit = {
@@ -42,29 +41,29 @@ class MetadataServiceSpec extends ERSTestHelper with BeforeAndAfterEach {
   }
   "calling storeErsSummary" should {
 
-    val metadataService: MetadataService = new MetadataService(mockMetadataRepository, mockErsLoggingAndAuditing) {
+    val metadataService: MetadataService = new MetadataService(mockMetadataRepository, mockAuditEvents) {
       override lazy val metadataRepository: MetadataMongoRepository = mockMetadataRepository
     }
 
     "return the result of storeErsSummary" in {
-      when(mockMetadataRepository.storeErsSummary(any[ErsSummary]())).thenReturn(Future.successful(true))
+      when(mockMetadataRepository.storeErsSummary(any[ErsSummary](), any()))
+        .thenReturn(ERSEnvelope(true))
 
-      val result = await(metadataService.storeErsSummary(Fixtures.metadata)(hc))
-      result shouldBe true
+      val result = await(metadataService.storeErsSummary(Fixtures.metadata)(hc).value)
+      result.value shouldBe true
     }
 
-    "return false if storeErsSummary throws exception" in {
-      when(mockMetadataRepository.storeErsSummary(any[ErsSummary]()))
-        .thenReturn(Future.failed(new RuntimeException))
+    "recover from error and return false if storeErsSummary returns error" in {
+      when(mockMetadataRepository.storeErsSummary(any[ErsSummary](), any()))
+        .thenReturn(ERSEnvelope(MongoGenericError("Mongo operation failed")))
 
-      val result = await(metadataService.storeErsSummary(Fixtures.metadata)(hc))
-      result shouldBe false
+      val result = await(metadataService.storeErsSummary(Fixtures.metadata)(hc).value)
+      result.value shouldBe false
     }
   }
 
   "calling validateErsSummaryFromJson" should {
-
-    def metadataService(validationResult: Boolean): MetadataService = new MetadataService(mockMetadataRepository, mockErsLoggingAndAuditing) {
+    def metadataService(validationResult: Boolean): MetadataService = new MetadataService(mockMetadataRepository, mockAuditEvents) {
 
       override def validateErsSummary(ersSummary: ErsSummary): (Boolean, Option[String]) = {
         (validationResult, Some(""))
@@ -74,26 +73,26 @@ class MetadataServiceSpec extends ERSTestHelper with BeforeAndAfterEach {
     "return object of ErsSummary if json is correct and there are no additional validation errors" in {
       val service = metadataService(true)
       val result = service.validateErsSummaryFromJson(Fixtures.metadataJson)
-      result.isDefined shouldBe true
+      result.isSuccess shouldBe true
+      result.asEither.value shouldBe an[ErsSummary]
     }
 
-    "return Null if json is correct and but there are additional validation errors" in {
+    "return JsError if json is correct and but there are additional validation errors" in {
       val service = metadataService(false)
       val result = service.validateErsSummaryFromJson(Fixtures.metadataJson)
-      result.isDefined shouldBe false
+      result.isSuccess shouldBe false
     }
 
-    "return Null if json is not correct" in {
+    "return JsError if json is not correct" in {
       val service = metadataService(true)
       val result = service.validateErsSummaryFromJson(Fixtures.invalidJson)
-      result.isDefined shouldBe false
+      result.isSuccess shouldBe false
     }
-
   }
 
   "calling validateErsSummary" should {
 
-    val metadataService: MetadataService = new MetadataService(mockMetadataRepository, mockErsLoggingAndAuditing)
+    val metadataService: MetadataService = new MetadataService(mockMetadataRepository, mockAuditEvents)
 
     "return true if given ErsSummary has no errors" in {
       val result = metadataService.validateErsSummary(Fixtures.metadata)

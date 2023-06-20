@@ -21,35 +21,35 @@ import akka.http.scaladsl.model.{HttpRequest, HttpResponse}
 import akka.stream.scaladsl.Source
 import akka.testkit.TestKit
 import akka.util.ByteString
+import common.ERSEnvelope
+import common.ERSEnvelope.ERSEnvelope
 import config.ApplicationConfig
 import controllers.auth.AuthAction
 import fixtures.{Fixtures, SIP, WithMockedAuthActions}
 import helpers.ERSTestHelper
 import metrics.Metrics
-import models.{SchemeData, SubmissionsSchemeData, UpscanCallback}
+import models._
 import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
-import play.api.test.Helpers._
 import org.mockito.internal.verification.VerificationModeFactory
 import org.scalatest.BeforeAndAfterEach
 import play.api.http.Status
-import play.api.libs.json.JsObject
 import play.api.mvc.PlayBodyParsers
 import play.api.test.FakeRequest
+import play.api.test.Helpers._
 import services.audit.AuditEvents
-import services.{FileDownloadService, PresubmissionService, ValidationService}
+import services.{FileDownloadService, PresubmissionService}
 import uk.gov.hmrc.auth.core.AuthConnector
+import uk.gov.hmrc.http.HeaderCarrier
 import utils.LoggingAndRexceptions.ErsLoggingAndAuditing
 
 import scala.concurrent.Future
-import uk.gov.hmrc.http.{HeaderCarrier, UpstreamErrorResponse}
 
 class ReceivePresubmissionControllerSpec extends TestKit(ActorSystem("ReceivePresubmissionControllerSpec"))
   with ERSTestHelper with BeforeAndAfterEach with WithMockedAuthActions {
 
   val mockAuthAction: AuthAction = mock[AuthAction]
   val mockPresubmissionService: PresubmissionService = mock[PresubmissionService]
-  val mockValidationService: ValidationService = mock[ValidationService]
   val mockErsLoggingAndAuditing: ErsLoggingAndAuditing = mock[ErsLoggingAndAuditing]
   val mockAuthConnector: AuthConnector = mock[AuthConnector]
   val mockAuditEvents: AuditEvents = mock[AuditEvents]
@@ -70,7 +70,6 @@ class ReceivePresubmissionControllerSpec extends TestKit(ActorSystem("ReceivePre
     reset(mockMetrics)
     reset(mockErsLoggingAndAuditing)
     reset(mockAuthAction)
-    reset(mockValidationService)
     reset(mockAuthConnector)
     reset(mockAuditEvents)
   }
@@ -79,13 +78,11 @@ class ReceivePresubmissionControllerSpec extends TestKit(ActorSystem("ReceivePre
                                    storeJsonResult: Boolean = true,
                                    downloadResponse: String = Fixtures.submissionsSchemeData.toString,
                                    mockSubmissionResult: Boolean = false,
-                                   failSubmitJson: Option[Throwable] = None
+                                   failSubmitJson: Option[ERSError] = None
                                   ): ReceivePresubmissionController =
     new ReceivePresubmissionController(
       mockPresubmissionService,
-      mockValidationService,
       testFileDownloadService(downloadResponse),
-      mockErsLoggingAndAuditing,
       mockAuthConnector,
       mockAuditEvents,
       mockMetrics,
@@ -97,24 +94,16 @@ class ReceivePresubmissionControllerSpec extends TestKit(ActorSystem("ReceivePre
 
       when(mockApplicationConfig.submissionParallelism).thenReturn(2)
       when(mockPresubmissionService.storeJson(any[SchemeData])(any[HeaderCarrier]()))
-        .thenReturn(Future(storeJsonResult))
-      when(mockPresubmissionService.storeJsonV2(any[SubmissionsSchemeData], any[SchemeData])(any[HeaderCarrier]()))
-        .thenReturn(Future(storeJsonResult))
-      when(mockValidationService.validateSchemeData(any[JsObject]))
-        .thenReturn(if (validationResult) Some(Fixtures.schemeData) else None)
-      when(mockValidationService.validateSubmissionsSchemeData(any[JsObject]))
-        .thenReturn(if (validationResult) Some(Fixtures.submissionsSchemeData) else None)
+        .thenReturn(ERSEnvelope.fromFuture(Future(storeJsonResult)))
 
       override def authorisedAction(empRef: String): AuthAction = mockAuthAction
 
       override def submitJson(fileSource: Source[(Seq[Seq[ByteString]], Long), _], submissionsSchemeData: SubmissionsSchemeData)
-                             (implicit hc: HeaderCarrier): Future[(Boolean, Long)] = {
-        if (mockSubmissionResult) {
-          Future((false, 3L))
-        } else if (failSubmitJson.isDefined) {
-          Future.failed(failSubmitJson.get)
-        } else {
-          super.submitJson(fileSource, submissionsSchemeData)
+                             (implicit hc: HeaderCarrier): ERSEnvelope[(Boolean, Long)] = {
+        (mockSubmissionResult, failSubmitJson) match {
+          case (true, _) => ERSEnvelope[(Boolean, Long)]((false, 3L))
+          case (_, Some(ersError)) => ERSEnvelope[(Boolean, Long)](ersError)
+          case _ => super.submitJson(fileSource, submissionsSchemeData)
         }
       }
     }
@@ -158,7 +147,7 @@ class ReceivePresubmissionControllerSpec extends TestKit(ActorSystem("ReceivePre
 
     "return INTERNAL_SERVER_ERROR if valid json is given but storage fails" in {
       val presubmissionController = buildPresubmissionController(storeJsonResult = false)
-      when(mockPresubmissionService.removeJson(any())(any())).thenReturn(Future(true))
+      when(mockPresubmissionService.removeJson(any())(any())).thenReturn(ERSEnvelope.fromFuture(Future(true)))
       val result = presubmissionController.receivePresubmissionJsonV2("")(FakeRequest().withBody(Fixtures.submissionsSchemeDataJson))
       status(result) shouldBe INTERNAL_SERVER_ERROR
       verify(mockMetrics, VerificationModeFactory.times(0)).storePresubmission(anyLong(), any())
@@ -167,7 +156,7 @@ class ReceivePresubmissionControllerSpec extends TestKit(ActorSystem("ReceivePre
 
     "return INTERNAL_SERVER_ERROR and log a warning if valid json is given, some data is stored and then failed to be removed" in {
       val presubmissionController = buildPresubmissionController(mockSubmissionResult = true)
-      when(mockPresubmissionService.removeJson(any())(any())).thenReturn(Future(false))
+      when(mockPresubmissionService.removeJson(any())(any())).thenReturn(ERSEnvelope.fromFuture(Future(false)))
       val result = presubmissionController.receivePresubmissionJsonV2("")(FakeRequest().withBody(Fixtures.submissionsSchemeDataJson))
       status(result) shouldBe INTERNAL_SERVER_ERROR
       verify(mockMetrics, VerificationModeFactory.times(0)).storePresubmission(anyLong(), any())
@@ -185,26 +174,26 @@ class ReceivePresubmissionControllerSpec extends TestKit(ActorSystem("ReceivePre
   }
 
   "calling storePresubmission" should {
-    "return InternalServerError when receiving an UpstreamErrorResponse from submitJson" in {
+    "return InternalServerError when receiving an MongoGenericError from submitJson" in {
       val submissionsSchemeData: SubmissionsSchemeData = SubmissionsSchemeData(SIP.schemeInfo, "sip sheet name",
         UpscanCallback("name", "/download/url"), 1)
 
-      val presubmissionController = buildPresubmissionController(failSubmitJson = Some(UpstreamErrorResponse("a message", 500)))
+      val presubmissionController = buildPresubmissionController(failSubmitJson = Some(MongoGenericError("Failed")))
       val result = await(presubmissionController.storePresubmission(submissionsSchemeData)(HeaderCarrier.apply()))
 
       result.header.status shouldBe Status.INTERNAL_SERVER_ERROR
-      bodyOf(result) shouldBe "a message"
+      bodyOf(result) shouldBe "Storing presubmission data failed."
     }
 
-    "return InternalServerError when receiving an unknown exception from submitJson" in {
+    "return InternalServerError when receiving an error from submitJson" in {
       val submissionsSchemeData: SubmissionsSchemeData = SubmissionsSchemeData(SIP.schemeInfo, "sip sheet name",
         UpscanCallback("name", "/download/url"), 1)
 
-      val presubmissionController = buildPresubmissionController(failSubmitJson = Some(new RuntimeException("a different message")))
+      val presubmissionController = buildPresubmissionController(failSubmitJson = Some(JsonFromSheetsCreationError("could not parse csv")))
       val result = await(presubmissionController.storePresubmission(submissionsSchemeData)(HeaderCarrier.apply()))
 
       result.header.status shouldBe Status.INTERNAL_SERVER_ERROR
-      bodyOf(result) shouldBe "a different message"
+      bodyOf(result) shouldBe "Storing presubmission data failed."
     }
   }
 }

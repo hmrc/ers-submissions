@@ -17,12 +17,14 @@
 package utils
 
 import com.typesafe.config.Config
+import common.ERSEnvelope
+import common.ERSEnvelope.ERSEnvelope
 import fixtures.Fixtures
 import helpers.ERSTestHelper
-import models.{ADRTransferException, ErsSummary, SchemeInfo}
+import models.{ErsSummary, MongoGenericError, SchemeInfo}
 import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
-import org.scalatest.BeforeAndAfterEach
+import org.scalatest.{BeforeAndAfterEach, EitherValues}
 import play.api.libs.json.{JsObject, Json}
 import play.api.mvc.Request
 import play.api.test.FakeRequest
@@ -31,9 +33,8 @@ import uk.gov.hmrc.http.HeaderCarrier
 import utils.LoggingAndRexceptions.ADRExceptionEmitter
 
 import scala.collection.mutable.ListBuffer
-import scala.concurrent.Future
 
-class ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach {
+class ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with EitherValues {
 
   implicit val hc: HeaderCarrier = new HeaderCarrier()
   implicit val request = FakeRequest().withBody(Fixtures.metadataJson)
@@ -44,7 +45,7 @@ class ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach {
   when(mockConfig.getConfig(anyString())).thenReturn(mock[Config])
 
   val mockConfigUtils: ConfigUtils = mock[ConfigUtils]
-  when(mockConfigUtils.getConfigData(anyString(), anyString())(any[HeaderCarrier](), any[ErsSummary]()))
+  when(mockConfigUtils.getConfigData(anyString(), anyString(), any[ErsSummary]())(any[HeaderCarrier]()))
     .thenReturn(mockConfig)
 
   override def beforeEach(): Unit = {
@@ -89,50 +90,47 @@ class ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach {
       mockConfigUtils
     ) {
 
-      override def createSubmissionJson()(implicit request: Request[_], hc: HeaderCarrier, ersSummary: ErsSummary, schemeType: String): Future[JsObject] =
-        Future.successful(notNilReturnJson)
+      override def createSubmissionJson(ersSummary: ErsSummary, schemeType: String)
+                                       (implicit request: Request[_], hc: HeaderCarrier): ERSEnvelope[JsObject] = ERSEnvelope(notNilReturnJson)
 
-      override def createRootJson(sheetsJson: JsObject)(implicit request: Request[_], hc: HeaderCarrier, ersSummary: ErsSummary, schemeType: String): JsObject =
-        nilReturnJson
-
+      override def createRootJson(sheetsJson: JsObject, ersSummary: ErsSummary, schemeType: String)
+                                 (implicit request: Request[_], hc: HeaderCarrier): JsObject = nilReturnJson
     }
 
     "return createSubmissionJson result for not NilReturn submission" in {
-      val result = await(mockAdrSubmission.generateSubmission()(request, hc, Fixtures.metadata))
+      val result = await(mockAdrSubmission.generateSubmission(Fixtures.metadata)(request, hc).value).value
       result shouldBe notNilReturnJson
     }
 
     "return createRootJson result for NilReturn submission" in {
-      val result = await(mockAdrSubmission.generateSubmission()(request, hc, Fixtures.metadataNilReturn))
+      val result = await(mockAdrSubmission.generateSubmission(Fixtures.metadataNilReturn)(request, hc).value).value
       result shouldBe nilReturnJson
     }
-
   }
 
   "calling createSubmissionJson" should {
-
     val mockAdrSubmission: ADRSubmission = new ADRSubmission(
       mockSubmissionCommon,
       mockPresubmissionService,
       mockAdrExceptionEmitter,
       mockConfigUtils
     ) {
-      override def createSheetsJson(sheetsJson: JsObject)(implicit request: Request[_], hc: HeaderCarrier, ersSummary: ErsSummary, schemeType: String): Future[JsObject] =
-        Future.successful(sheetsJson)
+      override def createSheetsJson(sheetsJson: JsObject, ersSummary: ErsSummary, schemeType: String)
+                                   (implicit request: Request[_], hc: HeaderCarrier): ERSEnvelope[JsObject] =
+        ERSEnvelope(sheetsJson)
 
-      override def createRootJson(sheetsJson: JsObject)(implicit request: Request[_], hc: HeaderCarrier, ersSummary: ErsSummary, schemeType: String): JsObject =
+      override def createRootJson(sheetsJson: JsObject, ersSummary: ErsSummary, schemeType: String)
+                                 (implicit request: Request[_], hc: HeaderCarrier): JsObject =
         notNilReturnJson
     }
 
     "return the result of createRootJson" in {
-
-      val result = await(mockAdrSubmission.createSubmissionJson()(request, hc, Fixtures.metadata, Fixtures.schemeType))
+      val result = await(mockAdrSubmission.createSubmissionJson(Fixtures.metadata, Fixtures.schemeType)(request, hc).value).value
       result shouldBe notNilReturnJson
     }
   }
 
   "calling createSheetsJson" should {
-
     val mockAdrSubmission: ADRSubmission = new ADRSubmission(
       mockSubmissionCommon,
       mockPresubmissionService,
@@ -141,53 +139,49 @@ class ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach {
     ) {
       when(mockSubmissionCommon.mergeSheetData(any[Config](), any[JsObject], any[JsObject])).thenReturn(sheetsJson)
 
-      override def buildJson(configData: Config, fileData: ListBuffer[Seq[String]], row: Option[Int] = None)(implicit request: Request[_], hc: HeaderCarrier): JsObject =
+      override def buildJson(configData: Config, fileData: ListBuffer[Seq[String]], row: Option[Int] = None)
+                            (implicit request: Request[_], hc: HeaderCarrier): JsObject =
         sheetsJson
     }
 
     "return given json as parameter if there is no data in the database" in {
-      when(mockPresubmissionService.getJson(any[SchemeInfo]())(any())).thenReturn(Future.successful(List()))
+      when(mockPresubmissionService.getJson(any[SchemeInfo]())(any())).thenReturn(ERSEnvelope(List()))
 
-      val result = await(mockAdrSubmission.createSheetsJson(sheetsJson)(request, hc, Fixtures.metadata, Fixtures.schemeType))
+      val result = await(mockAdrSubmission.createSheetsJson(sheetsJson, Fixtures.metadata, Fixtures.schemeType)(request, hc).value).value
       result shouldBe sheetsJson
     }
 
     "return merged data json if there is data in the database" in {
       when(mockPresubmissionService.getJson(any[SchemeInfo]())(any()))
-        .thenReturn(Future.successful(List(Fixtures.schemeData)))
+        .thenReturn(ERSEnvelope(scala.Seq(Fixtures.schemeData)))
 
-      val result = await(mockAdrSubmission.createSheetsJson(Json.obj())(request, hc, Fixtures.metadata, Fixtures.schemeType))
+      val result = await(mockAdrSubmission.createSheetsJson(Json.obj(), Fixtures.metadata, Fixtures.schemeType)(request, hc).value).value
       result shouldBe sheetsJson
     }
 
-    "throws adrException if retrieving data throws exception" in {
+    "return MongoGenericError if retrieving data returns error" in {
       when(mockPresubmissionService.getJson(any[SchemeInfo]())(any()))
-        .thenReturn(Future.failed(new Exception("errorMessage")))
+        .thenReturn(ERSEnvelope(MongoGenericError("There was a problem")))
 
-      intercept[ADRTransferException] {
-        await(mockAdrSubmission.createSheetsJson(Json.obj())(request, hc, Fixtures.metadata, Fixtures.schemeType))
-      }
+      val result = await(mockAdrSubmission.createSheetsJson(Json.obj(), Fixtures.metadata, Fixtures.schemeType)(request, hc).value)
+      result.swap.value shouldBe MongoGenericError("There was a problem")
     }
   }
 
   "calling createRootJson" should {
-
     val mockAdrSubmission: ADRSubmission = new ADRSubmission(
       mockSubmissionCommon,
       mockPresubmissionService,
       mockAdrExceptionEmitter,
       mockConfigUtils
     ) {
-      override def buildRoot(configData: Config, metadata: Object, sheetsJson: JsObject)
-                            (implicit request: Request[_], hc: HeaderCarrier, ersSummary: ErsSummary, schemeType: String): JsObject = nilReturnJson
+      override def buildRoot(configData: Config, metadata: Object, sheetsJson: JsObject, ersSummary: ErsSummary, schemeType: String)
+                            (implicit request: Request[_], hc: HeaderCarrier): JsObject = nilReturnJson
     }
 
     "return the result of buildRoot" in {
-
-      val result = mockAdrSubmission.createRootJson(Json.obj())(request, hc, Fixtures.metadataNilReturn, Fixtures.schemeType)
+      val result = mockAdrSubmission.createRootJson(Json.obj(), Fixtures.metadataNilReturn, Fixtures.schemeType)(request, hc)
       result shouldBe nilReturnJson
     }
-
   }
-
 }

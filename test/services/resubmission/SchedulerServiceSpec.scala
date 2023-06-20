@@ -16,11 +16,13 @@
 
 package services.resubmission
 
+import common.ERSEnvelope
 import config.ApplicationConfig
 import helpers.ERSTestHelper
+import models.ResubmissionError
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito._
-import org.scalatest.BeforeAndAfterEach
+import org.scalatest.{BeforeAndAfterEach, EitherValues}
 import play.api.mvc.Request
 import play.api.test.FakeRequest
 import repositories.DefaultLockRepositoryProvider
@@ -29,7 +31,7 @@ import utils.LoggingAndRexceptions.ErsLoggingAndAuditing
 
 import scala.concurrent.Future
 
-class SchedulerServiceSpec extends ERSTestHelper with BeforeAndAfterEach {
+class SchedulerServiceSpec extends ERSTestHelper with BeforeAndAfterEach with EitherValues {
 
   implicit val hc: HeaderCarrier = HeaderCarrier()
   implicit val request: Request[_] = FakeRequest()
@@ -49,26 +51,24 @@ class SchedulerServiceSpec extends ERSTestHelper with BeforeAndAfterEach {
       val schedulerService: ReSubmissionSchedulerService = new ReSubmissionSchedulerService(
         mockApplicationConfig,
         mockMongoLockRepository,
-        mockResubPresubmissionService,
-        mockErsLoggingAndAuditing)
+        mockResubPresubmissionService)
 
-      when(mockResubPresubmissionService.processFailedSubmissions()(any(), any(), any())).thenReturn(Future.successful(true))
+      when(mockResubPresubmissionService.processFailedSubmissions(any())(any(), any())).thenReturn(ERSEnvelope(Future.successful(true)))
 
-      val result = await(schedulerService.resubmit())
-      result shouldBe true
+      val result = await(schedulerService.resubmit().value)
+      result.value shouldBe true
     }
 
-    "return false if resubmitting gridFS data throws exception" in {
+    "return ResubmissionError if resubmitting gridFS data returns error" in {
       val schedulerService: ReSubmissionSchedulerService = new ReSubmissionSchedulerService(
         mockApplicationConfig,
         mockMongoLockRepository,
-        mockResubPresubmissionService,
-        mockErsLoggingAndAuditing)
+        mockResubPresubmissionService)
 
-      when(mockResubPresubmissionService.processFailedSubmissions()(any(), any(), any())).thenReturn(Future.failed(new RuntimeException))
+      when(mockResubPresubmissionService.processFailedSubmissions(any())(any(), any())).thenReturn(ERSEnvelope(ResubmissionError()))
 
-      val result = await(schedulerService.resubmit())
-      result shouldBe false
+      val result = await(schedulerService.resubmit().value)
+      result.swap.value shouldBe ResubmissionError()
     }
   }
 }

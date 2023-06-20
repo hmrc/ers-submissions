@@ -20,7 +20,6 @@ import com.typesafe.config.{Config, ConfigFactory, ConfigValueFactory}
 import fixtures.Common
 import helpers.ERSTestHelper
 import org.joda.time.{DateTime, DateTimeZone}
-import org.mongodb.scala.bson.BsonObjectId
 import play.api.libs.json.{JsObject, Json}
 import uk.gov.hmrc.http.HttpResponse
 
@@ -28,21 +27,6 @@ class SubmissionCommonSpec extends ERSTestHelper {
 
   val mockConfigUtils: ConfigUtils = app.injector.instanceOf[ConfigUtils]
   val testSubmissionCommon: SubmissionCommon = new SubmissionCommon(mockConfigUtils)
-
-  "getBSONObjectID" should {
-
-    "return BSONObjectID if valid string is given" in {
-      val result = testSubmissionCommon.getBSONObjectID("""BSONObjectID("575164805500007f007d5406")""")
-      result.isInstanceOf[BsonObjectId] shouldBe true
-    }
-
-    "throws exception if invalid string is given" in {
-      intercept[Exception] {
-        testSubmissionCommon.getBSONObjectID("""Invalid ID""")
-      }
-    }
-
-  }
 
   "getCorrelationID" should {
 
@@ -54,26 +38,6 @@ class SubmissionCommonSpec extends ERSTestHelper {
     "return empty string if CorrelationId is not in header" in {
       val result = testSubmissionCommon.getCorrelationID(HttpResponse(202, body = ""))
       result shouldBe ""
-    }
-  }
-
-  "castToDouble" should {
-    "return double from string" in {
-      testSubmissionCommon.castToDouble("10.5") shouldBe Some(10.5)
-    }
-
-    "return None from invalid double string" in {
-      testSubmissionCommon.castToDouble("test") shouldBe None
-    }
-  }
-
-  "castToInt" should {
-    "return int from string" in {
-      testSubmissionCommon.castToInt("10") shouldBe Some(10)
-    }
-
-    "return None from invalid double string" in {
-      testSubmissionCommon.castToInt("test") shouldBe None
     }
   }
 

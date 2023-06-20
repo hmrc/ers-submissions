@@ -16,47 +16,41 @@
 
 package connectors
 
+import cats.data.EitherT
+import common.ERSEnvelope.ERSEnvelope
+import cats.syntax.all._
 import config.ApplicationConfig
-import javax.inject.Inject
-import play.api.Logging
 import play.api.libs.json.JsObject
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
-import uk.gov.hmrc.http.HttpReads.Implicits.readRaw
-
-import scala.concurrent.{ExecutionContext, Future}
 import uk.gov.hmrc.play.bootstrap.http.DefaultHttpClient
-import utils.CorrelationIdHelper
+import utils.{CorrelationIdHelper, ErrorHandlerHelper}
+import uk.gov.hmrc.http.HttpReads.Implicits._
+
+import javax.inject.Inject
+import scala.concurrent.ExecutionContext
 
 class ADRConnector @Inject()(applicationConfig: ApplicationConfig,
-                             http: DefaultHttpClient) extends Logging with CorrelationIdHelper {
+                             http: DefaultHttpClient) extends ErrorHandlerHelper with CorrelationIdHelper {
 
-  def buildEtmpPath(path: String): String = s"${applicationConfig.adrBaseURI}/${path}"
+  override val className: String = getClass.getSimpleName
 
-  private def explicitHeaders()(implicit hc: HeaderCarrier): Seq[(String, String)] = Seq(
-    ("Environment" -> applicationConfig.UrlHeaderEnvironment),
-    ("Authorization" -> applicationConfig.UrlHeaderAuthorization)
-  ) ++ hc.headers(Seq(HEADER_X_CORRELATION_ID))
+  def buildEtmpPath(path: String): String = s"${applicationConfig.adrBaseURI}/$path"
 
-  def sendData(adrData: JsObject, schemeType: String)(implicit ec: ExecutionContext, hc: HeaderCarrier): Future[HttpResponse] = {
+  private def explicitHeaders()(implicit hc: HeaderCarrier): scala.Seq[(String, String)] = scala.Seq(
+    "Environment" -> applicationConfig.UrlHeaderEnvironment,
+    "Authorization" -> applicationConfig.UrlHeaderAuthorization
+  ) ++ hc.headers(scala.Seq(HEADER_X_CORRELATION_ID))
+
+  def sendData(adrData: JsObject, schemeType: String)(implicit ec: ExecutionContext, hc: HeaderCarrier): ERSEnvelope[HttpResponse] = EitherT {
     val url: String = buildEtmpPath(s"${applicationConfig.adrFullSubmissionURI}/${schemeType.toLowerCase()}")
     val headersForRequest = hc
       .withExtraHeaders(explicitHeaders(): _*)
       .headersForUrl(HeaderCarrier.Config.fromConfig(http.configuration))(url)
 
-    logger.debug("Sending data to ADR.\n" +
-      s"hc - headers: $headersForRequest\n" +
-      s"url: $url")
-
-    http.POST(url, adrData, headers = headersForRequest).map { res =>
-      logger.warn(s"ADR response: ${res.status}")
-      res
-    }.recover {
-      case ex: Exception =>
-        logger.error("Exception in ADRConnector sending data to ADR" + ex.getMessage)
-        throw ex
-      case tex: Throwable =>
-        logger.error("Throwable recovery in ADRConnector sending data to ADR" + tex.getMessage)
-        throw tex
-    }
+    http.POST[JsObject, HttpResponse](url, adrData, headersForRequest)
+      .map(_.asRight)
+      .recover {
+        case ex => Left(handleError(ex, "sendData"))
+      }
   }
 }

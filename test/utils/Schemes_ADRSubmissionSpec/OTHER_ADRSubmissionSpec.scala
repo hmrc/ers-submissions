@@ -17,12 +17,13 @@
 package utils.Schemes_ADRSubmissionSpec
 
 import com.typesafe.config.Config
+import common.ERSEnvelope
 import fixtures.{Common, Fixtures, OTHER}
 import helpers.ERSTestHelper
 import models.{SchemeData, SchemeInfo}
 import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
-import org.scalatest.BeforeAndAfter
+import org.scalatest.{BeforeAndAfter, EitherValues}
 import play.api.libs.json._
 import play.api.test.FakeRequest
 import services.PresubmissionService
@@ -33,7 +34,7 @@ import utils.{ADRSubmission, ConfigUtils, SubmissionCommon}
 import scala.collection.mutable.ListBuffer
 import scala.concurrent.Future
 
-class OTHER_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfter {
+class OTHER_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfter with EitherValues {
 
   implicit val hc: HeaderCarrier = new HeaderCarrier()
   implicit val request: FakeRequest[JsObject] = FakeRequest().withBody(Fixtures.metadataJson)
@@ -61,11 +62,11 @@ class OTHER_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfter {
       when(
         mockPresubmissionService.getJson(any[SchemeInfo]())(any())
       ).thenReturn(
-        Future.successful(List())
+        ERSEnvelope(Future.successful(List()))
       )
 
-      val result = await(mockAdrSubmission.generateSubmission()(request, hc, OTHER.metadataNilReturn))
-      result-("acknowledgementReference") shouldBe Json.parse("""{
+      val result = await(mockAdrSubmission.generateSubmission(OTHER.metadataNilReturn)(request, hc).value)
+      result.value - ("acknowledgementReference") shouldBe Json.parse("""{
                                                                 |"regime":"ERS",
                                                                 |"schemeType":"OTHER",
                                                                 |"schemeReference":"XA1100000000000",
@@ -103,11 +104,11 @@ class OTHER_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfter {
       when(
         mockPresubmissionService.getJson(any[SchemeInfo]())(any())
       ).thenReturn(
-        Future.successful(List())
+        ERSEnvelope(List())
       )
 
-      val result = await(mockAdrSubmission.generateSubmission()(request, hc, OTHER.metadata))
-      result-("acknowledgementReference") shouldBe Json.parse("""{
+      val result = await(mockAdrSubmission.generateSubmission(OTHER.metadata)(request, hc).value)
+      result.value - ("acknowledgementReference") shouldBe Json.parse("""{
                                                                 |"regime":"ERS",
                                                                 |"schemeType":"OTHER",
                                                                 |"schemeReference":"XA1100000000000",
@@ -168,7 +169,7 @@ class OTHER_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfter {
       when(
         mockPresubmissionService.getJson(any[SchemeInfo]())(any())
       ).thenReturn(
-        Future.successful(
+        ERSEnvelope(
           List(
             SchemeData(OTHER.schemeInfo, "Other_Grants_V4", None, Some(ListBuffer(OTHER.buildGrantedV4()))),
             SchemeData(OTHER.schemeInfo, "Other_Options_V4", None, Some(ListBuffer(OTHER.buildOptionV4("yes", "yes", "yes", "yes", "yes")))),
@@ -183,8 +184,8 @@ class OTHER_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfter {
         )
       )
 
-      val result = await(mockAdrSubmission.generateSubmission()(request, hc, OTHER.metadata))
-      result-("acknowledgementReference") shouldBe Json.parse("""{
+      val result = await(mockAdrSubmission.generateSubmission(OTHER.metadata)(request, hc).value)
+      result.value - ("acknowledgementReference") shouldBe Json.parse("""{
                                                                  |"regime":"ERS",
                                                                  |"schemeType":"OTHER",
                                                                  |"schemeReference":"XA1100000000000",
@@ -493,7 +494,7 @@ class OTHER_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfter {
       when(
         mockPresubmissionService.getJson(any[SchemeInfo]())(any())
       ).thenReturn(
-        Future.successful(
+        ERSEnvelope(Future.successful(
           List(
             SchemeData(OTHER.schemeInfo, "Other_Grants_V4", None, Some(ListBuffer(OTHER.buildGrantedV4()))),
             SchemeData(OTHER.schemeInfo, "Other_Grants_V4", None, Some(ListBuffer(OTHER.buildGrantedV4()))),
@@ -515,10 +516,10 @@ class OTHER_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfter {
             SchemeData(OTHER.schemeInfo, "Other_Sold_V4", None, Some(ListBuffer(OTHER.buildSoldV4("yes"))))
           )
         )
-      )
+      ))
 
-      val result = await(mockAdrSubmission.generateSubmission()(request, hc, OTHER.metadata))
-      result-("acknowledgementReference") shouldBe Json.parse("""{
+      val result = await(mockAdrSubmission.generateSubmission(OTHER.metadata)(request, hc).value)
+      result.value - ("acknowledgementReference") shouldBe Json.parse("""{
                                                                 |"regime":"ERS",
                                                                 |"schemeType":"OTHER",
                                                                 |"schemeReference":"XA1100000000000",
@@ -1085,7 +1086,6 @@ class OTHER_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfter {
     }
 
     // Options V4
-
     "create valid JSON for Options V4 with given TaxAvoidance = yes, optionsExercised = yes, sharesListedOnSE = yes, agreedHMRC = yes, valueReceivedOnRACL = yes" in {
 
       val sheetName: String = "Other_Options_V4"

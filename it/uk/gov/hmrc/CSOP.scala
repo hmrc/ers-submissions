@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-package fixtures
-
-import java.text.SimpleDateFormat
+package uk.gov.hmrc
 
 import models._
 import org.joda.time.DateTime
+
+import java.text.SimpleDateFormat
 
 object CSOP {
 

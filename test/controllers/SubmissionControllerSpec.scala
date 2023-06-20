@@ -16,8 +16,8 @@
 
 package controllers
 
-import java.util.concurrent.TimeUnit
-
+import common.ERSEnvelope
+import common.ERSEnvelope.ERSEnvelope
 import fixtures.Fixtures
 import helpers.ERSTestHelper
 import metrics.Metrics
@@ -26,7 +26,7 @@ import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
 import org.mockito.internal.verification.VerificationModeFactory
 import org.scalatest.BeforeAndAfterEach
-import play.api.libs.json.JsObject
+import play.api.libs.json.{JsError, JsObject, JsSuccess}
 import play.api.mvc._
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
@@ -35,6 +35,7 @@ import services.audit.AuditEvents
 import uk.gov.hmrc.http.HeaderCarrier
 import utils.LoggingAndRexceptions.ErsLoggingAndAuditing
 
+import java.util.concurrent.TimeUnit
 import scala.concurrent.{ExecutionContext, Future}
 
 class SubmissionControllerSpec extends ERSTestHelper with BeforeAndAfterEach {
@@ -43,7 +44,6 @@ class SubmissionControllerSpec extends ERSTestHelper with BeforeAndAfterEach {
   val mockErsLoggingAndAuditing : ErsLoggingAndAuditing = mock[ErsLoggingAndAuditing]
   val mockSubmissionCommonService: SubmissionService = mock[SubmissionService]
   val mockMetaService: MetadataService = mock[MetadataService]
-  val mockValidationService: ValidationService = mock[ValidationService]
   val mockAuditEvents: AuditEvents = mock[AuditEvents]
 
   override def beforeEach(): Unit = {
@@ -54,25 +54,22 @@ class SubmissionControllerSpec extends ERSTestHelper with BeforeAndAfterEach {
 
   "calling receiveMetadataJson" should {
 
-    def buildSubmissionController(isValidJson: Boolean = true, expectedResult: Future[Boolean] = Future.successful(true))
+    def buildSubmissionController(isValidJson: Boolean = true, expectedResult: ERSEnvelope[Boolean] = ERSEnvelope(true))
                                  (implicit ec: ExecutionContext): SubmissionController = {
       new SubmissionController(mockSubmissionCommonService,
         mockMetaService,
         mockMetrics,
-        mockErsLoggingAndAuditing,
         mockAuditEvents,
         mockCc) {
 
       when(mockMetaService.validateErsSummaryFromJson(any[JsObject])).thenReturn(
-        if (isValidJson) { Some(Fixtures.metadata) } else { None }
+        if (isValidJson) { JsSuccess(Fixtures.metadata) } else { JsError("validation error") }
       )
 
       when(
         mockSubmissionCommonService.callProcessData(any[ErsSummary], anyString(), anyString())(any[Request[_]](), any[HeaderCarrier]())
-      ).thenReturn(
-        expectedResult
-      )
-    }
+      ).thenReturn(expectedResult)
+      }
     }
 
     "return BadRequest if request data is not valid" in {
@@ -88,51 +85,34 @@ class SubmissionControllerSpec extends ERSTestHelper with BeforeAndAfterEach {
     }
 
     "report an error when data is not sent to ADR and recorded succesfully" in {
-      val submissionController = buildSubmissionController(isValidJson = true, Future.failed(ADRTransferException(mock[ErsMetaData],"","")))
+      val submissionController = buildSubmissionController(isValidJson = true, ERSEnvelope(ADRTransferError()))
       val result = submissionController.receiveMetadataJson()(FakeRequest().withBody(Fixtures.metadataJson))
       status(result) shouldBe INTERNAL_SERVER_ERROR
     }
 
     "report an error when the process of sending data to adr fails to complete" in {
-      val submissionController = buildSubmissionController(isValidJson = true, Future.failed(new Exception))
+      val submissionController = buildSubmissionController(isValidJson = true, ERSEnvelope(ADRTransferError()))
       val result = submissionController.receiveMetadataJson()(FakeRequest().withBody(Fixtures.metadataJson))
       status(result) shouldBe INTERNAL_SERVER_ERROR
     }
-
-    "report an error when the process of sending data to adr throws exception" in {
-      val submissionController = buildSubmissionController()
-
-        when(
-          mockSubmissionCommonService.callProcessData(any[ErsSummary], anyString(), anyString())(any[Request[_]](), any[HeaderCarrier]())
-        ).thenThrow(
-          new RuntimeException
-        )
-
-
-      val result = submissionController.receiveMetadataJson()(FakeRequest().withBody(Fixtures.metadataJson))
-      status(result) shouldBe INTERNAL_SERVER_ERROR
-    }
-
   }
 
   "calling saveMetadata" should {
-
     def buildSubmissionController(validateErsSummaryFromJsonResult: Boolean, storeErsSummaryResult: Boolean): SubmissionController =
       new SubmissionController(mockSubmissionCommonService,
         mockMetaService,
         mockMetrics,
-        mockErsLoggingAndAuditing,
         mockAuditEvents,
         mockCc) {
 
       when(
         mockMetaService.validateErsSummaryFromJson(any[JsObject]())
-      ).thenReturn(if (validateErsSummaryFromJsonResult) Some(Fixtures.metadataNilReturn) else None)
+      ).thenReturn(if (validateErsSummaryFromJsonResult) JsSuccess(Fixtures.metadataNilReturn) else JsError("validation error"))
 
       when(
         mockMetaService.storeErsSummary(any[ErsSummary]())(any[HeaderCarrier]())
       ).thenReturn(
-        Future.successful(storeErsSummaryResult)
+        ERSEnvelope.fromFuture(Future.successful(storeErsSummaryResult))
       )
     }
 

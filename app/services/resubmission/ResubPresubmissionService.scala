@@ -16,26 +16,29 @@
 
 package services.resubmission
 
+import cats.implicits._
+import common.ERSEnvelope
+import common.ERSEnvelope.ERSEnvelope
 import models._
-import org.mongodb.scala.bson.{BsonDocument, ObjectId}
-import org.mongodb.scala.result.UpdateResult
+import org.mongodb.scala.bson.BsonDocument
+import play.api.Logging
 import play.api.libs.json.{JsError, JsObject, JsSuccess}
 import play.api.mvc.Request
 import repositories.MetadataMongoRepository
 import services.SubmissionService
 import services.audit.AuditEvents
 import uk.gov.hmrc.http.HeaderCarrier
-import utils.LoggingAndRexceptions.{ErsLoggingAndAuditing, ResubmissionExceptionEmitter}
+import utils.LoggingAndRexceptions.ErsLoggingAndAuditing
+import utils.Session
 
 import javax.inject.Inject
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.ExecutionContext
 
 class ResubPresubmissionService @Inject()(metadataRepository: MetadataMongoRepository,
                                           val schedulerLoggingAndAuditing: ErsLoggingAndAuditing,
                                           submissionCommonService: SubmissionService,
-                                          auditEvents: AuditEvents,
-                                          resubmissionExceptionEmiter: ResubmissionExceptionEmitter)
-                                         (implicit ec: ExecutionContext) {
+                                          auditEvents: AuditEvents)
+                                         (implicit ec: ExecutionContext) extends Logging {
 
   def mapJsonToAggregatedLog(record: JsObject): Option[AggregatedLog] =
     record.validate[AggregatedLog] match {
@@ -45,105 +48,63 @@ class ResubPresubmissionService @Inject()(metadataRepository: MetadataMongoRepos
         None
     }
 
-  def logAggregateMetadataMetrics(): Future[Unit] = {
+  def logAggregateMetadataMetrics()(implicit hc: HeaderCarrier): ERSEnvelope[Unit] = {
     for {
-      aggregatedRecords: Seq[JsObject] <- metadataRepository
-        .getAggregateCountOfSubmissions()
+      aggregatedRecords <- metadataRepository
+        .getAggregateCountOfSubmissions(Session.id(hc))
       aggregatedLogs = AggregatedLogs(
         aggregatedRecords.flatMap(mapJsonToAggregatedLog)
       ).message
     } yield schedulerLoggingAndAuditing.logInfo(aggregatedLogs)
   }
 
-  def logFailedSubmissionCount()(implicit processFailedSubmissionsConfig: ProcessFailedSubmissionsConfig): Future[Unit] = {
-    val failedJobSelector: BsonDocument = metadataRepository.createFailedJobSelector()
+  def logFailedSubmissionCount(processFailedSubmissionsConfig: ProcessFailedSubmissionsConfig)
+                              (implicit hc: HeaderCarrier): ERSEnvelope[Unit] = {
+    val failedJobSelector: BsonDocument = metadataRepository.createFailedJobSelector(processFailedSubmissionsConfig)
     for {
-      numberOfRecords: Long <- metadataRepository
-        .getNumberOfFailedJobs(failedJobSelector)
+      numberOfRecords <- metadataRepository
+        .getNumberOfFailedJobs(failedJobSelector, Session.id(hc))
       countToLog = TotalNumberSubmissionsToProcessMessage(
         numberOfFailedJobs = numberOfRecords
       ).message
-    } yield schedulerLoggingAndAuditing.logInfo(countToLog)
+    } yield logger.info(countToLog)
   }
 
-  def processFailedSubmissions()(implicit request: Request[_],
-                                 hc: HeaderCarrier,
-                                 processFailedSubmissionsConfig: ProcessFailedSubmissionsConfig): Future[Boolean] = {
+  def processFailedSubmissions(processFailedSubmissionsConfig: ProcessFailedSubmissionsConfig)
+                              (implicit request: Request[_], hc: HeaderCarrier): ERSEnvelope[Boolean] = {
 
-    val failedJobSelector: BsonDocument = metadataRepository.createFailedJobSelector()
+    val failedJobSelector: BsonDocument = metadataRepository.createFailedJobSelector(processFailedSubmissionsConfig)
     for {
-      failedJobIds: Seq[ObjectId] <- metadataRepository.getFailedJobs(failedJobSelector)
-      _ = resubmissionExceptionEmiter.logInfo(NumberOfFailedToBeProcessedMessage(failedJobIds.length).message)
-      updateResult: UpdateResult <- metadataRepository
-        .findAndUpdateByStatus(failedJobIds)
-        .recover {
-          case rex: ResubmissionException => throw rex
-          case ex: Exception => resubmissionExceptionEmiter.emitFrom(
-            Map(
-              "message" -> "Searching for data to be resubmitted",
-              "context" -> "ResubPresubmissionService.processFailedSubmissions.findAndUpdateByStatus"
-            ),
-            Some(ex),
-            None
-          )
-        }
-      ersSummaries: Seq[ErsSummary] <- metadataRepository.findErsSummaries(failedJobIds)
-      resubmissionResults: Seq[Boolean] <- if (updateResult.wasAcknowledged()) {
-          Future.sequence(
-            ersSummaries.map {
-              ersSummary =>
-                startResubmission(ersSummary).map(res => {
-                  auditEvents.resubmissionResult(ersSummary.metaData.schemeInfo, res)
-                  res
-                })
-            }
-          )
-        }
-      else {
-        schedulerLoggingAndAuditing.logWarn(NoDataToResubmitMessage.message)
-        Future(Seq.empty[Boolean])
+      failedJobIds <- metadataRepository.getFailedJobs(failedJobSelector, processFailedSubmissionsConfig)
+      _ = logger.info(NumberOfFailedToBeProcessedMessage(failedJobIds.length).message)
+      updateResult <- metadataRepository.findAndUpdateByStatus(failedJobIds, Session.id(hc))
+      ersSummaries <- metadataRepository.findErsSummaries(failedJobIds, Session.id(hc))
+      resubmissionResults <- if (updateResult.wasAcknowledged()) {
+        ersSummaries.map { ersSummary =>
+          startResubmission(ersSummary, processFailedSubmissionsConfig).map { result =>
+            auditEvents.resubmissionResult(ersSummary.metaData.schemeInfo, result)
+            result
+          }
+        }.sequence
+      } else {
+        logger.warn(NoDataToResubmitMessage.message)
+        ERSEnvelope(scala.Seq[Boolean]())
       }
     } yield resubmissionResults.forall(identity)
   }
 
-  def startResubmission(ersSummary: ErsSummary)(implicit request: Request[_],
-                                                hc: HeaderCarrier,
-                                                processFailedSubmissionsConfig: ProcessFailedSubmissionsConfig): Future[Boolean] = {
-    schedulerLoggingAndAuditing.logInfo(ProcessingResubmitMessage.message + Some(ersSummary.confirmationDateTime))
+  def startResubmission(ersSummary: ErsSummary, processFailedSubmissionsConfig: ProcessFailedSubmissionsConfig)
+                       (implicit request: Request[_], hc: HeaderCarrier): ERSEnvelope[Boolean] = {
+    logger.info(ProcessingResubmitMessage.message + ersSummary.metaData.schemeInfo.basicLogMessage)
     submissionCommonService.callProcessData(ersSummary,
       Statuses.FailedResubmission.toString,
       processFailedSubmissionsConfig.resubmitSuccessStatus).map { result =>
-      val schemeRef = ersSummary.metaData.schemeInfo.schemeRef
-      if (result) {
-        schedulerLoggingAndAuditing.logInfo(s"Resubmission completed successfully for schemeRef: $schemeRef")
+      if(result) {
+        logger.info(s"Resubmission completed successfully for schemeRef: ${ersSummary.metaData.schemeInfo.schemeRef}")
       } else {
-        schedulerLoggingAndAuditing.logInfo(s"Resubmission failed for schemeRef: $schemeRef")
+        auditEvents.sendToAdrEvent("ErsTransferToAdrFailed", ersSummary, source = Some("scheduler"))
       }
       result
-    }.recover {
-      case aex: ADRTransferException =>
-        auditEvents.sendToAdrEvent("ErsTransferToAdrFailed", ersSummary, source = Some("scheduler"))
-        resubmissionExceptionEmiter.emitFrom(
-          Map(
-            "message" -> s"Resubmitting data to ADR - ADRTransferException: ${aex.message}",
-            "context" -> s"${aex.context}"
-          ),
-          Some(aex),
-          Some(ersSummary.metaData.schemeInfo)
-        )
-      case ex: Exception =>
-        auditEvents.sendToAdrEvent("ErsTransferToAdrFailed", ersSummary, source = Some("scheduler"))
-        resubmissionExceptionEmiter.emitFrom(
-          Map(
-            "message" -> s"Resubmitting data to ADR - Exception: ${ex.getMessage}",
-            "context" -> "ResubPresubmissionService.startResubmission.callProcessData"
-          ),
-          Some(ex),
-          Some(ersSummary.metaData.schemeInfo)
-        )
-      case ex: Throwable =>
-        auditEvents.sendToAdrEvent("ErsTransferToAdrFailed", ersSummary, source = Some("scheduler"))
-        throw ex
     }
   }
 }

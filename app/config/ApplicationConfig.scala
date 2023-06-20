@@ -16,10 +16,9 @@
 
 package config
 
-import javax.inject.Inject
-import models.ERSQuery
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
+import javax.inject.Inject
 import scala.util.Try
 
 class ApplicationConfig @Inject()(serviceConfig: ServicesConfig) {
@@ -51,26 +50,15 @@ class ApplicationConfig @Inject()(serviceConfig: ServicesConfig) {
   lazy val schedulerResubmitScheme: String = serviceConfig.getString("schedules.resubmission-service.schemaFilter.filter")
   lazy val schedulerSuccessStatus: String = serviceConfig.getString("schedules.resubmission-service.resubmit-successful-status")
 
-  lazy val defaultScheduleStartDate: String = serviceConfig.getString("schedules.resubmission-service.default-resubmit-start-date")
-
-  lazy val isErsQueryEnabled: Boolean = serviceConfig.getBoolean("ers-query.enabled")
-  lazy val ersQuerySchemeType: String = serviceConfig.getString("ers-query.schemetype")
-  lazy val ersQueryStartDate: String = serviceConfig.getString("ers-query.start-date")
-  lazy val ersQueryEndDate: String = serviceConfig.getString("ers-query.end-date")
-
-  def ersQuery: ERSQuery = {
-    ERSQuery(Some(ersQuerySchemeType),Some(ersQueryStartDate),Some(ersQueryEndDate),None,schedulerSchemeRefList)
-  }
-
   //  Date filter parameters
   lazy val dateTimeFilterEnabled: Boolean = serviceConfig.getBoolean(s"schedules.resubmission-service.dateTimeFilter.enabled")
   lazy val dateFilter: Option[String] =
-    if (dateTimeFilterEnabled)
+    if (dateTimeFilterEnabled) {
       Some(serviceConfig.getString(s"schedules.resubmission-service.dateTimeFilter.filter"))
-    else
+    } else {
       None
+    }
 
   def lockoutTimeout(jobName: String): Int = serviceConfig.getInt(s"schedules.$jobName.lockTimeout")
   def resubmissionLimit(jobName: String): Int = serviceConfig.getInt(s"schedules.$jobName.resubmissionLimit")
-
 }

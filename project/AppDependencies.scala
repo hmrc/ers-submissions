@@ -25,7 +25,8 @@ object AppDependencies {
     "com.typesafe.akka"  %% "akka-actor-typed"                   % akkaVersion,
     "com.typesafe.akka"  %% "akka-serialization-jackson"         % akkaVersion,
     "com.typesafe.akka"  %% "akka-http-spray-json"               % "10.2.10",
-    "com.enragedginger"  %% "akka-quartz-scheduler"              % "1.9.3-akka-2.6.x"
+    "com.enragedginger"  %% "akka-quartz-scheduler"              % "1.9.3-akka-2.6.x",
+    "org.typelevel"      %% "cats-core"                          % "2.9.0"
   )
 
   private val pegdownVersion = "1.6.0"

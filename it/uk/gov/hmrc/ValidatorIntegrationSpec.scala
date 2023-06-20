@@ -24,15 +24,19 @@ import _root_.play.api.test.FakeRequest
 import _root_.play.api.test.Helpers._
 import controllers.{PresubmissionController, ReceivePresubmissionController}
 import models.SubmissionsSchemeData
-import org.scalatest.BeforeAndAfterEach
+import org.scalatest.{BeforeAndAfterEach, EitherValues}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 import repositories.PresubmissionMongoRepository
 
 class ValidatorIntegrationSpec extends AnyWordSpecLike with Matchers
-  with BeforeAndAfterEach with FakeAuthService {
+  with BeforeAndAfterEach with FakeAuthService with EitherValues {
 
-  lazy val app: Application = new GuiceApplicationBuilder().configure(Map("microservice.services.auth.port" -> "18500")).build()
+  lazy val app: Application = new GuiceApplicationBuilder().configure(
+    Map("microservice.services.auth.port" -> "18500",
+      "auditing.enabled" -> false
+    )
+  ).build()
 
   def wsClient: WSClient = app.injector.instanceOf[WSClient]
 
@@ -64,9 +68,9 @@ class ValidatorIntegrationSpec extends AnyWordSpecLike with Matchers
           .withHeaders(("Authorization", "Bearer123"))))
       response.header.status shouldBe OK
 
-      val presubmissionData = await(presubmissionRepository.getJson(submissionsSchemeData.schemeInfo))
+      val presubmissionData = await(presubmissionRepository.getJson(submissionsSchemeData.schemeInfo, "").value).value
       presubmissionData.length shouldBe 1
-      presubmissionData.head.equals(Fixtures.schemeData)
+      presubmissionData.head.equals(Fixtures.schemeData())
     }
 
   }
@@ -83,15 +87,15 @@ class ValidatorIntegrationSpec extends AnyWordSpecLike with Matchers
       
       response.header.status shouldBe OK
 
-      val presubmissionData = await(presubmissionRepository.getJson(submissionsSchemeData.schemeInfo))
+      val presubmissionData = await(presubmissionRepository.getJson(submissionsSchemeData.schemeInfo, "").value).value
       presubmissionData.length shouldBe 1
-      presubmissionData.head.equals(Fixtures.schemeData)
+      presubmissionData.head.equals(Fixtures.schemeData())
 
       val removeResponse = await(presubmissionController.removePresubmissionJson()
         .apply(FakeRequest().withBody(Fixtures.schemeInfoPayload(schemeInfo).as[JsObject])))
       removeResponse.header.status shouldBe OK
 
-      val presubmissionDataAfterRemove = await(presubmissionRepository.getJson(Fixtures.schemeInfo()))
+      val presubmissionDataAfterRemove = await(presubmissionRepository.getJson(Fixtures.schemeInfo(), "").value).value
       presubmissionDataAfterRemove.length shouldBe 0
     }
 
@@ -108,9 +112,9 @@ class ValidatorIntegrationSpec extends AnyWordSpecLike with Matchers
           .withHeaders(("Authorization", "Bearer123"))))
 
       response.header.status shouldBe OK
-      val presubmissionData = await(presubmissionRepository.getJson(schemeInfo))
+      val presubmissionData = await(presubmissionRepository.getJson(schemeInfo, "").value).value
       presubmissionData.length shouldBe 1
-      presubmissionData.head.equals(Fixtures.schemeData)
+      presubmissionData.head.equals(Fixtures.schemeData())
 
       val checkResponse = await(presubmissionController.checkForExistingPresubmission(1)
         .apply(FakeRequest().withBody(Fixtures.schemeInfoPayload(schemeInfo).as[JsObject])))
@@ -126,9 +130,9 @@ class ValidatorIntegrationSpec extends AnyWordSpecLike with Matchers
         .withHeaders(("Authorization", "Bearer123"))))
 
       response.header.status shouldBe OK
-      val presubmissionData = await(presubmissionRepository.getJson(schemeInfo))
+      val presubmissionData = await(presubmissionRepository.getJson(schemeInfo, "").value).value
       presubmissionData.length shouldBe 1
-      presubmissionData.head.equals(Fixtures.schemeData)
+      presubmissionData.head.equals(Fixtures.schemeData())
 
       val checkResponse = await(presubmissionController.checkForExistingPresubmission(2)
         .apply(FakeRequest().withBody(Fixtures.schemeInfoPayload(schemeInfo).as[JsObject])))

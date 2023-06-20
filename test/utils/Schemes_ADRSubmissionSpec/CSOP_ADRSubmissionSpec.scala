@@ -17,12 +17,13 @@
 package utils.Schemes_ADRSubmissionSpec
 
 import com.typesafe.config.Config
+import common.ERSEnvelope
 import fixtures.{CSOP, Common, Fixtures}
 import helpers.ERSTestHelper
 import models.{SchemeData, SchemeInfo}
 import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
-import org.scalatest.BeforeAndAfter
+import org.scalatest.{BeforeAndAfter, EitherValues}
 import play.api.libs.json.{JsObject, Json}
 import play.api.test.FakeRequest
 import services.PresubmissionService
@@ -34,7 +35,7 @@ import scala.collection.mutable.ListBuffer
 import scala.concurrent.Future
 
 class CSOP_ADRSubmissionSpec
-  extends ERSTestHelper with BeforeAndAfter {
+  extends ERSTestHelper with BeforeAndAfter with EitherValues {
 
   val mockSubmissionCommon: SubmissionCommon = app.injector.instanceOf[SubmissionCommon]
   val mockAdrExceptionEmitter: ADRExceptionEmitter = mock[ADRExceptionEmitter]
@@ -62,11 +63,11 @@ class CSOP_ADRSubmissionSpec
       when(
         mockPresubmissionService.getJson(any[SchemeInfo]())(any())
       ).thenReturn(
-        Future.successful(List())
+        ERSEnvelope(Future.successful(List()))
       )
 
-      val result = await(adrSubmission.generateSubmission()(request, hc, CSOP.metadataNilReturnWithoutAltAmmends))
-      result - "acknowledgementReference" shouldBe Json.parse("""{
+      val result = await(adrSubmission.generateSubmission(CSOP.metadataNilReturnWithoutAltAmmends)(request, hc).value)
+      result.value - "acknowledgementReference" shouldBe Json.parse("""{
                                                                 |"regime":"ERS",
                                                                 |"schemeType":"CSOP",
                                                                 |"schemeReference":"XA1100000000000",
@@ -113,11 +114,11 @@ class CSOP_ADRSubmissionSpec
       when(
         mockPresubmissionService.getJson(any[SchemeInfo]())(any())
       ).thenReturn(
-        Future.successful(List())
+        ERSEnvelope(Future.successful(List()))
       )
 
-      val result = await(adrSubmission.generateSubmission()(request, hc, CSOP.metadataNilReturnWithSomeAltAmmends))
-      result - "acknowledgementReference" shouldBe Json.parse("""{
+      val result = await(adrSubmission.generateSubmission(CSOP.metadataNilReturnWithSomeAltAmmends)(request, hc).value)
+      result.value - "acknowledgementReference" shouldBe Json.parse("""{
                                                                 |"regime":"ERS",
                                                                 |"schemeType":"CSOP",
                                                                 |"schemeReference":"XA1100000000000",
@@ -177,11 +178,11 @@ class CSOP_ADRSubmissionSpec
       when(
         mockPresubmissionService.getJson(any[SchemeInfo]())(any())
       ).thenReturn(
-        Future.successful(List())
+        ERSEnvelope(Future.successful(List()))
       )
 
-      val result = await(adrSubmission.generateSubmission()(request, hc, CSOP.metadataNilReturnWithAllAltAmmends))
-      result - "acknowledgementReference"  shouldBe Json.parse("""{
+      val result = await(adrSubmission.generateSubmission(CSOP.metadataNilReturnWithAllAltAmmends)(request, hc).value)
+      result.value - "acknowledgementReference"  shouldBe Json.parse("""{
                                                                  |"regime":"ERS",
                                                                  |"schemeType":"CSOP",
                                                                  |"schemeReference":"XA1100000000000",
@@ -247,11 +248,11 @@ class CSOP_ADRSubmissionSpec
       when(
         mockPresubmissionService.getJson(any[SchemeInfo]())(any())
       ).thenReturn(
-        Future.successful(List())
+        ERSEnvelope(Future.successful(List()))
       )
 
-      val result = await(adrSubmission.generateSubmission()(request, hc, CSOP.metadata))
-      result-("acknowledgementReference") shouldBe Json.parse("""{
+      val result = await(adrSubmission.generateSubmission(CSOP.metadata)(request, hc).value)
+      result.value -("acknowledgementReference") shouldBe Json.parse("""{
                                                                 |"regime":"ERS",
                                                                 |"schemeType":"CSOP",
                                                                 |"schemeReference":"XA1100000000000",
@@ -321,13 +322,13 @@ class CSOP_ADRSubmissionSpec
       when(
         mockPresubmissionService.getJson(any[SchemeInfo]())(any())
       ).thenReturn(
-        Future.successful(
+        ERSEnvelope(Future.successful(
           List(SchemeData(CSOP.schemeInfo, "CSOP_OptionsGranted_V4", None, Some(ListBuffer(CSOP.buildGrantedV4("yes", "yes")))))
         )
-      )
+      ))
 
-      val result = await(adrSubmission.generateSubmission()(request, hc, CSOP.metadata))
-      result-("acknowledgementReference") shouldBe Json.parse("""{
+      val result = await(adrSubmission.generateSubmission(CSOP.metadata)(request, hc).value)
+      result.value -("acknowledgementReference") shouldBe Json.parse("""{
                                                                 |"regime":"ERS",
                                                                 |"schemeType":"CSOP",
                                                                 |"schemeReference":"XA1100000000000",
@@ -410,16 +411,16 @@ class CSOP_ADRSubmissionSpec
       when(
         mockPresubmissionService.getJson(any[SchemeInfo]())(any())
       ).thenReturn(
-        Future.successful(
+        ERSEnvelope(Future.successful(
           List(
             SchemeData(CSOP.schemeInfo, "CSOP_OptionsGranted_V4", None, Some(ListBuffer(CSOP.buildGrantedV4("yes", "yes")))),
             SchemeData(CSOP.schemeInfo, "CSOP_OptionsGranted_V4", None, Some(ListBuffer(CSOP.buildGrantedV4("yes", "yes"))))
           )
         )
-      )
+      ))
 
-      val result = await(adrSubmission.generateSubmission()(request, hc, CSOP.metadata))
-      result-("acknowledgementReference") shouldBe Json.parse("""{
+      val result = await(adrSubmission.generateSubmission(CSOP.metadata)(request, hc).value)
+      result.value -("acknowledgementReference") shouldBe Json.parse("""{
                                                                 |"regime":"ERS",
                                                                 |"schemeType":"CSOP",
                                                                 |"schemeReference":"XA1100000000000",
@@ -511,13 +512,13 @@ class CSOP_ADRSubmissionSpec
       when(
         mockPresubmissionService.getJson(any[SchemeInfo]())(any())
       ).thenReturn(
-        Future.successful(
+        ERSEnvelope(Future.successful(
           List(SchemeData(CSOP.schemeInfo, "CSOP_OptionsRCL_V4", None, Some(ListBuffer(CSOP.buildOptionsRCL(true, "yes")))))
         )
-      )
+      ))
 
-      val result = await(adrSubmission.generateSubmission()(request, hc, CSOP.metadata))
-      result-("acknowledgementReference") shouldBe Json.parse("""{
+      val result = await(adrSubmission.generateSubmission(CSOP.metadata)(request, hc).value)
+      result.value -("acknowledgementReference") shouldBe Json.parse("""{
                                                                 |"regime":"ERS",
                                                                 |"schemeType":"CSOP",
                                                                 |"schemeReference":"XA1100000000000",
@@ -604,16 +605,16 @@ class CSOP_ADRSubmissionSpec
       when(
         mockPresubmissionService.getJson(any[SchemeInfo]())(any())
       ).thenReturn(
-        Future.successful(
+        ERSEnvelope(Future.successful(
           List(
             SchemeData(CSOP.schemeInfo, "CSOP_OptionsRCL_V4", None, Some(ListBuffer(CSOP.buildOptionsRCL(true, "yes")))),
             SchemeData(CSOP.schemeInfo, "CSOP_OptionsRCL_V4", None, Some(ListBuffer(CSOP.buildOptionsRCL(false, "no"))))
           )
         )
-      )
+      ))
 
-      val result = await(adrSubmission.generateSubmission()(request, hc, CSOP.metadata))
-      result-("acknowledgementReference") shouldBe Json.parse("""{
+      val result = await(adrSubmission.generateSubmission(CSOP.metadata)(request, hc).value)
+      result.value -("acknowledgementReference") shouldBe Json.parse("""{
                                                                 |"regime":"ERS",
                                                                 |"schemeType":"CSOP",
                                                                 |"schemeReference":"XA1100000000000",
@@ -710,13 +711,13 @@ class CSOP_ADRSubmissionSpec
       when(
         mockPresubmissionService.getJson(any[SchemeInfo]())(any())
       ).thenReturn(
-        Future.successful(
+        ERSEnvelope(Future.successful(
           List(SchemeData(CSOP.schemeInfo, "CSOP_OptionsExercised_V4", None, Some(ListBuffer(CSOP.buildOptionsExercised(withAllFields = true, sharesListedOnSE = "yes", marketValueAgreedHMRC = "yes", payeOperated = "yes")))))
         )
-      )
+      ))
 
-      val result = await(adrSubmission.generateSubmission()(request, hc, CSOP.metadata))
-      result-("acknowledgementReference") shouldBe Json.parse("""{
+      val result = await(adrSubmission.generateSubmission(CSOP.metadata)(request, hc).value)
+      result.value -("acknowledgementReference") shouldBe Json.parse("""{
                                                                 |"regime":"ERS",
                                                                 |"schemeType":"CSOP",
                                                                 |"schemeReference":"XA1100000000000",
@@ -812,16 +813,16 @@ class CSOP_ADRSubmissionSpec
       when(
         mockPresubmissionService.getJson(any[SchemeInfo]())(any())
       ).thenReturn(
-        Future.successful(
+        ERSEnvelope(Future.successful(
           List(
             SchemeData(CSOP.schemeInfo, "CSOP_OptionsExercised_V4", None, Some(ListBuffer(CSOP.buildOptionsExercised(withAllFields = true, sharesListedOnSE = "yes", marketValueAgreedHMRC = "yes", payeOperated = "yes")))),
             SchemeData(CSOP.schemeInfo, "CSOP_OptionsExercised_V4", None, Some(ListBuffer(CSOP.buildOptionsExercised(withAllFields = true, sharesListedOnSE = "yes", marketValueAgreedHMRC = "yes", payeOperated = "yes"))))
           )
         )
-      )
+      ))
 
-      val result = await(adrSubmission.generateSubmission()(request, hc, CSOP.metadata))
-      result-("acknowledgementReference") shouldBe Json.parse("""{
+      val result = await(adrSubmission.generateSubmission(CSOP.metadata)(request, hc).value)
+      result.value -("acknowledgementReference") shouldBe Json.parse("""{
                                                                 |"regime":"ERS",
                                                                 |"schemeType":"CSOP",
                                                                 |"schemeReference":"XA1100000000000",
@@ -939,17 +940,17 @@ class CSOP_ADRSubmissionSpec
       when(
         mockPresubmissionService.getJson(any[SchemeInfo]())(any())
       ).thenReturn(
-        Future.successful(
+        ERSEnvelope(Future.successful(
           List(
             SchemeData(CSOP.schemeInfo, "CSOP_OptionsGranted_V4", None, Some(ListBuffer(CSOP.buildGrantedV4("yes", "yes")))),
             SchemeData(CSOP.schemeInfo, "CSOP_OptionsRCL_V4", None, Some(ListBuffer(CSOP.buildOptionsRCL(true, "yes")))),
             SchemeData(CSOP.schemeInfo, "CSOP_OptionsExercised_V4", None, Some(ListBuffer(CSOP.buildOptionsExercised(withAllFields = true, sharesListedOnSE = "yes", marketValueAgreedHMRC = "yes", payeOperated = "yes"))))
           )
         )
-      )
+      ))
 
-      val result = await(adrSubmission.generateSubmission()(request, hc, CSOP.metadataWithAllAmmends))
-      result-("acknowledgementReference") shouldBe Json.parse("""{
+      val result = await(adrSubmission.generateSubmission(CSOP.metadataWithAllAmmends)(request, hc).value)
+      result.value -("acknowledgementReference") shouldBe Json.parse("""{
                                                                 |"regime":"ERS",
                                                                 |"schemeType":"CSOP",
                                                                 |"schemeReference":"XA1100000000000",
@@ -1094,7 +1095,7 @@ class CSOP_ADRSubmissionSpec
       when(
         mockPresubmissionService.getJson(any[SchemeInfo]())(any())
       ).thenReturn(
-        Future.successful(
+        ERSEnvelope(Future.successful(
           List(
             SchemeData(CSOP.schemeInfo, "CSOP_OptionsGranted_V4", None, Some(ListBuffer(CSOP.buildGrantedV4("yes", "yes")))),
             SchemeData(CSOP.schemeInfo, "CSOP_OptionsGranted_V4", None, Some(ListBuffer(CSOP.buildGrantedV4("no", "no")))),
@@ -1104,10 +1105,10 @@ class CSOP_ADRSubmissionSpec
             SchemeData(CSOP.schemeInfo, "CSOP_OptionsExercised_V4", None, Some(ListBuffer(CSOP.buildOptionsExercised(withAllFields = true, sharesListedOnSE = "no", marketValueAgreedHMRC = "yes", payeOperated = "yes"))))
           )
         )
-      )
+      ))
 
-      val result = await(adrSubmission.generateSubmission()(request, hc, CSOP.metadataWithAllAmmends))
-      result-("acknowledgementReference") shouldBe Json.parse("""{
+      val result = await(adrSubmission.generateSubmission(CSOP.metadataWithAllAmmends)(request, hc).value)
+      result.value -("acknowledgementReference") shouldBe Json.parse("""{
                                                                 |"regime":"ERS",
                                                                 |"schemeType":"CSOP",
                                                                 |"schemeReference":"XA1100000000000",

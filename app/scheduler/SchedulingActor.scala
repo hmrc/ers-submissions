@@ -18,7 +18,6 @@ package scheduler
 
 import akka.actor.{Actor, ActorLogging, Props}
 import scheduler.SchedulingActor._
-import services.DocumentUpdateService
 import services.resubmission.ReSubmissionSchedulerService
 
 class SchedulingActor extends Actor with ActorLogging {
@@ -38,6 +37,5 @@ object SchedulingActor {
 
   def props(): Props = Props[SchedulingActor]()
 
-  case class UpdateDocumentsClass(service: DocumentUpdateService) extends ScheduledMessage[Boolean]
   case class ResubmissionServiceClass(service: ReSubmissionSchedulerService) extends ScheduledMessage[Boolean]
 }

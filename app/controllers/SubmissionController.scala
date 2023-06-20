@@ -16,75 +16,74 @@
 
 package controllers
 
-import java.util.concurrent.TimeUnit
-
-import javax.inject.Inject
 import metrics.Metrics
 import models._
-import org.joda.time.DateTime
+import play.api.Logging
 import play.api.libs.json._
 import play.api.mvc._
 import services._
 import services.audit.AuditEvents
-import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
-import utils.LoggingAndRexceptions.ErsLoggingAndAuditing
-
-import scala.concurrent.{ExecutionContext, Future}
-import utils.CorrelationIdHelper
 import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
+import utils.{CorrelationIdHelper, ErrorHandlerHelper}
+
+import java.util.concurrent.TimeUnit
+import javax.inject.Inject
+import scala.concurrent.ExecutionContext
 
 class SubmissionController @Inject()(submissionCommonService: SubmissionService,
                                      metadataService: MetadataService,
                                      metrics: Metrics,
-                                     ersLoggingAndAuditing: ErsLoggingAndAuditing,
                                      auditEvents: AuditEvents,
                                      cc: ControllerComponents)
-                                    (implicit val ec: ExecutionContext) extends BackendController(cc) with CorrelationIdHelper {
+                                    (implicit val ec: ExecutionContext) extends BackendController(cc) with CorrelationIdHelper with Logging with ErrorHandlerHelper {
 
-  def receiveMetadataJson(): Action[JsObject] = Action.async(parse.json[JsObject]) { implicit request =>
-    implicit val hc: HeaderCarrier = getOrCreateCorrelationID(request)
-    ersLoggingAndAuditing.logWarn(s"Submission journey 1. received request: ${DateTime.now}")
+  override val className: String = getClass.getSimpleName
+
+  def receiveMetadataJson(): Action[JsObject] = Action.async(parse.json[JsObject]) {
+    implicit request =>
+      implicit val hc: HeaderCarrier = getOrCreateCorrelationID(request)
 
     metadataService.validateErsSummaryFromJson(request.body) match {
-      case Some(ersSummary: ErsSummary) =>
-        ersLoggingAndAuditing.logWarn(s"Submission journey 2. validated request: ${DateTime.now}", Some(ersSummary))
-
-        try {
-          submissionCommonService.callProcessData(ersSummary, Statuses.Failed.toString, Statuses.Sent.toString).map{ _ =>
-            ersLoggingAndAuditing.handleSuccess(ersSummary.metaData.schemeInfo, "Submission is successfully completed")
+      case JsSuccess(ersSummary, _) =>
+        (for {
+          result <- submissionCommonService.callProcessData(ersSummary, Statuses.Failed.toString, Statuses.Sent.toString)(request, hc)
+        } yield result).value.map {
+          case Right(true) =>
+            logger.info(s"Submission is successfully completed for: ${ersSummary.metaData.schemeInfo.basicLogMessage}")
             Ok
-          }.recover {
-            case ex: Exception =>
-              auditEvents.sendToAdrEvent("ErsTransferToAdrFailed", ersSummary)
-              ersLoggingAndAuditing.handleException(ersSummary, ex, "Processing data for ADR exception")
-              InternalServerError(s"Exception: ${ex.getMessage}.")
-          }
-        } catch {
-          case ex: Exception =>
-            Future {
-              auditEvents.sendToAdrEvent("ErsTransferToAdrFailed", ersSummary)
-              ersLoggingAndAuditing.handleException(ersSummary, ex, "Processing data for ADR exception")
-              InternalServerError(s"Exception: ${ex.getMessage}.")
-            }
+          case Right(false) =>
+            auditEvents.sendToAdrEvent("ErsTransferToAdrFailed", ersSummary)
+            logger.error(s"Processing data failed for: ${ersSummary.metaData.schemeInfo.basicLogMessage}")
+            InternalServerError("Processing data failed.")
+          case Left(error) =>
+            auditEvents.sendToAdrEvent("ErsTransferToAdrFailed", ersSummary)
+            logger.error(s"Processing data failed for: ${ersSummary.metaData.schemeInfo.basicLogMessage} with error: [$error]")
+            InternalServerError("Processing data failed.")
         }
-      case _ => Future.successful(BadRequest("Invalid json."))
+      case JsError(jsonErrors) => handleBadRequest(jsonErrors)
     }
   }
 
   def saveMetadata(): Action[JsObject] = Action.async(parse.json[JsObject]) { implicit request =>
     metadataService.validateErsSummaryFromJson(request.body) match {
-      case Some(ersSummary: ErsSummary) =>
+      case JsSuccess(ersSummary, _) =>
         val startTime = System.currentTimeMillis()
-        metadataService.storeErsSummary(ersSummary).map {
-          case true =>
+        metadataService.storeErsSummary(ersSummary).value.map {
+          case Right(true) =>
             metrics.saveMetadata(System.currentTimeMillis() - startTime, TimeUnit.MILLISECONDS)
-            ersLoggingAndAuditing.handleSuccess(ersSummary.metaData.schemeInfo, s"ErsSummary is successfully saved, bundleRef: ${ersSummary.bundleRef}")
+            logger.info(s"ErsSummary is successfully saved, bundleRef: ${ersSummary.bundleRef}")
             Ok("Metadata is successfully stored.")
-          case false =>
-            ersLoggingAndAuditing.handleFailure(ersSummary.metaData.schemeInfo, s"Saving ErsSummary failed, bundleRef: ${ersSummary.bundleRef}")
+          case Right(false) =>
+            logger.error(s"Saving ErsSummary failed, bundleRef: ${ersSummary.bundleRef}, ${ersSummary.metaData.schemeInfo.basicLogMessage}")
+            auditEvents.auditADRTransferFailure(ersSummary.metaData.schemeInfo, Map.empty)
+            InternalServerError("Storing metadata failed.")
+          case Left(error) =>
+            logger.error(s"Saving ErsSummary failed, bundleRef: ${ersSummary.bundleRef}, ${ersSummary.metaData.schemeInfo.basicLogMessage} with error: [$error]")
+            auditEvents.auditADRTransferFailure(ersSummary.metaData.schemeInfo, Map.empty)
             InternalServerError("Storing metadata failed.")
         }
-      case _ => Future.successful(BadRequest("Invalid json."))
+      case JsError(jsonErrors) => handleBadRequest(jsonErrors)
     }
   }
 }

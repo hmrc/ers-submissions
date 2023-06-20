@@ -18,7 +18,6 @@ package utils
 
 import com.typesafe.config.Config
 import org.joda.time.DateTime
-import org.mongodb.scala.bson.BsonObjectId
 import play.api.Logging
 import play.api.libs.json.Json.JsValueWrapper
 import play.api.libs.json._
@@ -28,7 +27,7 @@ import java.text.SimpleDateFormat
 import javax.inject.Inject
 import scala.collection.mutable.ListBuffer
 
-class SubmissionCommon @Inject()(configUtils: ConfigUtils) extends Logging{
+class SubmissionCommon @Inject()(configUtils: ConfigUtils) extends Logging {
 
   def getCorrelationID(response: HttpResponse): String = {
     val correlationIdRegEx = "CorrelationId -> Buffer\\((\\w+-\\w+-\\w+-\\w+-\\w+)".r
@@ -37,37 +36,6 @@ class SubmissionCommon @Inject()(configUtils: ConfigUtils) extends Logging{
     ).map(
       _ group 1
     ).getOrElse("")
-  }
-
-  def getBSONObjectID(objectID: String): BsonObjectId = {
-    try {
-      BsonObjectId.apply(
-        objectID.replace("BSONObjectID(\"", "").replace("\")", "")
-      )
-    }
-    catch {
-      case ex: Exception =>
-        logger.error(s"Error creating ObjectID from $objectID, exception: ${ex.getMessage}")
-        throw ex
-    }
-  }
-
-  def castToDouble(value: String): Option[Double] = {
-    try {
-      Some(value.toDouble)
-    }
-    catch {
-      case ex: Exception => None
-    }
-  }
-
-  def castToInt(value: String): Option[Int] = {
-    try {
-      Some(value.toDouble.toInt)
-    }
-    catch {
-      case ex: Exception => None
-    }
   }
 
   def customFormat(value: DateTime, formatInfo: Config): String = {
@@ -105,7 +73,7 @@ class SubmissionCommon @Inject()(configUtils: ConfigUtils) extends Logging{
     getNewField(configElem, elemVal)
   }
 
-  def getFileDataValue(configElem: Config, fileData: ListBuffer[Seq[String]], row: Option[Int]): JsObject = {
+  def getFileDataValue(configElem: Config, fileData: ListBuffer[scala.Seq[String]], row: Option[Int]): JsObject = {
 
     if(configElem.hasPath("value")) {
       getConfigElemValue(configElem)
@@ -119,8 +87,8 @@ class SubmissionCommon @Inject()(configUtils: ConfigUtils) extends Logging{
         val elemType: String = configElem.getString("type")
         val elemVal: JsValueWrapper = elemType match {
           case "string" => value
-          case "int" => castToInt(value)
-          case "double" => castToDouble(value)
+          case "int" => value.toIntOption
+          case "double" => value.toDoubleOption
           case "boolean" =>
             val valid_value = configElem.getString("valid_value")
             value.toUpperCase == valid_value.toUpperCase

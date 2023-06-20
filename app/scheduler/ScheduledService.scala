@@ -16,10 +16,12 @@
 
 package scheduler
 
-import scala.concurrent.{ExecutionContext, Future}
+import common.ERSEnvelope.ERSEnvelope
+
+import scala.concurrent.ExecutionContext
 
 trait ScheduledService[R] {
   val jobName: String
 
-  def invoke(implicit ec : ExecutionContext) : Future[R]
+  def invoke(implicit ec : ExecutionContext) : ERSEnvelope[R]
 }

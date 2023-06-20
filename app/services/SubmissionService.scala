@@ -16,10 +16,11 @@
 
 package services
 
+import common.ERSEnvelope
+import common.ERSEnvelope.ERSEnvelope
 import connectors.ADRConnector
 import metrics.Metrics
-import models.{ADRTransferException, ErsSummary}
-import org.joda.time.DateTime
+import models.{ErsSummary, SchemeInfo, SubmissionStatusUpdateError}
 import play.api.Logging
 import play.api.http.Status.ACCEPTED
 import play.api.libs.json.JsObject
@@ -27,165 +28,86 @@ import play.api.mvc.Request
 import repositories.{MetadataMongoRepository, Repositories}
 import services.audit.AuditEvents
 import uk.gov.hmrc.http.HeaderCarrier
-import utils.LoggingAndRexceptions.{ADRExceptionEmitter, ErsLoggingAndAuditing}
-import utils.{ADRSubmission, SubmissionCommon}
+import utils.{ADRSubmission, Session, SubmissionCommon}
 
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.ExecutionContext
 
 class SubmissionService @Inject()(repositories: Repositories,
                                   adrConnector: ADRConnector,
                                   adrSubmission: ADRSubmission,
                                   submissionCommon: SubmissionCommon,
-                                  ersLoggingAndAuditing: ErsLoggingAndAuditing,
-                                  adrExceptionEmitter: ADRExceptionEmitter,
                                   auditEvents: AuditEvents,
                                   metrics: Metrics)(implicit ec: ExecutionContext) extends Logging {
 
   lazy val metadataRepository: MetadataMongoRepository = repositories.metadataRepository
 
-  def callProcessData(ersSummary: ErsSummary, failedStatus: String, successStatus: String)(implicit request: Request[_], hc: HeaderCarrier): Future[Boolean] = {
-    processData(ersSummary, failedStatus, successStatus).map {
-      res => res
-    }.recover {
-      case aex: ADRTransferException =>
-        ersLoggingAndAuditing.logWarn(s"Submission journey 4. start creating json exception ${aex.message}: ${DateTime.now}", Some(ersSummary))
-        metadataRepository.updateStatus(ersSummary.metaData.schemeInfo, failedStatus).map[Boolean] { res => res }
-        throw aex
-      case ex: Exception =>
-        ersLoggingAndAuditing.logWarn(s"Submission journey 4. start creating json exception ${ex.getMessage}: ${DateTime.now}", Some(ersSummary))
-        metadataRepository.updateStatus(ersSummary.metaData.schemeInfo, failedStatus).map[Boolean] { res => res }
-        adrExceptionEmitter.emitFrom(
-          ersSummary.metaData,
-          Map(
-            "message" -> "Exception processing submission",
-            "context" -> "PostsubmissionService.callProcessData"
-          ),
-          Some(ex)
-        )
+  def callProcessData(ersSummary: ErsSummary, failedStatus: String, successStatus: String)
+                     (implicit request: Request[_], hc: HeaderCarrier): ERSEnvelope[Boolean] =
+    processData(ersSummary, failedStatus, successStatus).recover {
+      case error =>
+        metadataRepository.updateStatus(ersSummary.metaData.schemeInfo, failedStatus, Session.id(hc))
+        logger.error(s"Processing data failed with error: [$error]. Updating transfer status to: [$failedStatus] for ${ersSummary.metaData.schemeInfo.basicLogMessage}")
+        false
     }
+
+  def processData(ersSummary: ErsSummary, failedStatus: String, successStatus: String)
+                 (implicit request: Request[_], hc: HeaderCarrier): ERSEnvelope[Boolean] = {
+      for {
+        adrData <- transformData(ersSummary)
+        postSubmissionUpdated <- sendToADRUpdatePostData(ersSummary, adrData, failedStatus, successStatus)
+      } yield postSubmissionUpdated
   }
 
-  def processData(ersSummary: ErsSummary, failedStatus: String, successStatus: String)(implicit request: Request[_], hc: HeaderCarrier): Future[Boolean] = {
-    ersLoggingAndAuditing.logWarn(s"Submission journey 3. start processing data: ${DateTime.now}", Some(ersSummary))
-    logger.info(s"Start processing data for ${ersLoggingAndAuditing.buildDataMessage(ersSummary)}")
-    transformData(ersSummary).flatMap { adrData =>
-      sendToADRUpdatePostData(ersSummary, adrData, failedStatus, successStatus) map {res => res}
-    }
-  }
-
-  def transformData(ersSummary: ErsSummary)(implicit request: Request[_], hc: HeaderCarrier): Future[JsObject] = {
-    ersLoggingAndAuditing.logWarn(s"Submission journey 4. start creating json: ${DateTime.now}", Some(ersSummary))
+  def transformData(ersSummary: ErsSummary)(implicit request: Request[_], hc: HeaderCarrier): ERSEnvelope[JsObject] = {
     val startTime = System.currentTimeMillis()
-    adrSubmission.generateSubmission()(request, hc, ersSummary).map { json =>
-      ersLoggingAndAuditing.logWarn(s"Submission journey 5. json is created: ${DateTime.now}", Some(ersSummary))
-      logger.debug("LFP -> 8. Json created () In PostsubmissionService.transformData method " + json.fields.size)
+
+    adrSubmission.generateSubmission(ersSummary)(request, hc).map { json =>
       metrics.generateJson(System.currentTimeMillis() - startTime, TimeUnit.MILLISECONDS)
-      ersLoggingAndAuditing.handleSuccess(ersSummary, "Json is successfully created")
       json
-    }.recover {
-      case adrEx: ADRTransferException =>
-        ersLoggingAndAuditing.logWarn(s"Submission journey 5. json is created exception ${adrEx.message}: ${DateTime.now}", Some(ersSummary))
-        throw adrEx
-      case ex: Exception =>
-        ersLoggingAndAuditing.logWarn(s"Submission journey 5. json is created exception ${ex.getMessage}: ${DateTime.now}", Some(ersSummary))
-        adrExceptionEmitter.emitFrom(
-          ersSummary.metaData,
-          Map(
-            "message" -> "Exception during transformData",
-            "context" -> "PostsubmissionService.transformData"
-          ),
-          Some(ex)
-        )
     }
   }
 
   def sendToADRUpdatePostData(ersSummary: ErsSummary, adrData: JsObject, failedStatus: String, successStatus: String)
-                             (implicit hc: HeaderCarrier): Future[Boolean] = {
-    ersLoggingAndAuditing.logWarn(s"Submission journey 6. start sending data: ${DateTime.now}", Some(ersSummary))
-    logger.info(s"Start sending data ${ersLoggingAndAuditing.buildDataMessage(ersSummary)}")
-
+                             (implicit hc: HeaderCarrier): ERSEnvelope[Boolean] = {
     val startTime = System.currentTimeMillis()
 
-    adrConnector.sendData(adrData, ersSummary.metaData.schemeInfo.schemeType).flatMap { response =>
-      ersLoggingAndAuditing.logWarn(s"Submission journey 7. data is sent with response ${response.status}: ${DateTime.now}", Some(ersSummary))
+    val result: ERSEnvelope[Boolean] = adrConnector.sendData(adrData, ersSummary.metaData.schemeInfo.schemeType).flatMap { response =>
       val transferStatus: String = response.status match {
         case ACCEPTED =>
-          logger.debug("LFP -> 14. Data sent ")
           metrics.sendToADR(System.currentTimeMillis() - startTime, TimeUnit.MILLISECONDS)
           metrics.successfulSendToADR()
           val correlationID: String = submissionCommon.getCorrelationID(response)
-          ersLoggingAndAuditing.handleSuccess(ersSummary, s"Data is sent successfully to ADR. CorrelationId : $correlationID" + "size of Fields in Json: " + adrData.fields.size)
           auditEvents.sendToAdrEvent("ErsTransferToAdrResponseReceived", ersSummary, Some(correlationID))
+          logger.info(s"Data transfer to ADR was successful for ${ersSummary.metaData.schemeInfo.basicLogMessage}")
           successStatus
         case _ =>
           metrics.failedSendToADR()
-          ersLoggingAndAuditing.handleFailure(ersSummary.metaData.schemeInfo, s"Sending to ADR failed. BundleRef: ${ersSummary.bundleRef}")
           auditEvents.sendToAdrEvent("ErsTransferToAdrFailed", ersSummary)
+          logger.info(s"Data transfer to ADR failed for ${ersSummary.metaData.schemeInfo.basicLogMessage}")
           failedStatus
       }
-      updatePostsubmission(response.status, transferStatus, ersSummary).map(res => res)
-    }.recover {
-      case adr: ADRTransferException =>
-        ersLoggingAndAuditing.logWarn(s"Submission journey 7. data is sent exception ${adr.message}: ${DateTime.now}", Some(ersSummary))
-        throw adr
-      case e: Exception =>
-        ersLoggingAndAuditing.logWarn(s"Submission journey 7. data is sent exception ${e.getMessage}: ${DateTime.now}", Some(ersSummary))
-        adrExceptionEmitter.emitFrom(
-          ersSummary.metaData,
-          Map(
-            "message" -> e.getMessage,
-            "context" -> "SubmissionCommon.sendToADRUpdatePostData"
-          ),
-          Some(e)
-        )
+      updatePostsubmission(response.status, transferStatus, ersSummary.metaData.schemeInfo)
     }
+    result
   }
 
-  def updatePostsubmission(adrSubmissionStatus: Int, transferStatus: String, ersSummary: ErsSummary)
-                          (implicit hc: HeaderCarrier): Future[Boolean] = {
-    ersLoggingAndAuditing.logWarn(s"Submission journey 8. start updating status $transferStatus: ${DateTime.now}", Some(ersSummary))
-    logger.info(s"Start updating status for ${ersSummary.metaData.schemeInfo.toString}")
+  def updatePostsubmission(adrSubmissionStatus: Int, transferStatus: String, schemeInfo: SchemeInfo)
+                          (implicit hc: HeaderCarrier): ERSEnvelope[Boolean] = {
     val startUpdateTime = System.currentTimeMillis()
-
-    metadataRepository.updateStatus(ersSummary.metaData.schemeInfo, transferStatus).map[Boolean] {
-      case true if adrSubmissionStatus == ACCEPTED =>
-        ersLoggingAndAuditing.logWarn(s"Submission journey 9. status was updated: ${DateTime.now}", Some(ersSummary))
-        metrics.updatePostsubmissionStatus(System.currentTimeMillis() - startUpdateTime, TimeUnit.MILLISECONDS)
-        ersLoggingAndAuditing.handleSuccess(ersSummary, "Status is updated successfully")
-        true
-      case false =>
-        ersLoggingAndAuditing.logWarn(s"Submission journey 9. status was updated: ${DateTime.now}", Some(ersSummary))
-        adrExceptionEmitter.emitFrom(
-          ersSummary.metaData,
-          Map(
-            "message" -> "Updating status failed",
-            "context" -> "SubmissionCommon.updatePostsubmission"
-          )
-        )
-      case _ =>
-        ersLoggingAndAuditing.logWarn(s"Submission journey 9. status was updated: ${DateTime.now}", Some(ersSummary))
-        metrics.updatePostsubmissionStatus(System.currentTimeMillis() - startUpdateTime, TimeUnit.MILLISECONDS)
-        adrExceptionEmitter.emitFrom(
-          ersSummary.metaData,
-          Map(
-            "message" -> "Sending data to ADR failed",
-            "context" -> "SubmissionCommon.sendToADRUpdatePostData"
-          )
-        )
-    }.recover {
-      case ex: Exception =>
-        ersLoggingAndAuditing.logWarn(s"Submission journey 9. status was updated exception ${ex.getMessage}: ${DateTime.now}", Some(ersSummary))
-        adrExceptionEmitter.emitFrom(
-          ersSummary.metaData,
-          Map(
-            "message" -> "Updating status exception",
-            "context" -> "SubmissionCommon.updatePostsubmission"
-          ),
-          Some(ex)
-        )
+    metadataRepository.updateStatus(schemeInfo, transferStatus, Session.id(hc)).flatMap {
+        case true if adrSubmissionStatus == ACCEPTED =>
+          metrics.updatePostsubmissionStatus(System.currentTimeMillis() - startUpdateTime, TimeUnit.MILLISECONDS)
+          logger.info(s"Updated submission transfer status to: [$transferStatus] for ${schemeInfo.basicLogMessage}")
+          ERSEnvelope(true)
+        case true =>
+          metrics.updatePostsubmissionStatus(System.currentTimeMillis() - startUpdateTime, TimeUnit.MILLISECONDS)
+          logger.info(s"Updated submission transfer status to: [$transferStatus] for ${schemeInfo.basicLogMessage}")
+          ERSEnvelope(SubmissionStatusUpdateError(Some(adrSubmissionStatus), Some(transferStatus)))
+        case _ =>
+          logger.info(s"Submission transfer status update to: [$transferStatus] failed for ${schemeInfo.basicLogMessage}")
+          ERSEnvelope(SubmissionStatusUpdateError(Some(adrSubmissionStatus), Some(transferStatus)))
     }
   }
-
 }

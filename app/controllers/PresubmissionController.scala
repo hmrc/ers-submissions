@@ -16,60 +16,72 @@
 
 package controllers
 
-import java.util.concurrent.TimeUnit
-import javax.inject.Inject
 import metrics.Metrics
 import models.SchemeInfo
 import play.api.Logging
-import play.api.libs.json.JsObject
+import play.api.libs.json._
 import play.api.mvc._
-import services.{PresubmissionService, ValidationService}
+import services.PresubmissionService
+import services.audit.AuditEvents
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
-import utils.LoggingAndRexceptions.ErsLoggingAndAuditing
+import utils.ErrorHandlerHelper
 
-import scala.concurrent.{ExecutionContext, Future}
+import java.util.concurrent.TimeUnit
+import javax.inject.Inject
+import scala.concurrent.ExecutionContext
 
 class PresubmissionController @Inject()(presubmissionService: PresubmissionService,
-                                        validationService: ValidationService,
-                                        ersLoggingAndAuditing: ErsLoggingAndAuditing,
+                                        auditEvents: AuditEvents,
                                         metrics: Metrics,
-                                        cc: ControllerComponents)(implicit ec: ExecutionContext) extends BackendController(cc) with Logging{
+                                        cc: ControllerComponents)
+                                       (implicit ec: ExecutionContext) extends BackendController(cc) with Logging with ErrorHandlerHelper {
 
+  override val className: String = getClass.getSimpleName
 
-  def removePresubmissionJson(): Action[JsObject] = Action.async(parse.json[JsObject]) { implicit request =>
-    validationService.validateSchemeInfo(request.body) match {
-      case Some(schemeInfo) =>
-        val startTime = System.currentTimeMillis()
-        logger.info(s"Start deleting presubmission data from external url for ${schemeInfo.toString}")
-
-        presubmissionService.removeJson(schemeInfo).map {
-          case true =>
-            metrics.removePresubmission(System.currentTimeMillis() - startTime, TimeUnit.MILLISECONDS)
-            ersLoggingAndAuditing.handleSuccess(schemeInfo, "Old presubmission data is successfully deleted")
-            Ok("Old presubmission data is successfully deleted.")
-          case false =>
-            metrics.failedRemovePresubmission()
-            ersLoggingAndAuditing.handleFailure(schemeInfo, "Deleting old presubmission data failed")
-            InternalServerError("Deleting old presubmission data failed.")
-        }
-      case _ => Future.successful(BadRequest("Invalid json format."))
-    }
+  def removePresubmissionJson(): Action[JsObject] = Action.async(parse.json[JsObject]) {
+    implicit request =>
+      request.body.validate[SchemeInfo] match {
+        case JsSuccess(schemeInfo, _) =>
+          val startTime = System.currentTimeMillis()
+          presubmissionService.removeJson(schemeInfo).value.map {
+            case Right(true) =>
+              metrics.removePresubmission(System.currentTimeMillis() - startTime, TimeUnit.MILLISECONDS)
+              logger.info(s"Old presubmission data is successfully deleted for: ${schemeInfo.basicLogMessage}")
+              Ok("Old presubmission data is successfully deleted.")
+            case Right(false) =>
+              metrics.failedRemovePresubmission()
+              logger.error(s"Deleting old presubmission data failed for: ${schemeInfo.basicLogMessage}")
+              auditEvents.auditADRTransferFailure(schemeInfo, Map.empty)
+              InternalServerError("Deleting old presubmission data failed.")
+            case Left(error) =>
+              logger.error(s"Deleting old presubmission data failed for: ${schemeInfo.basicLogMessage} with [$error]")
+              auditEvents.auditADRTransferFailure(schemeInfo, Map.empty)
+              InternalServerError("Deleting old presubmission data failed.")
+          }
+        case JsError(jsonErrors) => handleBadRequest(jsonErrors)
+      }
   }
 
-  def checkForExistingPresubmission(validatedSheets: Int): Action[JsObject] = Action.async(parse.json[JsObject]) { implicit request =>
-    validationService.validateSchemeInfo(request.body) match {
-      case Some(schemeInfo: SchemeInfo) =>
-        val startTime = System.currentTimeMillis()
-        presubmissionService.compareSheetsNumber(validatedSheets, schemeInfo).map {
-          case true =>
-            metrics.checkForPresubmission(System.currentTimeMillis() - startTime, TimeUnit.MILLISECONDS)
-            ersLoggingAndAuditing.handleSuccess(schemeInfo, "All presubmission records are found")
-            Ok("All presubmission records are found")
-          case false =>
-            ersLoggingAndAuditing.handleFailure(schemeInfo, s"Not all $validatedSheets presubmission records are found")
-            InternalServerError(s"Not all $validatedSheets records are found for ${schemeInfo.toString}.")
-        }
-      case _ => Future.successful(BadRequest("Invalid json."))
-    }
+  def checkForExistingPresubmission(validatedSheets: Int): Action[JsObject] = Action.async(parse.json[JsObject]) {
+    implicit request =>
+      request.body.validate[SchemeInfo] match {
+        case JsSuccess(schemeInfo, _) =>
+          val startTime = System.currentTimeMillis()
+          presubmissionService.compareSheetsNumber(validatedSheets, schemeInfo).value.map {
+            case Right(true) =>
+              metrics.checkForPresubmission(System.currentTimeMillis() - startTime, TimeUnit.MILLISECONDS)
+              logger.info(s"All presubmission records are found for: ${schemeInfo.basicLogMessage}")
+              Ok("All presubmission records are found")
+            case Right(false) =>
+              logger.error(s"Not all $validatedSheets presubmission records are found for: ${schemeInfo.basicLogMessage}")
+              auditEvents.auditADRTransferFailure(schemeInfo, Map.empty)
+              InternalServerError(s"Not all $validatedSheets records are found for ${schemeInfo.toString}.")
+            case Left(error) =>
+              logger.error(s"Check existing presubmission failed for: ${schemeInfo.basicLogMessage} with error: [$error]")
+              auditEvents.auditADRTransferFailure(schemeInfo, Map.empty)
+              InternalServerError(s"Not all $validatedSheets records are found for ${schemeInfo.toString}.")
+          }
+        case JsError(jsonErrors) => handleBadRequest(jsonErrors)
+      }
   }
 }

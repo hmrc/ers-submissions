@@ -19,19 +19,22 @@ package controllers
 import akka.actor.ActorSystem
 import akka.stream.scaladsl.{Sink, Source}
 import akka.util.ByteString
+import cats.data.EitherT
+import common.ERSEnvelope.ERSEnvelope
+import models.ERSError
 import config.ApplicationConfig
 import controllers.auth.{AuthAction, AuthorisedAction}
 import metrics.Metrics
 import models.{SchemeData, SubmissionsSchemeData}
 import play.api.Logging
-import play.api.libs.json.{JsObject, JsValue}
+import play.api.libs.json._
 import play.api.mvc._
 import services.audit.AuditEvents
-import services.{FileDownloadService, PresubmissionService, ValidationService}
+import services.{FileDownloadService, PresubmissionService}
 import uk.gov.hmrc.auth.core.AuthConnector
-import uk.gov.hmrc.http.{HeaderCarrier, UpstreamErrorResponse}
+import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
-import utils.LoggingAndRexceptions.ErsLoggingAndAuditing
+import utils.ErrorHandlerHelper
 
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
@@ -39,75 +42,70 @@ import scala.collection.mutable.ListBuffer
 import scala.concurrent.{ExecutionContext, Future}
 
 class ReceivePresubmissionController @Inject()(presubmissionService: PresubmissionService,
-                                               validationService: ValidationService,
                                                fileDownloadService: FileDownloadService,
-                                               ersLoggingAndAuditing: ErsLoggingAndAuditing,
                                                authConnector: AuthConnector,
                                                auditEvents: AuditEvents,
                                                metrics: Metrics,
                                                cc: ControllerComponents,
                                                bodyParser: PlayBodyParsers,
                                                appConfig: ApplicationConfig)
-                                              (implicit actorSystem: ActorSystem, ec: ExecutionContext) extends BackendController(cc) with Logging {
+                                              (implicit actorSystem: ActorSystem, ec: ExecutionContext) extends BackendController(cc) with Logging with ErrorHandlerHelper {
+
+  override val className: String = getClass.getSimpleName
 
   def authorisedAction(empRef: String): AuthAction = AuthorisedAction(empRef, authConnector, bodyParser)
 
   def receivePresubmissionJson(empRef: String): Action[JsValue] =
-    authorisedAction(empRef).async(parse.json(maxLength = 1024 * 10000)) { implicit request =>
-      validationService.validateSchemeData(request.body.as[JsObject]) match {
-        case schemeData: Some[SchemeData] => storePresubmission(schemeData.get)
-        case _ =>
-          Future.successful(BadRequest("Invalid json format."))
+    authorisedAction(empRef).async(parse.json(maxLength = 1024 * 10000)) {
+      implicit request =>
+      request.body.validate[SchemeData] match {
+        case JsSuccess(schemeData, _) => storePresubmission(schemeData)
+        case JsError(jsonErrors) => handleBadRequest(jsonErrors)
       }
     }
 
   def receivePresubmissionJsonV2(empRef: String): Action[JsValue] =
-    authorisedAction(empRef).async(parse.json) { implicit request =>
-      validationService.validateSubmissionsSchemeData(request.body.as[JsObject]) match {
-        case submissionsSchemeData: Some[SubmissionsSchemeData] =>
-          storePresubmission(submissionsSchemeData.get)
-        case _ =>
-          Future.successful(BadRequest("Invalid json format."))
+    authorisedAction(empRef).async(parse.json) {
+      implicit request =>
+        request.body.validate[SubmissionsSchemeData] match {
+        case JsSuccess(submissionsSchemeData, _) => storePresubmission(submissionsSchemeData)
+        case JsError(jsonErrors) => handleBadRequest(jsonErrors)
       }
     }
 
-  def submitJson(fileSource: Source[(Seq[Seq[ByteString]], Long), _], submissionsSchemeData: SubmissionsSchemeData)(
-    implicit hc: HeaderCarrier): Future[(Boolean, Long)] = {
-
+  def submitJson(fileSource: Source[(Seq[Seq[ByteString]], Long), _], submissionsSchemeData: SubmissionsSchemeData)
+                (implicit hc: HeaderCarrier): ERSEnvelope[(Boolean, Long)] = EitherT {
     fileSource.mapAsyncUnordered(appConfig.submissionParallelism)(chunkedRowsWithIndex => {
       val (chunkedRows, index) = chunkedRowsWithIndex
-      val checkedData: Option[ListBuffer[Seq[String]]] = Option(chunkedRows.map(_.map(_.utf8String)).to(ListBuffer)).filter(_.nonEmpty)
+      val checkedData: Option[ListBuffer[scala.Seq[String]]] = Option(chunkedRows.map(_.map(_.utf8String)).to(ListBuffer)).filter(_.nonEmpty)
 
-      presubmissionService.storeJsonV2(submissionsSchemeData,
+      presubmissionService.storeJson(
         SchemeData(submissionsSchemeData.schemeInfo,
           submissionsSchemeData.sheetName,
           numberOfParts = None,
           data = checkedData))
-        .map(wasStoredSuccessfully => (wasStoredSuccessfully, index))
+        .value
+        .map(_.map((_, index)))
     })
-      .takeWhile(booleanAndIndex => {
-        val wasStoredSuccessfully: Boolean = booleanAndIndex._1
+      .takeWhile((booleanAndIndex: Either[ERSError, (Boolean, Long)]) => {
+        val wasStoredSuccessfully: Boolean = booleanAndIndex.map(_._1).getOrElse(false)
         wasStoredSuccessfully
       }, inclusive = true)
       .runWith(Sink.last)
   }
 
   def storePresubmission(submissionsSchemeData: SubmissionsSchemeData)(implicit hc: HeaderCarrier): Future[Result] = {
-
     val startTime = System.currentTimeMillis()
     val fileSource: Source[(Seq[Seq[ByteString]], Long), _] =
       fileDownloadService.schemeDataToChunksWithIndex(submissionsSchemeData)
 
-    submitJson(fileSource, submissionsSchemeData).map {
-      case (true, _) =>
+    submitJson(fileSource, submissionsSchemeData).value.map {
+      case Right((true, _)) =>
         metrics.storePresubmission(System.currentTimeMillis() - startTime, TimeUnit.MILLISECONDS)
-        logger.debug("total running time was " + (System.currentTimeMillis() - startTime))
+        logger.info(s"Presubmission data for sheet ${submissionsSchemeData.sheetName} was stored successfully for: ${submissionsSchemeData.schemeInfo.basicLogMessage}")
         auditEvents.publicToProtectedEvent(submissionsSchemeData.schemeInfo, submissionsSchemeData.sheetName, submissionsSchemeData.numberOfRows.toString)
-        ersLoggingAndAuditing.handleSuccess(
-          submissionsSchemeData.schemeInfo, s"Presubmission data for sheet ${submissionsSchemeData.sheetName} was stored successfully"
-        )
         Ok("Presubmission data is stored successfully.")
-      case (_, index) =>
+      case Right((_, index)) =>
         presubmissionService.removeJson(submissionsSchemeData.schemeInfo).map { wasSuccess =>
           if (!wasSuccess && index > 0) {
             logger.error(
@@ -115,33 +113,33 @@ class ReceivePresubmissionController @Inject()(presubmissionService: Presubmissi
           }
         }
         metrics.failedStorePresubmission()
-        ersLoggingAndAuditing.handleFailure(submissionsSchemeData.schemeInfo, s"Storing presubmission data for sheet ${submissionsSchemeData.sheetName} failed")
+        logger.error(s"Storing presubmission data failed for: ${submissionsSchemeData.sheetName}, ${submissionsSchemeData.schemeInfo.basicLogMessage}")
+        auditEvents.auditADRTransferFailure(submissionsSchemeData.schemeInfo, Map.empty)
         InternalServerError("Storing presubmission data failed.")
-    }.recover {
-      case ex: UpstreamErrorResponse =>
-        InternalServerError(ex.getMessage())
-      case ex =>
-        logger.error(s"[ReceivePresubmissionController][storePresubmission] Unknown exception encountered while submitting file: ${ex.getMessage}")
-        InternalServerError(ex.getMessage)
+      case Left(error) =>
+        logger.error(s"Storing presubmission data failed for: ${submissionsSchemeData.sheetName}, ${submissionsSchemeData.schemeInfo.basicLogMessage} with error: [$error]")
+        auditEvents.auditADRTransferFailure(submissionsSchemeData.schemeInfo, Map.empty)
+        InternalServerError("Storing presubmission data failed.")
     }
   }
 
   def storePresubmission(schemeData: SchemeData)(implicit hc: HeaderCarrier): Future[Result] = {
-    logger.info(s"Starting storing presubmission data. SchemeInfo: ${schemeData.schemeInfo.toString}, SheetName: ${schemeData.sheetName}")
-
     val startTime = System.currentTimeMillis()
-
-    presubmissionService.storeJson(schemeData).map {
-      case true =>
+    presubmissionService.storeJson(schemeData).value.map {
+      case Right(true) =>
         metrics.storePresubmission(System.currentTimeMillis() - startTime, TimeUnit.MILLISECONDS)
+        logger.info(s"Presubmission data for sheet ${schemeData.sheetName} is stored successfully")
         auditEvents.publicToProtectedEvent(schemeData.schemeInfo, schemeData.sheetName, schemeData.data.getOrElse(Seq()).length.toString)
-        ersLoggingAndAuditing.handleSuccess(schemeData.schemeInfo, s"Presubmission data for sheet ${schemeData.sheetName} is stored successfully")
         Ok("Presubmission data is stored successfully.")
-      case _ =>
+      case Right(false) =>
         metrics.failedStorePresubmission()
-        ersLoggingAndAuditing.handleFailure(schemeData.schemeInfo, s"Storing presubmission data for sheet ${schemeData.sheetName} failed")
+        logger.error(s"Storing presubmission data failed for: ${schemeData.sheetName}, ${schemeData.schemeInfo.basicLogMessage}")
+        auditEvents.auditADRTransferFailure(schemeData.schemeInfo, Map.empty)
+        InternalServerError("Storing presubmission data failed.")
+      case Left(error) =>
+        logger.error(s"Storing presubmission data failed for: ${schemeData.sheetName}, ${schemeData.schemeInfo.basicLogMessage} with error: [$error]")
+        auditEvents.auditADRTransferFailure(schemeData.schemeInfo, Map.empty)
         InternalServerError("Storing presubmission data failed.")
     }
   }
-
 }

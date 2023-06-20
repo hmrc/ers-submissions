@@ -14,12 +14,10 @@
  * limitations under the License.
  */
 
-package services.resubmission
+package utils
 
-case class ProcessFailedSubmissionsConfig(resubmissionLimit: Int,
-                                          searchStatusList: List[String],
-                                          schemeRefList: Option[List[String]],
-                                          resubmitScheme: Option[String],
-                                          dateTimeFilter: Option[String],
-                                          failedStatus: String,
-                                          resubmitSuccessStatus: String)
+import uk.gov.hmrc.http.HeaderCarrier
+
+object Session {
+  def id(hc: HeaderCarrier): String = hc.sessionId.map(_.value).getOrElse("No Session ID available")
+}

@@ -21,14 +21,15 @@ import play.api.libs.json._
 
 import scala.collection.mutable.ListBuffer
 
-case class SchemeInfo (
-                        schemeRef: String,
-                        timestamp: DateTime = DateTime.now,
-                        schemeId: String,
-                        taxYear: String,
-                        schemeName: String,
-                        schemeType: String
-                        )
+case class SchemeInfo (schemeRef: String,
+                       timestamp: DateTime = DateTime.now,
+                       schemeId: String,
+                       taxYear: String,
+                       schemeName: String,
+                       schemeType: String) {
+
+  val basicLogMessage: String = List(schemeRef, schemeId, schemeType).mkString("[",",","]")
+}
 
 object SchemeInfo {
 
@@ -44,47 +45,19 @@ object SchemeInfo {
 
 }
 
-case class SchemeData(
-                       schemeInfo: SchemeInfo,
-                       sheetName: String,
-                       numberOfParts: Option[Int],
-                       data: Option[ListBuffer[Seq[String]]]
-                       )
+case class SchemeData(schemeInfo: SchemeInfo,
+                      sheetName: String,
+                      numberOfParts: Option[Int],
+                      data: Option[ListBuffer[scala.Seq[String]]])
 object SchemeData {
   implicit val format: OFormat[SchemeData] = Json.format[SchemeData]
 }
 
-case class SubmissionsSchemeData(
-                       schemeInfo: SchemeInfo,
-                       sheetName: String,
-                       data: UpscanCallback,
-                       numberOfRows: Int
-                       )
+case class SubmissionsSchemeData(schemeInfo: SchemeInfo,
+                                 sheetName: String,
+                                 data: UpscanCallback,
+                                 numberOfRows: Int)
 
 object SubmissionsSchemeData {
   implicit val format: OFormat[SubmissionsSchemeData] = Json.format[SubmissionsSchemeData]
-}
-
-case class SchemeRefContainer(schemeRef: String)
-object SchemeRefContainer {
-  implicit val format: OFormat[SchemeRefContainer] = Json.format[SchemeRefContainer]
-}
-case class SchemeInfoContainer(schemeInfo: SchemeRefContainer)
-object SchemeInfoContainer {
-  implicit val format: OFormat[SchemeInfoContainer] = Json.format[SchemeInfoContainer]
-}
-
-case class FullSchemeInfoContainer(schemeInfo: SchemeInfo)
-object FullSchemeInfoContainer {
-  implicit val format: OFormat[FullSchemeInfoContainer] = Json.format[FullSchemeInfoContainer]
-}
-
-case class MetaDataContainer(metaData: SchemeInfoContainer)
-object MetaDataContainer {
-  implicit val format: OFormat[MetaDataContainer] = Json.format[MetaDataContainer]
-}
-
-case class FullMetaDataContainer(metaData: FullSchemeInfoContainer)
-object FullMetaDataContainer {
-  implicit val format: OFormat[FullMetaDataContainer] = Json.format[FullMetaDataContainer]
 }
