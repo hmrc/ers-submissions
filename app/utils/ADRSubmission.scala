@@ -77,7 +77,13 @@ class ADRSubmission @Inject()(submissionCommon: SubmissionCommon,
             result = result ++ jsObject
           }
           case Left(error) =>
-            logger.warn(s"Failed to create Json from sheets data for: ${ersSummary.metaData.schemeInfo.basicLogMessage}. Exception: ${error.getMessage}")
+            logger.info(
+              s"Failed to create Json from sheets data for: ${ersSummary.metaData.schemeInfo.basicLogMessage}. \n" +
+              s"Number of rows from ersSummary: ${ersSummary.nofOfRows} \n" +
+              s"Transfer status from ersSummary: ${ersSummary.transferStatus} \n" +
+              s"Number of parts from fileData: ${fileData.numberOfParts} \n" +
+              s"Sheet name from fileData: ${fileData.sheetName} \n" +
+              s"Exception: ${error.getStackTrace.toSeq.take(20).mkString("\n")}")
             JsonFromSheetsCreationError(error.getMessage)
         }
       }
@@ -161,7 +167,7 @@ class ADRSubmission @Inject()(submissionCommon: SubmissionCommon,
           json ++= submissionCommon.addObjectValue(elem, elemVal)
         case "array" =>
           if (fileData.nonEmpty) {
-            if(row.isEmpty) {
+            if (row.isEmpty) {
               val elemVal: List[JsObject] = for (row <- fileData.indices.toList) yield buildJson(elem, fileData, Some(row))
               json ++= submissionCommon.addArrayValue(elem, elemVal)
             }
