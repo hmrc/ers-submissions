@@ -81,23 +81,34 @@ class SubmissionCommon @Inject()(configUtils: ConfigUtils) extends Logging {
     else {
       val elemColumn = configElem.getInt("column")
       val elemRow = row.getOrElse(configElem.getInt("row"))
-      val value = fileData(elemRow)(elemColumn)
-
-      if (value.nonEmpty) {
-        val elemType: String = configElem.getString("type")
-        val elemVal: JsValueWrapper = elemType match {
-          case "string" => value
-          case "int" => value.toIntOption
-          case "double" => value.toDoubleOption
-          case "boolean" =>
-            val valid_value = configElem.getString("valid_value")
-            value.toUpperCase == valid_value.toUpperCase
+      try {
+        val value = fileData(elemRow)(elemColumn)
+        if (value.nonEmpty) {
+          val elemType: String = configElem.getString("type")
+          val elemVal: JsValueWrapper = elemType match {
+            case "string" => value
+            case "int" => value.toIntOption
+            case "double" => value.toDoubleOption
+            case "boolean" =>
+              val valid_value = configElem.getString("valid_value")
+              value.toUpperCase == valid_value.toUpperCase
+          }
+          getNewField(configElem, elemVal)
         }
-        getNewField(configElem, elemVal)
+        else {
+          Json.obj()
+        }
+      } catch {
+        case e: java.lang.IndexOutOfBoundsException =>
+          logger.info(s"[getFileDataValue][IndexOutOfBoundsException] Could not find file data for row: " +
+            s"${elemRow} and column: ${elemColumn}. Exception: [${e}]")
+          Json.obj()
+        case e: Throwable =>
+          logger.info(s"[getFileDataValue][Exception] Could not find file data for row: " +
+            s"${elemRow} and column: ${elemColumn}. Exception: [${e}]")
+          Json.obj()
       }
-      else {
-        Json.obj()
-      }
+
     }
   }
 

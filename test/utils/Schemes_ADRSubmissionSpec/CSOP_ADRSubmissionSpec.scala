@@ -1474,7 +1474,7 @@ class CSOP_ADRSubmissionSpec
     }
   }
 
-  // CSOP_OptionsExercised_V4
+//   CSOP_OptionsExercised_V4
   "calling generateJson for OptionsExercised_V4" should {
 
     val configData: Config = Common.loadConfiguration(CSOP.schemeType, "CSOP_OptionsExercised_V4", mockConfigUtils)
@@ -1738,6 +1738,41 @@ class CSOP_ADRSubmissionSpec
                                    |]
                                    |}
                                    |}""".stripMargin)
+
+    }
+
+    "generate the expected json and not throw an exception when given less fields then the schema" in {
+
+      val result = adrSubmission.buildJson(
+        configData,
+        ListBuffer(
+          CSOP.buildGrantedV4WithMissingFields(),
+          CSOP.buildGrantedV4WithMissingFields()
+        )
+      )
+
+      result shouldBe Json.parse(
+        """
+          |{
+          |  "optionsExercisedInYear": true,
+          |  "exercised": {
+          |    "exercisedEvents": [
+          |      {
+          |        "dateOfExercise": "2015-12-09",
+          |        "individual": {
+          |          "firstName": "123456"
+          |        }
+          |      },
+          |      {
+          |        "dateOfExercise": "2015-12-09",
+          |        "individual": {
+          |          "firstName": "123456"
+          |        }
+          |      }
+          |    ]
+          |  }
+          |}
+          |""".stripMargin)
 
     }
 
