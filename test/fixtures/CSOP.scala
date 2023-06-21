@@ -37,6 +37,11 @@ object CSOP {
   )
 
   // CSOP_OptionsGranted_V4
+  def buildGrantedV4WithMissingFields(): Seq[String] = Seq(
+    "2015-12-09",
+    "123456"
+  )
+
   def buildGrantedV4(sharesListedOnSE: String, marketValueAgreedHMRC: String): Seq[String] = Seq(
     "2015-12-09",
     "123456",
