@@ -139,7 +139,7 @@ class ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with Eithe
     ) {
       when(mockSubmissionCommon.mergeSheetData(any[Config](), any[JsObject], any[JsObject])).thenReturn(sheetsJson)
 
-      override def buildJson(configData: Config, fileData: ListBuffer[Seq[String]], row: Option[Int] = None)
+      override def buildJson(configData: Config, fileData: ListBuffer[Seq[String]], row: Option[Int] = None, sheetName: Option[String], schemeInfo: Option[SchemeInfo])
                             (implicit request: Request[_], hc: HeaderCarrier): JsObject =
         sheetsJson
     }
