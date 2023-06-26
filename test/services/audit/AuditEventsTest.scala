@@ -28,8 +28,8 @@ import org.scalatest.BeforeAndAfterEach
 import play.api.test.FakeRequest
 import services.audit.{AuditEvents, AuditService}
 import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 import uk.gov.hmrc.play.audit.http.connector.AuditResult.{Disabled, Failure, Success}
-import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
 
 import scala.concurrent.Future
 

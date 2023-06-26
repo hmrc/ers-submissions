@@ -17,6 +17,7 @@
 package utils
 
 import com.typesafe.config.Config
+import models.SchemeInfo
 import org.joda.time.DateTime
 import play.api.Logging
 import play.api.libs.json.Json.JsValueWrapper
@@ -73,7 +74,7 @@ class SubmissionCommon @Inject()(configUtils: ConfigUtils) extends Logging {
     getNewField(configElem, elemVal)
   }
 
-  def getFileDataValue(configElem: Config, fileData: ListBuffer[scala.Seq[String]], row: Option[Int]): JsObject = {
+  def getFileDataValue(configElem: Config, fileData: ListBuffer[scala.Seq[String]], row: Option[Int], sheetName: Option[String], schemeInfo: Option[SchemeInfo]): JsObject = {
 
     if(configElem.hasPath("value")) {
       getConfigElemValue(configElem)
@@ -101,11 +102,13 @@ class SubmissionCommon @Inject()(configUtils: ConfigUtils) extends Logging {
       } catch {
         case e: java.lang.IndexOutOfBoundsException =>
           logger.info(s"[getFileDataValue][IndexOutOfBoundsException] Could not find file data for row: " +
-            s"${elemRow} and column: ${elemColumn}. Exception: [${e}]")
+            s"$elemRow and column: $elemColumn. Exception: [$e] \n " +
+            s"for [${sheetName.getOrElse("missingSheetName")}]: ${schemeInfo.map(_.basicLogMessage).getOrElse("missingSchemeInfo")}")
           Json.obj()
         case e: Throwable =>
           logger.info(s"[getFileDataValue][Exception] Could not find file data for row: " +
-            s"${elemRow} and column: ${elemColumn}. Exception: [${e}]")
+            s"$elemRow and column: $elemColumn. Exception: [$e] \n " +
+            s"for [${sheetName.getOrElse("missingSheetName")}]: ${schemeInfo.map(_.basicLogMessage).getOrElse("missingSchemeInfo")}")
           Json.obj()
       }
 

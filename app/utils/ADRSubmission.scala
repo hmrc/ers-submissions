@@ -70,12 +70,11 @@ class ADRSubmission @Inject()(submissionCommon: SubmissionCommon,
         Try {
           val sheetName: String = fileData.sheetName
           val configData: Config = configUtils.getConfigData(s"$schemeType/$sheetName", sheetName, ersSummary)
-          val data: JsObject = buildJson(configData, fileData.data.get)
+          val data: JsObject = buildJson(configData, fileData.data.get, None, Some(sheetName), Some(fileData.schemeInfo))
           submissionCommon.mergeSheetData(configData.getConfig("data_location"), result, data)
         }.toEither match {
-          case Right(jsObject) => {
+          case Right(jsObject) =>
             result = result ++ jsObject
-          }
           case Left(error) =>
             logger.info(
               s"Failed to create Json from sheets data for: ${ersSummary.metaData.schemeInfo.basicLogMessage}. \n" +
@@ -153,7 +152,7 @@ class ADRSubmission @Inject()(submissionCommon: SubmissionCommon,
     json
   }
 
-  def buildJson(configData: Config, fileData: ListBuffer[scala.Seq[String]], row: Option[Int] = None)
+  def buildJson(configData: Config, fileData: ListBuffer[scala.Seq[String]], row: Option[Int] = None, sheetName: Option[String] = None, schemeInfo: Option[SchemeInfo] = None)
                (implicit request: Request[_], hc: HeaderCarrier): JsObject = {
     import scala.jdk.CollectionConverters._
 
@@ -163,20 +162,20 @@ class ADRSubmission @Inject()(submissionCommon: SubmissionCommon,
     for (elem <- fieldsConfigList) {
       elem.getString("type") match {
         case "object" =>
-          val elemVal = buildJson(elem, fileData, row)
+          val elemVal = buildJson(elem, fileData, row, sheetName, schemeInfo)
           json ++= submissionCommon.addObjectValue(elem, elemVal)
         case "array" =>
           if (fileData.nonEmpty) {
             if (row.isEmpty) {
-              val elemVal: List[JsObject] = for (row <- fileData.indices.toList) yield buildJson(elem, fileData, Some(row))
+              val elemVal: List[JsObject] = for (row <- fileData.indices.toList) yield buildJson(elem, fileData, Some(row), sheetName, schemeInfo)
               json ++= submissionCommon.addArrayValue(elem, elemVal)
             }
             else {
-              val elemVal = buildJson(elem, fileData, row)
+              val elemVal = buildJson(elem, fileData, row, sheetName, schemeInfo)
               json ++= submissionCommon.addArrayValue(elem, List(elemVal))
             }
           }
-        case _ => json ++= submissionCommon.getFileDataValue(elem, fileData, row)
+        case _ => json ++= submissionCommon.getFileDataValue(elem, fileData, row, sheetName, schemeInfo)
       }
     }
     json
