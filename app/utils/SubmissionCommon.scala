@@ -33,7 +33,9 @@ class SubmissionCommon @Inject()(configUtils: ConfigUtils) extends Logging {
   def getCorrelationID(response: HttpResponse): String = {
     response.header("CorrelationId") match {
       case Some(correlationId) => correlationId
-      case None => "missingCorrelationId"
+      case None =>
+        logger.warn(s"[SubmissionCommon][getCorrelationID] Response headers: ${response.headers.toString()}")
+        "missingCorrelationId"
     }
   }
 
