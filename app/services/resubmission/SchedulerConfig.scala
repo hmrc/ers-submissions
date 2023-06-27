@@ -22,17 +22,9 @@ import models.Statuses
 trait SchedulerConfig {
   val applicationConfig: ApplicationConfig
 
-  val failedStatus: String = if (applicationConfig.schedulerSchemeRefListEnabled) {
-    applicationConfig.schedulerSchemeRefFailStatus
-  } else {
-    Statuses.FailedScheduler.toString
-  }
+  val failedStatus: String = applicationConfig.schedulerSchemeRefFailStatus
 
-  val searchStatusList: List[String] = if (applicationConfig.schedulerSchemeRefListEnabled) {
-    applicationConfig.schedulerSchemeRefStatusList
-  } else {
-    applicationConfig.schedulerStatuses
-  }
+  val searchStatusList: List[String] = applicationConfig.schedulerSchemeRefStatusList
 
   val schemeRefList: Option[List[String]] = if (applicationConfig.schedulerSchemeRefListEnabled) {
     Some(applicationConfig.schedulerSchemeRefList)

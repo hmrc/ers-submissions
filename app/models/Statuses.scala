@@ -21,6 +21,5 @@ object Statuses extends Enumeration {
   val Saved = Value("saved")
   val Sent = Value("sent")
   val Failed = Value("failed")
-  val FailedScheduler = Value("failedScheduler")
   val Process = Value("process")
 }

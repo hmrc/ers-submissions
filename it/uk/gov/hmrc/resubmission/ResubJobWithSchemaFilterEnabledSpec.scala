@@ -14,31 +14,33 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc
+package uk.gov.hmrc.resubmission
 
 import _root_.play.api.Application
 import _root_.play.api.inject.guice.GuiceApplicationBuilder
-import _root_.play.api.libs.json._
 import _root_.play.api.test.Helpers._
-import models.{ERSError, ErsSummary}
+import models.ERSError
 import org.mongodb.scala.model.Filters
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 import org.scalatestplus.play.guice.GuiceOneServerPerSuite
+import uk.gov.hmrc.{FakeErsStubService, Fixtures}
 
-class ResubJobWithDateFilterDisabledSpec extends AnyWordSpecLike
+class ResubJobWithSchemaFilterEnabledSpec extends AnyWordSpecLike
   with Matchers
   with GuiceOneServerPerSuite
   with FakeErsStubService {
 
   val applicationConfig: Map[String, Any] = Map(
     "microservice.services.ers-stub.port" -> "19339",
+    "schedules.resubmission-service.enabled" -> true,
     "schedules.resubmission-service.dateTimeFilter.enabled" -> false,
     "schedules.resubmission-service.schemaRefsFilter.enabled" -> false,
     "schedules.resubmission-service.schemaFilter.enabled" -> true,
     "schedules.resubmission-service.schemaFilter.filter" -> "CSOP",
     "schedules.resubmission-service.resubmissionLimit" -> 10,
     "schedules.resubmission-service.resubmit-list-statuses" -> "failed",
+    "schedules.resubmission-service.resubmit-fail-status" -> "failedResubmission",
     "schedules.resubmission-service.resubmit-successful-status" -> "successResubmit",
     "auditing.enabled" -> false
   )
@@ -65,50 +67,6 @@ class ResubJobWithDateFilterDisabledSpec extends AnyWordSpecLike
 
       countMetadataRecordsWithSelector(Filters.empty()) shouldBe 6
       countMetadataRecordsWithSelector(successResubmitTransferStatusSelector) shouldBe 4
-      countMetadataRecordsWithSelector(failedJobSelector) shouldBe 0
-    }
-
-    "resubmit failed jobs in batches with the correct transfer status and schema type" in new ResubmissionJobSetUp(app = app) {
-      val ersSummaries: Seq[ErsSummary] = Fixtures.generateListOfErsSummaries()
-
-      val storeDocs: Boolean = await(storeMultipleErsSummary(ersSummaries.map(Json.toJsObject(_))))
-      storeDocs shouldBe true
-
-      val storePresubmissionDocs: Boolean = await(storeMultiplePresubmissionData(Fixtures.generatePresubmissionRecordsForMetadata(ersSummaries).map(Json.toJsObject(_))))
-      storePresubmissionDocs shouldBe true
-
-      countMetadataRecordsWithSelector(Filters.empty()) shouldBe 40
-      countMetadataRecordsWithSelector(successResubmitTransferStatusSelector) shouldBe 0
-      countMetadataRecordsWithSelector(failedJobSelector) shouldBe 20
-      val firstJobRunOutcome: Either[ERSError, Boolean] = await(getJob.scheduledMessage.service.invoke.value)
-      firstJobRunOutcome shouldBe Right(true)
-
-      countMetadataRecordsWithSelector(Filters.empty()) shouldBe 40
-      countMetadataRecordsWithSelector(successResubmitTransferStatusSelector) shouldBe 10
-      countMetadataRecordsWithSelector(failedJobSelector) shouldBe 10
-
-      val secondJobRunOutcome: Either[ERSError, Boolean] = await(getJob.scheduledMessage.service.invoke.value)
-      secondJobRunOutcome shouldBe Right(true)
-
-      countMetadataRecordsWithSelector(Filters.empty()) shouldBe 40
-      countMetadataRecordsWithSelector(successResubmitTransferStatusSelector) shouldBe 20
-      countMetadataRecordsWithSelector(failedJobSelector) shouldBe 0
-
-      val ersSummariesSecondStore = Fixtures.failedJobsWithDifferentBundleRef
-      val secondStoreDocs: Boolean = await(storeMultipleErsSummary(ersSummariesSecondStore.map(Json.toJsObject(_))))
-      secondStoreDocs shouldBe true
-
-      val presubmissionDocsSecondStore: Boolean = await(storeMultiplePresubmissionData(Fixtures.generatePresubmissionRecordsForMetadata(ersSummariesSecondStore).map(Json.toJsObject(_))))
-      presubmissionDocsSecondStore shouldBe true
-
-      countMetadataRecordsWithSelector(Filters.empty()) shouldBe 50
-      countMetadataRecordsWithSelector(successResubmitTransferStatusSelector) shouldBe 20
-      countMetadataRecordsWithSelector(failedJobSelector) shouldBe 10
-      val thirdJobRunOutcome: Either[ERSError, Boolean] = await(getJob.scheduledMessage.service.invoke.value)
-      thirdJobRunOutcome shouldBe Right(true)
-
-      countMetadataRecordsWithSelector(Filters.empty()) shouldBe 50
-      countMetadataRecordsWithSelector(successResubmitTransferStatusSelector) shouldBe 30
       countMetadataRecordsWithSelector(failedJobSelector) shouldBe 0
     }
   }

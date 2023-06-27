@@ -27,8 +27,10 @@ import scala.util.Random
 object Fixtures {
   val invalidPayload: JsObject = Json.obj("invalid data" -> "test")
 
-  def schemeInfo(schemaType: String = "EMI", timestamp: DateTime = DateTime.now(DateTimeZone.UTC)): SchemeInfo = SchemeInfo (
-    schemeRef = "XA1100000000000",
+  def schemeInfo(schemaType: String = "EMI",
+                 timestamp: DateTime = DateTime.now(DateTimeZone.UTC),
+                 schemeRef: String = "XA1100000000000"): SchemeInfo = SchemeInfo (
+    schemeRef = schemeRef,
     timestamp = timestamp,
     schemeId = "123PA12345678",
     taxYear = "2014/15",
@@ -45,8 +47,8 @@ object Fixtures {
   )
   def submissionsSchemeDataJson(submissionsSchemeData: SubmissionsSchemeData): JsObject = Json.toJson(submissionsSchemeData).as[JsObject]
 
-  def ersMetaData(schemaType: String, timestamp: DateTime): ErsMetaData = ErsMetaData(
-    schemeInfo = schemeInfo(schemaType, timestamp),
+  def ersMetaData(schemaType: String, timestamp: DateTime, schemeRef: String): ErsMetaData = ErsMetaData(
+    schemeInfo = schemeInfo(schemaType, timestamp, schemeRef),
     ipRef = "127.0.0.0",
     aoRef = Some("123PA12345678"),
     empRef = "EMI - MyScheme - XA1100000000000 - 2014/15",
@@ -85,12 +87,13 @@ object Fixtures {
                       transferStatus: Option[String] = Some("saved"),
                       schemaType: String = "EMI",
                       bundleRef: String = "testbundle",
-                      timestamp: DateTime = DateTime.now(DateTimeZone.UTC)): ErsSummary = ErsSummary(
+                      timestamp: DateTime = DateTime.now(DateTimeZone.UTC),
+                      schemeRef: String = "XA1100000000000"): ErsSummary = ErsSummary(
     bundleRef = bundleRef,
     isNilReturn = if(isNilReturn) "2" else "1",
     fileType = Some("ods"),
     confirmationDateTime = DateTime.now(DateTimeZone.UTC),
-    metaData = ersMetaData(schemaType, timestamp),
+    metaData = ersMetaData(schemaType, timestamp, schemeRef),
     altAmendsActivity = None,
     alterationAmends = None,
     groupService = Some(
@@ -134,19 +137,15 @@ object Fixtures {
   def generateListOfErsSummaries(): Seq[ErsSummary] = {
 
     val failedJobs: Seq[ErsSummary] = generateListOfErsSummaries(
-      numberRecords = 20
+      numberRecords = 10
     )
 
-    val failedJobsWithWrongSchema: Seq[ErsSummary] = generateListOfErsSummaries(
-      numberRecords = 10,
-      schemaType = "NOT_A_VALID_SCHEMA"
-    )
     val passedJobs: Seq[ErsSummary] = generateListOfErsSummaries(
-      numberRecords = 10,
-      schemaType = "passed"
+      numberRecords = 5,
+      transferStatus = Some("passed")
     )
 
-    failedJobs ++ failedJobsWithWrongSchema ++ passedJobs
+    failedJobs ++ passedJobs
   }
 
   def generatePresubmissionRecordsForMetadata(ersSummaries: Seq[ErsSummary]): Seq[SchemeData] = {
@@ -159,12 +158,12 @@ object Fixtures {
 
   val formatter: DateTimeFormatter = DateTimeFormat.forPattern("dd/MM/yyyy")
   val ersSummaries: Seq[JsObject] = Seq(
-    Fixtures.buildErsSummary(transferStatus = Some("passed"), schemaType = "CSOP"), // wrong status for resubmission
-    Fixtures.buildErsSummary(transferStatus = Some("successResubmit"), schemaType = "CSOP"), // wrong status for resubmission (already resubmitted)
-    Fixtures.buildErsSummary(transferStatus = Some("failed"), schemaType = "NOT_CSOP"), // wrong schema type for resubmission
-    Fixtures.buildErsSummary(transferStatus = Some("failed"), schemaType = "CSOP" , timestamp = DateTime.parse("30/04/2023", formatter)), // wrong date for resubmission
-    Fixtures.buildErsSummary(transferStatus = Some("failed"), schemaType = "CSOP", timestamp = DateTime.parse("10/05/2023", formatter)), // should resubmit
-    Fixtures.buildErsSummary(transferStatus = Some("failed"), schemaType = "CSOP", timestamp = DateTime.parse("20/05/2023", formatter)), // should resubmit
+    Fixtures.buildErsSummary(transferStatus = Some("passed"), schemaType = "CSOP", timestamp = DateTime.parse("30/04/2022", formatter)),
+    Fixtures.buildErsSummary(transferStatus = Some("successResubmit"), schemaType = "CSOP", timestamp = DateTime.parse("30/04/2021", formatter)),
+    Fixtures.buildErsSummary(transferStatus = Some("failed"), schemaType = "NOT_CSOP", timestamp = DateTime.parse("30/04/2000", formatter)),
+    Fixtures.buildErsSummary(transferStatus = Some("failed"), schemaType = "CSOP", timestamp = DateTime.parse("30/04/2023", formatter)),
+    Fixtures.buildErsSummary(transferStatus = Some("failed"), schemaType = "CSOP", timestamp = DateTime.parse("10/05/2023", formatter)),
+    Fixtures.buildErsSummary(transferStatus = Some("failed"), schemaType = "CSOP", timestamp = DateTime.parse("20/05/2023", formatter)),
   ).map(Json.toJsObject(_))
 
   val schemeData: Seq[JsObject] = Seq(
