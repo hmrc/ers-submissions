@@ -24,11 +24,10 @@ import models.{SchemeData, SchemeInfo}
 import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
 import org.scalatest.{BeforeAndAfter, EitherValues}
-import play.api.libs.json.Json
+import play.api.libs.json.{JsObject, Json}
 import play.api.test.FakeRequest
 import services.PresubmissionService
 import uk.gov.hmrc.http.HeaderCarrier
-import utils.LoggingAndRexceptions.ADRExceptionEmitter
 import utils.{ADRSubmission, ConfigUtils, SubmissionCommon}
 
 import scala.collection.mutable.ListBuffer
@@ -37,17 +36,15 @@ import scala.concurrent.Future
 class EMI_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfter with EitherValues {
 
   implicit val hc: HeaderCarrier = new HeaderCarrier()
-  implicit val request = FakeRequest().withBody(Fixtures.metadataJson)
+  implicit val request: FakeRequest[JsObject] = FakeRequest().withBody(Fixtures.metadataJson)
 
   val mockSubmissionCommon: SubmissionCommon = app.injector.instanceOf[SubmissionCommon]
   val mockPresubmissionService: PresubmissionService = mock[PresubmissionService]
-  val mockAdrExceptionEmitter: ADRExceptionEmitter = mock[ADRExceptionEmitter]
   val mockConfigUtils: ConfigUtils = app.injector.instanceOf[ConfigUtils]
 
   val mockAdrSubmission: ADRSubmission = new ADRSubmission(
     mockSubmissionCommon,
     mockPresubmissionService,
-    mockAdrExceptionEmitter,
     mockConfigUtils
   )
 

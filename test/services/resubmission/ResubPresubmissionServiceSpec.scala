@@ -16,6 +16,7 @@
 
 package services.resubmission
 
+import com.mongodb.client.result.UpdateResult
 import common._
 import models._
 import fixtures.Fixtures
@@ -34,23 +35,19 @@ import repositories.MetadataMongoRepository
 import services.SubmissionService
 import services.audit.AuditEvents
 import uk.gov.hmrc.http.HeaderCarrier
-import utils.LoggingAndRexceptions.{ErsLoggingAndAuditing, ResubmissionExceptionEmitter}
 
 class ResubPresubmissionServiceSpec extends ERSTestHelper with BeforeAndAfterEach with EitherValues {
   implicit val hc: HeaderCarrier = new HeaderCarrier()
   implicit val request: Request[_] = FakeRequest()
 
   val metadataMongoRepositoryResubmission: MetadataMongoRepository = mock[MetadataMongoRepository]
-  val mockSchedulerLoggingAndAuditing: ErsLoggingAndAuditing = mock[ErsLoggingAndAuditing]
   val mockSubmissionService: SubmissionService = mock[SubmissionService]
   val mockAuditEvents: AuditEvents = mock[AuditEvents]
-  val mockResubmissionExceptionEmitter: ResubmissionExceptionEmitter = app.injector.instanceOf[ResubmissionExceptionEmitter]
 
   override def beforeEach(): Unit = {
     super.beforeEach()
     reset(metadataMongoRepositoryResubmission)
     reset(mockSubmissionService)
-    reset(mockSchedulerLoggingAndAuditing)
     reset(mockAuditEvents)
   }
 
@@ -60,6 +57,8 @@ class ResubPresubmissionServiceSpec extends ERSTestHelper with BeforeAndAfterEac
     override def getModifiedCount: Long = 1
     override def getUpsertedId: BsonValue = BsonString("123")
   }
+
+  val failedUpdateResult: UpdateResult = UpdateResult.unacknowledged()
 
   val schemeInfo: SchemeInfo = SchemeInfo(
     schemeRef = "123",
@@ -107,7 +106,6 @@ class ResubPresubmissionServiceSpec extends ERSTestHelper with BeforeAndAfterEac
   "processFailedSubmissions" should {
     val resubPresubmissionService: ResubPresubmissionService = new ResubPresubmissionService(
       metadataMongoRepositoryResubmission,
-      mockSchedulerLoggingAndAuditing,
       mockSubmissionService,
       mockAuditEvents
     )
@@ -207,7 +205,6 @@ class ResubPresubmissionServiceSpec extends ERSTestHelper with BeforeAndAfterEac
   "startResubmission" should {
     val resubPresubmissionService: ResubPresubmissionService = new ResubPresubmissionService(
       metadataMongoRepositoryResubmission,
-      mockSchedulerLoggingAndAuditing,
       mockSubmissionService,
       mockAuditEvents
     )

@@ -28,7 +28,6 @@ import play.api.libs.json.{JsObject, Json}
 import play.api.test.FakeRequest
 import services.PresubmissionService
 import uk.gov.hmrc.http.HeaderCarrier
-import utils.LoggingAndRexceptions.ADRExceptionEmitter
 import utils.{ADRSubmission, ConfigUtils, SubmissionCommon}
 
 import scala.collection.mutable.ListBuffer
@@ -38,7 +37,6 @@ class CSOP_ADRSubmissionSpec
   extends ERSTestHelper with BeforeAndAfter with EitherValues {
 
   val mockSubmissionCommon: SubmissionCommon = app.injector.instanceOf[SubmissionCommon]
-  val mockAdrExceptionEmitter: ADRExceptionEmitter = mock[ADRExceptionEmitter]
   val mockConfigUtils: ConfigUtils = app.injector.instanceOf[ConfigUtils]
   val mockPresubmissionService: PresubmissionService = mock[PresubmissionService]
 
@@ -48,7 +46,6 @@ class CSOP_ADRSubmissionSpec
   val adrSubmission: ADRSubmission = new ADRSubmission(
     mockSubmissionCommon,
     mockPresubmissionService,
-    mockAdrExceptionEmitter,
     mockConfigUtils
   )
   def before(fun : => scala.Any): Unit  = {

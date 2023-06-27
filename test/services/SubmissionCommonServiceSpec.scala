@@ -36,7 +36,7 @@ import play.api.test.FakeRequest
 import repositories.{MetadataMongoRepository, Repositories}
 import services.audit.AuditEvents
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
-import utils.LoggingAndRexceptions.{ADRExceptionEmitter, ErsLoggingAndAuditing}
+import utils.LoggingAndRexceptions.ADRExceptionEmitter
 import utils.{ADRSubmission, SubmissionCommon}
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -54,13 +54,6 @@ class SubmissionCommonServiceSpec extends ERSTestHelper with BeforeAndAfterEach 
   val adrSubmission: ADRSubmission = mock[ADRSubmission]
   val submissionCommon: SubmissionCommon = mock[SubmissionCommon]
   val metrics: Metrics = mock[Metrics]
-
-  val ersLoggingAndAuditing: ErsLoggingAndAuditing = new ErsLoggingAndAuditing(auditEvents) {
-    override val buildDataMessage: PartialFunction[Object, String] = {
-      case _ => ""
-    }
-    override def handleFailure(schemeInfo: SchemeInfo, message: String)(implicit hc: HeaderCarrier): Unit = {}
-  }
 
   override def beforeEach(): Unit = {
     super.beforeEach()
@@ -129,7 +122,7 @@ class SubmissionCommonServiceSpec extends ERSTestHelper with BeforeAndAfterEach 
     new SubmissionService(repositories, adrConnector, adrSubmission, submissionCommon, auditEvents, metrics) {
 
       override def transformData(ersSummary: ErsSummary)(implicit request: Request[_], hc: HeaderCarrier): ERSEnvelope[JsObject] =
-        ERSEnvelope.fromFuture(Future.successful(Json.obj()))
+        ERSEnvelope(Future.successful(Json.obj()))
 
       override def sendToADRUpdatePostData(ersSummary: ErsSummary, adrData: JsObject, failedStatus: String, successStatus: String)
                                           (implicit hc: HeaderCarrier): ERSEnvelope[Boolean] = ERSEnvelope(true)
@@ -248,6 +241,18 @@ class SubmissionCommonServiceSpec extends ERSTestHelper with BeforeAndAfterEach 
           .updatePostsubmission(INTERNAL_SERVER_ERROR, "failed", Fixtures.metadata.metaData.schemeInfo).value)
 
       result.swap.value shouldBe MongoGenericError("update failed")
+      verify(metrics, VerificationModeFactory.times(0)).updatePostsubmissionStatus(any[Long](), any[TimeUnit]())
+    }
+
+    "return SubmissionStatusUpdateError if update returned false" in {
+      when(mockMetadataRepository.updateStatus(any[SchemeInfo](), anyString(), any()))
+        .thenReturn(ERSEnvelope(false))
+
+      val result =
+        await(submissionCommonService
+          .updatePostsubmission(INTERNAL_SERVER_ERROR, "failed", Fixtures.metadata.metaData.schemeInfo).value)
+
+      result.swap.value shouldBe SubmissionStatusUpdateError(Some(INTERNAL_SERVER_ERROR), Some("failed"))
       verify(metrics, VerificationModeFactory.times(0)).updatePostsubmissionStatus(any[Long](), any[TimeUnit]())
     }
   }

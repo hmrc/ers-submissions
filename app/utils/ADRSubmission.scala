@@ -25,7 +25,6 @@ import play.api.libs.json.{JsObject, Json}
 import play.api.mvc.Request
 import services.PresubmissionService
 import uk.gov.hmrc.http.HeaderCarrier
-import utils.LoggingAndRexceptions.ADRExceptionEmitter
 
 import javax.inject.Inject
 import scala.collection.mutable.{ArrayBuffer, ListBuffer}
@@ -34,7 +33,6 @@ import scala.util.Try
 
 class ADRSubmission @Inject()(submissionCommon: SubmissionCommon,
                               presubmissionService: PresubmissionService,
-                              adrExceptionEmitter: ADRExceptionEmitter,
                               configUtils: ConfigUtils)
                              (implicit ec: ExecutionContext) extends Logging {
 

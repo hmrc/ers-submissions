@@ -20,4 +20,4 @@ case class ADRTransferException(ersMetaData: ErsMetaData,
                                 message: String,
                                 context: String) extends Exception(message)
 
-case class ResubmissionException(message: String, context: String, schemeInfo: Option[SchemeInfo]) extends Exception(message)
+//case class ResubmissionException(message: String, context: String, schemeInfo: Option[SchemeInfo]) extends Exception(message)

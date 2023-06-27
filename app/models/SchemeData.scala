@@ -16,7 +16,7 @@
 
 package models
 
-import org.joda.time.{DateTime, DateTimeZone}
+import org.joda.time.DateTime
 import play.api.libs.json._
 
 import scala.collection.mutable.ListBuffer
@@ -32,17 +32,9 @@ case class SchemeInfo (schemeRef: String,
 }
 
 object SchemeInfo {
+  import models.DateTime._
 
-  private val dateTimeRead: Reads[DateTime] =
-    __.read[Long].map { dateTime =>
-      new DateTime(dateTime, DateTimeZone.UTC)
-    }
-
-  private val dateTimeWrite: Writes[DateTime] = (dateTime: DateTime) => Json.toJson(dateTime.getMillis)
-
-  implicit val dateTimeFormats: Format[DateTime] = Format(dateTimeRead, dateTimeWrite)
   implicit val format: OFormat[SchemeInfo] = Json.format[SchemeInfo]
-
 }
 
 case class SchemeData(schemeInfo: SchemeInfo,

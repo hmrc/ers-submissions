@@ -16,18 +16,15 @@
 
 package utils.LoggingAndRexceptions
 
-import models.{ADRTransferException, ResubmissionException}
+import models.ADRTransferException
 
 trait ErsExceptionMessages {
 
   def buildExceptionMesssage(ex: Exception): String = {
     ex match {
-      case rEx: ResubmissionException => s"ResubmissionException: ${rEx.message},\n" +
-        s"context: ${rEx.context}"
       case adrEx: ADRTransferException => s"ADRTransferException: ${adrEx.message},\n" +
         s"context: ${adrEx.context}"
       case ex: Exception => s"Exception: ${ex.getMessage}"
     }
   }
-
 }

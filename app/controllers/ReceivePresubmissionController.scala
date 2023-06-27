@@ -73,28 +73,7 @@ class ReceivePresubmissionController @Inject()(presubmissionService: Presubmissi
       }
     }
 
-  def submitJson(fileSource: Source[(Seq[Seq[ByteString]], Long), _], submissionsSchemeData: SubmissionsSchemeData)
-                (implicit hc: HeaderCarrier): ERSEnvelope[(Boolean, Long)] = EitherT {
-    fileSource.mapAsyncUnordered(appConfig.submissionParallelism)(chunkedRowsWithIndex => {
-      val (chunkedRows, index) = chunkedRowsWithIndex
-      val checkedData: Option[ListBuffer[scala.Seq[String]]] = Option(chunkedRows.map(_.map(_.utf8String)).to(ListBuffer)).filter(_.nonEmpty)
-
-      presubmissionService.storeJson(
-        SchemeData(submissionsSchemeData.schemeInfo,
-          submissionsSchemeData.sheetName,
-          numberOfParts = None,
-          data = checkedData))
-        .value
-        .map(_.map((_, index)))
-    })
-      .takeWhile((booleanAndIndex: Either[ERSError, (Boolean, Long)]) => {
-        val wasStoredSuccessfully: Boolean = booleanAndIndex.map(_._1).getOrElse(false)
-        wasStoredSuccessfully
-      }, inclusive = true)
-      .runWith(Sink.last)
-  }
-
-  def storePresubmission(submissionsSchemeData: SubmissionsSchemeData)(implicit hc: HeaderCarrier): Future[Result] = {
+  private[controllers] def storePresubmission(submissionsSchemeData: SubmissionsSchemeData)(implicit hc: HeaderCarrier): Future[Result] = {
     val startTime = System.currentTimeMillis()
     val fileSource: Source[(Seq[Seq[ByteString]], Long), _] =
       fileDownloadService.schemeDataToChunksWithIndex(submissionsSchemeData)
@@ -117,13 +96,14 @@ class ReceivePresubmissionController @Inject()(presubmissionService: Presubmissi
         auditEvents.auditADRTransferFailure(submissionsSchemeData.schemeInfo, Map.empty)
         InternalServerError("Storing presubmission data failed.")
       case Left(error) =>
+        metrics.failedStorePresubmission()
         logger.error(s"Storing presubmission data failed for: ${submissionsSchemeData.sheetName}, ${submissionsSchemeData.schemeInfo.basicLogMessage} with error: [$error]")
         auditEvents.auditADRTransferFailure(submissionsSchemeData.schemeInfo, Map.empty)
         InternalServerError("Storing presubmission data failed.")
     }
   }
 
-  def storePresubmission(schemeData: SchemeData)(implicit hc: HeaderCarrier): Future[Result] = {
+  private def storePresubmission(schemeData: SchemeData)(implicit hc: HeaderCarrier): Future[Result] = {
     val startTime = System.currentTimeMillis()
     presubmissionService.storeJson(schemeData).value.map {
       case Right(true) =>
@@ -137,9 +117,31 @@ class ReceivePresubmissionController @Inject()(presubmissionService: Presubmissi
         auditEvents.auditADRTransferFailure(schemeData.schemeInfo, Map.empty)
         InternalServerError("Storing presubmission data failed.")
       case Left(error) =>
+        metrics.failedStorePresubmission()
         logger.error(s"Storing presubmission data failed for: ${schemeData.sheetName}, ${schemeData.schemeInfo.basicLogMessage} with error: [$error]")
         auditEvents.auditADRTransferFailure(schemeData.schemeInfo, Map.empty)
         InternalServerError("Storing presubmission data failed.")
     }
+  }
+
+  private[controllers] def submitJson(fileSource: Source[(Seq[Seq[ByteString]], Long), _], submissionsSchemeData: SubmissionsSchemeData)
+                        (implicit hc: HeaderCarrier): ERSEnvelope[(Boolean, Long)] = EitherT {
+    fileSource.mapAsyncUnordered(appConfig.submissionParallelism)(chunkedRowsWithIndex => {
+      val (chunkedRows, index) = chunkedRowsWithIndex
+      val checkedData: Option[ListBuffer[scala.Seq[String]]] = Option(chunkedRows.map(_.map(_.utf8String)).to(ListBuffer)).filter(_.nonEmpty)
+
+      presubmissionService.storeJson(
+        SchemeData(submissionsSchemeData.schemeInfo,
+          submissionsSchemeData.sheetName,
+          numberOfParts = None,
+          data = checkedData))
+        .value
+        .map(_.map((_, index)))
+    })
+      .takeWhile((booleanAndIndex: Either[ERSError, (Boolean, Long)]) => {
+        val wasStoredSuccessfully: Boolean = booleanAndIndex.map(_._1).getOrElse(false)
+        wasStoredSuccessfully
+      }, inclusive = true)
+      .runWith(Sink.last)
   }
 }

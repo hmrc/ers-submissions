@@ -50,10 +50,21 @@ class AuditEventsTest
   }
 
 for (eventResult <- Seq(Success, Failure("failed"), Disabled)) {
-  s"its should audit runtime errors with result $eventResult" in {
+  s"it should audit runtime errors with result $eventResult" in {
     when(mockAuditService.sendEvent(any(), any())(any())).thenReturn(Future.successful(eventResult))
 
     val result = await(testAuditEvents.auditRunTimeError(new RuntimeException, "some context"))
+
+    result shouldBe eventResult
+
+    verify(mockAuditService, VerificationModeFactory.times(1))
+      .sendEvent(any(), any())(any())
+  }
+
+  s"it should audit generic error with result $eventResult" in {
+    when(mockAuditService.sendEvent(any(), any())(any())).thenReturn(Future.successful(eventResult))
+
+    val result = await(testAuditEvents.auditError("someContext", "someMessage"))
 
     result shouldBe eventResult
 

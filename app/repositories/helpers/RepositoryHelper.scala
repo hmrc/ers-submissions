@@ -45,5 +45,4 @@ trait RepositoryHelper extends Logging {
         Left(MongoGenericError(other.getMessage))
     }
   }
-
 }

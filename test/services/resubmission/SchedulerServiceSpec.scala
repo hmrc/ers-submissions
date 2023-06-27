@@ -27,7 +27,6 @@ import play.api.mvc.Request
 import play.api.test.FakeRequest
 import repositories.DefaultLockRepositoryProvider
 import uk.gov.hmrc.http.HeaderCarrier
-import utils.LoggingAndRexceptions.ErsLoggingAndAuditing
 
 import scala.concurrent.Future
 
@@ -38,7 +37,6 @@ class SchedulerServiceSpec extends ERSTestHelper with BeforeAndAfterEach with Ei
   val mockApplicationConfig: ApplicationConfig = app.injector.instanceOf[ApplicationConfig]
   val mockMongoLockRepository: DefaultLockRepositoryProvider = mock[DefaultLockRepositoryProvider]
   val mockResubPresubmissionService: ResubPresubmissionService = mock[ResubPresubmissionService]
-  val mockErsLoggingAndAuditing: ErsLoggingAndAuditing = mock[ErsLoggingAndAuditing]
 
   override def beforeEach(): Unit = {
     super.beforeEach()
@@ -47,7 +45,7 @@ class SchedulerServiceSpec extends ERSTestHelper with BeforeAndAfterEach with Ei
 
   "resubmit" should {
 
-    "return the result of processFailedGridFSSubmissions" in {
+    "return the result of processFailedGridFSSubmissions if processFailedSubmissions returns true" in {
       val schedulerService: ReSubmissionSchedulerService = new ReSubmissionSchedulerService(
         mockApplicationConfig,
         mockMongoLockRepository,
@@ -57,6 +55,18 @@ class SchedulerServiceSpec extends ERSTestHelper with BeforeAndAfterEach with Ei
 
       val result = await(schedulerService.resubmit().value)
       result.value shouldBe true
+    }
+
+    "return the result of processFailedGridFSSubmissions if processFailedSubmissions returns false" in {
+      val schedulerService: ReSubmissionSchedulerService = new ReSubmissionSchedulerService(
+        mockApplicationConfig,
+        mockMongoLockRepository,
+        mockResubPresubmissionService)
+
+      when(mockResubPresubmissionService.processFailedSubmissions(any())(any(), any())).thenReturn(ERSEnvelope(Future.successful(false)))
+
+      val result = await(schedulerService.resubmit().value)
+      result.value shouldBe false
     }
 
     "return ResubmissionError if resubmitting gridFS data returns error" in {

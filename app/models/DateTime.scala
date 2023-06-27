@@ -14,27 +14,18 @@
  * limitations under the License.
  */
 
-package utils.LoggingAndExceptions
+package models
 
-import helpers.ERSTestHelper
-import services.audit.AuditEvents
-import uk.gov.hmrc.http.HeaderCarrier
-import utils.LoggingAndRexceptions.ADRExceptionEmitter
+import org.joda.time.{DateTime => DT, DateTimeZone}
+import play.api.libs.json.{Format, Json, Reads, Writes, __}
 
-class ADRExceptionEmitterSpec extends ERSTestHelper {
+object DateTime {
+    private val dateTimeRead: Reads[DT] =
+      __.read[Long].map { dateTime =>
+        new DT(dateTime, DateTimeZone.UTC)
+      }
 
-  val mockAuditEvents: AuditEvents = mock[AuditEvents]
+    private val dateTimeWrite: Writes[DT] = (dateTime: DT) => Json.toJson(dateTime.getMillis)
 
-  val mockADRExceptionEmitter = new ADRExceptionEmitter(mockAuditEvents)
-
-  "emitFrom" should {
-
-    implicit val hc: HeaderCarrier = new HeaderCarrier()
-
-    "sdsd" in {
-      true shouldBe true
-    }
-
-  }
-
+    implicit val dateTimeFormats: Format[DT] = Format(dateTimeRead, dateTimeWrite)
 }

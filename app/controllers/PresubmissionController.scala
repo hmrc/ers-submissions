@@ -46,15 +46,15 @@ class PresubmissionController @Inject()(presubmissionService: PresubmissionServi
           presubmissionService.removeJson(schemeInfo).value.map {
             case Right(true) =>
               metrics.removePresubmission(System.currentTimeMillis() - startTime, TimeUnit.MILLISECONDS)
-              logger.info(s"Old presubmission data is successfully deleted for: ${schemeInfo.basicLogMessage}")
               Ok("Old presubmission data is successfully deleted.")
             case Right(false) =>
-              metrics.failedRemovePresubmission()
               logger.error(s"Deleting old presubmission data failed for: ${schemeInfo.basicLogMessage}")
+              metrics.failedRemovePresubmission()
               auditEvents.auditADRTransferFailure(schemeInfo, Map.empty)
               InternalServerError("Deleting old presubmission data failed.")
             case Left(error) =>
               logger.error(s"Deleting old presubmission data failed for: ${schemeInfo.basicLogMessage} with [$error]")
+              metrics.failedRemovePresubmission()
               auditEvents.auditADRTransferFailure(schemeInfo, Map.empty)
               InternalServerError("Deleting old presubmission data failed.")
           }
@@ -68,12 +68,12 @@ class PresubmissionController @Inject()(presubmissionService: PresubmissionServi
         case JsSuccess(schemeInfo, _) =>
           val startTime = System.currentTimeMillis()
           presubmissionService.compareSheetsNumber(validatedSheets, schemeInfo).value.map {
-            case Right(true) =>
+            case Right((true, _)) =>
               metrics.checkForPresubmission(System.currentTimeMillis() - startTime, TimeUnit.MILLISECONDS)
               logger.info(s"All presubmission records are found for: ${schemeInfo.basicLogMessage}")
-              Ok("All presubmission records are found")
-            case Right(false) =>
-              logger.error(s"Not all $validatedSheets presubmission records are found for: ${schemeInfo.basicLogMessage}")
+              Ok("All presubmission records are found.")
+            case Right((false, sheetsInRepository)) =>
+              logger.warn(s"Found $sheetsInRepository presubmission records of expected $validatedSheets records for: ${schemeInfo.basicLogMessage}")
               auditEvents.auditADRTransferFailure(schemeInfo, Map.empty)
               InternalServerError(s"Not all $validatedSheets records are found for ${schemeInfo.toString}.")
             case Left(error) =>

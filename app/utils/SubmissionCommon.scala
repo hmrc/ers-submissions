@@ -111,7 +111,6 @@ class SubmissionCommon @Inject()(configUtils: ConfigUtils) extends Logging {
             s"for [${sheetName.getOrElse("missingSheetName")}]: ${schemeInfo.map(_.basicLogMessage).getOrElse("missingSchemeInfo")}")
           Json.obj()
       }
-
     }
   }
 

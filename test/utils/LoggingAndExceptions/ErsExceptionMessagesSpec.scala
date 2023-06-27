@@ -18,7 +18,7 @@ package utils.LoggingAndExceptions
 
 import fixtures.Fixtures
 import helpers.ERSTestHelper
-import models.{ADRTransferException, ResubmissionException}
+import models.ADRTransferException
 import utils.LoggingAndRexceptions.ErsExceptionMessages
 
 class ErsExceptionMessagesSpec extends ERSTestHelper {
@@ -26,11 +26,6 @@ class ErsExceptionMessagesSpec extends ERSTestHelper {
   object TestExceptionMessages extends ErsExceptionMessages
 
   "calling buildExceptionMesssage" should {
-    "return correct message if ResubmissionException is given" in {
-      val result = TestExceptionMessages.buildExceptionMesssage(ResubmissionException("message", "context", None))
-      result shouldBe "ResubmissionException: message,\ncontext: context"
-    }
-
     "return correct message if ADRTransferException is given" in {
       val result = TestExceptionMessages.buildExceptionMesssage(ADRTransferException(Fixtures.EMIMetaData, "message", "context"))
       result shouldBe "ADRTransferException: message,\ncontext: context"
