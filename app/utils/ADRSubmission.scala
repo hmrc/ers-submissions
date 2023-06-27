@@ -40,6 +40,7 @@ class ADRSubmission @Inject()(submissionCommon: SubmissionCommon,
 
   def generateSubmission(ersSummary: ErsSummary)(implicit request: Request[_], hc: HeaderCarrier): ERSEnvelope[JsObject] = {
     val schemeType: String = ersSummary.metaData.schemeInfo.schemeType.toUpperCase()
+    logger.info(s"[ADRSubmission][generateSubmission] ${ersSummary.basicLogMessage} ${ersSummary.metaData.schemeInfo.basicLogMessage}")
 
     if (ersSummary.isNilReturn == IsNilReturn.False.toString) {
       createSubmissionJson(ersSummary, schemeType)

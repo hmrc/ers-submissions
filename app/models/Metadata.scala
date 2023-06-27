@@ -138,7 +138,10 @@ case class ErsSummary(
                        trustees: Option[TrusteeDetailsList],
                        nofOfRows: Option[Int],
                        transferStatus: Option[String]
-                       )
+                       ) {
+
+  val basicLogMessage: String = List(bundleRef, fileType, s"nofOfRows $nofOfRows", transferStatus).mkString("[",",","]")
+}
 object ErsSummary {
 
   private val dateTimeRead: Reads[DateTime] =

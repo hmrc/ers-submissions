@@ -27,6 +27,7 @@ import repositories.LockRepositoryProvider
 import scheduler.ScheduledService
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.mongo.lock.LockService
+import utils.CorrelationIdHelper
 
 import javax.inject.Inject
 import scala.concurrent.ExecutionContext
@@ -37,7 +38,8 @@ class ReSubmissionSchedulerService @Inject()(val applicationConfig: ApplicationC
                                              resubPresubmissionService: ResubPresubmissionService)(implicit ec: ExecutionContext)
   extends ScheduledService[Boolean]
     with Logging
-    with SchedulerConfig {
+    with SchedulerConfig
+    with CorrelationIdHelper {
 
   override val jobName: String = "resubmission-service"
   private val resubmissionLimit = getResubmissionLimit(jobName)
@@ -60,7 +62,8 @@ class ReSubmissionSchedulerService @Inject()(val applicationConfig: ApplicationC
 
   override def invoke(implicit ec: ExecutionContext): ERSEnvelope[Boolean] = {
     val request: Request[JsObject] = ERSRequest.createERSRequest()
-    implicit val hc: HeaderCarrier = HeaderCarrier()
+    implicit val hc: HeaderCarrier = getOrCreateCorrelationID(request)
+
     resubPresubmissionService.logAggregateMetadataMetrics()
     resubPresubmissionService.logFailedSubmissionCount(processFailedSubmissionsConfig)
     logger.info(LockMessage(lockService).message)
