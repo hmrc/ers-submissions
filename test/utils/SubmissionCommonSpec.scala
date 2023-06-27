@@ -31,13 +31,13 @@ class SubmissionCommonSpec extends ERSTestHelper {
   "getCorrelationID" should {
 
     "return CorrelationId from header" in {
-      val result = testSubmissionCommon.getCorrelationID(HttpResponse(202, Json.obj(), Map("CorrelationId" -> Seq("CorrelationId -> Buffer(1A2B-3C-4D5F-6G-7Q)"))))
+      val result = testSubmissionCommon.getCorrelationID(HttpResponse(202, Json.obj(), Map("CorrelationId" -> Seq("1A2B-3C-4D5F-6G-7Q"))))
       result shouldBe "1A2B-3C-4D5F-6G-7Q"
     }
 
-    "return empty string if CorrelationId is not in header" in {
+    "return missingCorrelationId if CorrelationId is not in header" in {
       val result = testSubmissionCommon.getCorrelationID(HttpResponse(202, body = ""))
-      result shouldBe ""
+      result shouldBe "missingCorrelationId"
     }
   }
 

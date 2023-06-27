@@ -80,7 +80,7 @@ class SubmissionService @Inject()(repositories: Repositories,
           metrics.successfulSendToADR()
           val correlationID: String = submissionCommon.getCorrelationID(response)
           auditEvents.sendToAdrEvent("ErsTransferToAdrResponseReceived", ersSummary, Some(correlationID))
-          logger.info(s"Data transfer to ADR was successful for ${ersSummary.metaData.schemeInfo.basicLogMessage}")
+          logger.info(s"Data transfer to ADR was successful for ${ersSummary.metaData.schemeInfo.basicLogMessage}, correlationId: $correlationID")
           successStatus
         case _ =>
           metrics.failedSendToADR()

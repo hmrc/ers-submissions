@@ -31,12 +31,10 @@ import scala.collection.mutable.ListBuffer
 class SubmissionCommon @Inject()(configUtils: ConfigUtils) extends Logging {
 
   def getCorrelationID(response: HttpResponse): String = {
-    val correlationIdRegEx = "CorrelationId -> Buffer\\((\\w+-\\w+-\\w+-\\w+-\\w+)".r
-    correlationIdRegEx.findFirstMatchIn(
-      response.headers.toString()
-    ).map(
-      _ group 1
-    ).getOrElse("")
+    response.header("CorrelationId") match {
+      case Some(correlationId) => correlationId
+      case None => "missingCorrelationId"
+    }
   }
 
   def customFormat(value: DateTime, formatInfo: Config): String = {
