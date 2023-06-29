@@ -162,5 +162,4 @@ class SubmissionCommonSpec extends ERSTestHelper {
       result shouldBe Json.obj()
     }
   }
-
 }

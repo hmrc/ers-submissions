@@ -21,12 +21,12 @@ import play.api.libs.json._
 
 import scala.collection.mutable.ListBuffer
 
-case class SchemeInfo (schemeRef: String,
-                       timestamp: DateTime = DateTime.now,
-                       schemeId: String,
-                       taxYear: String,
-                       schemeName: String,
-                       schemeType: String) {
+case class SchemeInfo(schemeRef: String,
+                      timestamp: DateTime = DateTime.now,
+                      schemeId: String,
+                      taxYear: String,
+                      schemeName: String,
+                      schemeType: String) {
 
   val basicLogMessage: String = List(schemeRef, schemeType, taxYear, timestamp.getMillis.toString).mkString("[",",","]")
 }

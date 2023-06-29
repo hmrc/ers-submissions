@@ -75,8 +75,16 @@ class PresubmissionControllerSpec extends ERSTestHelper with BeforeAndAfterEach 
       verify(mockMetrics, VerificationModeFactory.times(1)).failedRemovePresubmission()
     }
 
-    "return InvalidServerError if service returns error" in {
+    "return Ok if service returns NoData()" in {
       val presubmissionController = buildPresubmissionController(removeJsonResult = ERSEnvelope(NoData()))
+      val result = presubmissionController.removePresubmissionJson()(FakeRequest().withBody(ersSchemeInfo))
+      status(result) shouldBe OK
+      verify(mockMetrics, VerificationModeFactory.times(0)).removePresubmission(anyLong(), any())
+      verify(mockMetrics, VerificationModeFactory.times(0)).failedRemovePresubmission()
+    }
+
+    "return INTERNAL_SERVER_ERROR if service returns error different than NoData()" in {
+      val presubmissionController = buildPresubmissionController(removeJsonResult = ERSEnvelope(MongoUnavailableError("mongo error")))
       val result = presubmissionController.removePresubmissionJson()(FakeRequest().withBody(ersSchemeInfo))
       status(result) shouldBe INTERNAL_SERVER_ERROR
       verify(mockMetrics, VerificationModeFactory.times(0)).removePresubmission(anyLong(), any())

@@ -61,7 +61,7 @@ class PresubmissionService @Inject()(repositories: Repositories)(implicit ec: Ex
         logger.info(s"Deleted ${result.getDeletedCount} documents from presubmission repository for: ${schemeInfo.basicLogMessage}")
         ERSEnvelope(true)
       case result if result.wasAcknowledged() =>
-        logger.warn(s"No data to delete from presubmission repository for: ${schemeInfo.basicLogMessage}")
+        logger.info(s"No data to delete from presubmission repository for: ${schemeInfo.basicLogMessage}")
         ERSEnvelope(NoData())
       case _ =>
         logger.warn(s"Deleting old presubmission data failed for: ${schemeInfo.basicLogMessage}")

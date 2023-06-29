@@ -14,27 +14,8 @@
  * limitations under the License.
  */
 
-package utils.LoggingAndExceptions
+package models
 
-import helpers.ERSTestHelper
-import services.audit.AuditEvents
-import uk.gov.hmrc.http.HeaderCarrier
-import utils.LoggingAndRexceptions.ADRExceptionEmitter
-
-class ADRExceptionEmitterSpec extends ERSTestHelper {
-
-  val mockAuditEvents: AuditEvents = mock[AuditEvents]
-
-  val mockADRExceptionEmitter = new ADRExceptionEmitter(mockAuditEvents)
-
-  "emitFrom" should {
-
-    implicit val hc: HeaderCarrier = new HeaderCarrier()
-
-    "sdsd" in {
-      true shouldBe true
-    }
-
-  }
-
-}
+case class ADRTransferException(ersMetaData: ErsMetaData,
+                                message: String,
+                                context: String) extends Exception(message)

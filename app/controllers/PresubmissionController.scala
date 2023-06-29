@@ -17,7 +17,7 @@
 package controllers
 
 import metrics.Metrics
-import models.SchemeInfo
+import models.{NoData, SchemeInfo}
 import play.api.Logging
 import play.api.libs.json._
 import play.api.mvc._
@@ -47,8 +47,9 @@ class PresubmissionController @Inject()(presubmissionService: PresubmissionServi
             case Right(true) =>
               metrics.removePresubmission(System.currentTimeMillis() - startTime, TimeUnit.MILLISECONDS)
               Ok("Old presubmission data is successfully deleted.")
+            case Left(NoData()) =>
+              Ok("No data to delete found.")
             case Right(false) =>
-              logger.error(s"Deleting old presubmission data failed for: ${schemeInfo.basicLogMessage}")
               metrics.failedRemovePresubmission()
               auditEvents.auditADRTransferFailure(schemeInfo, Map.empty)
               InternalServerError("Deleting old presubmission data failed.")

@@ -25,7 +25,6 @@ case class ErsMetaData(schemeInfo: SchemeInfo,
                        empRef: String,
                        agentRef: Option[String],
                        sapNumber: Option[String])
-
 object ErsMetaData {
   implicit val format: OFormat[ErsMetaData] = Json.format[ErsMetaData]
 }
@@ -35,7 +34,6 @@ case class AlterationAmends(altAmendsTerms: Option[String],
                             altAmendsExchange: Option[String],
                             altAmendsVariations: Option[String],
                             altAmendsOther: Option[String])
-
 object AlterationAmends {
   implicit val format: OFormat[AlterationAmends] = Json.format[AlterationAmends]
 }
@@ -70,6 +68,7 @@ case class CompanyDetails(companyName: String,
 object CompanyDetails {
   implicit val format: OFormat[CompanyDetails] = Json.format[CompanyDetails]
 }
+
 case class CompanyDetailsList(companies: List[CompanyDetails])
 object CompanyDetailsList {
   implicit val format: OFormat[CompanyDetailsList] = Json.format[CompanyDetailsList]

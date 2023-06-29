@@ -17,7 +17,6 @@
 package services.resubmission
 
 import config.ApplicationConfig
-import models.Statuses
 
 trait SchedulerConfig {
   val applicationConfig: ApplicationConfig
