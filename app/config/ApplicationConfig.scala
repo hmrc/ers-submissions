@@ -37,14 +37,12 @@ class ApplicationConfig @Inject()(serviceConfig: ServicesConfig) {
   lazy val UrlHeaderEnvironment: String = serviceConfig.getString("microservice.services.ers-stub.environment")
   lazy val UrlHeaderAuthorization: String = s"Bearer ${serviceConfig.getString("microservice.services.ers-stub.authorization-token")}"
 
-  lazy val schedulerStatuses: List[String] = Try(serviceConfig.getString("schedules.resubmission-service.statuses").split(",").toList).getOrElse(List())
-
   lazy val schedulerSchemeRefListEnabled: Boolean = serviceConfig.getBoolean("schedules.resubmission-service.schemaRefsFilter.enabled")
   lazy val schedulerSchemeRefList: List[String] = Try(serviceConfig.getString("schedules.resubmission-service.schemaRefsFilter.filter").split(",").toList)
     .getOrElse(List())
   lazy val schedulerSchemeRefStatusList: List[String] = Try(serviceConfig.getString("schedules.resubmission-service.resubmit-list-statuses").split(",").toList)
     .getOrElse(List())
-  lazy val schedulerSchemeRefFailStatus: String = serviceConfig.getString("schedules.resubmission-service.resubmit-list-failStatus")
+  lazy val schedulerSchemeRefFailStatus: String = serviceConfig.getString("schedules.resubmission-service.resubmit-fail-status")
 
   lazy val schedulerEnableResubmitByScheme: Boolean = serviceConfig.getBoolean("schedules.resubmission-service.schemaFilter.enabled")
   lazy val schedulerResubmitScheme: String = serviceConfig.getString("schedules.resubmission-service.schemaFilter.filter")

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc
+package uk.gov.hmrc.resubmission
 
 import _root_.play.api.Application
 import _root_.play.api.inject.guice.GuiceApplicationBuilder
@@ -24,6 +24,7 @@ import org.mongodb.scala.model.Filters
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 import org.scalatestplus.play.guice.GuiceOneServerPerSuite
+import uk.gov.hmrc.{FakeErsStubService, Fixtures}
 
 class ResubJobWithDateFilterEnabledSpec extends AnyWordSpecLike
   with Matchers
@@ -32,13 +33,15 @@ class ResubJobWithDateFilterEnabledSpec extends AnyWordSpecLike
 
   val applicationConfig: Map[String, Any] = Map(
     "microservice.services.ers-stub.port" -> "19339",
+    "schedules.resubmission-service.enabled" -> true,
     "schedules.resubmission-service.dateTimeFilter.enabled" -> true,
     "schedules.resubmission-service.dateTimeFilter.filter" -> "1/5/2023",
     "schedules.resubmission-service.schemaRefsFilter.enabled" -> false,
-    "schedules.resubmission-service.schemaFilter.enabled" -> true,
+    "schedules.resubmission-service.schemaFilter.enabled" -> false,
     "schedules.resubmission-service.schemaFilter.filter" -> "CSOP",
     "schedules.resubmission-service.resubmissionLimit" -> 10,
     "schedules.resubmission-service.resubmit-list-statuses" -> "failed",
+    "schedules.resubmission-service.resubmit-fail-status" -> "failedResubmission",
     "schedules.resubmission-service.resubmit-successful-status" -> "successResubmit",
     "auditing.enabled" -> false
   )

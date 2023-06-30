@@ -14,20 +14,20 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc
+package uk.gov.hmrc.resubmission
 
-import _root_.play.api.Application
-import _root_.play.api.libs.json.JsObject
-import _root_.play.api.test.Helpers._
 import org.mongodb.scala.MongoCollection
 import org.mongodb.scala.bson.BsonDocument
 import org.mongodb.scala.bson.conversions.Bson
 import org.mongodb.scala.model.Filters
+import play.api.Application
+import play.api.libs.json.JsObject
 import repositories.{MetadataMongoRepository, PresubmissionMongoRepository}
 import scheduler.ResubmissionServiceImpl
 import services.resubmission.ProcessFailedSubmissionsConfig
 
 import scala.concurrent.{ExecutionContext, Future}
+import _root_.play.api.test.Helpers._
 
 case class ResubmissionJobSetUp(app: Application) {
 
@@ -66,5 +66,7 @@ case class ResubmissionJobSetUp(app: Application) {
 
   val failedJobSelector: BsonDocument = metadataMongoRepository.createFailedJobSelector(processFailedSubmissionsConfig)
 
-  val successResubmitTransferStatusSelector: Bson = Filters.eq("transferStatus", "successResubmit")
+  val successResubmitTransferStatusSelector: Bson = Filters.eq(
+    "transferStatus", app.configuration.get[String]("schedules.resubmission-service.resubmit-successful-status")
+  )
 }
