@@ -45,8 +45,7 @@ class ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with Eithe
   when(mockConfig.getConfig(anyString())).thenReturn(mock[Config])
 
   val mockConfigUtils: ConfigUtils = mock[ConfigUtils]
-  when(mockConfigUtils.getConfigData(anyString(), anyString(), any[ErsSummary]())(any[HeaderCarrier]()))
-    .thenReturn(mockConfig)
+  when(mockConfigUtils.getConfigData(anyString(), anyString(), any[ErsSummary]())(any[HeaderCarrier]())).thenReturn(mockConfig)
 
   override def beforeEach(): Unit = {
     super.beforeEach()
@@ -86,7 +85,6 @@ class ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with Eithe
     val mockAdrSubmission: ADRSubmission = new ADRSubmission(
       mockSubmissionCommon,
       mockPresubmissionService,
-      mockAdrExceptionEmitter,
       mockConfigUtils
     ) {
 
@@ -112,7 +110,6 @@ class ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with Eithe
     val mockAdrSubmission: ADRSubmission = new ADRSubmission(
       mockSubmissionCommon,
       mockPresubmissionService,
-      mockAdrExceptionEmitter,
       mockConfigUtils
     ) {
       override def createSheetsJson(sheetsJson: JsObject, ersSummary: ErsSummary, schemeType: String)
@@ -134,7 +131,6 @@ class ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with Eithe
     val mockAdrSubmission: ADRSubmission = new ADRSubmission(
       mockSubmissionCommon,
       mockPresubmissionService,
-      mockAdrExceptionEmitter,
       mockConfigUtils
     ) {
       when(mockSubmissionCommon.mergeSheetData(any[Config](), any[JsObject], any[JsObject])).thenReturn(sheetsJson)
@@ -166,22 +162,20 @@ class ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with Eithe
       val result = await(mockAdrSubmission.createSheetsJson(Json.obj(), Fixtures.metadata, Fixtures.schemeType)(request, hc).value)
       result.swap.value shouldBe MongoGenericError("There was a problem")
     }
-  }
 
-  "calling createRootJson" should {
-    val mockAdrSubmission: ADRSubmission = new ADRSubmission(
-      mockSubmissionCommon,
-      mockPresubmissionService,
-      mockAdrExceptionEmitter,
-      mockConfigUtils
-    ) {
-      override def buildRoot(configData: Config, metadata: Object, sheetsJson: JsObject, ersSummary: ErsSummary, schemeType: String)
-                            (implicit request: Request[_], hc: HeaderCarrier): JsObject = nilReturnJson
-    }
-
-    "return the result of buildRoot" in {
-      val result = mockAdrSubmission.createRootJson(Json.obj(), Fixtures.metadataNilReturn, Fixtures.schemeType)(request, hc)
-      result shouldBe nilReturnJson
+    "calling createRootJson" should {
+      val mockAdrSubmission: ADRSubmission = new ADRSubmission(
+        mockSubmissionCommon,
+        mockPresubmissionService,
+        mockConfigUtils
+      ) {
+        override def buildRoot(configData: Config, metadata: Object, sheetsJson: JsObject, ersSummary: ErsSummary, schemeType: String)
+                              (implicit request: Request[_], hc: HeaderCarrier): JsObject = nilReturnJson
+      }
+      "return the result of buildRoot" in {
+        val result = mockAdrSubmission.createRootJson(Json.obj(), Fixtures.metadataNilReturn, Fixtures.schemeType)(request, hc)
+        result shouldBe nilReturnJson
+      }
     }
   }
 }

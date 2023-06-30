@@ -47,5 +47,4 @@ trait ErsDataMessages {
   def buildWildcardDataMessage: PartialFunction[Object, String] = {
     case data: Object => data.toString
   }
-
 }

@@ -54,19 +54,4 @@ class ErsLoggerSpec extends ERSTestHelper {
     }
 
   }
-
-  "calling logError" should {
-    "log error" in {
-      val result = TestErsLogger.logError("message")
-      result shouldBe (())
-    }
-  }
-
-  "calling logWarn" should {
-    "log warn" in {
-      val result = TestErsLogger.logWarn("message")
-      result shouldBe (())
-    }
-  }
-
 }

@@ -28,8 +28,8 @@ import utils.Session
 import javax.inject.Inject
 import scala.concurrent.ExecutionContext
 
-class MetadataService @Inject()(metadataMongoRepository: MetadataMongoRepository,
-                                auditEvents: AuditEvents)(implicit ec: ExecutionContext) extends Logging {
+class MetadataService @Inject()(metadataMongoRepository: MetadataMongoRepository, auditEvents: AuditEvents)
+                               (implicit ec: ExecutionContext) extends Logging {
 
   lazy val metadataRepository: MetadataMongoRepository = metadataMongoRepository
 

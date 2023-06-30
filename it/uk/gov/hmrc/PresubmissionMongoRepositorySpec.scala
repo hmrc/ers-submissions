@@ -21,6 +21,7 @@ import _root_.play.api.inject.guice.GuiceApplicationBuilder
 import _root_.play.api.libs.json.{JsObject, Json}
 import _root_.play.api.libs.ws.WSClient
 import _root_.play.api.test.Helpers._
+import com.mongodb.client.result.DeleteResult
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 import org.scalatest.{BeforeAndAfterEach, EitherValues}
@@ -91,7 +92,7 @@ class PresubmissionMongoRepositorySpec extends AnyWordSpecLike with Matchers wit
       val schemeInfo = schemeData.schemeInfo
       await(presubmissionRepository.storeJson(schemeData, "").value)
       await(presubmissionRepository.count(schemeInfo, "").value).value shouldBe 1
-      await(presubmissionRepository.removeJson(schemeInfo, "").value).value shouldBe true
+      await(presubmissionRepository.removeJson(schemeInfo, "").value).value shouldBe DeleteResult.acknowledged(1)
       await(presubmissionRepository.count(schemeInfo, "").value).value shouldBe 0
     }
   }

@@ -14,17 +14,18 @@
  * limitations under the License.
  */
 
-package utils.LoggingAndRexceptions
+package models
 
-import models.ADRTransferException
+import org.joda.time.{DateTime => DT, DateTimeZone}
+import play.api.libs.json.{Format, Json, Reads, Writes, __}
 
-trait ErsExceptionMessages {
+object DateTime {
+    private val dateTimeRead: Reads[DT] =
+      __.read[Long].map { dateTime =>
+        new DT(dateTime, DateTimeZone.UTC)
+      }
 
-  def buildExceptionMesssage(ex: Exception): String = {
-    ex match {
-      case adrEx: ADRTransferException => s"ADRTransferException: ${adrEx.message},\n" +
-        s"context: ${adrEx.context}"
-      case ex: Exception => s"Exception: ${ex.getMessage}"
-    }
-  }
+    private val dateTimeWrite: Writes[DT] = (dateTime: DT) => Json.toJson(dateTime.getMillis)
+
+    implicit val dateTimeFormats: Format[DT] = Format(dateTimeRead, dateTimeWrite)
 }

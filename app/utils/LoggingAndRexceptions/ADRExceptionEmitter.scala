@@ -22,30 +22,12 @@ import uk.gov.hmrc.http.HeaderCarrier
 
 import javax.inject.Inject
 
-class ADRExceptionEmitter @Inject()(auditEvents: AuditEvents) extends ErsLogger {
+class ADRExceptionEmitter @Inject()(auditEvents: AuditEvents) {
   
-  def emitFrom(ersMetaData: ErsMetaData, data: Map[String, String], ex: Option[Exception] = None)(implicit hc: HeaderCarrier): Nothing = {
-    if(ex.isDefined) {
-      logException(ersMetaData.schemeInfo, ex.get, Some(buildEmiterMessage(data)))
-      auditAndThrowWithStackTrace(ersMetaData, data, ex.get)
-    }
-    else {
-      logError(buildEmiterMessage(data), Some(ersMetaData.schemeInfo))
-      auditAndThrow(ersMetaData, data)
-    }
-  }
-  
-  def auditAndThrowWithStackTrace(ersMetaData: ErsMetaData,
-                                  data: Map[String, String],
-                                  ex: Exception)
+  def auditAndThrowWithStackTrace(ersMetaData: ErsMetaData, data: Map[String, String], ex: Exception)
                                  (implicit hc: HeaderCarrier): Nothing = {
     auditEvents.auditRunTimeError(ex, data("context"))
     throw createADRException(ersMetaData, data).initCause(ex)
-  }
-
-  def auditAndThrow(ersMetaData: ErsMetaData, data: Map[String, String])(implicit hc: HeaderCarrier): Nothing = {
-    auditEvents.auditADRTransferFailure(ersMetaData.schemeInfo, data)
-    throw createADRException(ersMetaData, data)
   }
 
   def createADRException(ersMetaData: ErsMetaData, data: Map[String, String]): ADRTransferException = {
@@ -55,5 +37,4 @@ class ADRExceptionEmitter @Inject()(auditEvents: AuditEvents) extends ErsLogger 
       data.getOrElse("context", "Undefined context")
     )
   }
-
 }

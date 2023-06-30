@@ -68,8 +68,7 @@ class ReSubmissionSchedulerService @Inject()(val applicationConfig: ApplicationC
     resubPresubmissionService.logFailedSubmissionCount(processFailedSubmissionsConfig)
     logger.info(LockMessage(lockService).message)
 
-    ERSEnvelope.fromFuture(lockService
-      .withLock(resubmit()(request, hc).value).map {
+    ERSEnvelope(lockService.withLock(resubmit()(request, hc).value).map {
       case Some(_) =>
         logger.info(FinishedResubmissionJob.message)
         true

@@ -30,21 +30,8 @@ trait ErsLogger extends ErsDataMessages with ErsExceptionMessages with Logging {
   def logException(data: Object, ex: Exception, context: Option[String] = None): Unit = {
     var errorMessage: String = buildExceptionMesssage(ex) + ",\n" + buildDataMessage(data)
     if(context.isDefined) {
-      errorMessage += s",\nContext: ${context}"
+      errorMessage += s",\nContext: $context"
     }
     logger.error(errorMessage)
   }
-
-  def logError(message: String, data: Option[Object] = None): Unit = {
-    logger.error(buildMessage(message, data))
-  }
-
-  def logWarn(message: String, data: Option[Object] = None): Unit = {
-    logger.warn(buildMessage(message, data))
-  }
-
-  def logInfo(message: String, data: Option[Object] = None): Unit = {
-    logger.info(buildMessage(message, data))
-  }
-
 }

@@ -28,14 +28,12 @@ import repositories.MetadataMongoRepository
 import services.SubmissionService
 import services.audit.AuditEvents
 import uk.gov.hmrc.http.HeaderCarrier
-import utils.LoggingAndRexceptions.ErsLoggingAndAuditing
 import utils.Session
 
 import javax.inject.Inject
 import scala.concurrent.ExecutionContext
 
 class ResubPresubmissionService @Inject()(metadataRepository: MetadataMongoRepository,
-                                          val schedulerLoggingAndAuditing: ErsLoggingAndAuditing,
                                           submissionCommonService: SubmissionService,
                                           auditEvents: AuditEvents)
                                          (implicit ec: ExecutionContext) extends Logging {
@@ -55,7 +53,7 @@ class ResubPresubmissionService @Inject()(metadataRepository: MetadataMongoRepos
       aggregatedLogs = AggregatedLogs(
         aggregatedRecords.flatMap(mapJsonToAggregatedLog)
       ).message
-    } yield schedulerLoggingAndAuditing.logInfo(aggregatedLogs)
+    } yield logger.info(aggregatedLogs)
   }
 
   def logFailedSubmissionCount(processFailedSubmissionsConfig: ProcessFailedSubmissionsConfig)

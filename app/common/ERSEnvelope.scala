@@ -34,6 +34,4 @@ object ERSEnvelope {
 
   def apply[T](eitherArg: Either[ERSError, T])(implicit ec: ExecutionContext): ERSEnvelope[T] =
     EitherT.fromEither[Future](eitherArg)
-
-  def fromFuture[T](t: Future[T])(implicit ec: ExecutionContext): ERSEnvelope[T] = EitherT.right(t)
 }

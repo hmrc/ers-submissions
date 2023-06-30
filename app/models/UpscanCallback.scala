@@ -24,8 +24,7 @@ case class UpscanCallback(name: String,
                           contentType: Option[String] = None,
                           customMetadata: Option[JsObject] = None,
                           noOfRows: Option[Int] = None,
-                          _type: Option[String] = None
-                         )
+                          _type: Option[String] = None)
 
 object UpscanCallback {
   implicit val upscanCallbackWrites: Writes[UpscanCallback] = Json.writes[UpscanCallback]

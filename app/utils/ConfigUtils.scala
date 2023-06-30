@@ -19,27 +19,24 @@ package utils
 import com.typesafe.config.{Config, ConfigFactory}
 import models.ErsSummary
 import uk.gov.hmrc.http.HeaderCarrier
-import utils.LoggingAndRexceptions.ADRExceptionEmitter
+import utils.LoggingAndRexceptions.{ADRExceptionEmitter, ErsLogger}
 
 import javax.inject.Inject
 
-class ConfigUtils @Inject()(adrExceptionEmitter: ADRExceptionEmitter) {
+class ConfigUtils @Inject()(adrExceptionEmitter: ADRExceptionEmitter) extends ErsLogger {
 
   def getConfigData(configPath: String, configValue: String, ersSummary: ErsSummary)(implicit hc: HeaderCarrier): Config = {
     try {
-      ConfigFactory.load(s"schemes/${configPath}").getConfig(configValue)
+      ConfigFactory.load(s"schemes/$configPath").getConfig(configValue)
     }
     catch {
-      case ex: Exception => {
-        adrExceptionEmitter.emitFrom(
-          ersSummary.metaData,
-          Map(
-            "message" -> s"Trying to load invalid configuration. Path: ${configPath}, value: ${configValue}",
-            "context" -> "ConfigUtils.getConfigData"
-          ),
-          Some(ex)
+      case ex: Exception =>
+        val data = Map(
+          "message" -> s"Trying to load invalid configuration. Path: $configPath, value: $configValue",
+          "context" -> "ConfigUtils.getConfigData"
         )
-      }
+        logException(ersSummary.metaData.schemeInfo, ex, Some(buildEmiterMessage(data)))
+        adrExceptionEmitter.auditAndThrowWithStackTrace(ersSummary.metaData, data, ex)
     }
   }
 
@@ -61,5 +58,4 @@ class ConfigUtils @Inject()(adrExceptionEmitter: ADRExceptionEmitter) {
       extractField(currentElem, result)
     }
   }
-
 }

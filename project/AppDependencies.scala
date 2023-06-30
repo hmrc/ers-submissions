@@ -4,10 +4,10 @@ object AppDependencies {
   import play.sbt.PlayImport.ws
 
   private val akkaVersion = "2.6.20"
-  private val bootstrapVersion = "7.15.0"
+  private val bootstrapVersion = "7.19.0"
 
   private val alpakkaVersion = "3.0.4"
-  private val nettyTransportVersion = "4.1.93.Final"
+  private val nettyTransportVersion = "4.1.94.Final"
   private val mongoVersion = "0.74.0"
 
   val compile: Seq[ModuleID] = Seq(

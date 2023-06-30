@@ -24,6 +24,7 @@ import models._
 import org.mongodb.scala.bson.{BsonDocument, BsonInt64, BsonString}
 import org.mongodb.scala.model.Sorts._
 import org.mongodb.scala.model._
+import org.mongodb.scala.result.DeleteResult
 import play.api.libs.json.OFormat.oFormatFromReadsAndOWrites
 import play.api.libs.json.{Format, JsObject, Json}
 import repositories.helpers.RepositoryHelper
@@ -110,10 +111,9 @@ class PresubmissionMongoRepository @Inject()(applicationConfig: ApplicationConfi
       }
   }
 
-  def removeJson(schemeInfo: SchemeInfo, sessionId: String): ERSEnvelope[Boolean] = EitherT {
+  def removeJson(schemeInfo: SchemeInfo, sessionId: String): ERSEnvelope[DeleteResult] = EitherT {
     collection.deleteOne(buildSelector(schemeInfo))
       .toFuture()
-      .map(_.wasAcknowledged())
       .map(_.asRight)
       .recover {
         mongoRecover(

@@ -18,29 +18,23 @@ package services
 
 import cats.implicits.catsStdInstancesForFuture
 import common.ERSEnvelope
-import models.{NoData, SchemeData, SchemeDataMappingError, SchemeInfo}
 import common.ERSEnvelope.ERSEnvelope
+import models.{NoData, SchemeData, SchemeDataMappingError, SchemeInfo}
 import play.api.Logging
 import repositories.{PresubmissionMongoRepository, Repositories}
 import uk.gov.hmrc.http.HeaderCarrier
-import utils.LoggingAndRexceptions.ErsLoggingAndAuditing
 import utils.Session
 
 import javax.inject.Inject
 import scala.concurrent.ExecutionContext
 import scala.util.Try
 
-class PresubmissionService @Inject()(repositories: Repositories, ersLoggingAndAuditing: ErsLoggingAndAuditing)
-                                    (implicit ec: ExecutionContext) extends Logging {
+class PresubmissionService @Inject()(repositories: Repositories)(implicit ec: ExecutionContext) extends Logging {
 
   lazy val presubmissionRepository: PresubmissionMongoRepository = repositories.presubmissionRepository
 
   def storeJson(schemeData: SchemeData)(implicit hc: HeaderCarrier): ERSEnvelope[Boolean] =
-    presubmissionRepository.storeJson(schemeData, Session.id(hc)).recover {
-      case error =>
-        logger.info(s"Storing data in pre-submission repository failed with error: [$error] for: ${schemeData.schemeInfo.basicLogMessage}")
-        false
-    }
+    presubmissionRepository.storeJson(schemeData, Session.id(hc))
 
   def getJson(schemeInfo: SchemeInfo)(implicit hc: HeaderCarrier): ERSEnvelope[scala.Seq[SchemeData]] = {
     presubmissionRepository.getJson(schemeInfo, Session.id(hc)).flatMap { result =>
@@ -62,19 +56,20 @@ class PresubmissionService @Inject()(repositories: Repositories, ersLoggingAndAu
   }
 
   def removeJson(schemeInfo: SchemeInfo)(implicit hc: HeaderCarrier): ERSEnvelope[Boolean] =
-    presubmissionRepository.removeJson(schemeInfo, Session.id(hc)).recover {
-      case error =>
-        logger.info(s"Removing data from pre-submission repository failed with error: [$error] for: ${schemeInfo.basicLogMessage}")
-        false
+    presubmissionRepository.removeJson(schemeInfo, Session.id(hc)).flatMap {
+      case result if result.wasAcknowledged() && result.getDeletedCount > 0 =>
+        logger.info(s"Deleted ${result.getDeletedCount} documents from presubmission repository for: ${schemeInfo.basicLogMessage}")
+        ERSEnvelope(true)
+      case result if result.wasAcknowledged() =>
+        logger.info(s"No data to delete from presubmission repository for: ${schemeInfo.basicLogMessage}")
+        ERSEnvelope(NoData())
+      case _ =>
+        logger.warn(s"Deleting old presubmission data failed for: ${schemeInfo.basicLogMessage}")
+        ERSEnvelope(false)
     }
 
-  def compareSheetsNumber(expectedSheets: Int, schemeInfo: SchemeInfo)(implicit hc: HeaderCarrier): ERSEnvelope[Boolean] = {
+  def compareSheetsNumber(expectedSheets: Int, schemeInfo: SchemeInfo)(implicit hc: HeaderCarrier): ERSEnvelope[(Boolean, Long)] =
     presubmissionRepository.count(schemeInfo, Session.id(hc)).map { existingSheets =>
-      existingSheets.toInt == expectedSheets
-    }.recover {
-      case error =>
-        logger.info(s"Count data in pre-submission repository failed with error: [$error] for: ${schemeInfo.basicLogMessage}")
-        false
+      (existingSheets.toInt == expectedSheets, existingSheets)
     }
-  }
 }

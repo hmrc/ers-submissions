@@ -17,10 +17,11 @@
 package controllers
 
 import common.ERSEnvelope
+import common.ERSEnvelope.ERSEnvelope
 import fixtures.Fixtures
 import helpers.ERSTestHelper
 import metrics.Metrics
-import models.SchemeInfo
+import models.{MongoUnavailableError, NoData, SchemeInfo}
 import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
 import org.mockito.internal.verification.VerificationModeFactory
@@ -38,22 +39,23 @@ class PresubmissionControllerSpec extends ERSTestHelper with BeforeAndAfterEach 
 
   val mockMetrics: Metrics = mock[Metrics]
   val mockPresubmissionService: PresubmissionService = mock[PresubmissionService]
-  val auditEvents: AuditEvents = mock[AuditEvents]
+  val mockAuditEvents: AuditEvents = mock[AuditEvents]
+  implicit val hc: HeaderCarrier = new HeaderCarrier()
 
   override def beforeEach(): Unit = {
     super.beforeEach()
     reset(mockMetrics)
-    reset(auditEvents)
+    reset(mockAuditEvents)
     reset(mockPresubmissionService)
   }
 
   val ersSchemeInfo: JsObject = Json.toJson(Fixtures.EMISchemeInfo).as[JsObject]
 
   "calling removePresubmissionJson" should {
-    def buildPresubmissionController(removeJsonResult: Boolean = true): PresubmissionController = {
-      new PresubmissionController(mockPresubmissionService, auditEvents, mockMetrics, mockCc) {
+    def buildPresubmissionController(removeJsonResult: ERSEnvelope[Boolean] = ERSEnvelope(true)): PresubmissionController = {
+      new PresubmissionController(mockPresubmissionService, mockAuditEvents, mockMetrics, mockCc) {
         when(mockPresubmissionService.removeJson(any[SchemeInfo])(any[HeaderCarrier]()))
-          .thenReturn(ERSEnvelope(removeJsonResult))
+          .thenReturn(removeJsonResult)
       }
     }
 
@@ -65,15 +67,31 @@ class PresubmissionControllerSpec extends ERSTestHelper with BeforeAndAfterEach 
       verify(mockMetrics, VerificationModeFactory.times(0)).failedRemovePresubmission()
     }
 
-    "return InvalidServerError if valid json is given but storage fails" in {
-      val presubmissionController = buildPresubmissionController(removeJsonResult = false)
+    "return InvalidServerError if valid json is given but removing fails" in {
+      val presubmissionController = buildPresubmissionController(removeJsonResult = ERSEnvelope(false))
       val result = presubmissionController.removePresubmissionJson()(FakeRequest().withBody(ersSchemeInfo))
       status(result) shouldBe INTERNAL_SERVER_ERROR
       verify(mockMetrics, VerificationModeFactory.times(0)).removePresubmission(anyLong(), any())
       verify(mockMetrics, VerificationModeFactory.times(1)).failedRemovePresubmission()
     }
 
-    "return OK if valid json is given and storage succeeds" in {
+    "return Ok if service returns NoData()" in {
+      val presubmissionController = buildPresubmissionController(removeJsonResult = ERSEnvelope(NoData()))
+      val result = presubmissionController.removePresubmissionJson()(FakeRequest().withBody(ersSchemeInfo))
+      status(result) shouldBe OK
+      verify(mockMetrics, VerificationModeFactory.times(0)).removePresubmission(anyLong(), any())
+      verify(mockMetrics, VerificationModeFactory.times(0)).failedRemovePresubmission()
+    }
+
+    "return INTERNAL_SERVER_ERROR if service returns error different than NoData()" in {
+      val presubmissionController = buildPresubmissionController(removeJsonResult = ERSEnvelope(MongoUnavailableError("mongo error")))
+      val result = presubmissionController.removePresubmissionJson()(FakeRequest().withBody(ersSchemeInfo))
+      status(result) shouldBe INTERNAL_SERVER_ERROR
+      verify(mockMetrics, VerificationModeFactory.times(0)).removePresubmission(anyLong(), any())
+      verify(mockMetrics, VerificationModeFactory.times(1)).failedRemovePresubmission()
+    }
+
+    "return OK if valid json is given and remove succeeds" in {
       val presubmissionController = buildPresubmissionController()
       val result = presubmissionController.removePresubmissionJson()(FakeRequest().withBody(ersSchemeInfo))
       status(result) shouldBe OK
@@ -84,10 +102,10 @@ class PresubmissionControllerSpec extends ERSTestHelper with BeforeAndAfterEach 
   }
 
   "calling checkForExistingPresubmission" should {
-    def buildPresubmissionController(checkResult: Boolean = true): PresubmissionController =
-      new PresubmissionController(mockPresubmissionService, auditEvents, mockMetrics, mockCc) {
+    def buildPresubmissionController(checkResult: Option[(Boolean, Long)] = Some((true, 1L))): PresubmissionController =
+      new PresubmissionController(mockPresubmissionService, mockAuditEvents, mockMetrics, mockCc) {
       when(mockPresubmissionService.compareSheetsNumber(anyInt(), any[SchemeInfo])(any[HeaderCarrier]()))
-        .thenReturn(ERSEnvelope(checkResult))
+        .thenReturn(ERSEnvelope(checkResult.toRight(MongoUnavailableError("mongo error"))))
     }
 
     "return BadRequest if invalid json is given" in {
@@ -98,9 +116,18 @@ class PresubmissionControllerSpec extends ERSTestHelper with BeforeAndAfterEach 
     }
 
     "return InvalidServerError if valid json is given but not all sheets are found" in {
-      val presubmissionController = buildPresubmissionController(checkResult = false)
+      val presubmissionController = buildPresubmissionController(checkResult = Some((false, 0)))
       val result = presubmissionController.checkForExistingPresubmission(5)(FakeRequest().withBody(ersSchemeInfo))
       status(result) shouldBe INTERNAL_SERVER_ERROR
+      verify(mockAuditEvents, VerificationModeFactory.times(1)).auditADRTransferFailure(any(), any())(any())
+      verify(mockMetrics, VerificationModeFactory.times(0)).checkForPresubmission(anyLong(), any[TimeUnit]())
+    }
+
+    "return InvalidServerError if valid json is given but service returns error" in {
+      val presubmissionController = buildPresubmissionController(checkResult = None)
+      val result = presubmissionController.checkForExistingPresubmission(5)(FakeRequest().withBody(ersSchemeInfo))
+      status(result) shouldBe INTERNAL_SERVER_ERROR
+      verify(mockAuditEvents, VerificationModeFactory.times(1)).auditADRTransferFailure(any(), any())(any())
       verify(mockMetrics, VerificationModeFactory.times(0)).checkForPresubmission(anyLong(), any[TimeUnit]())
     }
 
