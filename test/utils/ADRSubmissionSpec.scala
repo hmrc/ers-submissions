@@ -37,7 +37,7 @@ import scala.collection.mutable.ListBuffer
 class ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with EitherValues {
 
   implicit val hc: HeaderCarrier = new HeaderCarrier()
-  implicit val request = FakeRequest().withBody(Fixtures.metadataJson)
+  implicit val request: FakeRequest[JsObject] = FakeRequest().withBody(Fixtures.metadataJson)
   val mockSubmissionCommon: SubmissionCommon = mock[SubmissionCommon]
   val mockPresubmissionService: PresubmissionService = mock[PresubmissionService]
   val mockAdrExceptionEmitter: ADRExceptionEmitter = app.injector.instanceOf[ADRExceptionEmitter]
@@ -92,7 +92,7 @@ class ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with Eithe
                                        (implicit request: Request[_], hc: HeaderCarrier): ERSEnvelope[JsObject] = ERSEnvelope(notNilReturnJson)
 
       override def createRootJson(sheetsJson: JsObject, ersSummary: ErsSummary, schemeType: String)
-                                 (implicit request: Request[_], hc: HeaderCarrier): JsObject = nilReturnJson
+                                 (implicit request: Request[_], hc: HeaderCarrier): ERSEnvelope[JsObject] = ERSEnvelope(nilReturnJson)
     }
 
     "return createSubmissionJson result for not NilReturn submission" in {
@@ -117,8 +117,8 @@ class ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with Eithe
         ERSEnvelope(sheetsJson)
 
       override def createRootJson(sheetsJson: JsObject, ersSummary: ErsSummary, schemeType: String)
-                                 (implicit request: Request[_], hc: HeaderCarrier): JsObject =
-        notNilReturnJson
+                                 (implicit request: Request[_], hc: HeaderCarrier): ERSEnvelope[JsObject] =
+        ERSEnvelope(notNilReturnJson)
     }
 
     "return the result of createRootJson" in {
@@ -173,8 +173,8 @@ class ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with Eithe
                               (implicit request: Request[_], hc: HeaderCarrier): JsObject = nilReturnJson
       }
       "return the result of buildRoot" in {
-        val result = mockAdrSubmission.createRootJson(Json.obj(), Fixtures.metadataNilReturn, Fixtures.schemeType)(request, hc)
-        result shouldBe nilReturnJson
+        val result =  await(mockAdrSubmission.createRootJson(Json.obj(), Fixtures.metadataNilReturn, Fixtures.schemeType)(request, hc).value)
+        result.value shouldBe nilReturnJson
       }
     }
   }

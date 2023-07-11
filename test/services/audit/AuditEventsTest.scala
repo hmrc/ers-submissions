@@ -25,6 +25,7 @@ import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.{reset, verify, when}
 import org.mockito.internal.verification.VerificationModeFactory
 import org.scalatest.BeforeAndAfterEach
+import play.api.mvc.{AnyContent, AnyContentAsEmpty}
 import play.api.test.FakeRequest
 import services.audit.{AuditEvents, AuditService}
 import uk.gov.hmrc.http.HeaderCarrier
@@ -36,8 +37,8 @@ import scala.concurrent.Future
 class AuditEventsTest
   extends ERSTestHelper with BeforeAndAfterEach {
 
-  implicit val request = FakeRequest()
-  implicit var hc = new HeaderCarrier()
+  implicit val request: FakeRequest[AnyContent] = FakeRequest()
+  implicit var hc: HeaderCarrier = new HeaderCarrier()
   val dateTime = new DateTime()
   val rsc = new ErsMetaData(new SchemeInfo("",new DateTime(),"","","",""),"",Some(""),"",Some(""),Some(""))
   val mockAuditConnector: AuditConnector = mock[AuditConnector]

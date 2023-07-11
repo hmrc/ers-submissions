@@ -17,22 +17,24 @@
 package connectors
 
 import cats.data.EitherT
-import common.ERSEnvelope.ERSEnvelope
 import cats.syntax.all._
+import com.typesafe.config.ConfigFactory
+import common.ERSEnvelope.ERSEnvelope
 import config.ApplicationConfig
 import play.api.libs.json.JsObject
-import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
-import uk.gov.hmrc.play.bootstrap.http.DefaultHttpClient
-import utils.{CorrelationIdHelper, ErrorHandlerHelper}
 import uk.gov.hmrc.http.HttpReads.Implicits._
+import uk.gov.hmrc.http.client.HttpClientV2
+import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, StringContextOps}
+import utils.{CorrelationIdHelper, ErrorHandlerHelper}
 
 import javax.inject.Inject
 import scala.concurrent.ExecutionContext
 
 class ADRConnector @Inject()(applicationConfig: ApplicationConfig,
-                             http: DefaultHttpClient) extends ErrorHandlerHelper with CorrelationIdHelper {
+                             http: HttpClientV2) extends ErrorHandlerHelper with CorrelationIdHelper {
 
   override val className: String = getClass.getSimpleName
+  private val headerCarrierConfig = HeaderCarrier.Config.fromConfig(ConfigFactory.load())
 
   def buildEtmpPath(path: String): String = s"${applicationConfig.adrBaseURI}/$path"
 
@@ -45,9 +47,9 @@ class ADRConnector @Inject()(applicationConfig: ApplicationConfig,
     val url: String = buildEtmpPath(s"${applicationConfig.adrFullSubmissionURI}/${schemeType.toLowerCase()}")
     val headersForRequest = hc
       .withExtraHeaders(explicitHeaders(): _*)
-      .headersForUrl(HeaderCarrier.Config.fromConfig(http.configuration))(url)
+      .headersForUrl(headerCarrierConfig)(url)
 
-    http.POST[JsObject, HttpResponse](url, adrData, headersForRequest)
+    http.post(url"$url").withBody(adrData).setHeader(headersForRequest: _*).execute[HttpResponse]
       .map(_.asRight)
       .recover {
         case ex => Left(handleError(ex, "sendData"))

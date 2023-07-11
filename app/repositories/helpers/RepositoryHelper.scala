@@ -31,7 +31,7 @@ trait RepositoryHelper extends Logging {
     val genericMessage = s"[$repository][$method][SessionId: $sessionId] $message."
 
     private def logMessage: String = optSchemaRefs.fold(genericMessage){ schemaRefs =>
-      s"$genericMessage SchemaRefs: ${schemaRefs.map(_.mkString(","))}"
+      s"$genericMessage SchemaRefs: ${schemaRefs.mkString(",")}"
     }
 
     override def isDefinedAt(x: Throwable): Boolean = x.isInstanceOf[Exception]
