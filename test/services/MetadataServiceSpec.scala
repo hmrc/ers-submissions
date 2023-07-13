@@ -23,13 +23,10 @@ import models.{ErsSummary, MongoGenericError}
 import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
 import org.mockito.internal.verification.VerificationModeFactory
-import org.mockito.verification.VerificationMode
 import org.scalatest.{BeforeAndAfterEach, EitherValues}
 import repositories.{MetadataMongoRepository, Repositories}
 import services.audit.AuditEvents
 import uk.gov.hmrc.http.HeaderCarrier
-
-import java.util.concurrent.TimeUnit
 
 class MetadataServiceSpec extends ERSTestHelper with BeforeAndAfterEach with EitherValues {
 

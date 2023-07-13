@@ -30,6 +30,9 @@ import scala.collection.mutable.ListBuffer
 
 class SubmissionCommon @Inject()(configUtils: ConfigUtils) extends Logging {
 
+  private val EmptyJson: JsObject = Json.obj()
+  private val EmptyJsonArray: JsArray = Json.arr()
+
   def getCorrelationID(response: HttpResponse): String = {
     response.header("CorrelationId") match {
       case Some(correlationId) => correlationId
@@ -52,65 +55,44 @@ class SubmissionCommon @Inject()(configUtils: ConfigUtils) extends Logging {
     }
   }
 
-  def getNewField(configElem: Config, elemVal: JsValueWrapper): JsObject = {
-    val elemName: String = configElem.getString("name")
-    Json.obj(
-      elemName -> elemVal
-    )
-  }
+  def getNewField(configElem: Config, elemVal: JsValueWrapper): JsObject =
+    Json.obj(configElem.getString("name") -> elemVal)
 
-  def getConfigElemFieldValueByType(configElem: Config, fieldName: String): JsValueWrapper = {
-    val elemType: String = configElem.getString("type")
-    elemType match {
+  def getConfigElemFieldValueByType(configElem: Config, fieldName: String): JsValueWrapper =
+    configElem.getString("type") match {
       case "boolean" => configElem.getBoolean(fieldName)
-      case "int" => configElem.getInt(fieldName)
-      case "string" => configElem.getString(fieldName)
-      case _ => throw new Exception("Undefined type")
+      case "int"     => configElem.getInt(fieldName)
+      case "string"  => configElem.getString(fieldName)
+      case _         => throw new IllegalArgumentException("Undefined type")
     }
-  }
 
-  def getConfigElemValue(configElem: Config): JsObject = {
-    val elemVal: JsValueWrapper = getConfigElemFieldValueByType(configElem, "value")
-    getNewField(configElem, elemVal)
-  }
+  def getConfigElemValue(configElem: Config): JsObject =
+    getNewField(configElem, getConfigElemFieldValueByType(configElem, "value"))
 
-  def getFileDataValue(configElem: Config, fileData: ListBuffer[scala.Seq[String]], row: Option[Int], sheetName: Option[String], schemeInfo: Option[SchemeInfo]): JsObject = {
-
-    if(configElem.hasPath("value")) {
-      getConfigElemValue(configElem)
-    }
+  def getFileDataValue(configElem: Config, fileData: ListBuffer[Seq[String]], row: Option[Int], sheetName: Option[String], schemeInfo: Option[SchemeInfo]): JsObject = {
+    if(configElem.hasPath("value")) getConfigElemValue(configElem)
     else {
       val elemColumn = configElem.getInt("column")
       val elemRow = row.getOrElse(configElem.getInt("row"))
-      try {
-        val value = fileData(elemRow)(elemColumn)
-        if (value.nonEmpty) {
-          val elemType: String = configElem.getString("type")
-          val elemVal: JsValueWrapper = elemType match {
-            case "string" => value
-            case "int" => value.toIntOption
-            case "double" => value.toDoubleOption
-            case "boolean" =>
-              val valid_value = configElem.getString("valid_value")
-              value.toUpperCase == valid_value.toUpperCase
-          }
-          getNewField(configElem, elemVal)
-        }
-        else {
-          Json.obj()
-        }
-      } catch {
-        case e: java.lang.IndexOutOfBoundsException =>
-          logger.info(s"[getFileDataValue][IndexOutOfBoundsException] Could not find file data for row: " +
-            s"$elemRow and column: $elemColumn. Exception: [$e] \n " +
-            s"for [${sheetName.getOrElse("missingSheetName")}]: ${schemeInfo.map(_.basicLogMessage).getOrElse("missingSchemeInfo")}")
-          Json.obj()
-        case e: Throwable =>
-          logger.info(s"[getFileDataValue][Exception] Could not find file data for row: " +
-            s"$elemRow and column: $elemColumn. Exception: [$e] \n " +
-            s"for [${sheetName.getOrElse("missingSheetName")}]: ${schemeInfo.map(_.basicLogMessage).getOrElse("missingSchemeInfo")}")
-          Json.obj()
+      handleValueRetrieval(configElem, fileData, elemRow, elemColumn, sheetName, schemeInfo)
+    }
+  }
+
+  def handleValueRetrieval(configElem: Config, fileData: ListBuffer[Seq[String]], elemRow: Int, elemColumn: Int, sheetName: Option[String], schemeInfo: Option[SchemeInfo]): JsObject = {
+    try {
+      val value = fileData(elemRow)(elemColumn)
+      if (value.nonEmpty) {
+        getNewField(configElem, configElem.getString("type") match {
+          case "string" => value
+          case "int" => value.toIntOption
+          case "double" => value.toDoubleOption
+          case "boolean" => value.toUpperCase == configElem.getString("valid_value").toUpperCase
+        })
       }
+      else EmptyJson
+    } catch {
+      case e: IndexOutOfBoundsException => handleException(e, elemRow, elemColumn, sheetName, schemeInfo, "[getFileDataValue][IndexOutOfBoundsException]")
+      case e: Throwable => handleException(e, elemRow, elemColumn, sheetName, schemeInfo, "[getFileDataValue][Exception]")
     }
   }
 
@@ -137,7 +119,7 @@ class SubmissionCommon @Inject()(configUtils: ConfigUtils) extends Logging {
             getNewField(configElem, elemVal)
           }
           else {
-            Json.obj()
+            EmptyJson
           }
         case value =>
           val elemType: String = configElem.getString("type")
@@ -160,47 +142,57 @@ class SubmissionCommon @Inject()(configUtils: ConfigUtils) extends Logging {
     }
   }
 
-  def addObjectValue(elem: Config, elemVal: JsObject): JsObject = {
-    if(elemVal == Json.obj()) {
-      return Json.obj()
-    }
-    getNewField(elem, elemVal)
+  def addObjectValue(elem: Config, elemVal: JsObject): JsObject = elemVal match {
+    case EmptyJson => EmptyJson
+    case _ => getNewField(elem, elemVal)
   }
 
-  def addArrayValue(elem: Config, elemVal:  List[JsObject]): JsObject = {
-    if (elemVal.count(_ != Json.obj()) == 0) {
-      return Json.obj()
+  def addArrayValue(elem: Config, elemVal: List[JsObject]): JsObject = {
+    if (elemVal.exists(_ != EmptyJson)) {
+      getNewField(elem, elemVal)
+    } else {
+      EmptyJson
     }
-    getNewField(elem, elemVal)
   }
 
   def getObjectFromJson(fieldName: String, json: JsObject): JsObject = {
-    (json \ fieldName).asOpt[JsObject].getOrElse(Json.obj())
+    (json \ fieldName).asOpt[JsObject].getOrElse(EmptyJson)
   }
 
   def getArrayFromJson(fieldName: String, json: JsObject): JsArray = {
-    (json \ fieldName).asOpt[JsArray].getOrElse(Json.arr())
+    (json \ fieldName).asOpt[JsArray].getOrElse(EmptyJsonArray)
   }
 
-  def mergeSheetData(configData: Config, oldJson: JsObject, newJson: JsObject): JsObject = {
-    if(oldJson == Json.obj()) {
-      return newJson
+  def mergeSheetData(configData: Config, oldJson: JsObject, newJson: JsObject): JsObject = (oldJson, newJson) match {
+    case (EmptyJson, _) | (_, EmptyJson)=> newJson
+    case _ =>
+      val jsonField = configData.getString("name")
+      getOptionalDataLocation(configData) match {
+        case Some(dataLocationConfig) =>
+          newJson ++ Json.obj(
+            jsonField -> mergeSheetData(
+              dataLocationConfig,
+              getObjectFromJson(jsonField, oldJson),
+              getObjectFromJson(jsonField, newJson)
+            )
+          )
+        case None =>
+          Json.obj(
+            jsonField -> (getArrayFromJson(jsonField, oldJson) ++ getArrayFromJson(jsonField, newJson))
+          )
+      }
+  }
+
+  private def getOptionalDataLocation(config: Config): Option[Config] = {
+    if (config.hasPath("data_location")) {
+      Some(config.getConfig("data_location"))
+    } else {
+      None
     }
-    if(newJson == Json.obj()) {
-      return newJson
-    }
-    val jsonField = configData.getString("name")
-    if(configData.hasPath("data_location")) {
-      return newJson ++ Json.obj(
-        jsonField -> mergeSheetData(
-          configData.getConfig("data_location"),
-          getObjectFromJson(jsonField, oldJson),
-          getObjectFromJson(jsonField, newJson)
-        )
-      )
-    }
-    Json.obj(
-      jsonField -> (getArrayFromJson(jsonField, oldJson) ++ getArrayFromJson(jsonField, newJson))
-    )
+  }
+
+  private def handleException(e: Throwable, elemRow: Int, elemColumn: Int, sheetName: Option[String], schemeInfo: Option[SchemeInfo], logMsg: String): JsObject = {
+    logger.info(s"$logMsg Could not find file data for row: $elemRow and column: $elemColumn. Exception: [$e] for [${sheetName.getOrElse("missingSheetName")}]: ${schemeInfo.map(_.basicLogMessage).getOrElse("missingSchemeInfo")}")
+    EmptyJson
   }
 }
