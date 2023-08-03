@@ -16,20 +16,16 @@
 
 package fixtures
 
-import java.text.SimpleDateFormat
-
+import fixtures.Common._
 import models._
-import org.joda.time.DateTime
 
 object EMI {
 
   val schemeType: String = "EMI"
   val schemeRef: String = "XA1100000000000"
-  val timestamp: DateTime = DateTime.now
 
   val schemeInfo: SchemeInfo = SchemeInfo (
     schemeRef = schemeRef,
-    timestamp = timestamp,
     schemeId = "123PA12345678",
     taxYear = "2015/16",
     schemeName = "My scheme",
@@ -184,6 +180,7 @@ object EMI {
     Some("1234567890"),
     Some("1234567890")
   )
+
   val companyDetailsMin: CompanyDetails = CompanyDetails(
     "testCompany",
     "testAddress1",
@@ -205,13 +202,11 @@ object EMI {
     sapNumber = Some("sap-123456")
   )
 
-  val dateTimeFormat = new SimpleDateFormat("d MMMM yyyy, h:mma")
-
   val metadata: ErsSummary = ErsSummary(
     bundleRef = "testbundle",
     isNilReturn = "1",
     fileType = Some("ods"),
-    confirmationDateTime = new DateTime(dateTimeFormat.parse("21 May 2015, 11:12AM")),
+    confirmationDateTime = testConfirmationDateTime,
     metaData = ersMetadata,
     altAmendsActivity = None,
     alterationAmends = None,
@@ -235,12 +230,11 @@ object EMI {
     transferStatus = Some("saved")
   )
 
-
   val metadataNilReturn: ErsSummary = ErsSummary(
     bundleRef = "testbundle",
     isNilReturn = "2",
     fileType = None,
-    confirmationDateTime = new DateTime(dateTimeFormat.parse("21 May 2015, 11:12AM")),
+    confirmationDateTime = testConfirmationDateTime,
     metaData = ersMetadata,
     altAmendsActivity = None,
     alterationAmends = None,

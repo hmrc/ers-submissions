@@ -43,7 +43,8 @@ class ResubJobNoFiltersEnabledSpec extends AnyWordSpecLike
     "schedules.resubmission-service.resubmit-fail-status" -> "failedResubmission",
     "schedules.resubmission-service.resubmit-successful-status" -> "successResubmit",
     "auditing.enabled" -> false,
-    "settings.presubmission-collection-index-replace" -> false
+    "settings.presubmission-collection-index-replace" -> false,
+    "schedules.resubmission-service.additional-logs.enabled" -> true
   )
 
   override lazy val app: Application = new GuiceApplicationBuilder()
@@ -79,7 +80,7 @@ class ResubJobNoFiltersEnabledSpec extends AnyWordSpecLike
       countMetadataRecordsWithSelector(successResubmitTransferStatusSelector) shouldBe 4
       countMetadataRecordsWithSelector(failedJobSelector) shouldBe 6
 
-      val ersSummariesSecondStore = Fixtures.failedJobsWithDifferentBundleRef
+      val ersSummariesSecondStore: Seq[ErsSummary] = Fixtures.failedJobsWithDifferentBundleRef
       val secondStoreDocs: Boolean = await(storeMultipleErsSummary(ersSummariesSecondStore.map(Json.toJsObject(_))))
       secondStoreDocs shouldBe true
 

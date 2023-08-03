@@ -54,5 +54,4 @@ trait ERSTestHelper extends AnyWordSpecLike with Matchers with OptionValues with
   }
 
   def await[T](future: Future[T], timeout: FiniteDuration = 10.seconds): T = Await.result(future, timeout)
-
 }

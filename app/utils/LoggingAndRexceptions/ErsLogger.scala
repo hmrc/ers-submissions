@@ -34,4 +34,10 @@ trait ErsLogger extends ErsDataMessages with ErsExceptionMessages with Logging {
     }
     logger.error(errorMessage)
   }
+
+  def logIfEnabled(logEnabled: Boolean)(block: => Unit): Unit = {
+    Option(logEnabled)
+      .filter(identity)
+      .foreach( _ => block)
+  }
 }

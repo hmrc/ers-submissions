@@ -16,16 +16,14 @@
 
 package models
 
-import org.joda.time.{DateTime => DT, DateTimeZone}
+import java.time.Instant
 import play.api.libs.json.{Format, Json, Reads, Writes, __}
 
 object DateTime {
-    private val dateTimeRead: Reads[DT] =
-      __.read[Long].map { dateTime =>
-        new DT(dateTime, DateTimeZone.UTC)
-      }
+  private val dateTimeRead: Reads[Instant] =
+    __.read[Long].map(Instant.ofEpochMilli)
 
-    private val dateTimeWrite: Writes[DT] = (dateTime: DT) => Json.toJson(dateTime.getMillis)
+  private val dateTimeWrite: Writes[Instant] = (dateTime: Instant) => Json.toJson(dateTime.toEpochMilli)
 
-    implicit val dateTimeFormats: Format[DT] = Format(dateTimeRead, dateTimeWrite)
+  implicit val dateTimeFormats: Format[Instant] = Format(dateTimeRead, dateTimeWrite)
 }

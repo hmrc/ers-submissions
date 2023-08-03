@@ -19,9 +19,10 @@ package utils
 import com.typesafe.config.{Config, ConfigFactory, ConfigValueFactory}
 import fixtures.Common
 import helpers.ERSTestHelper
-import org.joda.time.{DateTime, DateTimeZone}
 import play.api.libs.json.{JsObject, Json}
 import uk.gov.hmrc.http.HttpResponse
+
+import java.time.LocalDateTime
 
 class SubmissionCommonSpec extends ERSTestHelper {
 
@@ -43,8 +44,7 @@ class SubmissionCommonSpec extends ERSTestHelper {
 
   "customFormat" should {
 
-    val dateTime: DateTime = new DateTime().withYear(2015).withMonthOfYear(5).withDayOfMonth(21).withHourOfDay(11).withMinuteOfHour(12).withSecondOfMinute(0).withMillisOfSecond(0).withZone(DateTimeZone.UTC)
-
+    val dateTime: LocalDateTime = LocalDateTime.of(2015, 5,21,11,12,0,0)
     "convert datetime to string using correct format" in {
       val testConfig = ConfigFactory.empty().withValue("type", ConfigValueFactory.fromAnyRef("datetime"))
         .withValue("json_format", ConfigValueFactory.fromAnyRef("yyyy-MM-dd'T'HH:mm:ss"))
@@ -57,7 +57,7 @@ class SubmissionCommonSpec extends ERSTestHelper {
       val testConfig = ConfigFactory.empty().withValue("type", ConfigValueFactory.fromAnyRef(""))
       val result = testSubmissionCommon.customFormat(dateTime, testConfig)
 
-      result shouldBe dateTime.toString()
+      result shouldBe dateTime.toString
     }
   }
 

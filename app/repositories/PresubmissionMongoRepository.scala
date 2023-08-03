@@ -57,7 +57,7 @@ class PresubmissionMongoRepository @Inject()(applicationConfig: ApplicationConfi
 
   def buildSelector(schemeInfo: SchemeInfo): BsonDocument = BsonDocument(
     "schemeInfo.schemeRef" -> BsonString(schemeInfo.schemeRef),
-    "schemeInfo.timestamp" -> BsonInt64(schemeInfo.timestamp.getMillis)
+    "schemeInfo.timestamp" -> BsonInt64(schemeInfo.timestamp.toEpochMilli)
   )
 
   def storeJson(presubmissionData: SchemeData, sessionId: String): ERSEnvelope[Boolean] = EitherT {

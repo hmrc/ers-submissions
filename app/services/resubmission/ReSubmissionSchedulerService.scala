@@ -20,7 +20,6 @@ import common.ERSEnvelope
 import common.ERSEnvelope.ERSEnvelope
 import config.ApplicationConfig
 import models._
-import play.api.Logging
 import play.api.libs.json.JsObject
 import play.api.mvc.Request
 import repositories.LockRepositoryProvider
@@ -28,6 +27,7 @@ import scheduler.ScheduledService
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.mongo.lock.LockService
 import utils.CorrelationIdHelper
+import utils.LoggingAndRexceptions.ErsLogger
 
 import javax.inject.Inject
 import scala.concurrent.ExecutionContext
@@ -37,7 +37,7 @@ class ReSubmissionSchedulerService @Inject()(val applicationConfig: ApplicationC
                                              lockRepositoryProvider: LockRepositoryProvider,
                                              resubPresubmissionService: ResubPresubmissionService)(implicit ec: ExecutionContext)
   extends ScheduledService[Boolean]
-    with Logging
+    with ErsLogger
     with SchedulerConfig
     with CorrelationIdHelper {
 
@@ -64,9 +64,11 @@ class ReSubmissionSchedulerService @Inject()(val applicationConfig: ApplicationC
     val request: Request[JsObject] = ERSRequest.createERSRequest()
     implicit val hc: HeaderCarrier = getOrCreateCorrelationID(request)
 
-    resubPresubmissionService.logAggregateMetadataMetrics()
-    resubPresubmissionService.logFailedSubmissionCount(processFailedSubmissionsConfig)
-    logger.info(LockMessage(lockService).message)
+    logIfEnabled(applicationConfig.schedulerEnableAdditionalLogs) {
+      resubPresubmissionService.logAggregateMetadataMetrics()
+      resubPresubmissionService.logFailedSubmissionCount(processFailedSubmissionsConfig)
+      logger.info(LockMessage(lockService).message)
+    }
 
     ERSEnvelope(lockService.withLock(resubmit()(request, hc).value).map {
       case Some(_) =>

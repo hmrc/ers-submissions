@@ -21,14 +21,14 @@ import _root_.play.api.inject.guice.GuiceApplicationBuilder
 import _root_.play.api.libs.json._
 import _root_.play.api.test.Helpers._
 import models.{ERSError, ErsSummary, SchemeData}
-import org.joda.time.DateTime
-import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
 import org.mongodb.scala.model.Filters
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 import org.scalatestplus.play.guice.GuiceOneServerPerSuite
 import uk.gov.hmrc.{CSOP, FakeErsStubService, Fixtures}
 
+import java.time.{Instant, LocalDate, ZoneId}
+import java.time.format.DateTimeFormatter
 import scala.collection.mutable.ListBuffer
 
 class ResubJobWithSchemaRefsFilterEnabledSpec extends AnyWordSpecLike
@@ -47,21 +47,23 @@ class ResubJobWithSchemaRefsFilterEnabledSpec extends AnyWordSpecLike
     "schedules.resubmission-service.resubmit-list-statuses" -> "failed",
     "schedules.resubmission-service.resubmit-fail-status" -> "failedResubmission",
     "schedules.resubmission-service.resubmit-successful-status" -> "successResubmit",
-    "auditing.enabled" -> false
+    "auditing.enabled" -> false,
+    "schedules.resubmission-service.additional-logs.enabled" -> true
   )
 
-  val formatter: DateTimeFormatter = DateTimeFormat.forPattern("dd/MM/yyyy")
+  val formatter: DateTimeFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy")
+  def instantFromDate(date: String): Instant = LocalDate.parse(date, formatter).atStartOfDay(ZoneId.of("UTC")).toInstant
 
-  val submissionDatesAndSchemeRefs: Seq[(DateTime, String)] = Seq(
-    (DateTime.parse("11/04/2023", formatter), "123"),
-    (DateTime.parse("30/04/2023", formatter), "456"),
-    (DateTime.parse("10/05/2023", formatter), "789"),
-    (DateTime.parse("20/05/2023", formatter), "101"),
-    (DateTime.parse("16/05/2023", formatter), "121")
+  val submissionDatesAndSchemeRefs: Seq[(Instant, String)] = Seq(
+    (instantFromDate("11/04/2023"), "123"),
+    (instantFromDate("30/04/2023"), "456"),
+    (instantFromDate("10/05/2023"), "789"),
+    (instantFromDate("20/05/2023"), "101"),
+    (instantFromDate("16/05/2023"), "121")
   )
 
   val ersSummaries: Seq[ErsSummary] = submissionDatesAndSchemeRefs.map {
-    case (submissionDate: DateTime, schemeRef: String) =>
+    case (submissionDate: Instant, schemeRef: String) =>
       Fixtures.buildErsSummary(transferStatus = Some("failed"), schemaType = "CSOP", timestamp = submissionDate, schemeRef = schemeRef)
   } ++ Seq(
     Fixtures.buildErsSummary(transferStatus = Some("passed"), schemaType = "CSOP"),
@@ -69,7 +71,7 @@ class ResubJobWithSchemaRefsFilterEnabledSpec extends AnyWordSpecLike
   )
 
   val presubmissionsData: Seq[SchemeData] = submissionDatesAndSchemeRefs.map {
-    case (submissionDate: DateTime, schemeRef: String) =>
+    case (submissionDate: Instant, schemeRef: String) =>
       SchemeData(
         CSOP.schemeInfo.copy(timestamp = submissionDate, schemeRef = schemeRef),
         "CSOP_OptionsRCL_V4",

@@ -23,11 +23,9 @@ import fixtures.Fixtures
 import helpers.ERSTestHelper
 import models.{ErsMetaData, ErsSummary, SchemeInfo}
 import org.bson.BsonValue
-import org.joda.time.DateTime
 import org.mockito.ArgumentMatchers.{any, anyString, eq => mockEq}
 import org.mockito.Mockito._
 import org.mongodb.scala.bson.{BsonString, ObjectId}
-import org.mongodb.scala.result.UpdateResult
 import org.scalatest.{BeforeAndAfterEach, EitherValues}
 import play.api.mvc.Request
 import play.api.test.FakeRequest
@@ -35,6 +33,9 @@ import repositories.MetadataMongoRepository
 import services.SubmissionService
 import services.audit.AuditEvents
 import uk.gov.hmrc.http.HeaderCarrier
+
+import java.time.Instant
+import java.time.temporal.ChronoUnit
 
 class ResubPresubmissionServiceSpec extends ERSTestHelper with BeforeAndAfterEach with EitherValues {
   implicit val hc: HeaderCarrier = new HeaderCarrier()
@@ -81,7 +82,7 @@ class ResubPresubmissionServiceSpec extends ERSTestHelper with BeforeAndAfterEac
     bundleRef = "123",
     isNilReturn = "456",
     fileType = None,
-    confirmationDateTime = new DateTime(),
+    confirmationDateTime = Instant.now().truncatedTo(ChronoUnit.MILLIS),
     metaData = ersMetaData,
     altAmendsActivity = None,
     alterationAmends = None,

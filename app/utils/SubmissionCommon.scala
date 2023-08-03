@@ -18,15 +18,16 @@ package utils
 
 import com.typesafe.config.Config
 import models.SchemeInfo
-import org.joda.time.DateTime
 import play.api.Logging
 import play.api.libs.json.Json.JsValueWrapper
 import play.api.libs.json._
 import uk.gov.hmrc.http.HttpResponse
 
-import java.text.SimpleDateFormat
+import java.time._
+import java.time.format.DateTimeFormatter
 import javax.inject.Inject
 import scala.collection.mutable.ListBuffer
+import scala.util.{Failure, Success, Try}
 
 class SubmissionCommon @Inject()(configUtils: ConfigUtils) extends Logging {
 
@@ -42,16 +43,14 @@ class SubmissionCommon @Inject()(configUtils: ConfigUtils) extends Logging {
     }
   }
 
-  def customFormat(value: DateTime, formatInfo: Config): String = {
+  def customFormat(value: LocalDateTime, formatInfo: Config): String = {
     formatInfo.getString("type") match {
       case "datetime" =>
         val jsonFormat = formatInfo.getString("json_format")
-        val jsonDateTimeFormat = new SimpleDateFormat(jsonFormat)
+        val formatter = DateTimeFormatter.ofPattern(jsonFormat)
 
-        jsonDateTimeFormat.format(
-          value.toDate
-        )
-      case _ => value.toString()
+        value.format(formatter)
+      case _ => value.toString
     }
   }
 
@@ -102,7 +101,7 @@ class SubmissionCommon @Inject()(configUtils: ConfigUtils) extends Logging {
       getConfigElemValue(configElem)
     }
     else if(configElem.hasPath("datetime_value") && configElem.getString("datetime_value") == "now") {
-      val elemVal = System.currentTimeMillis().toString
+      val elemVal = Instant.now().toEpochMilli.toString
       getNewField(configElem, elemVal)
     }
     else {
@@ -128,14 +127,12 @@ class SubmissionCommon @Inject()(configUtils: ConfigUtils) extends Logging {
               val valid_value = configElem.getString("valid_value")
               value.toString == valid_value
             case "string" =>
-              value match {
-                case time: DateTime =>
-                  customFormat(time, configElem.getConfig("format"))
-                case _: String =>
-                  value.toString
-                case _ =>
-                  JsNull
+              Try(LocalDateTime.parse(value.toString, DateTimeFormatter.ISO_DATE_TIME)) match {
+                case Success(time) => customFormat(time, configElem.getConfig("format"))
+                case Failure(_) => value.toString
               }
+            case _ =>
+              JsNull
           }
           getNewField(configElem, elemVal)
       }
