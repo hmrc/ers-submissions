@@ -21,8 +21,6 @@ import cats.implicits.catsSyntaxEitherId
 import common.ERSEnvelope.ERSEnvelope
 import config.ApplicationConfig
 import models._
-import org.joda.time.DateTime
-import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
 import org.mongodb.scala.FindObservable
 import org.mongodb.scala.bson.{BsonDocument, BsonInt64, BsonString, Document, ObjectId}
 import org.mongodb.scala.model.Accumulators._
@@ -37,6 +35,8 @@ import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
 import uk.gov.hmrc.mongo.play.json.formats.MongoFormats
 
+import java.time.{LocalDate, ZoneId}
+import java.time.format.DateTimeFormatter
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.ExecutionContext
 
@@ -55,7 +55,7 @@ class MetadataMongoRepository @Inject()(val applicationConfig: ApplicationConfig
 
   def buildSelector(schemeInfo: SchemeInfo): BsonDocument = BsonDocument(
     "metaData.schemeInfo.schemeRef" -> BsonString(schemeInfo.schemeRef),
-    "metaData.schemeInfo.timestamp" -> BsonInt64(schemeInfo.timestamp.getMillis)
+    "metaData.schemeInfo.timestamp" -> BsonInt64(schemeInfo.timestamp.toEpochMilli)
   )
 
   def storeErsSummary(ersSummary: ErsSummary, sessionId: String): ERSEnvelope[Boolean] = EitherT {
@@ -110,10 +110,10 @@ class MetadataMongoRepository @Inject()(val applicationConfig: ApplicationConfig
       processFailedSubmissionsConfig.resubmitScheme.map(scheme => "metaData.schemeInfo.schemeType" -> BsonString(scheme))
     )
 
-    val formatter: DateTimeFormatter = DateTimeFormat.forPattern("dd/MM/yyyy")
+    val formatter: DateTimeFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy")
 
     val dateRangeSelector: BsonDocument = BsonDocument(processFailedSubmissionsConfig.dateTimeFilter.map(date =>
-      "metaData.schemeInfo.timestamp" -> BsonDocument("$gte" -> DateTime.parse(date, formatter).getMillis))
+      "metaData.schemeInfo.timestamp" -> BsonDocument("$gte" -> LocalDate.parse(date, formatter).atStartOfDay(ZoneId.of("UTC")).toInstant.toEpochMilli))
     )
 
     Seq(baseSelector, schemeRefSelector, schemeSelector, dateRangeSelector).foldLeft(BsonDocument())(_ +:+ _)

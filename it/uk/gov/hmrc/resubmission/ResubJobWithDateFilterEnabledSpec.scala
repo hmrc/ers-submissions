@@ -35,7 +35,7 @@ class ResubJobWithDateFilterEnabledSpec extends AnyWordSpecLike
     "microservice.services.ers-stub.port" -> "19339",
     "schedules.resubmission-service.enabled" -> true,
     "schedules.resubmission-service.dateTimeFilter.enabled" -> true,
-    "schedules.resubmission-service.dateTimeFilter.filter" -> "1/5/2023",
+    "schedules.resubmission-service.dateTimeFilter.filter" -> "01/05/2023",
     "schedules.resubmission-service.schemaRefsFilter.enabled" -> false,
     "schedules.resubmission-service.schemaFilter.enabled" -> false,
     "schedules.resubmission-service.schemaFilter.filter" -> "CSOP",
@@ -43,7 +43,8 @@ class ResubJobWithDateFilterEnabledSpec extends AnyWordSpecLike
     "schedules.resubmission-service.resubmit-list-statuses" -> "failed",
     "schedules.resubmission-service.resubmit-fail-status" -> "failedResubmission",
     "schedules.resubmission-service.resubmit-successful-status" -> "successResubmit",
-    "auditing.enabled" -> false
+    "auditing.enabled" -> false,
+    "schedules.resubmission-service.additional-logs.enabled" -> true
   )
 
   override lazy val app: Application = new GuiceApplicationBuilder()

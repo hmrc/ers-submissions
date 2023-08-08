@@ -18,9 +18,10 @@ package uk.gov.hmrc
 
 import _root_.play.api.libs.json._
 import models._
-import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
-import org.joda.time.{DateTime, DateTimeZone}
 
+import java.time.format.DateTimeFormatter
+import java.time.temporal.ChronoUnit
+import java.time.{Instant, LocalDate, ZoneId, ZonedDateTime}
 import scala.collection.mutable.ListBuffer
 import scala.util.Random
 
@@ -28,8 +29,8 @@ object Fixtures {
   val invalidPayload: JsObject = Json.obj("invalid data" -> "test")
 
   def schemeInfo(schemaType: String = "EMI",
-                 timestamp: DateTime = DateTime.now(DateTimeZone.UTC),
-                 schemeRef: String = "XA1100000000000"): SchemeInfo = SchemeInfo (
+                 timestamp: Instant = Instant.now().truncatedTo(ChronoUnit.MILLIS),
+                 schemeRef: String = "XA1100000000000"): SchemeInfo = SchemeInfo(
     schemeRef = schemeRef,
     timestamp = timestamp,
     schemeId = "123PA12345678",
@@ -37,6 +38,7 @@ object Fixtures {
     schemeName = "EMI",
     schemeType = schemaType
   )
+
   def schemeInfoPayload(schemeInfo: SchemeInfo): JsValue = Json.toJson(schemeInfo)
 
   val submissionsSchemeData: SubmissionsSchemeData = SubmissionsSchemeData(
@@ -47,7 +49,7 @@ object Fixtures {
   )
   def submissionsSchemeDataJson(submissionsSchemeData: SubmissionsSchemeData): JsObject = Json.toJson(submissionsSchemeData).as[JsObject]
 
-  def ersMetaData(schemaType: String, timestamp: DateTime, schemeRef: String): ErsMetaData = ErsMetaData(
+  def ersMetaData(schemaType: String, timestamp: Instant, schemeRef: String): ErsMetaData = ErsMetaData(
     schemeInfo = schemeInfo(schemaType, timestamp, schemeRef),
     ipRef = "127.0.0.0",
     aoRef = Some("123PA12345678"),
@@ -56,7 +58,7 @@ object Fixtures {
     sapNumber = Some("sap-123456")
   )
 
-  def schemeData(timestamp: Option[DateTime] = None): SchemeData = SchemeData(
+  def schemeData(timestamp: Option[Instant] = None): SchemeData = SchemeData(
     timestamp.fold(schemeInfo())(ts => schemeInfo(timestamp = ts)),
     "EMI40_Adjustments_V4",
     None,
@@ -87,12 +89,12 @@ object Fixtures {
                       transferStatus: Option[String] = Some("saved"),
                       schemaType: String = "EMI",
                       bundleRef: String = "testbundle",
-                      timestamp: DateTime = DateTime.now(DateTimeZone.UTC),
+                      timestamp: Instant = Instant.now().truncatedTo(ChronoUnit.MILLIS),
                       schemeRef: String = "XA1100000000000"): ErsSummary = ErsSummary(
     bundleRef = bundleRef,
     isNilReturn = if(isNilReturn) "2" else "1",
     fileType = Some("ods"),
-    confirmationDateTime = DateTime.now(DateTimeZone.UTC),
+    confirmationDateTime = timestamp,
     metaData = ersMetaData(schemaType, timestamp, schemeRef),
     altAmendsActivity = None,
     alterationAmends = None,
@@ -129,7 +131,7 @@ object Fixtures {
         transferStatus = transferStatus,
         schemaType = schemaType,
         bundleRef = bundleRef,
-        timestamp = DateTime.now(DateTimeZone.UTC).minus(random.nextLong())
+        timestamp = ZonedDateTime.now().toInstant.minus(random.nextLong(), ChronoUnit.MILLIS)
       )
     )
   }
@@ -156,19 +158,21 @@ object Fixtures {
 
   val failedJobsWithDifferentBundleRef: Seq[ErsSummary] = generateListOfErsSummaries(numberRecords = 10)
 
-  val formatter: DateTimeFormatter = DateTimeFormat.forPattern("dd/MM/yyyy")
+  val formatter: DateTimeFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy")
+  def instantFromDate(date: String): Instant = LocalDate.parse(date, formatter).atStartOfDay(ZoneId.of("UTC")).toInstant
+
   val ersSummaries: Seq[JsObject] = Seq(
-    Fixtures.buildErsSummary(transferStatus = Some("passed"), schemaType = "CSOP", timestamp = DateTime.parse("30/04/2022", formatter)),
-    Fixtures.buildErsSummary(transferStatus = Some("successResubmit"), schemaType = "CSOP", timestamp = DateTime.parse("30/04/2021", formatter)),
-    Fixtures.buildErsSummary(transferStatus = Some("failed"), schemaType = "NOT_CSOP", timestamp = DateTime.parse("30/04/2000", formatter)),
-    Fixtures.buildErsSummary(transferStatus = Some("failed"), schemaType = "CSOP", timestamp = DateTime.parse("30/04/2023", formatter)),
-    Fixtures.buildErsSummary(transferStatus = Some("failed"), schemaType = "CSOP", timestamp = DateTime.parse("10/05/2023", formatter)),
-    Fixtures.buildErsSummary(transferStatus = Some("failed"), schemaType = "CSOP", timestamp = DateTime.parse("20/05/2023", formatter)),
+    Fixtures.buildErsSummary(transferStatus = Some("passed"), schemaType = "CSOP", timestamp = instantFromDate("30/04/2022")),
+    Fixtures.buildErsSummary(transferStatus = Some("successResubmit"), schemaType = "CSOP", timestamp = instantFromDate("30/04/2021")),
+    Fixtures.buildErsSummary(transferStatus = Some("failed"), schemaType = "NOT_CSOP", timestamp = instantFromDate("30/04/2000")),
+    Fixtures.buildErsSummary(transferStatus = Some("failed"), schemaType = "CSOP", timestamp = instantFromDate("30/04/2023")),
+    Fixtures.buildErsSummary(transferStatus = Some("failed"), schemaType = "CSOP", timestamp = instantFromDate("10/05/2023")),
+    Fixtures.buildErsSummary(transferStatus = Some("failed"), schemaType = "CSOP", timestamp = instantFromDate("20/05/2023"))
   ).map(Json.toJsObject(_))
 
   val schemeData: Seq[JsObject] = Seq(
-    SchemeData(CSOP.schemeInfo.copy(timestamp = DateTime.parse("30/04/2023", formatter)), "CSOP_OptionsRCL_V4", None, Some(ListBuffer(CSOP.buildOptionsRCL(true, "yes")))),
-    SchemeData(CSOP.schemeInfo.copy(timestamp = DateTime.parse("10/05/2023", formatter)), "CSOP_OptionsRCL_V4", None, Some(ListBuffer(CSOP.buildOptionsRCL(true, "yes")))),
-    SchemeData(CSOP.schemeInfo.copy(timestamp = DateTime.parse("20/05/2023", formatter)), "CSOP_OptionsRCL_V4", None, Some(ListBuffer(CSOP.buildOptionsRCL(true, "yes"))))
+    SchemeData(CSOP.schemeInfo.copy(timestamp = instantFromDate("30/04/2023")), "CSOP_OptionsRCL_V4", None, Some(ListBuffer(CSOP.buildOptionsRCL(true, "yes")))),
+    SchemeData(CSOP.schemeInfo.copy(timestamp = instantFromDate("10/05/2023")), "CSOP_OptionsRCL_V4", None, Some(ListBuffer(CSOP.buildOptionsRCL(true, "yes")))),
+    SchemeData(CSOP.schemeInfo.copy(timestamp = instantFromDate("20/05/2023")), "CSOP_OptionsRCL_V4", None, Some(ListBuffer(CSOP.buildOptionsRCL(true, "yes"))))
   ).map(Json.toJsObject(_))
 }

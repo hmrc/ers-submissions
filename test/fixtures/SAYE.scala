@@ -16,18 +16,13 @@
 
 package fixtures
 
-import java.text.SimpleDateFormat
-
+import fixtures.Common._
 import models._
-import org.joda.time.DateTime
-
 
 object SAYE {
 
   val sayeSchemeType: String = "SAYE"
   val schemeRef: String = "XA1100000000000"
-  val timestamp: DateTime = DateTime.now
-
 
   def buildExercisedV4(allFields: Boolean, sharesListedOnSE: String, marketValueAgreedHMRC: String): Seq[String] = Seq(
     "2014-01-01",
@@ -79,12 +74,12 @@ object SAYE {
 
   val schemeInfo: SchemeInfo = SchemeInfo (
     schemeRef = "XA1100000000000",
-    timestamp = timestamp,
     schemeId = "123PA12345678",
     taxYear = "2014/15",
     schemeName = "My scheme",
     schemeType = sayeSchemeType
   )
+
   val companyDetails: CompanyDetails = CompanyDetails(
     "testCompany",
     "testAddress1",
@@ -96,6 +91,7 @@ object SAYE {
     Some("1234567890"),
     Some("1234567890")
   )
+
   val companyDetailsMin: CompanyDetails = CompanyDetails(
     "testCompany",
     "testAddress1",
@@ -117,13 +113,11 @@ object SAYE {
     sapNumber = Some("sap-123456")
   )
 
-  val dateTimeFormat = new SimpleDateFormat("d MMMM yyyy, h:mma")
-
   val ersSumarry: ErsSummary = ErsSummary(
     bundleRef = "testbundle",
     isNilReturn = "1",
     fileType = Some("ods"),
-    confirmationDateTime = new DateTime(dateTimeFormat.parse("21 May 2015, 11:12AM")),
+    confirmationDateTime = testConfirmationDateTime,
     metaData = ersMetadata,
     altAmendsActivity = None,
     alterationAmends = None,
@@ -151,7 +145,7 @@ object SAYE {
     bundleRef = "testbundle",
     isNilReturn = "1",
     fileType = Some("ods"),
-    confirmationDateTime = new DateTime(dateTimeFormat.parse("21 May 2015, 11:12AM")),
+    confirmationDateTime = testConfirmationDateTime,
     metaData = ersMetadata,
     altAmendsActivity = Some(AltAmendsActivity("1")),
     alterationAmends = Some(
@@ -183,12 +177,11 @@ object SAYE {
     transferStatus = Some("saved")
   )
 
-
   val ersSummaryNilReturn: ErsSummary = ErsSummary(
     bundleRef = "testbundle",
     isNilReturn = "2",
     fileType = None,
-    confirmationDateTime = new DateTime(dateTimeFormat.parse("21 May 2015, 11:12AM")),
+    confirmationDateTime = testConfirmationDateTime,
     metaData = ersMetadata,
     altAmendsActivity = None,
     alterationAmends = None,
@@ -205,12 +198,11 @@ object SAYE {
     transferStatus = Some("saved")
   )
 
-
   val ersSummaryNilReturnWithAllAltAmmends: ErsSummary = ErsSummary(
     bundleRef = "testbundle",
     isNilReturn = "2",
     fileType = None,
-    confirmationDateTime = new DateTime(dateTimeFormat.parse("21 May 2015, 11:12AM")),
+    confirmationDateTime = testConfirmationDateTime,
     metaData = ersMetadata,
     altAmendsActivity = Some(AltAmendsActivity("1")),
     alterationAmends = Some(
@@ -239,7 +231,7 @@ object SAYE {
     bundleRef = "testbundle",
     isNilReturn = "2",
     fileType = None,
-    confirmationDateTime = new DateTime(dateTimeFormat.parse("21 May 2015, 11:12AM")),
+    confirmationDateTime = testConfirmationDateTime,
     metaData = ersMetadata,
     altAmendsActivity = Some(AltAmendsActivity("1")),
     alterationAmends = Some(
@@ -268,7 +260,7 @@ object SAYE {
     bundleRef = "testbundle",
     isNilReturn = "2",
     fileType = None,
-    confirmationDateTime = new DateTime(dateTimeFormat.parse("21 May 2015, 11:12AM")),
+    confirmationDateTime = testConfirmationDateTime,
     metaData = ersMetadata,
     altAmendsActivity = None,
     alterationAmends = None,
@@ -284,5 +276,4 @@ object SAYE {
     nofOfRows = None,
     transferStatus = Some("saved")
   )
-
 }

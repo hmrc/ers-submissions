@@ -16,19 +16,21 @@
 
 package models
 
-import org.joda.time.DateTime
 import play.api.libs.json._
 
+import java.time.Instant
+import java.time.temporal.ChronoUnit
 import scala.collection.mutable.ListBuffer
 
+
 case class SchemeInfo(schemeRef: String,
-                      timestamp: DateTime = DateTime.now,
+                      timestamp: Instant = Instant.now().truncatedTo(ChronoUnit.MILLIS),
                       schemeId: String,
                       taxYear: String,
                       schemeName: String,
                       schemeType: String) {
 
-  val basicLogMessage: String = List(schemeRef, schemeType, taxYear, timestamp.getMillis.toString).mkString("[",",","]")
+  val basicLogMessage: String = List(schemeRef, schemeType, taxYear, timestamp.toEpochMilli.toString).mkString("[",",","]")
 }
 
 object SchemeInfo {

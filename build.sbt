@@ -18,7 +18,7 @@ lazy val scoverageSettings = {
     // Semicolon-separated list of regexs matching classes to exclude
     ScoverageKeys.coverageExcludedPackages := "<empty>;Reverse.*;.*ERSRequest.*;models/.data/..*;prod.*;app.*;models.*;.*BuildInfo.*;view.*;.*Connector.*;repositories.*;.*Config;.*Global.*;prod.Routes;testOnlyDoNotUseInAppConf.*;.*Configuration;.*AuthFilter;.*AuditFilter;.*LoggingFilter;.*Metrics;.*WSHttp.*",
     ScoverageKeys.coverageMinimumStmtTotal := 86,
-    ScoverageKeys.coverageFailOnMinimum := false,
+    ScoverageKeys.coverageFailOnMinimum := true,
   )
 }
 
@@ -31,9 +31,9 @@ lazy val testSettings = Seq(
 lazy val microservice = Project(appName, file("."))
   .enablePlugins(play.sbt.PlayScala, SbtDistributablesPlugin)
   .disablePlugins(JUnitXmlReportPlugin) //Required to prevent https://github.com/scalatest/scalatest/issues/1427
-  .settings(scoverageSettings *)
-  .settings(scalaSettings *)
-  .settings(defaultSettings() *)
+  .settings(scoverageSettings)
+  .settings(scalaSettings)
+  .settings(defaultSettings())
   .settings(
     scalaVersion := "2.13.11",
     libraryDependencies ++= AppDependencies.all,
@@ -43,7 +43,7 @@ lazy val microservice = Project(appName, file("."))
   )
   .configs(IntegrationTest)
   .settings(integrationTestSettings())
-  .settings(inConfig(Test)(testSettings) *)
+  .settings(inConfig(Test)(testSettings))
   .settings(majorVersion := 1)
   .settings(PlayKeys.playDefaultPort := 9292)
 
@@ -51,5 +51,5 @@ scalacOptions ++= Seq(
   "-Wconf:src=routes/.*:s"
 )
 
-addCommandAlias("scalastyleAll", "all scalastyle test:scalastyle")
-addCommandAlias("testAll", "all test it:test")
+addCommandAlias("scalastyleAll", "all scalastyle Test/scalastyle")
+addCommandAlias("testAll", "all test IntegrationTest/test")

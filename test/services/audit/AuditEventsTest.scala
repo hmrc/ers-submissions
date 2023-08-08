@@ -20,18 +20,18 @@ import fixtures.Fixtures
 import fixtures.Fixtures.schemeData
 import helpers.ERSTestHelper
 import models.{ErsMetaData, SchemeInfo}
-import org.joda.time.{DateTime, DateTimeZone}
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.{reset, verify, when}
 import org.mockito.internal.verification.VerificationModeFactory
 import org.scalatest.BeforeAndAfterEach
-import play.api.mvc.{AnyContent, AnyContentAsEmpty}
+import play.api.mvc.AnyContent
 import play.api.test.FakeRequest
 import services.audit.{AuditEvents, AuditService}
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 import uk.gov.hmrc.play.audit.http.connector.AuditResult.{Disabled, Failure, Success}
 
+import java.time.{ZoneId, ZonedDateTime}
 import scala.concurrent.Future
 
 class AuditEventsTest
@@ -39,8 +39,7 @@ class AuditEventsTest
 
   implicit val request: FakeRequest[AnyContent] = FakeRequest()
   implicit var hc: HeaderCarrier = new HeaderCarrier()
-  val dateTime = new DateTime()
-  val rsc = new ErsMetaData(new SchemeInfo("",new DateTime(),"","","",""),"",Some(""),"",Some(""),Some(""))
+  val rsc: ErsMetaData = ErsMetaData(SchemeInfo(schemeRef = "", schemeId = "", taxYear = "", schemeName = "", schemeType = ""),"",Some(""),"",Some(""),Some(""))
   val mockAuditConnector: AuditConnector = mock[AuditConnector]
   val mockAuditService: AuditService = mock[AuditService]
   val testAuditEvents = new AuditEvents(mockAuditService)
@@ -111,8 +110,7 @@ for (eventResult <- Seq(Success, Failure("failed"), Disabled)) {
 }
 
   "eventMap should return the correct map when no additional maps are added" in {
-    val timestamp: DateTime = new DateTime()
-      .withDate(2015,12,5).withTime(12,50,55,0).withZone(DateTimeZone.UTC)
+    val timestamp = ZonedDateTime.of(2015,12,5,12,50,55,0, ZoneId.of("UTC")).toInstant
 
     val testSchemeInfo: Map[String, String] = Map(
       "schemeRef" -> "XA1100000000000",

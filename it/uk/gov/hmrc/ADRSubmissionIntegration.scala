@@ -25,7 +25,6 @@ import _root_.play.api.test.FakeRequest
 import _root_.play.api.test.Helpers._
 import controllers.SubmissionController
 import models.ErsSummary
-import org.joda.time.{DateTime, DateTimeZone}
 import org.mongodb.scala.bson.BsonDocument
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.matchers.should.Matchers
@@ -33,6 +32,8 @@ import org.scalatest.wordspec.AnyWordSpecLike
 import repositories.{MetadataMongoRepository, PresubmissionMongoRepository}
 import uk.gov.hmrc.Fixtures.buildErsSummary
 
+import java.time.Instant
+import java.time.temporal.ChronoUnit
 import scala.concurrent.Future
 
 class ADRSubmissionIntegration extends AnyWordSpecLike with Matchers
@@ -48,7 +49,7 @@ class ADRSubmissionIntegration extends AnyWordSpecLike with Matchers
   private lazy val submissionController = app.injector.instanceOf[SubmissionController]
   private lazy val presubmissionRepository = app.injector.instanceOf[PresubmissionMongoRepository]
   private lazy val metadataMongoRepository = app.injector.instanceOf[MetadataMongoRepository]
-  val timestamp: DateTime = DateTime.now(DateTimeZone.UTC)
+  val timestamp: Instant = Instant.now().truncatedTo(ChronoUnit.MILLIS)
 
   override protected def beforeEach(): Unit = {
     super.beforeEach()

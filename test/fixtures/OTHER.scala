@@ -16,21 +16,18 @@
 
 package fixtures
 
-import java.text.SimpleDateFormat
-
+import fixtures.Common._
 import models._
-import org.joda.time.DateTime
+
 import scala.collection.mutable.ListBuffer
 
 object OTHER {
 
   val otherSchemeType: String = "OTHER"
   val schemeRef: String = "XA1100000000000"
-  val timestamp: DateTime = DateTime.now
 
   val schemeInfo: SchemeInfo = SchemeInfo (
     schemeRef = "XA1100000000000",
-    timestamp = timestamp,
     schemeId = "123PA12345678",
     taxYear = "2014/15",
     schemeName = "My scheme",
@@ -284,6 +281,7 @@ object OTHER {
     Some("1234567890"),
     Some("1234567890")
   )
+
   val companyDetailsMin: CompanyDetails = CompanyDetails(
     "testCompany",
     "testAddress1",
@@ -305,13 +303,11 @@ object OTHER {
     sapNumber = Some("sap-123456")
   )
 
-  val dateTimeFormat = new SimpleDateFormat("d MMMM yyyy, h:mma")
-
   val metadata: ErsSummary = ErsSummary(
     bundleRef = "testbundle",
     isNilReturn = "1",
     fileType = Some("ods"),
-    confirmationDateTime = new DateTime(dateTimeFormat.parse("21 May 2015, 11:12AM")),
+    confirmationDateTime = testConfirmationDateTime,
     metaData = ersMetadata,
     altAmendsActivity = None,
     alterationAmends = None,
@@ -335,12 +331,11 @@ object OTHER {
     transferStatus = Some("saved")
   )
 
-
   val metadataNilReturn: ErsSummary = ErsSummary(
     bundleRef = "testbundle",
     isNilReturn = "2",
     fileType = None,
-    confirmationDateTime = new DateTime(dateTimeFormat.parse("21 May 2015, 11:12AM")),
+    confirmationDateTime = testConfirmationDateTime,
     metaData = ersMetadata,
     altAmendsActivity = None,
     alterationAmends = None,
@@ -356,5 +351,4 @@ object OTHER {
     nofOfRows = None,
     transferStatus = Some("saved")
   )
-
 }

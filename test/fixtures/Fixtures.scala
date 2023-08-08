@@ -16,20 +16,21 @@
 
 package fixtures
 
+import fixtures.Common._
 import models._
-import org.joda.time.{DateTime, DateTimeZone}
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.libs.json.{JsObject, JsValue, Json}
-
-import scala.collection.mutable.ListBuffer
 import uk.gov.hmrc.domain.Generator
+
+import java.time.temporal.ChronoUnit
+import java.time.{Instant, ZoneId, ZonedDateTime}
+import scala.collection.mutable.ListBuffer
 
 object Fixtures extends MockitoSugar {
 
-  lazy val nino = new Generator().nextNino.nino
+  lazy val nino: String = new Generator().nextNino.nino
 
-  val timestamp: DateTime = new DateTime().withDate(2015,12,5).withTime(12,50,55,0).withZone(DateTimeZone.UTC) //DateTime.now
-
+  val timestamp: Instant = ZonedDateTime.of(2015,12,5,12,50,55,0, ZoneId.of("UTC")).toInstant.truncatedTo(ChronoUnit.MILLIS)
   val schemeType = "EMI"
 
   val schemeInfo: SchemeInfo = SchemeInfo (
@@ -43,11 +44,11 @@ object Fixtures extends MockitoSugar {
 
   val schemeInfoJson: JsValue = Json.toJson(schemeInfo)
 
-  val summaryData = ErsSummary(
+  val summaryData: ErsSummary = ErsSummary(
     bundleRef = "123453222",
     isNilReturn = "true",
     fileType = Some("ods"),
-    confirmationDateTime = timestamp,
+    confirmationDateTime = testConfirmationDateTime,
     metaData = ErsMetaData(
       schemeInfo = schemeInfo,
       ipRef = "127.0.0.0",
@@ -75,7 +76,7 @@ object Fixtures extends MockitoSugar {
     schemeType = schemeType
   )
 
-  val EMIMetaData = ErsMetaData(
+  val EMIMetaData: ErsMetaData = ErsMetaData(
     schemeInfo = EMISchemeInfo,
     ipRef = "127.0.0.0",
     aoRef = Some("123PA12345678"),
@@ -84,11 +85,11 @@ object Fixtures extends MockitoSugar {
     sapNumber = Some("sap-123456")
   )
 
-  val EMISummaryDate = ErsSummary(
+  val EMISummaryDate: ErsSummary = ErsSummary(
     bundleRef = "123453222",
     isNilReturn = "true",
     fileType = Some("ods"),
-    confirmationDateTime = timestamp,
+    confirmationDateTime = testConfirmationDateTime,
     metaData = EMIMetaData,
     altAmendsActivity = None,
     alterationAmends = None,
@@ -149,7 +150,7 @@ object Fixtures extends MockitoSugar {
     bundleRef = "testbundle",
     isNilReturn = "1",
     fileType = Some("ods"),
-    confirmationDateTime = DateTime.now,
+    confirmationDateTime = testConfirmationDateTime,
     metaData = EMIMetaData,
     altAmendsActivity = None,
     alterationAmends = None,
@@ -179,7 +180,7 @@ object Fixtures extends MockitoSugar {
     bundleRef = "testbundle",
     isNilReturn = "2",
     fileType = None,
-    confirmationDateTime = DateTime.now,
+    confirmationDateTime = testConfirmationDateTime,
     metaData = EMIMetaData,
     altAmendsActivity = None,
     alterationAmends = None,
@@ -204,7 +205,7 @@ object Fixtures extends MockitoSugar {
     bundleRef = "testbundle",
     isNilReturn = "5",
     fileType = None,
-    confirmationDateTime = DateTime.now,
+    confirmationDateTime = testConfirmationDateTime,
     metaData = EMIMetaData,
     altAmendsActivity = None,
     alterationAmends = None,
@@ -220,7 +221,7 @@ object Fixtures extends MockitoSugar {
     bundleRef = "testbundle",
     isNilReturn = "2",
     fileType = None,
-    confirmationDateTime = DateTime.now,
+    confirmationDateTime = testConfirmationDateTime,
     metaData = ErsMetaData(
       schemeInfo = SchemeInfo (
         schemeRef = "",
@@ -250,7 +251,7 @@ object Fixtures extends MockitoSugar {
     bundleRef = "testbundle",
     isNilReturn = "2",
     fileType = None,
-    confirmationDateTime = DateTime.now,
+    confirmationDateTime = testConfirmationDateTime,
     metaData = ErsMetaData(
       schemeInfo = SchemeInfo (
         schemeRef = "XA1100000000000",
@@ -275,5 +276,4 @@ object Fixtures extends MockitoSugar {
     nofOfRows = None,
     transferStatus = Some("saved")
   )
-
 }

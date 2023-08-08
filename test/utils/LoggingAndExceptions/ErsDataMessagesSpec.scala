@@ -27,18 +27,18 @@ class ErsDataMessagesSpec extends ERSTestHelper {
   "calling buildSchemeInfoMessage" should {
     "display correct message for schemeInfo" in {
       val result = TestDataMessages.buildSchemeInfoMessage(Fixtures.schemeInfo)
-      result shouldBe "SchemeInfo: SchemeInfo(XA1100000000000,2015-12-05T12:50:55.000Z,123PA12345678,2014/15,My scheme,EMI)"
+      result shouldBe "SchemeInfo: SchemeInfo(XA1100000000000,2015-12-05T12:50:55Z,123PA12345678,2014/15,My scheme,EMI)"
     }
   }
 
   "calling buildErsSummaryMessage" should {
     "display correct message for ErsSummary" in {
       val result = TestDataMessages.buildErsSummaryMessage(Fixtures.EMISummaryDate)
-      result shouldBe "ConfirmationDateTime: 2015-12-05T12:50:55.000Z\n" +
+      result shouldBe "ConfirmationDateTime: 2015-05-21T11:12:00Z\n" +
         "BundleRef: 123453222,\n" +
         "isNilReturn: true,\n" +
         "fileType: ods,\n" +
-        "SchemeInfo: SchemeInfo(XA1100000000000,2015-12-05T12:50:55.000Z,123PA12345678,2014/15,My scheme,EMI)"
+        "SchemeInfo: SchemeInfo(XA1100000000000,2015-12-05T12:50:55Z,123PA12345678,2014/15,My scheme,EMI)"
     }
   }
 

@@ -17,19 +17,17 @@
 package uk.gov.hmrc
 
 import models._
-import org.joda.time.DateTime
 
-import java.text.SimpleDateFormat
+import java.time.{Instant, LocalDateTime, ZoneId}
 
 object CSOP {
+  val testConfirmationDateTime: Instant = LocalDateTime.parse("2015-05-21T11:12:00").atZone(ZoneId.of("UTC")).toInstant
 
   val schemeType: String = "CSOP"
   val schemeRef: String = "XA1100000000000"
-  val timestamp: DateTime = DateTime.now
 
   val schemeInfo: SchemeInfo = SchemeInfo(
     schemeRef = schemeRef,
-    timestamp = timestamp,
     schemeId = "123PA12345678",
     taxYear = "2015/16",
     schemeName = "My scheme",
@@ -37,6 +35,11 @@ object CSOP {
   )
 
   // CSOP_OptionsGranted_V4
+  def buildGrantedV4WithMissingFields(): Seq[String] = Seq(
+    "2015-12-09",
+    "123456"
+  )
+
   def buildGrantedV4(sharesListedOnSE: String, marketValueAgreedHMRC: String): Seq[String] = Seq(
     "2015-12-09",
     "123456",
@@ -130,13 +133,11 @@ object CSOP {
     sapNumber = Some("sap-123456")
   )
 
-  val dateTimeFormat = new SimpleDateFormat("d MMMM yyyy, h:mma")
-
   val metadata: ErsSummary = ErsSummary(
     bundleRef = "testbundle",
     isNilReturn = "1",
     fileType = Some("ods"),
-    confirmationDateTime = new DateTime(dateTimeFormat.parse("21 May 2015, 11:12AM")),
+    confirmationDateTime = testConfirmationDateTime,
     metaData = ersMetadata,
     altAmendsActivity = None,
     alterationAmends = None,
@@ -164,7 +165,7 @@ object CSOP {
     bundleRef = "testbundle",
     isNilReturn = "1",
     fileType = Some("ods"),
-    confirmationDateTime = new DateTime(dateTimeFormat.parse("21 May 2015, 11:12AM")),
+    confirmationDateTime = testConfirmationDateTime,
     metaData = ersMetadata,
     altAmendsActivity = Some(AltAmendsActivity("1")),
     alterationAmends = Some(
@@ -200,7 +201,7 @@ object CSOP {
     bundleRef = "testbundle",
     isNilReturn = "2",
     fileType = None,
-    confirmationDateTime = new DateTime(dateTimeFormat.parse("21 May 2015, 11:12AM")),
+    confirmationDateTime = testConfirmationDateTime,
     metaData = ersMetadata,
     altAmendsActivity = Some(AltAmendsActivity("1")),
     alterationAmends = Some(
@@ -229,7 +230,7 @@ object CSOP {
     bundleRef = "testbundle",
     isNilReturn = "2",
     fileType = None,
-    confirmationDateTime = new DateTime(dateTimeFormat.parse("21 May 2015, 11:12AM")),
+    confirmationDateTime = testConfirmationDateTime,
     metaData = ersMetadata,
     altAmendsActivity = Some(AltAmendsActivity("1")),
     alterationAmends = Some(
@@ -258,7 +259,7 @@ object CSOP {
     bundleRef = "testbundle",
     isNilReturn = "2",
     fileType = None,
-    confirmationDateTime = new DateTime(dateTimeFormat.parse("21 May 2015, 11:12AM")),
+    confirmationDateTime = testConfirmationDateTime,
     metaData = ersMetadata,
     altAmendsActivity = None,
     alterationAmends = None,

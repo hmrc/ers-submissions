@@ -16,8 +16,9 @@
 
 package models
 
-import org.joda.time.DateTime
 import play.api.libs.json._
+
+import java.time.Instant
 
 case class ErsMetaData(schemeInfo: SchemeInfo,
                        ipRef: String,
@@ -98,7 +99,7 @@ object AltAmendsActivity {
 case class ErsSummary(bundleRef: String,
                       isNilReturn: String,
                       fileType: Option[String],
-                      confirmationDateTime: DateTime,
+                      confirmationDateTime: Instant,
                       metaData: ErsMetaData,
                       altAmendsActivity: Option[AltAmendsActivity],
                       alterationAmends: Option[AlterationAmends],
