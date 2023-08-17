@@ -164,8 +164,7 @@ class ADRSubmission @Inject()(submissionCommon: SubmissionCommon,
             if (row.isEmpty) {
               val elemVal: List[JsObject] = fileData.indices.toList.map(row => buildJson(elem, fileData, Some(row), sheetName, schemeInfo))
               json ++ submissionCommon.addArrayValue(elem, elemVal)
-            }
-            else {
+            } else {
               val elemVal = buildJson(elem, fileData, row, sheetName, schemeInfo)
               json ++ submissionCommon.addArrayValue(elem, List(elemVal))
             }

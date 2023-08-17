@@ -47,7 +47,7 @@ object OTHER {
     "",
     ""
   )
-  
+
   def buildOptionV4(
                       taxAvoidance: String = "yes",
                       optionsExercised: String = "yes",

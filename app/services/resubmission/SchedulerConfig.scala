@@ -44,7 +44,7 @@ trait SchedulerConfig {
   def getResubmissionLimit(jobName: String): Int = applicationConfig.resubmissionLimit(jobName)
 
   def getLockoutTimeout(jobName: String): Int = applicationConfig.lockoutTimeout(jobName)
-  
+
   def getProcessFailedSubmissionsConfig(resubmissionLimit: Int): ProcessFailedSubmissionsConfig = ProcessFailedSubmissionsConfig(
     resubmissionLimit,
     searchStatusList,
