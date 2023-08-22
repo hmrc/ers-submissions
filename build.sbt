@@ -36,9 +36,8 @@ lazy val microservice = Project(appName, file("."))
   .settings(defaultSettings())
   .settings(
     scalaVersion := "2.13.11",
-    libraryDependencies ++= AppDependencies.all,
+    libraryDependencies ++= AppDependencies(),
     libraryDependencySchemes ++= Seq("org.scala-lang.modules" %% "scala-xml" % VersionScheme.Always),
-    dependencyOverrides += "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.15.2",
     routesGenerator := InjectedRoutesGenerator
   )
   .configs(IntegrationTest)
@@ -52,4 +51,3 @@ scalacOptions ++= Seq(
 )
 
 addCommandAlias("scalastyleAll", "all scalastyle Test/scalastyle")
-addCommandAlias("testAll", "all test IntegrationTest/test")

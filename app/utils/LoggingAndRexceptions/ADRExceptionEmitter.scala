@@ -23,7 +23,6 @@ import uk.gov.hmrc.http.HeaderCarrier
 import javax.inject.Inject
 
 class ADRExceptionEmitter @Inject()(auditEvents: AuditEvents) {
-  
   def auditAndThrowWithStackTrace(ersMetaData: ErsMetaData, data: Map[String, String], ex: Exception)
                                  (implicit hc: HeaderCarrier): Nothing = {
     auditEvents.auditRunTimeError(ex, data("context"))

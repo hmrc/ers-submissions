@@ -12,11 +12,8 @@ object AppDependencies {
     "uk.gov.hmrc"        %% "domain"                             % "8.3.0-play-28",
     "com.lightbend.akka" %% "akka-stream-alpakka-csv"            % alpakkaVersion,
     "com.enragedginger"  %% "akka-quartz-scheduler"              % "1.9.3-akka-2.6.x",
-    "org.typelevel"      %% "cats-core"                          % "2.9.0"
+    "org.typelevel"      %% "cats-core"                          % "2.10.0"
   )
-
-  private val scalaTestVersion = "3.2.16"
-  private val flexmarkAllVersion = "0.64.8"
 
   val test: Seq[ModuleID] = Seq(
     "uk.gov.hmrc"                  %% "bootstrap-test-play-28"  % bootstrapVersion,
@@ -29,5 +26,5 @@ object AppDependencies {
     "com.fasterxml.jackson.module" %% "jackson-module-scala"    % "2.15.2"
   ).map(_ % "test, it")
 
-  def all: Seq[ModuleID] = compile ++ test
+  def apply(): Seq[ModuleID] = compile ++ test
 }
