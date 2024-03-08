@@ -1378,6 +1378,91 @@ class CSOP_ADRSubmissionSpec
     }
   }
 
+  // CSOP_OptionsGranted_V5
+  "calling generateJson for OptionsGranted_V5" should {
+
+    val configData: Config = Common.loadConfiguration(CSOP.schemeType, "CSOP_OptionsGranted_V5", mockConfigUtils)
+
+    "create valid JSON with sharesListedOnSE = (\"yes\" or \"no\"), marketValueAgreedHMRC = \"yes\"" in {
+
+      val result = adrSubmission.buildJson(
+        configData,
+        ListBuffer(
+          CSOP.buildGrantedV4(sharesListedOnSE = "yes", marketValueAgreedHMRC = "yes"),
+          CSOP.buildGrantedV4(sharesListedOnSE = "no", marketValueAgreedHMRC = "yes")
+        )
+      )
+
+      result shouldBe Json.parse("""{
+                                   |"optionsGrantedInYear":true,
+                                   |"grant":{
+                                   |"grants":[
+                                   |{
+                                   |"dateOfGrant":"2015-12-09",
+                                   |"numberOfIndividuals":123456,
+                                   |"numberOfSharesGrantedOver":50.6,
+                                   |"umvPerShareUsedToDetermineTheExPrice":10.9821,
+                                   |"exercisePricePerShare":8.2587,
+                                   |"sharesListedOnSE":true,
+                                   |"employeeHoldSharesGreaterThan60K":false
+                                   |},
+                                   |{
+                                   |"dateOfGrant":"2015-12-09",
+                                   |"numberOfIndividuals":123456,
+                                   |"numberOfSharesGrantedOver":50.6,
+                                   |"umvPerShareUsedToDetermineTheExPrice":10.9821,
+                                   |"exercisePricePerShare":8.2587,
+                                   |"sharesListedOnSE":false,
+                                   |"mvAgreedHMRC":true,
+                                   |"hmrcRef":"aa12345678",
+                                   |"employeeHoldSharesGreaterThan60K":false
+                                   |}
+                                   |]
+                                   |}
+                                   |}""".stripMargin)
+    }
+
+    "create valid JSON with sharesListedOnSE = \"no\", marketValueAgreedHMRC = (\"yes\" or \"no\")" in {
+
+      val result = adrSubmission.buildJson(
+        configData,
+        ListBuffer(
+          CSOP.buildGrantedV4(sharesListedOnSE = "no", marketValueAgreedHMRC = "yes"),
+          CSOP.buildGrantedV4(sharesListedOnSE = "no", marketValueAgreedHMRC = "no")
+        )
+      )
+
+      result shouldBe Json.parse("""{
+                                   |"optionsGrantedInYear":true,
+                                   |"grant":{
+                                   |"grants":[
+                                   |{
+                                   |"dateOfGrant":"2015-12-09",
+                                   |"numberOfIndividuals":123456,
+                                   |"numberOfSharesGrantedOver":50.6,
+                                   |"umvPerShareUsedToDetermineTheExPrice":10.9821,
+                                   |"exercisePricePerShare":8.2587,
+                                   |"sharesListedOnSE":false,
+                                   |"mvAgreedHMRC":true,
+                                   |"hmrcRef":"aa12345678",
+                                   |"employeeHoldSharesGreaterThan60K":false
+                                   |},
+                                   |{
+                                   |"dateOfGrant":"2015-12-09",
+                                   |"numberOfIndividuals":123456,
+                                   |"numberOfSharesGrantedOver":50.6,
+                                   |"umvPerShareUsedToDetermineTheExPrice":10.9821,
+                                   |"exercisePricePerShare":8.2587,
+                                   |"sharesListedOnSE":false,
+                                   |"mvAgreedHMRC":false,
+                                   |"employeeHoldSharesGreaterThan60K":false
+                                   |}
+                                   |]
+                                   |}
+                                   |}""".stripMargin)
+    }
+  }
+
   // CSOP_OptionsRCL_V4
   "calling generateJson for OptionsRCL_V4" should {
 
