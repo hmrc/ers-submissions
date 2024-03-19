@@ -1404,7 +1404,7 @@ class CSOP_ADRSubmissionSpec
                                    |"umvPerShareUsedToDetermineTheExPrice":10.9821,
                                    |"exercisePricePerShare":8.2587,
                                    |"sharesListedOnSE":true,
-                                   |"employeeHoldSharesGreaterThan60K":false
+                                   |"employeeHoldSharesGreaterThan30K":false
                                    |},
                                    |{
                                    |"dateOfGrant":"2015-12-09",
@@ -1415,7 +1415,7 @@ class CSOP_ADRSubmissionSpec
                                    |"sharesListedOnSE":false,
                                    |"mvAgreedHMRC":true,
                                    |"hmrcRef":"aa12345678",
-                                   |"employeeHoldSharesGreaterThan60K":false
+                                   |"employeeHoldSharesGreaterThan30K":false
                                    |}
                                    |]
                                    |}
@@ -1445,7 +1445,7 @@ class CSOP_ADRSubmissionSpec
                                    |"sharesListedOnSE":false,
                                    |"mvAgreedHMRC":true,
                                    |"hmrcRef":"aa12345678",
-                                   |"employeeHoldSharesGreaterThan60K":false
+                                   |"employeeHoldSharesGreaterThan30K":false
                                    |},
                                    |{
                                    |"dateOfGrant":"2015-12-09",
@@ -1455,7 +1455,7 @@ class CSOP_ADRSubmissionSpec
                                    |"exercisePricePerShare":8.2587,
                                    |"sharesListedOnSE":false,
                                    |"mvAgreedHMRC":false,
-                                   |"employeeHoldSharesGreaterThan60K":false
+                                   |"employeeHoldSharesGreaterThan30K":false
                                    |}
                                    |]
                                    |}
@@ -1556,10 +1556,407 @@ class CSOP_ADRSubmissionSpec
     }
   }
 
-//   CSOP_OptionsExercised_V4
+  // CSOP_OptionsRCL_V5
+  "calling generateJson for OptionsRCL_V5" should {
+
+    val configData: Config = Common.loadConfiguration(CSOP.schemeType, "CSOP_OptionsRCL_V5", mockConfigUtils)
+
+    "create valid JSON with withAllFields = (true or false), moneyExchanged = \"yes\"" in {
+
+      val result = adrSubmission.buildJson(
+        configData,
+        ListBuffer(
+          CSOP.buildOptionsRCL(withAllFields = true, moneyExchanged = "yes"),
+          CSOP.buildOptionsRCL(withAllFields = false, moneyExchanged = "yes")
+        )
+      )
+
+      result shouldBe Json.parse("""{
+                                   |"optionsReleasedExchangesCancelledLapsedInYear":true,
+                                   |"released":{
+                                   |"releasedEvents":[
+                                   |{
+                                   |"dateOfEvent":"2015-12-09",
+                                   |"wasMoneyOrValueGiven":true,
+                                   |"amtOrValue":10.9821,
+                                   |"releasedIndividual":{
+                                   |"firstName":"First",
+                                   |"secondName":"Second",
+                                   |"surname":"Last",
+                                   |"nino":"NINO",
+                                   |"payeReference":"123/XZ55555555"
+                                   |},
+                                   |"payeOperatedApplied":false
+                                   |},
+                                   |{
+                                   |"dateOfEvent":"2015-12-09",
+                                   |"wasMoneyOrValueGiven":true,
+                                   |"amtOrValue":10.9821,
+                                   |"releasedIndividual":{
+                                   |"firstName":"First",
+                                   |"surname":"Last",
+                                   |"payeReference":"123/XZ55555555"
+                                   |},
+                                   |"payeOperatedApplied":false
+                                   |}
+                                   |]
+                                   |}
+                                   |}""".stripMargin)
+    }
+
+    "create valid JSON with withAllFields = true, moneyExchanged = (\"yes\" or \"no\")" in {
+
+      val result = adrSubmission.buildJson(
+        configData,
+        ListBuffer(
+          CSOP.buildOptionsRCL(withAllFields = true, moneyExchanged = "yes"),
+          CSOP.buildOptionsRCL(withAllFields = true, moneyExchanged = "no")
+        )
+      )
+
+      result shouldBe Json.parse("""{
+                                   |"optionsReleasedExchangesCancelledLapsedInYear":true,
+                                   |"released":{
+                                   |"releasedEvents":[
+                                   |{
+                                   |"dateOfEvent":"2015-12-09",
+                                   |"wasMoneyOrValueGiven":true,
+                                   |"amtOrValue":10.9821,
+                                   |"releasedIndividual":{
+                                   |"firstName":"First",
+                                   |"secondName":"Second",
+                                   |"surname":"Last",
+                                   |"nino":"NINO",
+                                   |"payeReference":"123/XZ55555555"
+                                   |},
+                                   |"payeOperatedApplied":false
+                                   |},
+                                   |{
+                                   |"dateOfEvent":"2015-12-09",
+                                   |"wasMoneyOrValueGiven":false,
+                                   |"releasedIndividual":{
+                                   |"firstName":"First",
+                                   |"secondName":"Second",
+                                   |"surname":"Last",
+                                   |"nino":"NINO",
+                                   |"payeReference":"123/XZ55555555"
+                                   |},
+                                   |"payeOperatedApplied":false
+                                   |}
+                                   |]
+                                   |}
+                                   |}""".stripMargin)
+    }
+  }
+
+  // CSOP_OptionsExercised_V4
   "calling generateJson for OptionsExercised_V4" should {
 
     val configData: Config = Common.loadConfiguration(CSOP.schemeType, "CSOP_OptionsExercised_V4", mockConfigUtils)
+
+    "create valid JSON with withAllFields = (true or false), sharesListedOnSE = \"yes\", marketValueAgreedHMRC = \"yes\", payeOperated = \"yes\"" in {
+
+      val result = adrSubmission.buildJson(
+        configData,
+        ListBuffer(
+          CSOP.buildOptionsExercised(withAllFields = true, sharesListedOnSE = "yes", marketValueAgreedHMRC = "yes", payeOperated = "yes"),
+          CSOP.buildOptionsExercised(withAllFields = false, sharesListedOnSE = "yes", marketValueAgreedHMRC = "yes", payeOperated = "yes")
+        )
+      )
+
+      result shouldBe Json.parse("""{
+                                   |"optionsExercisedInYear":true,
+                                   |"exercised":{
+                                   |"exercisedEvents":[
+                                   |{
+                                   |"dateOfExercise":"2015-12-09",
+                                   |"individual":{
+                                   |"firstName":"First",
+                                   |"secondName":"Second",
+                                   |"surname":"Last",
+                                   |"nino":"NINO",
+                                   |"payeReference":"123/XZ55555555"
+                                   |},
+                                   |"dateOfGrant":"2015-12-10",
+                                   |"numberSharesAcquired":100.0,
+                                   |"sharesPartOfLargestClass":true,
+                                   |"sharesListedOnSE":true,
+                                   |"amvPerShareAtAcquisitionDate":10.1234,
+                                   |"exerciseValuePerShare":10.1234,
+                                   |"umvPerShareAtExerciseDate":10.1234,
+                                   |"qualifyForTaxRelief":true,
+                                   |"payeOperatedApplied":true,
+                                   |"deductibleAmount":10.1234,
+                                   |"nicsElectionAgreementEnteredInto":true,
+                                   |"sharesDisposedOnSameDay":true
+                                   |},
+                                   |{
+                                   |"dateOfExercise":"2015-12-09",
+                                   |"individual":{
+                                   |"firstName":"First",
+                                   |"surname":"Last",
+                                   |"payeReference":"123/XZ55555555"
+                                   |},
+                                   |"dateOfGrant":"2015-12-10",
+                                   |"numberSharesAcquired":100.0,
+                                   |"sharesPartOfLargestClass":true,
+                                   |"sharesListedOnSE":true,
+                                   |"amvPerShareAtAcquisitionDate":10.1234,
+                                   |"exerciseValuePerShare":10.1234,
+                                   |"umvPerShareAtExerciseDate":10.1234,
+                                   |"qualifyForTaxRelief":true,
+                                   |"payeOperatedApplied":true,
+                                   |"deductibleAmount":10.1234,
+                                   |"nicsElectionAgreementEnteredInto":true,
+                                   |"sharesDisposedOnSameDay":true
+                                   |}
+                                   |]
+                                   |}
+                                   |}""".stripMargin)
+
+    }
+
+    "create valid JSON with withAllFields = true, sharesListedOnSE = (\"yes\" or \"no\"), marketValueAgreedHMRC = \"yes\", payeOperated = \"yes\"" in {
+
+      val result = adrSubmission.buildJson(
+        configData,
+        ListBuffer(
+          CSOP.buildOptionsExercised(withAllFields = true, sharesListedOnSE = "yes", marketValueAgreedHMRC = "yes", payeOperated = "yes"),
+          CSOP.buildOptionsExercised(withAllFields = true, sharesListedOnSE = "no", marketValueAgreedHMRC = "yes", payeOperated = "yes")
+        )
+      )
+
+      result shouldBe Json.parse("""{
+                                   |"optionsExercisedInYear":true,
+                                   |"exercised":{
+                                   |"exercisedEvents":[
+                                   |{
+                                   |"dateOfExercise":"2015-12-09",
+                                   |"individual":{
+                                   |"firstName":"First",
+                                   |"secondName":"Second",
+                                   |"surname":"Last",
+                                   |"nino":"NINO",
+                                   |"payeReference":"123/XZ55555555"
+                                   |},
+                                   |"dateOfGrant":"2015-12-10",
+                                   |"numberSharesAcquired":100.0,
+                                   |"sharesPartOfLargestClass":true,
+                                   |"sharesListedOnSE":true,
+                                   |"amvPerShareAtAcquisitionDate":10.1234,
+                                   |"exerciseValuePerShare":10.1234,
+                                   |"umvPerShareAtExerciseDate":10.1234,
+                                   |"qualifyForTaxRelief":true,
+                                   |"payeOperatedApplied":true,
+                                   |"deductibleAmount":10.1234,
+                                   |"nicsElectionAgreementEnteredInto":true,
+                                   |"sharesDisposedOnSameDay":true
+                                   |},
+                                   |{
+                                   |"dateOfExercise":"2015-12-09",
+                                   |"individual":{
+                                   |"firstName":"First",
+                                   |"secondName":"Second",
+                                   |"surname":"Last",
+                                   |"nino":"NINO",
+                                   |"payeReference":"123/XZ55555555"
+                                   |},
+                                   |"dateOfGrant":"2015-12-10",
+                                   |"numberSharesAcquired":100.0,
+                                   |"sharesPartOfLargestClass":true,
+                                   |"sharesListedOnSE":false,
+                                   |"mvAgreedHMRC":true,
+                                   |"hmrcRef":"aa12345678",
+                                   |"amvPerShareAtAcquisitionDate":10.1234,
+                                   |"exerciseValuePerShare":10.1234,
+                                   |"umvPerShareAtExerciseDate":10.1234,
+                                   |"qualifyForTaxRelief":true,
+                                   |"payeOperatedApplied":true,
+                                   |"deductibleAmount":10.1234,
+                                   |"nicsElectionAgreementEnteredInto":true,
+                                   |"sharesDisposedOnSameDay":true
+                                   |}
+                                   |]
+                                   |}
+                                   |}""".stripMargin)
+
+    }
+
+    "create valid JSON with withAllFields = true, sharesListedOnSE = \"no\", marketValueAgreedHMRC = (\"yes\" or \"no\"), payeOperated = \"yes\"" in {
+
+      val result = adrSubmission.buildJson(
+        configData,
+        ListBuffer(
+          CSOP.buildOptionsExercised(withAllFields = true, sharesListedOnSE = "no", marketValueAgreedHMRC = "yes", payeOperated = "yes"),
+          CSOP.buildOptionsExercised(withAllFields = true, sharesListedOnSE = "no", marketValueAgreedHMRC = "no", payeOperated = "yes")
+        )
+      )
+
+      result shouldBe Json.parse("""{
+                                   |"optionsExercisedInYear":true,
+                                   |"exercised":{
+                                   |"exercisedEvents":[
+                                   |{
+                                   |"dateOfExercise":"2015-12-09",
+                                   |"individual":{
+                                   |"firstName":"First",
+                                   |"secondName":"Second",
+                                   |"surname":"Last",
+                                   |"nino":"NINO",
+                                   |"payeReference":"123/XZ55555555"
+                                   |},
+                                   |"dateOfGrant":"2015-12-10",
+                                   |"numberSharesAcquired":100.0,
+                                   |"sharesPartOfLargestClass":true,
+                                   |"sharesListedOnSE":false,
+                                   |"mvAgreedHMRC":true,
+                                   |"hmrcRef":"aa12345678",
+                                   |"amvPerShareAtAcquisitionDate":10.1234,
+                                   |"exerciseValuePerShare":10.1234,
+                                   |"umvPerShareAtExerciseDate":10.1234,
+                                   |"qualifyForTaxRelief":true,
+                                   |"payeOperatedApplied":true,
+                                   |"deductibleAmount":10.1234,
+                                   |"nicsElectionAgreementEnteredInto":true,
+                                   |"sharesDisposedOnSameDay":true
+                                   |},
+                                   |{
+                                   |"dateOfExercise":"2015-12-09",
+                                   |"individual":{
+                                   |"firstName":"First",
+                                   |"secondName":"Second",
+                                   |"surname":"Last",
+                                   |"nino":"NINO",
+                                   |"payeReference":"123/XZ55555555"
+                                   |},
+                                   |"dateOfGrant":"2015-12-10",
+                                   |"numberSharesAcquired":100.0,
+                                   |"sharesPartOfLargestClass":true,
+                                   |"sharesListedOnSE":false,
+                                   |"mvAgreedHMRC":false,
+                                   |"amvPerShareAtAcquisitionDate":10.1234,
+                                   |"exerciseValuePerShare":10.1234,
+                                   |"umvPerShareAtExerciseDate":10.1234,
+                                   |"qualifyForTaxRelief":true,
+                                   |"payeOperatedApplied":true,
+                                   |"deductibleAmount":10.1234,
+                                   |"nicsElectionAgreementEnteredInto":true,
+                                   |"sharesDisposedOnSameDay":true
+                                   |}
+                                   |]
+                                   |}
+                                   |}""".stripMargin)
+
+    }
+
+    "create valid JSON with withAllFields = true, sharesListedOnSE = \"no\", marketValueAgreedHMRC = \"yes\", payeOperated = (\"yes\" or \"no\")" in {
+
+      val result = adrSubmission.buildJson(
+        configData,
+        ListBuffer(
+          CSOP.buildOptionsExercised(withAllFields = true, sharesListedOnSE = "no", marketValueAgreedHMRC = "yes", payeOperated = "yes"),
+          CSOP.buildOptionsExercised(withAllFields = true, sharesListedOnSE = "no", marketValueAgreedHMRC = "yes", payeOperated = "no")
+        )
+      )
+
+      result shouldBe Json.parse("""{
+                                   |"optionsExercisedInYear":true,
+                                   |"exercised":{
+                                   |"exercisedEvents":[
+                                   |{
+                                   |"dateOfExercise":"2015-12-09",
+                                   |"individual":{
+                                   |"firstName":"First",
+                                   |"secondName":"Second",
+                                   |"surname":"Last",
+                                   |"nino":"NINO",
+                                   |"payeReference":"123/XZ55555555"
+                                   |},
+                                   |"dateOfGrant":"2015-12-10",
+                                   |"numberSharesAcquired":100.0,
+                                   |"sharesPartOfLargestClass":true,
+                                   |"sharesListedOnSE":false,
+                                   |"mvAgreedHMRC":true,
+                                   |"hmrcRef":"aa12345678",
+                                   |"amvPerShareAtAcquisitionDate":10.1234,
+                                   |"exerciseValuePerShare":10.1234,
+                                   |"umvPerShareAtExerciseDate":10.1234,
+                                   |"qualifyForTaxRelief":true,
+                                   |"payeOperatedApplied":true,
+                                   |"deductibleAmount":10.1234,
+                                   |"nicsElectionAgreementEnteredInto":true,
+                                   |"sharesDisposedOnSameDay":true
+                                   |},
+                                   |{
+                                   |"dateOfExercise":"2015-12-09",
+                                   |"individual":{
+                                   |"firstName":"First",
+                                   |"secondName":"Second",
+                                   |"surname":"Last",
+                                   |"nino":"NINO",
+                                   |"payeReference":"123/XZ55555555"
+                                   |},
+                                   |"dateOfGrant":"2015-12-10",
+                                   |"numberSharesAcquired":100.0,
+                                   |"sharesPartOfLargestClass":true,
+                                   |"sharesListedOnSE":false,
+                                   |"mvAgreedHMRC":true,
+                                   |"hmrcRef":"aa12345678",
+                                   |"amvPerShareAtAcquisitionDate":10.1234,
+                                   |"exerciseValuePerShare":10.1234,
+                                   |"umvPerShareAtExerciseDate":10.1234,
+                                   |"qualifyForTaxRelief":true,
+                                   |"payeOperatedApplied":false,
+                                   |"nicsElectionAgreementEnteredInto":true,
+                                   |"sharesDisposedOnSameDay":true
+                                   |}
+                                   |]
+                                   |}
+                                   |}""".stripMargin)
+
+    }
+
+    "generate the expected json and not throw an exception when given less fields then the schema" in {
+
+      val result = adrSubmission.buildJson(
+        configData,
+        ListBuffer(
+          CSOP.buildGrantedV4WithMissingFields(),
+          CSOP.buildGrantedV4WithMissingFields()
+        )
+      )
+
+      result shouldBe Json.parse(
+        """
+          |{
+          |  "optionsExercisedInYear": true,
+          |  "exercised": {
+          |    "exercisedEvents": [
+          |      {
+          |        "dateOfExercise": "2015-12-09",
+          |        "individual": {
+          |          "firstName": "123456"
+          |        }
+          |      },
+          |      {
+          |        "dateOfExercise": "2015-12-09",
+          |        "individual": {
+          |          "firstName": "123456"
+          |        }
+          |      }
+          |    ]
+          |  }
+          |}
+          |""".stripMargin)
+
+    }
+
+  }
+
+  // CSOP_OptionsExercised_V5
+  "calling generateJson for OptionsExercised_V5" should {
+
+    val configData: Config = Common.loadConfiguration(CSOP.schemeType, "CSOP_OptionsExercised_V5", mockConfigUtils)
 
     "create valid JSON with withAllFields = (true or false), sharesListedOnSE = \"yes\", marketValueAgreedHMRC = \"yes\", payeOperated = \"yes\"" in {
 
