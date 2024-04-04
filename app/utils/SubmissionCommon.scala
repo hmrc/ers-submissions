@@ -22,7 +22,6 @@ import play.api.Logging
 import play.api.libs.json.Json.JsValueWrapper
 import play.api.libs.json._
 import uk.gov.hmrc.http.HttpResponse
-
 import java.time._
 import java.time.format.DateTimeFormatter
 import javax.inject.Inject
