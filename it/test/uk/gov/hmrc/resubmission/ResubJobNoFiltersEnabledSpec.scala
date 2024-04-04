@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.resubmission
+package test.uk.gov.hmrc.resubmission
 
 import _root_.play.api.Application
 import _root_.play.api.inject.guice.GuiceApplicationBuilder
@@ -25,7 +25,7 @@ import org.mongodb.scala.model.Filters
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 import org.scalatestplus.play.guice.GuiceOneServerPerSuite
-import uk.gov.hmrc.{FakeErsStubService, Fixtures}
+import test.uk.gov.hmrc.{FakeErsStubService, Fixtures}
 
 class ResubJobNoFiltersEnabledSpec extends AnyWordSpecLike
   with Matchers

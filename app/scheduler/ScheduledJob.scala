@@ -16,8 +16,8 @@
 
 package scheduler
 
-import akka.actor.{ActorRef, ActorSystem}
-import com.typesafe.akka.extension.quartz.QuartzSchedulerExtension
+import org.apache.pekko.actor.{ActorRef, ActorSystem}
+import org.apache.pekko.extension.quartz.QuartzSchedulerExtension
 import org.quartz.CronExpression
 import play.api.inject.ApplicationLifecycle
 import play.api.{Configuration, Logging}
@@ -25,7 +25,6 @@ import scheduler.SchedulingActor.ScheduledMessage
 
 import java.time.ZoneId
 import java.util.TimeZone
-
 import scala.concurrent.Future
 
 trait ScheduledJob extends Logging {

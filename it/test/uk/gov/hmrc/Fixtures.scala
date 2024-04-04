@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc
+package test.uk.gov.hmrc
 
 import _root_.play.api.libs.json._
 import models._

@@ -16,11 +16,11 @@
 
 package controllers
 
-import akka.actor.ActorSystem
-import akka.http.scaladsl.model.{HttpRequest, HttpResponse}
-import akka.stream.scaladsl.Source
-import akka.testkit.TestKit
-import akka.util.ByteString
+import org.apache.pekko.actor.ActorSystem
+import org.apache.pekko.http.scaladsl.model.{HttpRequest, HttpResponse}
+import org.apache.pekko.stream.scaladsl.Source
+import org.apache.pekko.testkit.TestKit
+import org.apache.pekko.util.ByteString
 import common.ERSEnvelope
 import common.ERSEnvelope.ERSEnvelope
 import config.ApplicationConfig

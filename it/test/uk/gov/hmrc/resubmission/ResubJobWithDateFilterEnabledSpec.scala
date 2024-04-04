@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.resubmission
+package test.uk.gov.hmrc.resubmission
 
 import _root_.play.api.Application
 import _root_.play.api.inject.guice.GuiceApplicationBuilder
@@ -24,9 +24,9 @@ import org.mongodb.scala.model.Filters
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 import org.scalatestplus.play.guice.GuiceOneServerPerSuite
-import uk.gov.hmrc.{FakeErsStubService, Fixtures}
+import test.uk.gov.hmrc.{FakeErsStubService, Fixtures}
 
-class ResubJobWithSchemaFilterEnabledSpec extends AnyWordSpecLike
+class ResubJobWithDateFilterEnabledSpec extends AnyWordSpecLike
   with Matchers
   with GuiceOneServerPerSuite
   with FakeErsStubService {
@@ -34,9 +34,10 @@ class ResubJobWithSchemaFilterEnabledSpec extends AnyWordSpecLike
   val applicationConfig: Map[String, Any] = Map(
     "microservice.services.ers-stub.port" -> "19339",
     "schedules.resubmission-service.enabled" -> true,
-    "schedules.resubmission-service.dateTimeFilter.enabled" -> false,
+    "schedules.resubmission-service.dateTimeFilter.enabled" -> true,
+    "schedules.resubmission-service.dateTimeFilter.filter" -> "01/05/2023",
     "schedules.resubmission-service.schemaRefsFilter.enabled" -> false,
-    "schedules.resubmission-service.schemaFilter.enabled" -> true,
+    "schedules.resubmission-service.schemaFilter.enabled" -> false,
     "schedules.resubmission-service.schemaFilter.filter" -> "CSOP",
     "schedules.resubmission-service.resubmissionLimit" -> 10,
     "schedules.resubmission-service.resubmit-list-statuses" -> "failed",
@@ -52,8 +53,9 @@ class ResubJobWithSchemaFilterEnabledSpec extends AnyWordSpecLike
     )
     .build()
 
-  "With dateTimeFiltering not enabled ResubPresubmissionServiceJob" should {
-    "resubmit failed jobs with the correct transfer status and schema type" in new ResubmissionJobSetUp(app = app) {
+  "With dateTimeFiltering enabled ResubPresubmissionServiceJob" should {
+    "resubmit failed jobs with the correct transfer status, schema type and submitted after dateTimeFilter" in new ResubmissionJobSetUp(app = app) {
+
       val storeDocs: Boolean = await(storeMultipleErsSummary(Fixtures.ersSummaries))
       val storePresubmissions: Boolean = await(storeMultiplePresubmissionData(Fixtures.schemeData))
       storeDocs shouldBe true
@@ -61,13 +63,14 @@ class ResubJobWithSchemaFilterEnabledSpec extends AnyWordSpecLike
 
       countMetadataRecordsWithSelector(Filters.empty()) shouldBe 6
       countMetadataRecordsWithSelector(successResubmitTransferStatusSelector) shouldBe 1
-      countMetadataRecordsWithSelector(failedJobSelector) shouldBe 3
+      countMetadataRecordsWithSelector(failedJobSelector) shouldBe 2
 
       val updateCompleted: Either[ERSError, Boolean] = await(getJob.scheduledMessage.service.invoke.value)
       updateCompleted shouldBe Right(true)
 
       countMetadataRecordsWithSelector(Filters.empty()) shouldBe 6
-      countMetadataRecordsWithSelector(successResubmitTransferStatusSelector) shouldBe 4
+
+      countMetadataRecordsWithSelector(successResubmitTransferStatusSelector) shouldBe 3
       countMetadataRecordsWithSelector(failedJobSelector) shouldBe 0
     }
   }

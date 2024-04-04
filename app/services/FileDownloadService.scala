@@ -16,12 +16,12 @@
 
 package services
 
-import akka.actor.ActorSystem
-import akka.http.scaladsl.Http
-import akka.http.scaladsl.model.{HttpRequest, HttpResponse}
-import akka.stream.alpakka.csv.scaladsl.CsvParsing
-import akka.stream.scaladsl.Source
-import akka.util.ByteString
+import org.apache.pekko.actor.ActorSystem
+import org.apache.pekko.http.scaladsl.Http
+import org.apache.pekko.http.scaladsl.model.{HttpRequest, HttpResponse}
+import org.apache.pekko.stream.connectors.csv.scaladsl.CsvParsing
+import org.apache.pekko.stream.scaladsl.Source
+import org.apache.pekko.util.ByteString
 import config.ApplicationConfig
 import models.SubmissionsSchemeData
 import play.api.Logging
@@ -36,7 +36,7 @@ class FileDownloadService @Inject()(appConfig: ApplicationConfig)(implicit actor
   def extractEntityData(response: HttpResponse): Source[ByteString, _] = {
     val uploadCsvSizeLimit = appConfig.uploadCsvSizeLimit
     response match {
-      case HttpResponse(akka.http.scaladsl.model.StatusCodes.OK, _, entity, _) => entity.withSizeLimit(uploadCsvSizeLimit).dataBytes
+      case HttpResponse(org.apache.pekko.http.scaladsl.model.StatusCodes.OK, _, entity, _) => entity.withSizeLimit(uploadCsvSizeLimit).dataBytes
       case notOkResponse =>
         logger.error(
           s"[ProcessCsvService][extractEntityData] Illegal response from Upscan: ${notOkResponse.status.intValue}, " +

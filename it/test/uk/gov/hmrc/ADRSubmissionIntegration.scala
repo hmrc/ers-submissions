@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc
+package test.uk.gov.hmrc
 
 import _root_.play.api.Application
 import _root_.play.api.inject.guice.GuiceApplicationBuilder
@@ -30,7 +30,7 @@ import org.scalatest.BeforeAndAfterEach
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 import repositories.{MetadataMongoRepository, PresubmissionMongoRepository}
-import uk.gov.hmrc.Fixtures.buildErsSummary
+import Fixtures.buildErsSummary
 
 import java.time.Instant
 import java.time.temporal.ChronoUnit

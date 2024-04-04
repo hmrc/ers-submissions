@@ -22,9 +22,9 @@ import com.typesafe.config.ConfigFactory
 import common.ERSEnvelope.ERSEnvelope
 import config.ApplicationConfig
 import play.api.libs.json.JsObject
+import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, StringContextOps}
 import uk.gov.hmrc.http.HttpReads.Implicits._
 import uk.gov.hmrc.http.client.HttpClientV2
-import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, StringContextOps}
 import utils.{CorrelationIdHelper, ErrorHandlerHelper}
 
 import javax.inject.Inject
