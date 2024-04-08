@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package test.uk.gov.hmrc.resubmission
+package uk.gov.hmrc.resubmission
 
 import _root_.play.api.Application
 import _root_.play.api.inject.guice.GuiceApplicationBuilder
@@ -25,7 +25,7 @@ import org.mongodb.scala.model.Filters
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 import org.scalatestplus.play.guice.GuiceOneServerPerSuite
-import test.uk.gov.hmrc.{CSOP, FakeErsStubService, Fixtures}
+import uk.gov.hmrc.{CSOP, FakeErsStubService, Fixtures}
 
 import java.time.{Instant, LocalDate, ZoneId}
 import java.time.format.DateTimeFormatter

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package test.uk.gov.hmrc.resubmission
+package uk.gov.hmrc.resubmission
 
 import org.mongodb.scala.MongoCollection
 import org.mongodb.scala.bson.BsonDocument

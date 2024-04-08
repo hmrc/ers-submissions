@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package test.uk.gov.hmrc
+package uk.gov.hmrc
 
 import models._
 

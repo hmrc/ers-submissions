@@ -10,7 +10,8 @@ object AppDependencies {
     "uk.gov.hmrc.mongo"       %% "hmrc-mongo-play-30"           % mongoVersion,
     "uk.gov.hmrc"             %% "domain-play-30"               % "9.0.0",
     "org.apache.pekko"        %% "pekko-connectors-csv"         % pekkoVersion,
-    "org.typelevel"           %% "cats-core"                    % "2.10.0"
+    "org.typelevel"           %% "cats-core"                    % "2.10.0",
+    "io.github.samueleresca"  %% "pekko-quartz-scheduler"       % "1.2.0-pekko-1.0.x"
   )
 
   val test: Seq[ModuleID] = Seq(
@@ -20,11 +21,7 @@ object AppDependencies {
     "com.vladsch.flexmark"          % "flexmark-all"            % "0.64.8",
     "org.apache.pekko"             %% "pekko-testkit"           % pekkoVersion,
     "com.fasterxml.jackson.module" %% "jackson-module-scala"    % "2.16.1",
-    "io.github.samueleresca" %% "pekko-quartz-scheduler" % "1.2.0-pekko-1.0.x"
-  ).map(_ % Test)
-
-  // only add additional dependencies here - it test inherit test dependencies above already
-  val itDependencies: Seq[ModuleID] = Seq()
+  ).map(_ % "test, it")
 
   def apply(): Seq[ModuleID] = compile ++ test
 }
