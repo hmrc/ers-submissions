@@ -21,7 +21,7 @@ object AppDependencies {
     "com.vladsch.flexmark"          % "flexmark-all"            % "0.64.8",
     "org.apache.pekko"             %% "pekko-testkit"           % pekkoVersion,
     "com.fasterxml.jackson.module" %% "jackson-module-scala"    % "2.16.1",
-  ).map(_ % "test, it")
+  ).map(_ % Test)
 
   def apply(): Seq[ModuleID] = compile ++ test
 }

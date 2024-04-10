@@ -43,8 +43,6 @@ lazy val microservice = Project(appName, file("."))
     libraryDependencySchemes ++= Seq("org.scala-lang.modules" %% "scala-xml" % VersionScheme.Always),
     routesGenerator := InjectedRoutesGenerator
   )
-  .configs(IntegrationTest)
-  .settings(integrationTestSettings())
   .settings(inConfig(Test)(testSettings))
   .settings(majorVersion := 1)
   .settings(PlayKeys.playDefaultPort := 9292)
@@ -54,10 +52,9 @@ scalacOptions ++= Seq(
 )
 
 lazy val it = project
-  .enablePlugins(PlayScala, SbtDistributablesPlugin)
+  .enablePlugins(PlayScala)
   .disablePlugins(JUnitXmlReportPlugin) //Required to prevent https://github.com/scalatest/scalatest/issues/1427
   .dependsOn(microservice % "test->test")
-  .settings(inConfig(Test)(testSettings))
-  .settings(PlayKeys.playDefaultPort := 9292)
+  .settings(testSettings)
 
 addCommandAlias("scalastyleAll", "all scalastyle Test/scalastyle")
