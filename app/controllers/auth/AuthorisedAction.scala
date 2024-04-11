@@ -19,7 +19,7 @@ package controllers.auth
 import play.api.Logging
 import play.api.mvc.Results.Unauthorized
 import play.api.mvc.{ActionBuilder, ActionFunction, AnyContent, BodyParser, PlayBodyParsers, Request, Result}
-import uk.gov.hmrc.auth.core._
+import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisationException, AuthorisedFunctions, ConfidenceLevel, Enrolment}
 import uk.gov.hmrc.domain.EmpRef
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.http.HeaderCarrierConverter

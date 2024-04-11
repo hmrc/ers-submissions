@@ -16,9 +16,9 @@
 
 package controllers
 
-import akka.actor.ActorSystem
-import akka.stream.scaladsl.{Sink, Source}
-import akka.util.ByteString
+import org.apache.pekko.actor.ActorSystem
+import org.apache.pekko.stream.scaladsl.{Sink, Source}
+import org.apache.pekko.util.ByteString
 import cats.data.EitherT
 import common.ERSEnvelope.ERSEnvelope
 import models.ERSError

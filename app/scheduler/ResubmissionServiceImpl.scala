@@ -16,7 +16,7 @@
 
 package scheduler
 
-import akka.actor.ActorSystem
+import org.apache.pekko.actor.ActorSystem
 import com.google.inject.Inject
 import play.api.Configuration
 import play.api.inject.ApplicationLifecycle

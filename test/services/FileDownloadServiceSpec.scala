@@ -16,11 +16,11 @@
 
 package services
 
-import akka.actor.ActorSystem
-import akka.http.scaladsl.model.{HttpEntity, HttpRequest, HttpResponse, StatusCodes}
-import akka.stream.scaladsl.{Sink, Source}
-import akka.testkit.TestKit
-import akka.util.ByteString
+import org.apache.pekko.actor.ActorSystem
+import org.apache.pekko.http.scaladsl.model.{HttpEntity, HttpRequest, HttpResponse, StatusCodes}
+import org.apache.pekko.stream.scaladsl.{Sink, Source}
+import org.apache.pekko.testkit.TestKit
+import org.apache.pekko.util.ByteString
 import config.ApplicationConfig
 import fixtures.SIP
 import helpers.ERSTestHelper

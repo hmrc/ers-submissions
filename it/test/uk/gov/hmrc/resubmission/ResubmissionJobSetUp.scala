@@ -38,7 +38,7 @@ case class ResubmissionJobSetUp(app: Application) {
   await(collection.drop().toFuture())
   await(collectionPs.drop().toFuture())
 
-  def getJob: ResubmissionServiceImpl = app.injector.instanceOf[ResubmissionServiceImpl]
+  val getJob: ResubmissionServiceImpl = app.injector.instanceOf[ResubmissionServiceImpl]
 
   implicit val ec: ExecutionContext = app.injector.instanceOf[ExecutionContext]
 

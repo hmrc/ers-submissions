@@ -16,10 +16,10 @@
 
 package utils
 
-import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.play.http.HeaderCarrierConverter
 import java.util.UUID
 import play.api.mvc.Request
+import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.play.http.HeaderCarrierConverter
 
 trait CorrelationIdHelper {
   protected val HEADER_X_CORRELATION_ID: String = "X-Correlation-Id"

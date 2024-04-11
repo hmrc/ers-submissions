@@ -17,7 +17,7 @@
 package repositories
 
 import com.google.inject.Inject
-import uk.gov.hmrc.mongo.lock._
+import uk.gov.hmrc.mongo.lock.MongoLockRepository
 
 trait LockRepositoryProvider {
   val repo: MongoLockRepository

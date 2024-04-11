@@ -1,15 +1,16 @@
 
 import scoverage.ScoverageKeys
 import play.routes.compiler.InjectedRoutesGenerator
-import sbt.Keys.*
+
 import sbt.*
 import uk.gov.hmrc.DefaultBuildSettings.{defaultSettings, scalaSettings}
 import uk.gov.hmrc.sbtdistributables.SbtDistributablesPlugin
 
-import uk.gov.hmrc.*
-import DefaultBuildSettings.*
 import play.sbt.routes.RoutesKeys.routesGenerator
 import uk.gov.hmrc.versioning.SbtGitVersioning.autoImport.majorVersion
+
+ThisBuild / majorVersion := 2
+ThisBuild / scalaVersion := "2.13.12"
 
 val appName = "ers-submissions"
 
@@ -35,13 +36,11 @@ lazy val microservice = Project(appName, file("."))
   .settings(scalaSettings)
   .settings(defaultSettings())
   .settings(
-    scalaVersion := "2.13.12",
+    scalaVersion := "2.13.13",
     libraryDependencies ++= AppDependencies(),
     libraryDependencySchemes ++= Seq("org.scala-lang.modules" %% "scala-xml" % VersionScheme.Always),
     routesGenerator := InjectedRoutesGenerator
   )
-  .configs(IntegrationTest)
-  .settings(integrationTestSettings())
   .settings(inConfig(Test)(testSettings))
   .settings(majorVersion := 1)
   .settings(PlayKeys.playDefaultPort := 9292)
@@ -49,5 +48,11 @@ lazy val microservice = Project(appName, file("."))
 scalacOptions ++= Seq(
   "-Wconf:src=routes/.*:s"
 )
+
+lazy val it = project
+  .enablePlugins(PlayScala)
+  .disablePlugins(JUnitXmlReportPlugin) //Required to prevent https://github.com/scalatest/scalatest/issues/1427
+  .dependsOn(microservice % "test->test")
+  .settings(testSettings)
 
 addCommandAlias("scalastyleAll", "all scalastyle Test/scalastyle")
