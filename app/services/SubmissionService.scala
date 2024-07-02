@@ -66,7 +66,7 @@ class SubmissionService @Inject()(repositories: Repositories,
     adrSubmission.generateSubmission(ersSummary)(request, hc).map { json =>
       val transformer = (__ \ "submitter" \ "firstName").json.update(__.read[JsString].map{ firstName =>
         if (firstName.as[String].length > 35) {
-          logger.error(s"[SubmissionService][transformData] submitter name was greater than 35 characters for " +
+          logger.info(s"[SubmissionService][transformData] submitter name was greater than 35 characters for " +
             s"SchemeRef: ${ersSummary.metaData.schemeInfo.schemeRef}, trimming to allow submission")
           JsString(firstName.as[String].take(35))
         } else {
@@ -77,7 +77,7 @@ class SubmissionService @Inject()(repositories: Repositories,
       json.transform(transformer) match {
         case JsSuccess(value, _) => value
         case JsError(_) =>
-          logger.error("[SubmissionService][transformData] Failed to transform data, attempting to proceed untransformed")
+          logger.info("[SubmissionService][transformData] Failed to transform data, attempting to proceed untransformed")
           json
       }
     }
