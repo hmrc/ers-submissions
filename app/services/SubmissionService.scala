@@ -23,7 +23,7 @@ import metrics.Metrics
 import models.{ErsSummary, SchemeInfo, SubmissionStatusUpdateError}
 import play.api.Logging
 import play.api.http.Status.ACCEPTED
-import play.api.libs.json.JsObject
+import play.api.libs.json.{JsError, JsObject, JsString, JsSuccess, __}
 import play.api.mvc.Request
 import repositories.{MetadataMongoRepository, Repositories}
 import services.audit.AuditEvents
@@ -64,8 +64,22 @@ class SubmissionService @Inject()(repositories: Repositories,
     val startTime = System.currentTimeMillis()
 
     adrSubmission.generateSubmission(ersSummary)(request, hc).map { json =>
+      val transformer = (__ \ "submitter" \ "firstName").json.update(__.read[JsString].map{ firstName =>
+        if (firstName.as[String].length > 35) {
+          logger.info(s"[SubmissionService][transformData] submitter name was greater than 35 characters for " +
+            s"SchemeRef: ${ersSummary.metaData.schemeInfo.schemeRef}, trimming to allow submission")
+          JsString(firstName.as[String].take(35))
+        } else {
+          firstName
+        }
+      })
       metrics.generateJson(System.currentTimeMillis() - startTime, TimeUnit.MILLISECONDS)
-      json
+      json.transform(transformer) match {
+        case JsSuccess(value, _) => value
+        case JsError(_) =>
+          logger.info("[SubmissionService][transformData] Failed to transform data, attempting to proceed untransformed")
+          json
+      }
     }
   }
 
