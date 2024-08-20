@@ -77,8 +77,7 @@ class SubmissionService @Inject()(repositories: Repositories,
       })
     }) match {
       case JsSuccess(value, _) => value
-      case JsError(Seq((jsP, e))) =>
-        logger.error(jsP.path.mkString("") + " -> " + e.mkString(";") +" " + json.toString())
+      case JsError(_) =>
         logger.info(s"[SubmissionService][transformData] Failed to transform $fieldName data, attempting to proceed untransformed")
         json
     }
