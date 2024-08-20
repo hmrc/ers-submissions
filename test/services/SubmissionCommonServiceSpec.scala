@@ -18,8 +18,6 @@ package services
 
 import common.ERSEnvelope
 import common.ERSEnvelope.ERSEnvelope
-
-import java.util.concurrent.TimeUnit
 import connectors.ADRConnector
 import fixtures.Fixtures
 import helpers.ERSTestHelper
@@ -39,6 +37,7 @@ import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 import utils.LoggingAndRexceptions.ADRExceptionEmitter
 import utils.{ADRSubmission, SubmissionCommon}
 
+import java.util.concurrent.TimeUnit
 import scala.concurrent.{ExecutionContext, Future}
 
 class SubmissionCommonServiceSpec extends ERSTestHelper with BeforeAndAfterEach with EitherValues {
@@ -146,6 +145,35 @@ class SubmissionCommonServiceSpec extends ERSTestHelper with BeforeAndAfterEach 
       val result = await(submissionCommonService.transformData(Fixtures.metadata).value).value
       result shouldBe Fixtures.schemeDataJson
       verify(metrics, VerificationModeFactory.times(1)).generateJson(any[Long](), any[TimeUnit]())
+    }
+    
+    
+    "trim firstName data > 35 chars" in {
+      val schemeDataJsStr =
+        """{"submitter": {"firstName": "This Company name is too long for this field", "country": "Some Country"}}"""
+        
+      val trimmedSchemeDataJsStr =
+        """{"submitter": {"firstName": "This Company name is too long for t", "country": "Some Country"}}"""
+
+      when(adrSubmission.generateSubmission(any[ErsSummary]())(any[Request[_]](), any[HeaderCarrier]))
+        .thenReturn(ERSEnvelope(Json.parse(schemeDataJsStr).as[JsObject]))
+
+      val result = await(submissionCommonService.transformData(Fixtures.metadata).value).value
+      result shouldBe Json.parse(trimmedSchemeDataJsStr)
+    }
+    
+    "trim country data > 18 chars" in {
+      val schemeDataJsStr =
+        """{"submitter": {"firstName": "Some Company", "country": "This Country is to long for this field"}}"""
+
+      val trimmedSchemeDataJsStr =
+        """{"submitter": {"firstName": "Some Company", "country": "This Country is to"}}"""
+
+      when(adrSubmission.generateSubmission(any[ErsSummary]())(any[Request[_]](), any[HeaderCarrier]))
+        .thenReturn(ERSEnvelope(Json.parse(schemeDataJsStr).as[JsObject]))
+
+      val result = await(submissionCommonService.transformData(Fixtures.metadata).value).value
+      result shouldBe Json.parse(trimmedSchemeDataJsStr)
     }
 
     "return JsonFromSheetsCreationError" in {
