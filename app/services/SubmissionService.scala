@@ -23,7 +23,7 @@ import metrics.Metrics
 import models.{ErsSummary, SchemeInfo, SubmissionStatusUpdateError}
 import play.api.Logging
 import play.api.http.Status.ACCEPTED
-import play.api.libs.json.{JsError, JsObject, JsString, JsSuccess, __}
+import play.api.libs.json.{JsError, JsObject, JsPath, JsString, JsSuccess, __}
 import play.api.mvc.Request
 import repositories.{MetadataMongoRepository, Repositories}
 import services.audit.AuditEvents
@@ -65,10 +65,10 @@ class SubmissionService @Inject()(repositories: Repositories,
 
     val (maxFirstNameLen, maxCountryLen) = (35, 18)
     
-    def trimDataIfSizeExceeded(json: JsObject, fieldName: String, maxLen: Int) = json.transform({
-      (__ \ "submitter" \ s"$fieldName").json.update(__.read[JsString].map { field =>
+    def trimDataIfSizeExceeded(json: JsObject, fieldName: String, jsPath: JsPath, maxLen: Int) = json.transform({
+     jsPath.json.update(__.read[JsString].map { field =>
         if (field.as[String].length > maxLen) {
-          logger.info(s"[SubmissionService][transformData] submitter $fieldName was greater than $maxLen characters for " +
+          logger.info(s"[SubmissionService][transformData] $fieldName was greater than $maxLen characters for " +
             s"SchemeRef: ${ersSummary.metaData.schemeInfo.schemeRef}, trimming to allow submission")
           JsString(field.as[String].take(maxLen))
         } else {
@@ -78,14 +78,14 @@ class SubmissionService @Inject()(repositories: Repositories,
     }) match {
       case JsSuccess(value, _) => value
       case JsError(_) =>
-        logger.info(s"[SubmissionService][transformData] Failed to transform $fieldName data, attempting to proceed untransformed")
+        logger.info(s"[SubmissionService][transformData] Failed to transform Json Path $jsPath data, attempting to proceed untransformed")
         json
     }
     
     adrSubmission.generateSubmission(ersSummary)(request, hc).map { json =>
       metrics.generateJson(System.currentTimeMillis() - startTime, TimeUnit.MILLISECONDS)
-      val transformedFirstNameJson = trimDataIfSizeExceeded(json, "firstName", maxFirstNameLen)
-      val transformedDataJson = trimDataIfSizeExceeded(transformedFirstNameJson, "country", maxCountryLen)
+      val transformedFirstNameJson = trimDataIfSizeExceeded(json, "firstName", __ \ "submitter" \ "firstName", maxFirstNameLen)
+      val transformedDataJson = trimDataIfSizeExceeded(transformedFirstNameJson, "country", __ \ "submitter" \ "address" \ "country", maxCountryLen)
       transformedDataJson
     }
   }

@@ -146,28 +146,15 @@ class SubmissionCommonServiceSpec extends ERSTestHelper with BeforeAndAfterEach 
       result shouldBe Fixtures.schemeDataJson
       verify(metrics, VerificationModeFactory.times(1)).generateJson(any[Long](), any[TimeUnit]())
     }
-    
-    
-    "trim firstName data > 35 chars" in {
-      val schemeDataJsStr =
-        """{"submitter": {"firstName": "This Company name is too long for this field", "country": "Some Country"}}"""
-        
-      val trimmedSchemeDataJsStr =
-        """{"submitter": {"firstName": "This Company name is too long for t", "country": "Some Country"}}"""
 
-      when(adrSubmission.generateSubmission(any[ErsSummary]())(any[Request[_]](), any[HeaderCarrier]))
-        .thenReturn(ERSEnvelope(Json.parse(schemeDataJsStr).as[JsObject]))
-
-      val result = await(submissionCommonService.transformData(Fixtures.metadata).value).value
-      result shouldBe Json.parse(trimmedSchemeDataJsStr)
-    }
-    
-    "trim country data > 18 chars" in {
+    "trim submitter data if too long" in {
       val schemeDataJsStr =
-        """{"submitter": {"firstName": "Some Company", "country": "This Country is to long for this field"}}"""
+        """{"submitter": {"firstName": "This Company name is too long for this field",
+          |                "address": {"country": "This Country is to long for this field"}}}""".stripMargin
 
       val trimmedSchemeDataJsStr =
-        """{"submitter": {"firstName": "Some Company", "country": "This Country is to"}}"""
+        """{"submitter": {"firstName": "This Company name is too long for t",
+          |               "address": {"country": "This Country is to"}}}""".stripMargin
 
       when(adrSubmission.generateSubmission(any[ErsSummary]())(any[Request[_]](), any[HeaderCarrier]))
         .thenReturn(ERSEnvelope(Json.parse(schemeDataJsStr).as[JsObject]))
