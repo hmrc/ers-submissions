@@ -28,15 +28,12 @@ import org.mongodb.scala.model.{Aggregates, Filters, Projections}
 import org.mongodb.scala.result.UpdateResult
 import play.api.libs.json.Format.GenericFormat
 import play.api.libs.json.{Format, JsObject, Json}
-import repositories.helpers.BsonDocumentHelper.BsonOps
 import repositories.helpers.RepositoryHelper
 import services.resubmission.ProcessFailedSubmissionsConfig
 import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
 import uk.gov.hmrc.mongo.play.json.formats.MongoFormats
 
-import java.time.{LocalDate, ZoneId}
-import java.time.format.DateTimeFormatter
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.ExecutionContext
 
@@ -95,29 +92,8 @@ class MetadataMongoRepository @Inject()(val applicationConfig: ApplicationConfig
       }
   }
 
-  def createFailedJobSelector(processFailedSubmissionsConfig: ProcessFailedSubmissionsConfig): BsonDocument = {
-    val baseSelector: BsonDocument = BsonDocument(
-      "transferStatus" -> BsonDocument(
-        "$in" -> processFailedSubmissionsConfig.searchStatusList.map(Some(_))
-      )
-    )
-
-    val schemeRefSelector: BsonDocument = BsonDocument(
-      processFailedSubmissionsConfig.schemeRefList.map(schemeList => "metaData.schemeInfo.schemeRef" -> BsonDocument("$in" -> schemeList))
-    )
-
-    val schemeSelector: BsonDocument = BsonDocument(
-      processFailedSubmissionsConfig.resubmitScheme.map(scheme => "metaData.schemeInfo.schemeType" -> BsonString(scheme))
-    )
-
-    val formatter: DateTimeFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy")
-
-    val dateRangeSelector: BsonDocument = BsonDocument(processFailedSubmissionsConfig.dateTimeFilter.map(date =>
-      "metaData.schemeInfo.timestamp" -> BsonDocument("$gte" -> LocalDate.parse(date, formatter).atStartOfDay(ZoneId.of("UTC")).toInstant.toEpochMilli))
-    )
-
-    Seq(baseSelector, schemeRefSelector, schemeSelector, dateRangeSelector).foldLeft(BsonDocument())(_ +:+ _)
-  }
+  def createFailedJobSelector(processFailedSubmissionsConfig: ProcessFailedSubmissionsConfig): BsonDocument =
+    Selectors(processFailedSubmissionsConfig).allSelectors
 
   def getFailedJobs(failedJobSelector: BsonDocument,
                     processFailedSubmissionsConfig: ProcessFailedSubmissionsConfig,
@@ -210,6 +186,22 @@ class MetadataMongoRepository @Inject()(val applicationConfig: ApplicationConfig
             Document("schemeType" -> "$metaData.schemeInfo.schemeType", "transferStatus" -> "$transferStatus"),
             sum("count", 1)
         )))
+      .toFuture()
+      .map(_.asRight)
+      .recover {
+        mongoRecover(
+          repository = className,
+          method = "getAggregateCountOfSubmissions",
+          sessionId = sessionId,
+          message = "operation failed due to exception from Mongo",
+          optSchemaRefs = None
+        )
+      }
+  }
+
+  def getStatusForSelectedSchemes(sessionId: String, selectors: Selectors): ERSEnvelope[Seq[JsObject]] = EitherT {
+    collection
+      .find(filter = selectors.schemeRefSelector)
       .toFuture()
       .map(_.asRight)
       .recover {

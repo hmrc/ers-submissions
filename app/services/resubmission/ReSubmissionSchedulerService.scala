@@ -19,7 +19,7 @@ package services.resubmission
 import common.ERSEnvelope
 import common.ERSEnvelope.ERSEnvelope
 import config.ApplicationConfig
-import models._
+import messages._
 import play.api.libs.json.JsObject
 import play.api.mvc.Request
 import repositories.LockRepositoryProvider
@@ -68,6 +68,9 @@ class ReSubmissionSchedulerService @Inject()(val applicationConfig: ApplicationC
       resubPresubmissionService.logAggregateMetadataMetrics()
       resubPresubmissionService.logFailedSubmissionCount(processFailedSubmissionsConfig)
       logger.info(LockMessage(lockService).message)
+    }
+    logIfEnabled(applicationConfig.schedulerSchemeRefListEnabled) {
+      resubPresubmissionService.logSelectedSchemeRefDetails(processFailedSubmissionsConfig)
     }
 
     ERSEnvelope(lockService.withLock(resubmit()(request, hc).value).map {
