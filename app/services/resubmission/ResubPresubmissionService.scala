@@ -19,12 +19,13 @@ package services.resubmission
 import cats.implicits._
 import common.ERSEnvelope
 import common.ERSEnvelope.ERSEnvelope
+import messages._
 import models._
 import org.mongodb.scala.bson.BsonDocument
 import play.api.Logging
-import play.api.libs.json.{JsError, JsObject, JsSuccess}
+import play.api.libs.json.{JsError, JsObject, JsPath, JsSuccess, JsonValidationError, Reads}
 import play.api.mvc.Request
-import repositories.MetadataMongoRepository
+import repositories.{MetadataMongoRepository, Selectors}
 import services.SubmissionService
 import services.audit.AuditEvents
 import uk.gov.hmrc.http.HeaderCarrier
@@ -38,11 +39,12 @@ class ResubPresubmissionService @Inject()(metadataRepository: MetadataMongoRepos
                                           auditEvents: AuditEvents)
                                          (implicit ec: ExecutionContext) extends Logging {
 
-  def mapJsonToAggregatedLog(record: JsObject): Option[AggregatedLog] =
-    record.validate[AggregatedLog] match {
+  def validateJson[T](record: JsObject)(implicit reads: Reads[T]): Option[T] =
+    record.validate[T] match {
       case JsSuccess(obj, _) =>
         Some(obj)
-      case JsError(_) =>
+      case JsError(e: collection.Seq[(JsPath, collection.Seq[JsonValidationError])]) =>
+        logger.warn(s"Failed to validate JsObject error: ${e.map(_._2).mkString(", ")}")
         None
     }
 
@@ -51,7 +53,7 @@ class ResubPresubmissionService @Inject()(metadataRepository: MetadataMongoRepos
       aggregatedRecords <- metadataRepository
         .getAggregateCountOfSubmissions(Session.id(hc))
       aggregatedLogs = AggregatedLogs(
-        aggregatedRecords.flatMap(mapJsonToAggregatedLog)
+        aggregatedRecords.flatMap(validateJson[AggregatedLog])
       ).message
     } yield logger.info(aggregatedLogs)
   }
@@ -66,6 +68,17 @@ class ResubPresubmissionService @Inject()(metadataRepository: MetadataMongoRepos
         numberOfFailedJobs = numberOfRecords
       ).message
     } yield logger.info(countToLog)
+  }
+
+  def logSelectedSchemeRefDetails(processFailedSubmissionsConfig: ProcessFailedSubmissionsConfig)
+                                 (implicit hc: HeaderCarrier): ERSEnvelope[Unit] = {
+    for {
+      statusForSelectedSchemes <- metadataRepository
+        .getStatusForSelectedSchemes(Session.id(hc), Selectors(processFailedSubmissionsConfig))
+      selectedSchemeRefLogs = SelectedSchemeRefLogs(
+        statusForSelectedSchemes.flatMap(validateJson[ErsSummary])
+      ).message
+    } yield logger.info(selectedSchemeRefLogs)
   }
 
   def processFailedSubmissions(processFailedSubmissionsConfig: ProcessFailedSubmissionsConfig)

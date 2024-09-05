@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package models
+package messages
 
-import services.resubmission.AggregatedLog
+import models.ErsSummary
 import uk.gov.hmrc.mongo.lock.LockService
 
 trait ResubmissionMessages {
@@ -65,4 +65,23 @@ case class ResubmissionLimitMessage(resubmissionLimit: Long) extends Resubmissio
 case class AggregatedLogs(aggregatedLogs: Seq[AggregatedLog]) extends ResubmissionMessages {
   val message: String = s"$prefix Aggregated view of submissions: \n" +
     s"${aggregatedLogs.map(_.logLine).mkString("\n", "\n", "\n")}"
+}
+
+case class SelectedSchemeRefLogs(selectedErsSummary: Seq[ErsSummary]) extends ResubmissionMessages {
+  private def logLine(ersSummary: ErsSummary): String = s"schemaRef: ${ersSummary.metaData.schemeInfo.schemeRef}, " +
+    s"schemaType: ${ersSummary.metaData.schemeInfo.schemeType}, " +
+    s"taxYear: ${ersSummary.metaData.schemeInfo.taxYear}, " +
+    s"transferStatus: ${ersSummary.transferStatus.getOrElse("transfer status is not defined")}, " +
+    s"timestamp: ${ersSummary.metaData.schemeInfo.timestamp}"
+
+  val numberSelectedErsRecords: Int = selectedErsSummary.length
+  val message: String =
+    if (selectedErsSummary.isEmpty) {
+      s"$prefix Could not find any records for the selected scheme reference"
+    }
+    else if (numberSelectedErsRecords > 50){
+      s"$prefix Selected schemes have more then 50 records ($numberSelectedErsRecords records selected)"
+    } else {
+      s"$prefix Selected scheme details: ${selectedErsSummary.map(logLine).mkString("\n", "\n", "\n")}"
+    }
 }
