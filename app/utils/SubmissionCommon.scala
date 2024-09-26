@@ -72,16 +72,15 @@ class SubmissionCommon @Inject()(configUtils: ConfigUtils) extends Logging {
     else {
       val elemColumn = configElem.getInt("column")
       val elemRow = row.getOrElse(configElem.getInt("row"))
-      handleValueRetrieval(configElem, fileData, elemRow, elemColumn, sheetName, schemeInfo)
+      handleValueRetrieval(configElem, fileData, elemRow, elemColumn)
     }
   }
 
+
   def handleValueRetrieval(configElem: Config,
-                            fileData: ListBuffer[Seq[String]],
-                            elemRow: Int,
-                            elemColumn: Int,
-                            sheetName: Option[String],
-                            schemeInfo: Option[SchemeInfo]): JsObject = {
+                           fileData: ListBuffer[Seq[String]],
+                           elemRow: Int,
+                           elemColumn: Int): JsObject = {
 
     def getNewFieldOpt(configElem: Config, value: String): Option[JsObject] = {
       val allowedTypes = List("string", "int", "double", "boolean")
@@ -91,7 +90,8 @@ class SubmissionCommon @Inject()(configUtils: ConfigUtils) extends Logging {
           case "string" => value
           case "int" => value.toIntOption
           case "double" => value.toDoubleOption
-          case "boolean" => value.toUpperCase == configElem.getString("valid_value").toUpperCase
+          case "boolean" if configElem.hasPath("valid_value") => value.toUpperCase == configElem.getString("valid_value").toUpperCase
+          case _ => None
         }
 
         getNewFieldSafe(configElem, parsedConfigValue)
