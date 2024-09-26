@@ -83,7 +83,7 @@ class SubmissionCommon @Inject()(configUtils: ConfigUtils) extends Logging {
                             sheetName: Option[String],
                             schemeInfo: Option[SchemeInfo]): JsObject = {
 
-    def getNewFieldWrapper(configElem: Config, value: String): Option[JsObject] = {
+    def getNewFieldOpt(configElem: Config, value: String): Option[JsObject] = {
       val allowedTypes = List("string", "int", "double", "boolean")
 
       if (value.nonEmpty && configElem.hasPath("type") && allowedTypes.contains(configElem.getString("type"))) {
@@ -101,9 +101,9 @@ class SubmissionCommon @Inject()(configUtils: ConfigUtils) extends Logging {
     }
 
     val valueFromConfig: Option[JsObject] = for {
-      row <- fileData.lift(elemRow)
-      valueFromColumn <- row.lift(elemColumn)
-      finalValue <- getNewFieldWrapper(configElem, valueFromColumn)
+      row: Seq[String] <- fileData.lift(elemRow)
+      valueFromColumn: String <- row.lift(elemColumn)
+      finalValue: JsObject <- getNewFieldOpt(configElem, valueFromColumn)
     } yield finalValue
 
     valueFromConfig.getOrElse(EmptyJson)
@@ -208,5 +208,5 @@ class SubmissionCommon @Inject()(configUtils: ConfigUtils) extends Logging {
       None
     }
   }
-  
+
 }
