@@ -83,18 +83,31 @@ class SubmissionCommon @Inject()(configUtils: ConfigUtils) extends Logging {
                            elemColumn: Int): JsObject = {
 
     def getNewFieldOpt(configElem: Config, value: String): Option[JsObject] = {
+
+      def booleanCase(configElem: Config, value: String): Either[JsObject, JsValueWrapper] = {
+        if (configElem.hasPath("valid_value")) {
+          Right(value.toUpperCase == configElem.getString("valid_value").toUpperCase)
+        } else {
+          Left(EmptyJson)
+        }
+      }
+
       val allowedTypes = List("string", "int", "double", "boolean")
 
       if (value.nonEmpty && configElem.hasPath("type") && allowedTypes.contains(configElem.getString("type"))) {
-        val parsedConfigValue: JsValueWrapper = configElem.getString("type") match {
-          case "string" => value
-          case "int" => value.toIntOption
-          case "double" => value.toDoubleOption
-          case "boolean" if configElem.hasPath("valid_value") => value.toUpperCase == configElem.getString("valid_value").toUpperCase
-          case _ => None
+        val parsedConfigValue: Either[JsObject, JsValueWrapper] = configElem.getString("type") match {
+          case "string" => Right(value)
+          case "int" => Right(value.toIntOption)
+          case "double" => Right(value.toDoubleOption)
+          case "boolean" => booleanCase(configElem, value)
         }
 
-        getNewFieldSafe(configElem, parsedConfigValue)
+        parsedConfigValue match {
+          case Left(emptyJson) => Some(emptyJson)
+          case Right(value: JsValueWrapper) => {
+            getNewFieldSafe(configElem, value)
+          }
+        }
       } else {
         None
       }

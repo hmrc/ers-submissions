@@ -19,10 +19,12 @@ package utils
 import com.typesafe.config.{Config, ConfigFactory, ConfigValueFactory}
 import fixtures.Common
 import helpers.ERSTestHelper
+import play.api.Configuration
 import play.api.libs.json.{JsObject, Json}
 import uk.gov.hmrc.http.HttpResponse
 
 import java.time.LocalDateTime
+import scala.collection.mutable.ListBuffer
 
 class SubmissionCommonSpec extends ERSTestHelper {
 
@@ -162,4 +164,68 @@ class SubmissionCommonSpec extends ERSTestHelper {
       result shouldBe Json.obj()
     }
   }
+
+  "handleValueRetrieval" should {
+
+     val EmptyJson: JsObject = Json.obj()
+
+
+    "string" in {
+      val configElem = Configuration.from(Map("column" -> 0, "name" -> "dateOfGrant", "type" -> "string"))
+      val fileData = ListBuffer(Seq("2015-12-09", "123456", "50.60", "10.9821", "8.2587", "yes", "", "", "no"))
+
+      val result = testSubmissionCommon.handleValueRetrieval(configElem.underlying, fileData, elemRow = 0, elemColumn = 0)
+
+      result shouldBe Json.parse("""{"dateOfGrant":"2015-12-09"}""")
+    }
+
+    "int" in {
+      val configElem = Configuration.from(Map("column" -> 1, "name" -> "numberOfIndividuals", "type" -> "int"))
+      val fileData = ListBuffer(Seq("2015-12-09", "123456", "50.60", "10.9821", "8.2587", "yes","" , "", "no"))
+
+      val result = testSubmissionCommon.handleValueRetrieval(configElem.underlying, fileData, elemRow = 0, elemColumn = 1)
+
+      result shouldBe Json.parse("""{"numberOfIndividuals":123456}""")
+    }
+
+
+    "double" in {
+
+      val configElem = Configuration.from(Map("column" -> 2, "name" -> "numberOfSharesGrantedOver", "type" -> "double"))
+      val fileData = ListBuffer(Seq("2015-12-09", "123456", "50.60", "10.9821", "8.2587", "yes","" , "", "no"))
+
+      val result = testSubmissionCommon.handleValueRetrieval(configElem.underlying, fileData, elemRow = 0, elemColumn = 2)
+
+      result shouldBe Json.parse("""{"numberOfSharesGrantedOver":50.6}""")
+    }
+
+    "boolean" in {
+      val configElem = Configuration.from(Map("column" -> 5, "name" -> "sharesListedOnSE", "type" -> "boolean", "valid_value" -> "YES"))
+
+      val fileData = ListBuffer(Seq("2015-12-09", "123456", "50.60", "10.9821", "8.2587", "yes","" , "", "no"))
+      val result = testSubmissionCommon.handleValueRetrieval(configElem.underlying, fileData, elemRow = 0, elemColumn = 5)
+
+      result shouldBe Json.parse("""{"sharesListedOnSE":true}""")
+    }
+
+    "empty value (boolean)" in {
+      val configElem = Configuration.from(Map("column" -> 5, "name" -> "sharesListedOnSE", "type" -> "boolean", "valid_value" -> "YES"))
+
+      val fileData = ListBuffer(Seq("2015-12-09", "123456", "50.60", "10.9821", "8.2587", "","" , "", "no"))
+      val result = testSubmissionCommon.handleValueRetrieval(configElem.underlying, fileData, elemRow = 0, elemColumn = 5)
+
+      result shouldBe EmptyJson
+    }
+
+    "no valid_value in config for boolean type" in {
+      val configElem = Configuration.from(Map("column" -> 5, "name" -> "sharesListedOnSE", "type" -> "boolean"))
+
+      val fileData = ListBuffer(Seq("2015-12-09", "123456", "50.60", "10.9821", "8.2587", "yes","" , "", "no"))
+      val result = testSubmissionCommon.handleValueRetrieval(configElem.underlying, fileData, elemRow = 0, elemColumn = 5)
+
+      result shouldBe EmptyJson
+    }
+
+  }
+
 }
