@@ -76,23 +76,45 @@ class SubmissionCommon @Inject()(configUtils: ConfigUtils) extends Logging {
     }
   }
 
-  def handleValueRetrieval(configElem: Config, fileData: ListBuffer[Seq[String]], elemRow: Int, elemColumn: Int, sheetName: Option[String], schemeInfo: Option[SchemeInfo]): JsObject = {
-    try {
-      val value = fileData(elemRow)(elemColumn)
-      if (value.nonEmpty) {
-        getNewField(configElem, configElem.getString("type") match {
+  def handleValueRetrieval(configElem: Config,
+                            fileData: ListBuffer[Seq[String]],
+                            elemRow: Int,
+                            elemColumn: Int,
+                            sheetName: Option[String],
+                            schemeInfo: Option[SchemeInfo]): JsObject = {
+
+    def getNewFieldWrapper(configElem: Config, value: String): Option[JsObject] = {
+      val allowedTypes = List("string", "int", "double", "boolean")
+
+      if (value.nonEmpty && configElem.hasPath("type") && allowedTypes.contains(configElem.getString("type"))) {
+        val parsedConfigValue: JsValueWrapper = configElem.getString("type") match {
           case "string" => value
           case "int" => value.toIntOption
           case "double" => value.toDoubleOption
           case "boolean" => value.toUpperCase == configElem.getString("valid_value").toUpperCase
-        })
+        }
+
+        getNewFieldSafe(configElem, parsedConfigValue)
+      } else {
+        None
       }
-      else EmptyJson
-    } catch {
-      case e: IndexOutOfBoundsException => handleException(e, elemRow, elemColumn, sheetName, schemeInfo, "[getFileDataValue][IndexOutOfBoundsException]")
-      case e: Throwable => handleException(e, elemRow, elemColumn, sheetName, schemeInfo, "[getFileDataValue][Exception]")
     }
+
+    val valueFromConfig: Option[JsObject] = for {
+      row <- fileData.lift(elemRow)
+      valueFromColumn <- row.lift(elemColumn)
+      finalValue <- getNewFieldWrapper(configElem, valueFromColumn)
+    } yield finalValue
+
+    valueFromConfig.getOrElse(EmptyJson)
   }
+
+  private def getNewFieldSafe(configElem: Config, elemVal: JsValueWrapper): Option[JsObject] =
+    for {
+      name <- if (configElem.hasPath("name")) Some(configElem.getString("name")) else None
+      if name.nonEmpty
+    } yield Json.obj(name -> elemVal)
+
 
   def getMetadataValue(configElem: Config, metadata: Object): JsObject = {
 
@@ -186,9 +208,5 @@ class SubmissionCommon @Inject()(configUtils: ConfigUtils) extends Logging {
       None
     }
   }
-
-  private def handleException(e: Throwable, elemRow: Int, elemColumn: Int, sheetName: Option[String], schemeInfo: Option[SchemeInfo], logMsg: String): JsObject = {
-    logger.info(s"$logMsg Could not find file data for row: $elemRow and column: $elemColumn. Exception: [$e] for [${sheetName.getOrElse("missingSheetName")}]: ${schemeInfo.map(_.basicLogMessage).getOrElse("missingSchemeInfo")}")
-    EmptyJson
-  }
+  
 }
