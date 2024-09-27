@@ -68,7 +68,7 @@ class SubmissionCommon @Inject()(configUtils: ConfigUtils) extends Logging {
     getNewField(configElem, getConfigElemFieldValueByType(configElem, "value"))
 
   def getFileDataValue(configElem: Config, fileData: ListBuffer[Seq[String]], row: Option[Int], sheetName: Option[String], schemeInfo: Option[SchemeInfo]): JsObject = {
-    if(configElem.hasPath("value")) getConfigElemValue(configElem)
+    if (configElem.hasPath("value")) getConfigElemValue(configElem)
     else {
       val elemColumn = configElem.getInt("column")
       val elemRow = row.getOrElse(configElem.getInt("row"))
@@ -77,42 +77,19 @@ class SubmissionCommon @Inject()(configUtils: ConfigUtils) extends Logging {
   }
 
 
+  /** Attempt to retrieve a formatted value from the file data, using 'type', 'valid_value' and 'name' info from config.
+   *
+   * @param configElem   config used to check for 'type', 'valid_value', and 'name' keys
+   * @param fileData     data to access values from
+   * @param elemRow     row to access within the data
+   * @param elemColumn  column to access within the row
+   * @return            the parsed value at the row and column specified e.g. {"dateOfGrant":"2015-12-09"},
+   *                    or an empty json object
+   */
   def handleValueRetrieval(configElem: Config,
                            fileData: ListBuffer[Seq[String]],
                            elemRow: Int,
                            elemColumn: Int): JsObject = {
-
-    def getNewFieldOpt(configElem: Config, value: String): Option[JsObject] = {
-
-      def booleanCase(configElem: Config, value: String): Either[JsObject, JsValueWrapper] = {
-        if (configElem.hasPath("valid_value")) {
-          Right(value.toUpperCase == configElem.getString("valid_value").toUpperCase)
-        } else {
-          Left(EmptyJson)
-        }
-      }
-
-      val allowedTypes = List("string", "int", "double", "boolean")
-
-      if (value.nonEmpty && configElem.hasPath("type") && allowedTypes.contains(configElem.getString("type"))) {
-        val parsedConfigValue: Either[JsObject, JsValueWrapper] = configElem.getString("type") match {
-          case "string" => Right(value)
-          case "int" => Right(value.toIntOption)
-          case "double" => Right(value.toDoubleOption)
-          case "boolean" => booleanCase(configElem, value)
-        }
-
-        parsedConfigValue match {
-          case Left(emptyJson) => Some(emptyJson)
-          case Right(value: JsValueWrapper) => {
-            getNewFieldSafe(configElem, value)
-          }
-        }
-      } else {
-        None
-      }
-    }
-
     val valueFromConfig: Option[JsObject] = for {
       row: Seq[String] <- fileData.lift(elemRow)
       valueFromColumn: String <- row.lift(elemColumn)
@@ -122,19 +99,51 @@ class SubmissionCommon @Inject()(configUtils: ConfigUtils) extends Logging {
     valueFromConfig.getOrElse(EmptyJson)
   }
 
-  private def getNewFieldSafe(configElem: Config, elemVal: JsValueWrapper): Option[JsObject] =
+  private def getNewFieldOpt(configElem: Config, value: String): Option[JsObject] = {
     for {
-      name <- if (configElem.hasPath("name")) Some(configElem.getString("name")) else None
-      if name.nonEmpty
-    } yield Json.obj(name -> elemVal)
+      typeFromConfig <- configUtils.getConfigStringOpt(configElem, "type")
+      result <- {
+        val allowedTypes = List("string", "int", "double", "boolean")
+        if (value.nonEmpty && allowedTypes.contains(typeFromConfig)) {
+          val parsedConfigValue: Either[JsObject, JsValueWrapper] = typeFromConfig match {
+            case "string" => Right(value)
+            case "int" => Right(value.toIntOption)
+            case "double" => Right(value.toDoubleOption)
+            case "boolean" => getNewFieldOptBooleanCase(configElem, value)
+          }
 
+          parsedConfigValue match {
+            case Left(emptyJson) => Some(emptyJson)
+            case Right(valueFromData) =>
+              configUtils
+                .getConfigStringOpt(configElem, "name")
+                .map(nameFromConfig => Json.obj(nameFromConfig -> valueFromData))
+          }
+        } else {
+          None
+        }
+      }
+    } yield result
+  }
+
+  private def getNewFieldOptBooleanCase(configElem: Config, value: String): Either[JsObject, JsValueWrapper] = {
+    val isValidValueOpt =
+      configUtils
+        .getConfigStringOpt(configElem, "valid_value")
+        .map(valueFromConfig => value.toUpperCase == valueFromConfig.toUpperCase)
+
+    isValidValueOpt match {
+      case Some(isValidValue) => Right(isValidValue)
+      case None => Left(EmptyJson)
+    }
+  }
 
   def getMetadataValue(configElem: Config, metadata: Object): JsObject = {
 
-    if(configElem.hasPath("value")) {
+    if (configElem.hasPath("value")) {
       getConfigElemValue(configElem)
     }
-    else if(configElem.hasPath("datetime_value") && configElem.getString("datetime_value") == "now") {
+    else if (configElem.hasPath("datetime_value") && configElem.getString("datetime_value") == "now") {
       val elemVal = Instant.now().toEpochMilli.toString
       getNewField(configElem, elemVal)
     }
@@ -143,7 +152,7 @@ class SubmissionCommon @Inject()(configUtils: ConfigUtils) extends Logging {
         case None =>
           if (configElem.hasPath("default_value")) {
             val elemType: String = configElem.getString("type")
-            val elemVal: JsValueWrapper = if(elemType == "boolean") {
+            val elemVal: JsValueWrapper = if (elemType == "boolean") {
               configElem.getBoolean("default_value")
             }
             else {
@@ -195,7 +204,7 @@ class SubmissionCommon @Inject()(configUtils: ConfigUtils) extends Logging {
   }
 
   def mergeSheetData(configData: Config, oldJson: JsObject, newJson: JsObject): JsObject = (oldJson, newJson) match {
-    case (EmptyJson, _) | (_, EmptyJson)=> newJson
+    case (EmptyJson, _) | (_, EmptyJson) => newJson
     case _ =>
       val jsonField = configData.getString("name")
       getOptionalDataLocation(configData) match {

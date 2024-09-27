@@ -58,4 +58,13 @@ class ConfigUtils @Inject()(adrExceptionEmitter: ADRExceptionEmitter) extends Er
       extractField(currentElem, result)
     }
   }
+
+   def getConfigStringOpt(configElem: Config, path: String): Option[String] = {
+    try {
+      Some(configElem.getString(path))
+    } catch {
+      case _: Exception => None
+    }
+  }
+
 }
