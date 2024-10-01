@@ -260,6 +260,27 @@ class SubmissionCommonSpec extends ERSTestHelper {
       }
     }
 
+    // TODO this is existing behaviour, should we be making an object with null as the value?
+    "return a JSON object with the correct key, and a null value given they values cannot be parsed" when {
+      "integer is not parsable" in {
+        val configElem = Configuration.from(Map("column" -> 1, "name" -> "numberOfIndividuals", "type" -> "int"))
+        val fileData = ListBuffer(Seq("2015-12-09", "You can't parse me mate", "50.60", "10.9821", "8.2587", "yes","" , "", "no"))
+
+        val result = testSubmissionCommon.handleValueRetrieval(configElem.underlying, fileData, elemRow = 0, elemColumn = 1)
+
+        result shouldBe Json.parse("""{"numberOfIndividuals":null}""")
+      }
+
+      "double is not parsable" in {
+        val configElem = Configuration.from(Map("column" -> 2, "name" -> "numberOfSharesGrantedOver", "type" -> "double"))
+        val fileData = ListBuffer(Seq("2015-12-09", "123456", "let me out", "10.9821", "8.2587", "yes","" , "", "no"))
+
+        val result = testSubmissionCommon.handleValueRetrieval(configElem.underlying, fileData, elemRow = 0, elemColumn = 2)
+
+        result shouldBe Json.parse("""{"numberOfSharesGrantedOver":null}""")
+      }
+    }
+
   }
 
 }

@@ -67,7 +67,7 @@ class SubmissionCommon @Inject()(configUtils: ConfigUtils) extends Logging {
   def getConfigElemValue(configElem: Config): JsObject =
     getNewField(configElem, getConfigElemFieldValueByType(configElem, "value"))
 
-  def getFileDataValue(configElem: Config, fileData: ListBuffer[Seq[String]], row: Option[Int], sheetName: Option[String], schemeInfo: Option[SchemeInfo]): JsObject = {
+  def getFileDataValue(configElem: Config, fileData: ListBuffer[Seq[String]], row: Option[Int]): JsObject = {
     if (configElem.hasPath("value")) getConfigElemValue(configElem)
     else {
       val elemColumn = configElem.getInt("column")
@@ -148,7 +148,7 @@ class SubmissionCommon @Inject()(configUtils: ConfigUtils) extends Logging {
     configUtils
       .getConfigStringOpt(configElem, "valid_value")
       .map(valueFromConfig => valueFromColumn.toUpperCase == valueFromConfig.toUpperCase)
-    }
+  }
 
   def getMetadataValue(configElem: Config, metadata: Object): JsObject = {
 
