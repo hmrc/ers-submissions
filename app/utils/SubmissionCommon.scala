@@ -93,12 +93,11 @@ class SubmissionCommon @Inject()(configUtils: ConfigUtils) extends Logging {
     val valueFromConfig: Option[JsObject] = for {
       row: Seq[String] <- fileData.lift(elemRow)
       valueFromColumn: String <- row.lift(elemColumn)
-      finalValue: JsObject <- getNewFieldOpt(configElem, valueFromColumn)
+      finalValue: JsObject <- createValueJson(configElem, valueFromColumn)
     } yield finalValue
 
     valueFromConfig.getOrElse(EmptyJson)
   }
-
 
   /**
    *
@@ -106,7 +105,7 @@ class SubmissionCommon @Inject()(configUtils: ConfigUtils) extends Logging {
    * @param valueFromColumn   value from fileData at the previously specified row & column
    * @return                  a parsed value with the the correct name and value, or an empty JSON object
    */
-  private def getNewFieldOpt(configRow: Config, valueFromColumn: String): Option[JsObject] = {
+  private def createValueJson(configRow: Config, valueFromColumn: String): Option[JsObject] = {
     for {
       typeFromConfig <- configUtils.getConfigStringOpt(configRow, "type")
       result <- {
@@ -114,17 +113,7 @@ class SubmissionCommon @Inject()(configUtils: ConfigUtils) extends Logging {
 
         if (valueFromColumn.nonEmpty && allowedTypes.contains(typeFromConfig)) {
           if (typeFromConfig == "boolean") {
-            // For the boolean case, we do another check against the 'valid_value' config element.
-            // This case is handled separately to create the expected empty JSON object,
-            // and not an object like { "name" : null } as JsValueWrapper converts empty options to null
-            val parsedBooleanConfigValueOpt: Option[JsValueWrapper] = getNewFieldOptBooleanCase(configRow, valueFromColumn)
-
-            parsedBooleanConfigValueOpt
-              .flatMap(parsedBooleanConfigValue =>
-                configUtils
-                  .getConfigStringOpt(configRow, "name")
-                  .map(nameFromConfig => Json.obj(nameFromConfig -> parsedBooleanConfigValue))
-              )
+            createBooleanValueJson(configRow, valueFromColumn)
           } else {
 
             val parsedConfigValue: JsValueWrapper = typeFromConfig match {
@@ -144,10 +133,25 @@ class SubmissionCommon @Inject()(configUtils: ConfigUtils) extends Logging {
     } yield result
   }
 
-  private def getNewFieldOptBooleanCase(configElem: Config, valueFromColumn: String): Option[JsValueWrapper] = {
-    configUtils
-      .getConfigStringOpt(configElem, "valid_value")
-      .map(valueFromConfig => valueFromColumn.toUpperCase == valueFromConfig.toUpperCase)
+  /** For the boolean case, we check valueFromColumn for equality against the 'valid_value' config element.
+   * This case is handled separately to create the expected empty JSON object,
+   * and not an object like { "name" : null } as JsValueWrapper converts empty options to null
+   *
+   * @param configRow         config row to retrieve the 'name' and 'valid_value' from
+   * @param valueFromColumn  value to test against the config 'valid_value'
+   */
+  private def createBooleanValueJson(configRow: Config, valueFromColumn: String) : Option[JsObject] = {
+    for {
+      parsedBooleanConfigValue <-
+        configUtils
+          .getConfigStringOpt(configRow, "valid_value")
+          .map(validValue => valueFromColumn.toUpperCase == validValue.toUpperCase)
+
+      result <-
+        configUtils
+          .getConfigStringOpt(configRow, "name")
+          .map(name => Json.obj(name -> parsedBooleanConfigValue))
+    } yield result
   }
 
   def getMetadataValue(configElem: Config, metadata: Object): JsObject = {
