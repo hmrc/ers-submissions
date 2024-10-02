@@ -167,7 +167,7 @@ class SubmissionCommonSpec extends ERSTestHelper {
 
   "handleValueRetrieval" should {
 
-     val EmptyJson: JsObject = Json.obj()
+    val EmptyJson: JsObject = Json.obj()
 
     "return an empty JSON object, given a row or column out of bounds" when {
 
@@ -190,12 +190,12 @@ class SubmissionCommonSpec extends ERSTestHelper {
       }
     }
 
-    "extract the relevant name from config, and value from fileData" when {
+    "create the expected JSON by extracting the relevant name from config, and value from fileData" when {
+
+      val fileData = ListBuffer(Seq("2015-12-09", "123456", "50.60", "10.9821", "8.2587", "yes", "", "", "no"))
 
       "value is a string" in {
         val configElem = Configuration.from(Map("column" -> 0, "name" -> "dateOfGrant", "type" -> "string"))
-        val fileData = ListBuffer(Seq("2015-12-09", "123456", "50.60", "10.9821", "8.2587", "yes", "", "", "no"))
-
         val result = testSubmissionCommon.handleValueRetrieval(configElem.underlying, fileData, elemRow = 0, elemColumn = 0)
 
         result shouldBe Json.parse("""{"dateOfGrant":"2015-12-09"}""")
@@ -203,8 +203,6 @@ class SubmissionCommonSpec extends ERSTestHelper {
 
       "value is an integer" in {
         val configElem = Configuration.from(Map("column" -> 1, "name" -> "numberOfIndividuals", "type" -> "int"))
-        val fileData = ListBuffer(Seq("2015-12-09", "123456", "50.60", "10.9821", "8.2587", "yes","" , "", "no"))
-
         val result = testSubmissionCommon.handleValueRetrieval(configElem.underlying, fileData, elemRow = 0, elemColumn = 1)
 
         result shouldBe Json.parse("""{"numberOfIndividuals":123456}""")
@@ -212,26 +210,21 @@ class SubmissionCommonSpec extends ERSTestHelper {
 
       "value is a double" in {
         val configElem = Configuration.from(Map("column" -> 2, "name" -> "numberOfSharesGrantedOver", "type" -> "double"))
-        val fileData = ListBuffer(Seq("2015-12-09", "123456", "50.60", "10.9821", "8.2587", "yes","" , "", "no"))
-
         val result = testSubmissionCommon.handleValueRetrieval(configElem.underlying, fileData, elemRow = 0, elemColumn = 2)
 
         result shouldBe Json.parse("""{"numberOfSharesGrantedOver":50.6}""")
       }
 
-      "value is a boolean type and true" in {
+      "type is boolean, and value equal to valid_value" in {
         val configElem = Configuration.from(Map("column" -> 5, "name" -> "sharesListedOnSE", "type" -> "boolean", "valid_value" -> "YES"))
-
-        val fileData = ListBuffer(Seq("2015-12-09", "123456", "50.60", "10.9821", "8.2587", "yes","" , "", "no"))
         val result = testSubmissionCommon.handleValueRetrieval(configElem.underlying, fileData, elemRow = 0, elemColumn = 5)
 
         result shouldBe Json.parse("""{"sharesListedOnSE":true}""")
       }
 
-      "value is a boolean type and false" in {
+      "type is boolean, and value not equal to valid_value" in {
         val configElem = Configuration.from(Map("column" -> 5, "name" -> "sharesListedOnSE", "type" -> "boolean", "valid_value" -> "YES"))
-
-        val fileData = ListBuffer(Seq("2015-12-09", "123456", "50.60", "10.9821", "8.2587", "no","" , "", "no"))
+        val fileData = ListBuffer(Seq("2015-12-09", "123456", "50.60", "10.9821", "8.2587", "no", "", "", "no"))
         val result = testSubmissionCommon.handleValueRetrieval(configElem.underlying, fileData, elemRow = 0, elemColumn = 5)
 
         result shouldBe Json.parse("""{"sharesListedOnSE":false}""")
@@ -241,7 +234,7 @@ class SubmissionCommonSpec extends ERSTestHelper {
 
     "return an empty JSON object for a boolean type" when {
 
-      "value at the column is empty" in {
+      "value at the column specified is empty" in {
         val configElem = Configuration.from(Map("column" -> 5, "name" -> "sharesListedOnSE", "type" -> "boolean", "valid_value" -> "YES"))
 
         val fileData = ListBuffer(Seq("2015-12-09", "123456", "50.60", "10.9821", "8.2587", "", "", "", "no"))
@@ -261,10 +254,10 @@ class SubmissionCommonSpec extends ERSTestHelper {
     }
 
     // TODO this is existing behaviour, should we be making an object with null as the value?
-    "return a JSON object with the correct key, and a null value given they values cannot be parsed" when {
+    "return a JSON object with the specified key, and a null value given they values cannot be parsed" when {
       "integer is not parsable" in {
         val configElem = Configuration.from(Map("column" -> 1, "name" -> "numberOfIndividuals", "type" -> "int"))
-        val fileData = ListBuffer(Seq("2015-12-09", "You can't parse me mate", "50.60", "10.9821", "8.2587", "yes","" , "", "no"))
+        val fileData = ListBuffer(Seq("2015-12-09", "You can't parse me mate", "50.60", "10.9821", "8.2587", "yes", "", "", "no"))
 
         val result = testSubmissionCommon.handleValueRetrieval(configElem.underlying, fileData, elemRow = 0, elemColumn = 1)
 
@@ -273,7 +266,7 @@ class SubmissionCommonSpec extends ERSTestHelper {
 
       "double is not parsable" in {
         val configElem = Configuration.from(Map("column" -> 2, "name" -> "numberOfSharesGrantedOver", "type" -> "double"))
-        val fileData = ListBuffer(Seq("2015-12-09", "123456", "let me out", "10.9821", "8.2587", "yes","" , "", "no"))
+        val fileData = ListBuffer(Seq("2015-12-09", "123456", "let me out", "10.9821", "8.2587", "yes", "", "", "no"))
 
         val result = testSubmissionCommon.handleValueRetrieval(configElem.underlying, fileData, elemRow = 0, elemColumn = 2)
 
