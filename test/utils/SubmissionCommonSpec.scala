@@ -168,6 +168,7 @@ class SubmissionCommonSpec extends ERSTestHelper {
   "handleValueRetrieval" should {
 
     val EmptyJson: JsObject = Json.obj()
+    val firstRow = 0
 
     "return an empty JSON object, given a row or column out of bounds" when {
 
@@ -195,37 +196,42 @@ class SubmissionCommonSpec extends ERSTestHelper {
       val fileData = ListBuffer(Seq("2015-12-09", "123456", "50.60", "10.9821", "8.2587", "yes", "", "", "no"))
 
       "value is a string" in {
-        val configElem = Configuration.from(Map("column" -> 0, "name" -> "dateOfGrant", "type" -> "string"))
-        val result = testSubmissionCommon.handleValueRetrieval(configElem.underlying, fileData, elemRow = 0, elemColumn = 0)
+        val column = 0
+        val configElem = Configuration.from(Map("column" -> column, "name" -> "dateOfGrant", "type" -> "string"))
+        val result = testSubmissionCommon.handleValueRetrieval(configElem.underlying, fileData, firstRow, column)
 
         result shouldBe Json.parse("""{"dateOfGrant":"2015-12-09"}""")
       }
 
       "value is an integer" in {
-        val configElem = Configuration.from(Map("column" -> 1, "name" -> "numberOfIndividuals", "type" -> "int"))
-        val result = testSubmissionCommon.handleValueRetrieval(configElem.underlying, fileData, elemRow = 0, elemColumn = 1)
+        val column = 1
+        val configElem = Configuration.from(Map("column" -> column, "name" -> "numberOfIndividuals", "type" -> "int"))
+        val result = testSubmissionCommon.handleValueRetrieval(configElem.underlying, fileData, firstRow, column)
 
         result shouldBe Json.parse("""{"numberOfIndividuals":123456}""")
       }
 
       "value is a double" in {
-        val configElem = Configuration.from(Map("column" -> 2, "name" -> "numberOfSharesGrantedOver", "type" -> "double"))
-        val result = testSubmissionCommon.handleValueRetrieval(configElem.underlying, fileData, elemRow = 0, elemColumn = 2)
+        val column = 2
+        val configElem = Configuration.from(Map("column" -> column, "name" -> "numberOfSharesGrantedOver", "type" -> "double"))
+        val result = testSubmissionCommon.handleValueRetrieval(configElem.underlying, fileData, firstRow, column)
 
         result shouldBe Json.parse("""{"numberOfSharesGrantedOver":50.6}""")
       }
 
       "type is boolean, and value equal to valid_value" in {
-        val configElem = Configuration.from(Map("column" -> 5, "name" -> "sharesListedOnSE", "type" -> "boolean", "valid_value" -> "YES"))
-        val result = testSubmissionCommon.handleValueRetrieval(configElem.underlying, fileData, elemRow = 0, elemColumn = 5)
+        val column = 5
+        val configElem = Configuration.from(Map("column" -> column, "name" -> "sharesListedOnSE", "type" -> "boolean", "valid_value" -> "YES"))
+        val result = testSubmissionCommon.handleValueRetrieval(configElem.underlying, fileData, firstRow, column)
 
         result shouldBe Json.parse("""{"sharesListedOnSE":true}""")
       }
 
       "type is boolean, and value not equal to valid_value" in {
-        val configElem = Configuration.from(Map("column" -> 5, "name" -> "sharesListedOnSE", "type" -> "boolean", "valid_value" -> "YES"))
+        val column = 5
+        val configElem = Configuration.from(Map("column" -> column, "name" -> "sharesListedOnSE", "type" -> "boolean", "valid_value" -> "YES"))
         val fileData = ListBuffer(Seq("2015-12-09", "123456", "50.60", "10.9821", "8.2587", "no", "", "", "no"))
-        val result = testSubmissionCommon.handleValueRetrieval(configElem.underlying, fileData, elemRow = 0, elemColumn = 5)
+        val result = testSubmissionCommon.handleValueRetrieval(configElem.underlying, fileData, firstRow, column)
 
         result shouldBe Json.parse("""{"sharesListedOnSE":false}""")
       }
@@ -235,19 +241,21 @@ class SubmissionCommonSpec extends ERSTestHelper {
     "return an empty JSON object for a boolean type" when {
 
       "value at the column specified is empty" in {
-        val configElem = Configuration.from(Map("column" -> 5, "name" -> "sharesListedOnSE", "type" -> "boolean", "valid_value" -> "YES"))
+        val column = 5
+        val configElem = Configuration.from(Map("column" -> column, "name" -> "sharesListedOnSE", "type" -> "boolean", "valid_value" -> "YES"))
 
         val fileData = ListBuffer(Seq("2015-12-09", "123456", "50.60", "10.9821", "8.2587", "", "", "", "no"))
-        val result = testSubmissionCommon.handleValueRetrieval(configElem.underlying, fileData, elemRow = 0, elemColumn = 5)
+        val result = testSubmissionCommon.handleValueRetrieval(configElem.underlying, fileData, firstRow, column)
 
         result shouldBe EmptyJson
       }
 
       "valid_value is not defined in config" in {
+        val column = 5
         val configElem = Configuration.from(Map("column" -> 5, "name" -> "sharesListedOnSE", "type" -> "boolean"))
 
         val fileData = ListBuffer(Seq("2015-12-09", "123456", "50.60", "10.9821", "8.2587", "yes", "", "", "no"))
-        val result = testSubmissionCommon.handleValueRetrieval(configElem.underlying, fileData, elemRow = 0, elemColumn = 5)
+        val result = testSubmissionCommon.handleValueRetrieval(configElem.underlying, fileData, firstRow,column)
 
         result shouldBe EmptyJson
       }
@@ -256,23 +264,62 @@ class SubmissionCommonSpec extends ERSTestHelper {
     // TODO this is existing behaviour, should we be making an object with null as the value?
     "return a JSON object with the specified key, and a null value given they values cannot be parsed" when {
       "integer is not parsable" in {
-        val configElem = Configuration.from(Map("column" -> 1, "name" -> "numberOfIndividuals", "type" -> "int"))
+        val column = 1
+        val configElem = Configuration.from(Map("column" -> column, "name" -> "numberOfIndividuals", "type" -> "int"))
         val fileData = ListBuffer(Seq("2015-12-09", "You can't parse me mate", "50.60", "10.9821", "8.2587", "yes", "", "", "no"))
 
-        val result = testSubmissionCommon.handleValueRetrieval(configElem.underlying, fileData, elemRow = 0, elemColumn = 1)
+        val result = testSubmissionCommon.handleValueRetrieval(configElem.underlying, fileData, firstRow, column)
 
         result shouldBe Json.parse("""{"numberOfIndividuals":null}""")
       }
 
       "double is not parsable" in {
-        val configElem = Configuration.from(Map("column" -> 2, "name" -> "numberOfSharesGrantedOver", "type" -> "double"))
+        val column = 2
+        val configElem = Configuration.from(Map("column" -> column, "name" -> "numberOfSharesGrantedOver", "type" -> "double"))
         val fileData = ListBuffer(Seq("2015-12-09", "123456", "let me out", "10.9821", "8.2587", "yes", "", "", "no"))
 
-        val result = testSubmissionCommon.handleValueRetrieval(configElem.underlying, fileData, elemRow = 0, elemColumn = 2)
+        val result = testSubmissionCommon.handleValueRetrieval(configElem.underlying, fileData, firstRow, column)
 
         result shouldBe Json.parse("""{"numberOfSharesGrantedOver":null}""")
       }
     }
+
+    // Test for SIP_Awards_V4 schema optional 16th & 17th columns
+    "return empty JSON" when {
+
+      "no data exists at column 17" in {
+        val column = 17
+        val configElem = Configuration.from(Map("column" -> column, "name" -> "the17thColumn", "type" -> "string"))
+
+        val fileData = ListBuffer(
+          Seq(
+            "2015-03-24", "100", "4", "yes", "2:1", "10.1234", "10.12", "10.1234", "123456",
+            "123456", "123456", "123456", "123456", "123456", "no", "yes"
+          )
+        )
+
+        val result = testSubmissionCommon.handleValueRetrieval(configElem.underlying, fileData, firstRow, column)
+
+        result shouldBe EmptyJson
+      }
+
+      "no data exists at column 16" in {
+        val column = 16
+        val configElem = Configuration.from(Map("column" -> 16, "name" -> "the16thColumn", "type" -> "string"))
+
+        val fileData = ListBuffer(
+          Seq(
+            "2015-03-24", "100", "4", "yes", "2:1", "10.1234", "10.12", "10.1234", "123456",
+            "123456", "123456", "123456", "123456", "123456", "no"
+          )
+        )
+
+        val result = testSubmissionCommon.handleValueRetrieval(configElem.underlying, fileData, firstRow, column)
+
+        result shouldBe EmptyJson
+      }
+    }
+
 
   }
 
