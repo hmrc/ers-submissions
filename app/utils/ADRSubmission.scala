@@ -170,7 +170,7 @@ class ADRSubmission @Inject()(submissionCommon: SubmissionCommon,
             }
           }
           else json
-        case _ => json ++ submissionCommon.getFileDataValue(elem, fileData, row, sheetName, schemeInfo)
+        case _ => json ++ submissionCommon.getFileDataValue(elem, fileData, row)
       }
     }
   }
