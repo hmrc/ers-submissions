@@ -17,7 +17,6 @@
 package utils
 
 import com.typesafe.config.Config
-import models.SchemeInfo
 import play.api.Logging
 import play.api.libs.json.Json.JsValueWrapper
 import play.api.libs.json._
