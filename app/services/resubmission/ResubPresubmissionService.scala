@@ -43,8 +43,11 @@ class ResubPresubmissionService @Inject()(metadataRepository: MetadataMongoRepos
     record.validate[T] match {
       case JsSuccess(obj, _) =>
         Some(obj)
-      case JsError(e: collection.Seq[(JsPath, collection.Seq[JsonValidationError])]) =>
-        logger.warn(s"Failed to validate JsObject error: ${e.map(_._2).mkString(", ")}")
+      case JsError(errors: collection.Seq[(JsPath, collection.Seq[JsonValidationError])]) =>
+        val jsErrors = errors
+          .map((e: (JsPath, collection.Seq[JsonValidationError])) => s"${e._1}: ${e._2.mkString(", ")}")
+          .mkString(", ")
+        logger.warn(s"Failed to validate JsObject error: ${jsErrors}")
         None
     }
 
