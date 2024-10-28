@@ -108,7 +108,7 @@ case class ErsSummary(bundleRef: String,
                       companies: Option[CompanyDetailsList],
                       trustees: Option[TrusteeDetailsList],
                       nofOfRows: Option[Int],
-                      transferStatus: Option[String]) {
+                      transferStatus: Option[String] = Some("tmpDefaultValue")) {
 
   val basicLogMessage: String = List(bundleRef, fileType, s"nofOfRows $nofOfRows", transferStatus).mkString("[",",","]")
 }
