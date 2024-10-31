@@ -30,7 +30,11 @@ case class Selectors(processFailedSubmissionsConfig: ProcessFailedSubmissionsCon
     )
   )
 
-  val schemeRefSelector: BsonDocument = BsonDocument(
+  val preSubmissionSchemeRefSelector: BsonDocument = BsonDocument(
+    processFailedSubmissionsConfig.schemeRefList.map(schemeList => "schemeInfo.schemeRef" -> BsonDocument("$in" -> schemeList))
+  )
+
+  val metadataSchemeRefSelector: BsonDocument = BsonDocument(
     processFailedSubmissionsConfig.schemeRefList.map(schemeList => "metaData.schemeInfo.schemeRef" -> BsonDocument("$in" -> schemeList))
   )
 
@@ -42,9 +46,9 @@ case class Selectors(processFailedSubmissionsConfig: ProcessFailedSubmissionsCon
     "metaData.schemeInfo.timestamp" -> BsonDocument("$gte" -> LocalDate.parse(date, DateTimeFormatter.ofPattern("dd/MM/yyyy")).atStartOfDay(ZoneId.of("UTC")).toInstant.toEpochMilli))
   )
 
-  val allSelectors: BsonDocument = Seq(
+  val allMetadataSelectors: BsonDocument = Seq(
     baseSelector,
-    schemeRefSelector,
+    metadataSchemeRefSelector,
     schemeSelector,
     dateRangeSelector
   ).foldLeft(BsonDocument())(_ +:+ _)

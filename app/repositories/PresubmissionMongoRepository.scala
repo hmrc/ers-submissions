@@ -129,4 +129,20 @@ class PresubmissionMongoRepository @Inject()(applicationConfig: ApplicationConfi
   private def createDocumentToInsert(schemeData: SchemeData): JsObject =
     Json.toJsObject(schemeData) ++
       Json.obj("createdAt" -> Json.obj("$date" -> Instant.now.toEpochMilli))
+
+  def getStatusForSelectedSchemes(sessionId: String, selectors: Selectors): ERSEnvelope[Seq[JsObject]] = EitherT {
+    collection
+      .find(filter = selectors.preSubmissionSchemeRefSelector)
+      .toFuture()
+      .map(_.asRight)
+      .recover {
+        mongoRecover(
+          repository = className,
+          method = "getAggregateCountOfSubmissions",
+          sessionId = sessionId,
+          message = "operation failed due to exception from Mongo",
+          optSchemaRefs = None
+        )
+      }
+  }
 }

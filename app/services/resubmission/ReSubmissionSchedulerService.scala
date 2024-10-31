@@ -65,12 +65,21 @@ class ReSubmissionSchedulerService @Inject()(val applicationConfig: ApplicationC
     implicit val hc: HeaderCarrier = getOrCreateCorrelationID(request)
 
     logIfEnabled(applicationConfig.schedulerEnableAdditionalLogs) {
-      resubPresubmissionService.logAggregateMetadataMetrics()
-      resubPresubmissionService.logFailedSubmissionCount(processFailedSubmissionsConfig)
+      resubPresubmissionService
+        .logAggregateMetadataMetrics()
+        .map(message => logger.info(message))
+      resubPresubmissionService
+        .logFailedSubmissionCount(processFailedSubmissionsConfig)
+        .map(message => logger.info(message))
       logger.info(LockMessage(lockService).message)
     }
     logIfEnabled(applicationConfig.schedulerSchemeRefListEnabled) {
-      resubPresubmissionService.logSelectedSchemeRefDetails(processFailedSubmissionsConfig)
+      resubPresubmissionService
+        .getMetadataSelectedSchemeRefDetailsMessage(processFailedSubmissionsConfig)
+        .map(message => logger.info(message))
+      resubPresubmissionService
+        .getPreSubSelectedSchemeRefDetailsMessage(processFailedSubmissionsConfig)
+        .map(message => logger.info(message))
     }
 
     ERSEnvelope(lockService.withLock(resubmit()(request, hc).value).map {

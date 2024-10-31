@@ -25,7 +25,7 @@ import org.mongodb.scala.bson.BsonDocument
 import play.api.Logging
 import play.api.libs.json.{JsError, JsObject, JsPath, JsSuccess, JsonValidationError, Reads}
 import play.api.mvc.Request
-import repositories.{MetadataMongoRepository, Selectors}
+import repositories.{MetadataMongoRepository, PresubmissionMongoRepository, Selectors}
 import services.SubmissionService
 import services.audit.AuditEvents
 import uk.gov.hmrc.http.HeaderCarrier
@@ -35,6 +35,7 @@ import javax.inject.Inject
 import scala.concurrent.ExecutionContext
 
 class ResubPresubmissionService @Inject()(metadataRepository: MetadataMongoRepository,
+                                          presubmissionRepository: PresubmissionMongoRepository,
                                           submissionCommonService: SubmissionService,
                                           auditEvents: AuditEvents)
                                          (implicit ec: ExecutionContext) extends Logging {
@@ -51,18 +52,18 @@ class ResubPresubmissionService @Inject()(metadataRepository: MetadataMongoRepos
         None
     }
 
-  def logAggregateMetadataMetrics()(implicit hc: HeaderCarrier): ERSEnvelope[Unit] = {
+  def logAggregateMetadataMetrics()(implicit hc: HeaderCarrier): ERSEnvelope[String] = {
     for {
       aggregatedRecords <- metadataRepository
         .getAggregateCountOfSubmissions(Session.id(hc))
       aggregatedLogs = AggregatedLogs(
         aggregatedRecords.flatMap(validateJson[AggregatedLog])
       ).message
-    } yield logger.info(aggregatedLogs)
+    } yield aggregatedLogs
   }
 
   def logFailedSubmissionCount(processFailedSubmissionsConfig: ProcessFailedSubmissionsConfig)
-                              (implicit hc: HeaderCarrier): ERSEnvelope[Unit] = {
+                              (implicit hc: HeaderCarrier): ERSEnvelope[String] = {
     val failedJobSelector: BsonDocument = metadataRepository.createFailedJobSelector(processFailedSubmissionsConfig)
     for {
       numberOfRecords <- metadataRepository
@@ -70,19 +71,28 @@ class ResubPresubmissionService @Inject()(metadataRepository: MetadataMongoRepos
       countToLog = TotalNumberSubmissionsToProcessMessage(
         numberOfFailedJobs = numberOfRecords
       ).message
-    } yield logger.info(countToLog)
+    } yield countToLog
   }
 
-  def logSelectedSchemeRefDetails(processFailedSubmissionsConfig: ProcessFailedSubmissionsConfig)
-                                 (implicit hc: HeaderCarrier): ERSEnvelope[Unit] = {
+  def getPreSubSelectedSchemeRefDetailsMessage(processFailedSubmissionsConfig: ProcessFailedSubmissionsConfig)
+                                              (implicit hc: HeaderCarrier): ERSEnvelope[String] =
     for {
-      statusForSelectedSchemes <- metadataRepository
+      preSubmissionStatuses <- presubmissionRepository
         .getStatusForSelectedSchemes(Session.id(hc), Selectors(processFailedSubmissionsConfig))
-      selectedSchemeRefLogs = SelectedSchemeRefLogs(
-        statusForSelectedSchemes.flatMap(validateJson[ErsSummary])
-      ).message
-    } yield logger.info(selectedSchemeRefLogs)
-  }
+      preSubmissionSchemeData: Seq[SchemeData] = preSubmissionStatuses
+        .flatMap(validateJson[SchemeData])
+      selectedSchemeRefLogs = PreSubSelectedSchemeRefLogs(preSubmissionSchemeData)
+    } yield selectedSchemeRefLogs.message
+
+  def getMetadataSelectedSchemeRefDetailsMessage(processFailedSubmissionsConfig: ProcessFailedSubmissionsConfig)
+                                                (implicit hc: HeaderCarrier): ERSEnvelope[String] =
+    for {
+      metadataStatuses <- metadataRepository
+        .getStatusForSelectedSchemes(Session.id(hc), Selectors(processFailedSubmissionsConfig))
+      metadataErsSummaries: Seq[ErsSummary] = metadataStatuses
+        .flatMap(validateJson[ErsSummary])
+      selectedSchemeRefLogs = MetaDataSelectedSchemeRefLogs(metadataErsSummaries)
+    } yield selectedSchemeRefLogs.message
 
   def processFailedSubmissions(processFailedSubmissionsConfig: ProcessFailedSubmissionsConfig)
                               (implicit request: Request[_], hc: HeaderCarrier): ERSEnvelope[Boolean] = {
