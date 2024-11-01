@@ -110,7 +110,7 @@ case class ErsSummary(bundleRef: String,
                       nofOfRows: Option[Int],
                       transferStatus: Option[String]) {
 
-  val basicLogMessage: String = List(bundleRef, fileType, s"nofOfRows $nofOfRows", transferStatus).mkString("[",",","]")
+  val basicLogMessage: String = List(s"bundleRef $bundleRef", s"filetype $fileType", s"nofOfRows $nofOfRows", transferStatus).mkString("[",",","]")
 }
 object ErsSummary {
   import models.DateTime._
