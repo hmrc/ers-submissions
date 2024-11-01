@@ -29,10 +29,11 @@ import org.mongodb.scala.bson.{BsonString, ObjectId}
 import org.scalatest.{BeforeAndAfterEach, EitherValues}
 import play.api.mvc.Request
 import play.api.test.FakeRequest
-import repositories.MetadataMongoRepository
+import repositories.{MetadataMongoRepository, PresubmissionMongoRepository, Selectors}
 import services.SubmissionService
 import services.audit.AuditEvents
 import uk.gov.hmrc.http.HeaderCarrier
+import play.api.libs.json._
 
 import java.time.Instant
 import java.time.temporal.ChronoUnit
@@ -41,13 +42,15 @@ class ResubPresubmissionServiceSpec extends ERSTestHelper with BeforeAndAfterEac
   implicit val hc: HeaderCarrier = new HeaderCarrier()
   implicit val request: Request[_] = FakeRequest()
 
-  val metadataMongoRepositoryResubmission: MetadataMongoRepository = mock[MetadataMongoRepository]
+  val mockMetadataMongoRepository: MetadataMongoRepository = mock[MetadataMongoRepository]
+  val mockPresubmissionMongoRepository: PresubmissionMongoRepository = mock[PresubmissionMongoRepository]
+
   val mockSubmissionService: SubmissionService = mock[SubmissionService]
   val mockAuditEvents: AuditEvents = mock[AuditEvents]
 
   override def beforeEach(): Unit = {
     super.beforeEach()
-    reset(metadataMongoRepositoryResubmission)
+    reset(mockMetadataMongoRepository)
     reset(mockSubmissionService)
     reset(mockAuditEvents)
   }
@@ -63,6 +66,7 @@ class ResubPresubmissionServiceSpec extends ERSTestHelper with BeforeAndAfterEac
 
   val schemeInfo: SchemeInfo = SchemeInfo(
     schemeRef = "123",
+    timestamp = Instant.parse("2023-10-07T10:15:30.00Z"),
     schemeId = "123",
     taxYear = "123",
     schemeName = "123",
@@ -106,17 +110,18 @@ class ResubPresubmissionServiceSpec extends ERSTestHelper with BeforeAndAfterEac
 
   "processFailedSubmissions" should {
     val resubPresubmissionService: ResubPresubmissionService = new ResubPresubmissionService(
-      metadataMongoRepositoryResubmission,
+      mockMetadataMongoRepository,
+      mockPresubmissionMongoRepository,
       mockSubmissionService,
       mockAuditEvents
     )
 
     "return true if findAndUpdateByStatus is successful and returns a record" in {
-      when(metadataMongoRepositoryResubmission.getFailedJobs(any(), any(), any()))
+      when(mockMetadataMongoRepository.getFailedJobs(any(), any(), any()))
         .thenReturn(ERSEnvelope(Seq(new ObjectId())))
-      when(metadataMongoRepositoryResubmission.findAndUpdateByStatus(any[List[ObjectId]](), any()))
+      when(mockMetadataMongoRepository.findAndUpdateByStatus(any[List[ObjectId]](), any()))
         .thenReturn(ERSEnvelope(updateResult))
-      when(metadataMongoRepositoryResubmission.findErsSummaries(any(), any()))
+      when(mockMetadataMongoRepository.findErsSummaries(any(), any()))
         .thenReturn(ERSEnvelope(scala.Seq(ersSummary)))
       when(mockSubmissionService.callProcessData(any(), any(), any())(any(), any()))
         .thenReturn(ERSEnvelope(true))
@@ -126,11 +131,11 @@ class ResubPresubmissionServiceSpec extends ERSTestHelper with BeforeAndAfterEac
     }
 
     "return false if findAndUpdateByStatus is successful but returns None" in {
-      when(metadataMongoRepositoryResubmission.getFailedJobs(any(), any(), any()))
+      when(mockMetadataMongoRepository.getFailedJobs(any(), any(), any()))
         .thenReturn(ERSEnvelope(Seq(new ObjectId())))
-      when(metadataMongoRepositoryResubmission.findAndUpdateByStatus(any[List[ObjectId]](), any()))
+      when(mockMetadataMongoRepository.findAndUpdateByStatus(any[List[ObjectId]](), any()))
         .thenReturn(ERSEnvelope(updateResult))
-      when(metadataMongoRepositoryResubmission.findErsSummaries(any(), any()))
+      when(mockMetadataMongoRepository.findErsSummaries(any(), any()))
         .thenReturn(ERSEnvelope(Seq(ersSummary)))
       when(mockSubmissionService.callProcessData(any(), any(), any())(any(), any()))
         .thenReturn(ERSEnvelope(false))
@@ -140,11 +145,11 @@ class ResubPresubmissionServiceSpec extends ERSTestHelper with BeforeAndAfterEac
     }
 
     "rethrow ERSError() if such one occurs" in {
-      when(metadataMongoRepositoryResubmission.getFailedJobs(any(), any(), any()))
+      when(mockMetadataMongoRepository.getFailedJobs(any(), any(), any()))
         .thenReturn(ERSEnvelope(Seq(new ObjectId())))
-      when(metadataMongoRepositoryResubmission.findAndUpdateByStatus(any(), any()))
+      when(mockMetadataMongoRepository.findAndUpdateByStatus(any(), any()))
         .thenReturn(ERSEnvelope(updateResult))
-      when(metadataMongoRepositoryResubmission.findErsSummaries(any(), any()))
+      when(mockMetadataMongoRepository.findErsSummaries(any(), any()))
         .thenReturn(ERSEnvelope(scala.Seq(ersSummary)))
       when(mockSubmissionService.callProcessData(any(), any(), any())(any(), any()))
         .thenReturn(ERSEnvelope(JsonFromSheetsCreationError("error occurred")))
@@ -155,11 +160,11 @@ class ResubPresubmissionServiceSpec extends ERSTestHelper with BeforeAndAfterEac
     }
 
     "throw ERSError if Exception occurs" in {
-      when(metadataMongoRepositoryResubmission.findAndUpdateByStatus(any(), any()))
+      when(mockMetadataMongoRepository.findAndUpdateByStatus(any(), any()))
         .thenReturn(ERSEnvelope(MongoGenericError("Something went wrong")))
-      when(metadataMongoRepositoryResubmission.getFailedJobs(any(), any(), any()))
+      when(mockMetadataMongoRepository.getFailedJobs(any(), any(), any()))
         .thenReturn(ERSEnvelope(Seq(new ObjectId())))
-      when(metadataMongoRepositoryResubmission.findErsSummaries(any(), any()))
+      when(mockMetadataMongoRepository.findErsSummaries(any(), any()))
         .thenReturn(ERSEnvelope(scala.Seq(ersSummary)))
       when(mockSubmissionService.callProcessData(any(), any(), any())(any(), any()))
         .thenReturn(ERSEnvelope(false))
@@ -182,11 +187,11 @@ class ResubPresubmissionServiceSpec extends ERSTestHelper with BeforeAndAfterEac
           val failedJobIds = Seq(new ObjectId("6450e4f47e56c12cd1259908"), new ObjectId("6450e4f47e56c12cd1259910"))
           val ersSummaries = Seq(firstErsSummary, secondErsSummary)
 
-          when(metadataMongoRepositoryResubmission.getFailedJobs(any(), any(), any()))
+          when(mockMetadataMongoRepository.getFailedJobs(any(), any(), any()))
             .thenReturn(ERSEnvelope(failedJobIds))
-          when(metadataMongoRepositoryResubmission.findAndUpdateByStatus(mockEq(failedJobIds), any()))
+          when(mockMetadataMongoRepository.findAndUpdateByStatus(mockEq(failedJobIds), any()))
             .thenReturn(ERSEnvelope(updateResult))
-          when(metadataMongoRepositoryResubmission.findErsSummaries(mockEq(failedJobIds), any()))
+          when(mockMetadataMongoRepository.findErsSummaries(mockEq(failedJobIds), any()))
             .thenReturn(ERSEnvelope(ersSummaries))
           when(mockSubmissionService.callProcessData(mockEq(firstErsSummary), any(), any())(any(), any()))
             .thenReturn(ERSEnvelope(firstResult))
@@ -205,7 +210,8 @@ class ResubPresubmissionServiceSpec extends ERSTestHelper with BeforeAndAfterEac
 
   "startResubmission" should {
     val resubPresubmissionService: ResubPresubmissionService = new ResubPresubmissionService(
-      metadataMongoRepositoryResubmission,
+      mockMetadataMongoRepository,
+      mockPresubmissionMongoRepository,
       mockSubmissionService,
       mockAuditEvents
     )
@@ -234,6 +240,161 @@ class ResubPresubmissionServiceSpec extends ERSTestHelper with BeforeAndAfterEac
       val result = await(resubPresubmissionService.startResubmission(Fixtures.metadata, processFailedSubmissionsConfig).value)
 
       result.swap.value shouldBe ADRTransferError()
+    }
+  }
+
+  "getPreSubSelectedSchemeRefDetailsMessage" should {
+
+    val resubPresubmissionService: ResubPresubmissionService = new ResubPresubmissionService(
+      mockMetadataMongoRepository,
+      mockPresubmissionMongoRepository,
+      mockSubmissionService,
+      mockAuditEvents
+    )
+
+    def getSimpleSchemaData(schemeInfo: SchemeInfo) = SchemeData(
+      schemeInfo = schemeInfo,
+      sheetName = "TestSheet",
+      numberOfParts = None,
+      data = None
+    )
+
+    "produce a log message with only the submissions returned from getStatusForSelectedSchemes" in {
+
+      val taxYears: Seq[String] = Seq("2015/16", "2016/17", "2017/18", "2018/19", "2019/20", "2020/21", "2021/22")
+      val schemeDataAsJsObject: Seq[JsObject] = taxYears
+        .map(taxYear =>
+          Json.toJson(getSimpleSchemaData(schemeInfo.copy(taxYear = taxYear))).as[JsObject]
+        )
+
+      def createExpectedStringFromTaxYear(taxYear: String): String =
+        s"schemaRef: 123, schemaType: 123, taxYear: $taxYear, timestamp: 2023-10-07T10:15:30Z"
+
+      val expectedOutput = s"[ResubmissionService] PreSubSelectedSchemeRefLogs - Selected scheme details: " +
+        s"${taxYears.map(createExpectedStringFromTaxYear).mkString("\n", "\n", "\n")}"
+
+      when(mockPresubmissionMongoRepository.getStatusForSelectedSchemes(anyString(), any()))
+        .thenReturn(ERSEnvelope(schemeDataAsJsObject))
+
+      val result: String = await(resubPresubmissionService.getPreSubSelectedSchemeRefDetailsMessage(processFailedSubmissionsConfig).value).value
+
+      result shouldEqual expectedOutput
+    }
+
+    "produce a message indicating it could not find any submissions when getStatusForSelectedSchemes returns an empty seq" in {
+      when(mockPresubmissionMongoRepository.getStatusForSelectedSchemes(anyString(), any()))
+        .thenReturn(ERSEnvelope(Seq.empty[JsObject]))
+
+      val expectedOutput = s"[ResubmissionService] PreSubSelectedSchemeRefLogs - Could not find any records for the selected scheme reference"
+
+      val result: String = await(resubPresubmissionService.getPreSubSelectedSchemeRefDetailsMessage(processFailedSubmissionsConfig).value).value
+
+      result shouldEqual expectedOutput
+    }
+
+    "produce a message indicating there are to many submissions to log out when getStatusForSelectedSchemes returns > 50 records" in {
+      when(mockPresubmissionMongoRepository.getStatusForSelectedSchemes(anyString(), any()))
+        .thenReturn(ERSEnvelope(Seq.fill(51)(getSimpleSchemaData(schemeInfo)).map(Json.toJson(_).as[JsObject])))
+
+      val expectedOutput = s"[ResubmissionService] PreSubSelectedSchemeRefLogs - Selected schemes have more then 50 records (51 records selected)"
+
+      val result: String = await(resubPresubmissionService.getPreSubSelectedSchemeRefDetailsMessage(processFailedSubmissionsConfig).value).value
+
+      result shouldEqual expectedOutput
+    }
+  }
+
+  "getMetadataSelectedSchemeRefDetailsMessage" should {
+
+    val resubPresubmissionService: ResubPresubmissionService = new ResubPresubmissionService(
+      mockMetadataMongoRepository,
+      mockPresubmissionMongoRepository,
+      mockSubmissionService,
+      mockAuditEvents
+    )
+
+    def getSimpleErsSummary(schemeInfo: SchemeInfo, transferStatus: Option[String] = Some("saved")): ErsSummary = ersSummary
+      .copy(
+        metaData = ersMetaData.copy(schemeInfo = schemeInfo),
+        transferStatus = transferStatus
+      )
+
+    "produce a log message with only the submissions returned from getStatusForSelectedSchemes" in {
+
+      def createExpectedStringFromTaxYear(taxYear: String, transferStatus: Option[String]): String =
+        s"schemaRef: 123, schemaType: 123, taxYear: $taxYear, transferStatus: ${transferStatus.get}, timestamp: 2023-10-07T10:15:30Z"
+
+      val taxYearAndTransferStatus: Seq[(String, Option[String])] = Seq(
+        ("2015/16", Some("saved")),
+        ("2016/17", Some("saved")),
+        ("2017/18", Some("saved")),
+        ("2018/19", Some("saved")),
+        ("2019/20", Some("saved")),
+        ("2020/21", Some("saved")),
+        ("2021/22", Some("saved"))
+      )
+
+      val taxYearAndTransferStatusString: String = taxYearAndTransferStatus
+      .map{
+        case (taxYear, transferStatus: Option[String]) =>
+          createExpectedStringFromTaxYear(taxYear, transferStatus)
+      }.mkString("\n", "\n", "\n")
+
+      val ersSummaryAsJsObject: Seq[JsObject] = taxYearAndTransferStatus
+        .map { case (taxYear, transferStatus) =>
+          Json.toJson(getSimpleErsSummary(schemeInfo.copy(taxYear = taxYear), transferStatus = transferStatus)).as[JsObject]
+        }
+
+      val expectedOutput = s"[ResubmissionService] MetaDataSelectedSchemeRefLogs - Selected scheme details: " +
+        s"$taxYearAndTransferStatusString"
+
+      when(mockMetadataMongoRepository.getStatusForSelectedSchemes(anyString(), any()))
+        .thenReturn(ERSEnvelope(ersSummaryAsJsObject))
+
+      val result: String = await(resubPresubmissionService.getMetadataSelectedSchemeRefDetailsMessage(processFailedSubmissionsConfig).value).value
+
+      result shouldEqual expectedOutput
+    }
+
+    "produce a log message using the default value for the transfer status when None can be found" in {
+
+      val ersSummaryAsJsObject: Seq[JsObject] = Seq(
+        Json
+          .toJson(getSimpleErsSummary(schemeInfo.copy(taxYear = "2016/17"), transferStatus = None))
+          .as[JsObject]
+      )
+
+      val expectedOutput = s"[ResubmissionService] MetaDataSelectedSchemeRefLogs - Selected scheme details: \n" +
+        s"schemaRef: 123, schemaType: 123, taxYear: 2016/17, transferStatus: transfer status is not defined, timestamp: 2023-10-07T10:15:30Z\n"
+
+      when(mockMetadataMongoRepository.getStatusForSelectedSchemes(anyString(), any()))
+        .thenReturn(ERSEnvelope(ersSummaryAsJsObject))
+
+      val result: String = await(resubPresubmissionService.getMetadataSelectedSchemeRefDetailsMessage(processFailedSubmissionsConfig).value).value
+
+      result shouldEqual expectedOutput
+    }
+
+    "produce a message indicating it could not find any submissions when getStatusForSelectedSchemes returns an empty seq" in {
+      when(mockMetadataMongoRepository.getStatusForSelectedSchemes(anyString(), any()))
+        .thenReturn(ERSEnvelope(Seq.empty[JsObject]))
+
+      val expectedOutput = s"[ResubmissionService] MetaDataSelectedSchemeRefLogs - Could not find any records for the selected scheme reference"
+
+      val result: String = await(resubPresubmissionService.getMetadataSelectedSchemeRefDetailsMessage(processFailedSubmissionsConfig).value).value
+
+      result shouldEqual expectedOutput
+    }
+
+    "produce a message indicating there are to many submissions to log out when getStatusForSelectedSchemes returns > 50 records" in {
+      when(mockMetadataMongoRepository.getStatusForSelectedSchemes(anyString(), any()))
+        .thenReturn(ERSEnvelope(Seq.fill(51)(getSimpleErsSummary(schemeInfo)).map(Json.toJson(_).as[JsObject])))
+
+      val expectedOutput = s"[ResubmissionService] MetaDataSelectedSchemeRefLogs - Selected schemes have more then 50 records (51 records selected)"
+
+      val result: String = await(resubPresubmissionService.getMetadataSelectedSchemeRefDetailsMessage(processFailedSubmissionsConfig).value).value
+
+      result shouldEqual expectedOutput
     }
   }
 }

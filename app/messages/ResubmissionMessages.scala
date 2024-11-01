@@ -16,7 +16,7 @@
 
 package messages
 
-import models.ErsSummary
+import models.{ErsSummary, SchemeData}
 import uk.gov.hmrc.mongo.lock.LockService
 
 trait ResubmissionMessages {
@@ -67,7 +67,7 @@ case class AggregatedLogs(aggregatedLogs: Seq[AggregatedLog]) extends Resubmissi
     s"${aggregatedLogs.map(_.logLine).mkString("\n", "\n", "\n")}"
 }
 
-case class SelectedSchemeRefLogs(selectedErsSummary: Seq[ErsSummary]) extends ResubmissionMessages {
+case class MetaDataSelectedSchemeRefLogs(selectedErsSummary: Seq[ErsSummary]) extends ResubmissionMessages {
   private def logLine(ersSummary: ErsSummary): String = s"schemaRef: ${ersSummary.metaData.schemeInfo.schemeRef}, " +
     s"schemaType: ${ersSummary.metaData.schemeInfo.schemeType}, " +
     s"taxYear: ${ersSummary.metaData.schemeInfo.taxYear}, " +
@@ -77,11 +77,30 @@ case class SelectedSchemeRefLogs(selectedErsSummary: Seq[ErsSummary]) extends Re
   val numberSelectedErsRecords: Int = selectedErsSummary.length
   val message: String =
     if (selectedErsSummary.isEmpty) {
-      s"$prefix Could not find any records for the selected scheme reference"
+      s"$prefix MetaDataSelectedSchemeRefLogs - Could not find any records for the selected scheme reference"
     }
     else if (numberSelectedErsRecords > 50){
-      s"$prefix Selected schemes have more then 50 records ($numberSelectedErsRecords records selected)"
+      s"$prefix MetaDataSelectedSchemeRefLogs - Selected schemes have more then 50 records ($numberSelectedErsRecords records selected)"
     } else {
-      s"$prefix Selected scheme details: ${selectedErsSummary.map(logLine).mkString("\n", "\n", "\n")}"
+      s"$prefix MetaDataSelectedSchemeRefLogs - Selected scheme details: ${selectedErsSummary.map(logLine).mkString("\n", "\n", "\n")}"
+    }
+}
+
+case class PreSubSelectedSchemeRefLogs(selectedErsSummary: Seq[SchemeData]) extends ResubmissionMessages {
+  private def logLine(schemeData: SchemeData): String =
+    s"schemaRef: ${schemeData.schemeInfo.schemeRef}, " +
+    s"schemaType: ${schemeData.schemeInfo.schemeType}, " +
+    s"taxYear: ${schemeData.schemeInfo.taxYear}, " +
+    s"timestamp: ${schemeData.schemeInfo.timestamp}"
+
+  val numberSelectedErsRecords: Int = selectedErsSummary.length
+  val message: String =
+    if (selectedErsSummary.isEmpty) {
+      s"$prefix PreSubSelectedSchemeRefLogs - Could not find any records for the selected scheme reference"
+    }
+    else if (numberSelectedErsRecords > 50){
+      s"$prefix PreSubSelectedSchemeRefLogs - Selected schemes have more then 50 records ($numberSelectedErsRecords records selected)"
+    } else {
+      s"$prefix PreSubSelectedSchemeRefLogs - Selected scheme details: ${selectedErsSummary.map(logLine).mkString("\n", "\n", "\n")}"
     }
 }

@@ -108,9 +108,9 @@ case class ErsSummary(bundleRef: String,
                       companies: Option[CompanyDetailsList],
                       trustees: Option[TrusteeDetailsList],
                       nofOfRows: Option[Int],
-                      transferStatus: Option[String] = Some("tmpDefaultValue")) {
+                      transferStatus: Option[String]) {
 
-  val basicLogMessage: String = List(bundleRef, fileType, s"nofOfRows $nofOfRows", transferStatus).mkString("[",",","]")
+  val basicLogMessage: String = List(s"bundleRef $bundleRef", s"filetype $fileType", s"nofOfRows $nofOfRows", transferStatus).mkString("[",",","]")
 }
 object ErsSummary {
   import models.DateTime._

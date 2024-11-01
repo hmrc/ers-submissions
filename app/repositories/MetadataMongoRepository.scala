@@ -93,7 +93,7 @@ class MetadataMongoRepository @Inject()(val applicationConfig: ApplicationConfig
   }
 
   def createFailedJobSelector(processFailedSubmissionsConfig: ProcessFailedSubmissionsConfig): BsonDocument =
-    Selectors(processFailedSubmissionsConfig).allSelectors
+    Selectors(processFailedSubmissionsConfig).allMetadataSelectors
 
   def getFailedJobs(failedJobSelector: BsonDocument,
                     processFailedSubmissionsConfig: ProcessFailedSubmissionsConfig,
@@ -201,7 +201,7 @@ class MetadataMongoRepository @Inject()(val applicationConfig: ApplicationConfig
 
   def getStatusForSelectedSchemes(sessionId: String, selectors: Selectors): ERSEnvelope[Seq[JsObject]] = EitherT {
     collection
-      .find(filter = selectors.schemeRefSelector)
+      .find(filter = selectors.metadataSchemeRefSelector)
       .toFuture()
       .map(_.asRight)
       .recover {
