@@ -397,4 +397,36 @@ class ResubPresubmissionServiceSpec extends ERSTestHelper with BeforeAndAfterEac
       result shouldEqual expectedOutput
     }
   }
+
+  "logAggregateMetadataMetrics" should {
+
+    val resubPresubmissionService: ResubPresubmissionService = new ResubPresubmissionService(
+      mockMetadataMongoRepository,
+      mockPresubmissionMongoRepository,
+      mockSubmissionService,
+      mockAuditEvents
+    )
+
+    "produced a message showing a list of metadata records grouped by scheme type and transfer status, replacing missing counts with EmptyTransferStatus" in {
+
+      val aggregatedJsonObjs: Seq[JsObject] = Seq(
+        Json.parse("""{"_id":{"schemeType":"CSOP","transferStatus":"sent"},"count":5}"""),
+        Json.parse("""{"_id":{"schemeType":"CSOP","transferStatus":"failed"},"count":5}"""),
+        Json.parse("""{"_id":{"schemeType":"SIP"},"count":5}""")
+      ).map(_.as[JsObject])
+
+      when(mockMetadataMongoRepository.getAggregateCountOfSubmissions(anyString()))
+        .thenReturn(ERSEnvelope(aggregatedJsonObjs))
+
+      val expectedOutput = s"[ResubmissionService] Aggregated view of submissions:\n" +
+        s"schemaType: CSOP, transferStatus: sent, count: 5\n" +
+        s"schemaType: CSOP, transferStatus: failed, count: 5\n" +
+        s"schemaType: SIP, transferStatus: EmptyTransferStatus, count: 5\n"
+
+      val result: String = await(resubPresubmissionService.logAggregateMetadataMetrics().value).value
+
+      result shouldEqual expectedOutput
+    }
+
+  }
 }

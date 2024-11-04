@@ -207,7 +207,7 @@ class MetadataMongoRepository @Inject()(val applicationConfig: ApplicationConfig
       .recover {
         mongoRecover(
           repository = className,
-          method = "getAggregateCountOfSubmissions",
+          method = "getStatusForSelectedSchemes",
           sessionId = sessionId,
           message = "operation failed due to exception from Mongo",
           optSchemaRefs = None

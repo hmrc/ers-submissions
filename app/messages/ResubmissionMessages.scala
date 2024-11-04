@@ -63,7 +63,7 @@ case class ResubmissionLimitMessage(resubmissionLimit: Long) extends Resubmissio
 }
 
 case class AggregatedLogs(aggregatedLogs: Seq[AggregatedLog]) extends ResubmissionMessages {
-  val message: String = s"$prefix Aggregated view of submissions: \n" +
+  val message: String = s"$prefix Aggregated view of submissions:" +
     s"${aggregatedLogs.map(_.logLine).mkString("\n", "\n", "\n")}"
 }
 
