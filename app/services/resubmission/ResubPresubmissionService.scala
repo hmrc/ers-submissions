@@ -58,8 +58,8 @@ class ResubPresubmissionService @Inject()(metadataRepository: MetadataMongoRepos
         .getAggregateCountOfSubmissions(Session.id(hc))
       aggregatedLogs = AggregatedLogs(
         aggregatedRecords.flatMap(validateJson[AggregatedLog])
-      ).message
-    } yield aggregatedLogs
+      )
+    } yield aggregatedLogs.message
   }
 
   def logFailedSubmissionCount(processFailedSubmissionsConfig: ProcessFailedSubmissionsConfig)
