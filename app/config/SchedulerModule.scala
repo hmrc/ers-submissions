@@ -19,8 +19,17 @@ package config
 import com.google.inject.AbstractModule
 import scheduler.ResubmissionServiceImpl
 
+import javax.inject.Inject
+import scala.concurrent.ExecutionContext
+
 class SchedulerModule extends AbstractModule {
   override def configure(): Unit = {
     bind(classOf[ResubmissionServiceImpl]).asEagerSingleton()
   }
+}
+  class MyTask @Inject()(resubmissionService: ResubmissionServiceImpl)(implicit ec: ExecutionContext) extends Runnable {
+    override def run(): Unit = {
+      resubmissionService.resubmissionService.invoke
+    }
+
 }

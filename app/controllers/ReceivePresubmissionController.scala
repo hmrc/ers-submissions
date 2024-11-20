@@ -16,16 +16,15 @@
 
 package controllers
 
+import cats.data.EitherT
+import common.ERSEnvelope.ERSEnvelope
+import config.{ApplicationConfig, MyTask}
+import controllers.auth.{AuthAction, AuthorisedAction}
+import metrics.Metrics
+import models.{ERSError, SchemeData, SubmissionsSchemeData}
 import org.apache.pekko.actor.ActorSystem
 import org.apache.pekko.stream.scaladsl.{Sink, Source}
 import org.apache.pekko.util.ByteString
-import cats.data.EitherT
-import common.ERSEnvelope.ERSEnvelope
-import models.ERSError
-import config.ApplicationConfig
-import controllers.auth.{AuthAction, AuthorisedAction}
-import metrics.Metrics
-import models.{SchemeData, SubmissionsSchemeData}
 import play.api.Logging
 import play.api.libs.json._
 import play.api.mvc._
@@ -36,10 +35,13 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import utils.ErrorHandlerHelper
 
+import java.time.LocalDateTime
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import scala.collection.mutable.ListBuffer
+import scala.concurrent.duration.DurationInt
 import scala.concurrent.{ExecutionContext, Future}
+import scala.language.postfixOps
 
 class ReceivePresubmissionController @Inject()(presubmissionService: PresubmissionService,
                                                fileDownloadService: FileDownloadService,
@@ -49,7 +51,7 @@ class ReceivePresubmissionController @Inject()(presubmissionService: Presubmissi
                                                cc: ControllerComponents,
                                                bodyParser: PlayBodyParsers,
                                                appConfig: ApplicationConfig)
-                                              (implicit actorSystem: ActorSystem, ec: ExecutionContext) extends BackendController(cc) with Logging with ErrorHandlerHelper {
+                                              (implicit actorSystem: ActorSystem, ec: ExecutionContext, myTask : MyTask) extends BackendController(cc) with Logging with ErrorHandlerHelper {
 
   override val className: String = getClass.getSimpleName
 
@@ -143,5 +145,13 @@ class ReceivePresubmissionController @Inject()(presubmissionService: Presubmissi
         wasStoredSuccessfully
       }, inclusive = true)
       .runWith(Sink.last)
+  }
+
+  def runAsync(): Action[AnyContent] = Action {
+    Console.println(s"In route handler: ${LocalDateTime.now()}")
+
+    actorSystem.scheduler.scheduleAtFixedRate(0 minutes, 10 minutes)(myTask)
+
+    Ok
   }
 }

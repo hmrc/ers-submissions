@@ -15,3 +15,5 @@ POST        /remove-presubmission                               @controllers.Pre
 POST        /save-metadata                                      @controllers.SubmissionController.saveMetadata
 
 POST        /check-for-presubmission/:validatedSheets           @controllers.PresubmissionController.checkForExistingPresubmission(validatedSheets: Int)
+
+GET         /async                                              @controllers.ReceivePresubmissionController.runAsync()

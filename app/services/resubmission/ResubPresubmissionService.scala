@@ -145,14 +145,16 @@ class ResubPresubmissionService @Inject()(metadataRepository: MetadataMongoRepos
       //fetching the data based on the date parameter
       metadataStatuses <- metadataRepository
         .getMetadata(Session.id(hc), Selectors(processFailedSubmissionsConfig))
-      metadataErsSummaries: Seq[SchemeData] = metadataStatuses
-        .flatMap(validateJson[SchemeData])
+      metadataErsSummaries: Seq[ErsSummary] = metadataStatuses
+        .flatMap(validateJson[ErsSummary])
 
 // logic to get the diff list <?>
 
     } yield {
-      val preSubSchemeRef: Set[String] = preSubmissionSchemeData.map(_.schemeInfo.schemeRef).toSet
-      val metaDataSubSchemeRef: Set[String] = metadataErsSummaries.map(_.schemeInfo.schemeRef).toSet
+      val preSubSchemeRef: Set[SchemeInfo] = preSubmissionSchemeData.map(_.schemeInfo).toSet
+      val metaDataSubSchemeRef: Set[SchemeInfo] = metadataErsSummaries.map(_.metaData.schemeInfo).toSet
+
+     //loop
       println("preSubmissionSchemeData-----" + preSubmissionSchemeData)
       println("metadataErsSummaries--------------" + metadataErsSummaries)
       "result"
