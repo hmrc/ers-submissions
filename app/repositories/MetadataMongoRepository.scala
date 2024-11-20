@@ -214,4 +214,20 @@ class MetadataMongoRepository @Inject()(val applicationConfig: ApplicationConfig
         )
       }
   }
+
+  def getMetadata(sessionId: String, selectors: Selectors): ERSEnvelope[Seq[JsObject]] = EitherT {
+    collection
+      .find(filter = selectors.dateRangeSelector)
+      .toFuture()
+      .map(_.asRight)
+      .recover {
+        mongoRecover(
+          repository = className,
+          method = "getJson",
+          sessionId = sessionId,
+          message = "operation failed due to exception from Mongo",
+          optSchemaRefs = None
+        )
+      }
+  }
 }

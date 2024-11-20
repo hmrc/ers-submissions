@@ -48,6 +48,7 @@ class ApplicationConfig @Inject()(serviceConfig: ServicesConfig) {
   lazy val schedulerResubmitScheme: String = serviceConfig.getString("schedules.resubmission-service.schemaFilter.filter")
   lazy val schedulerSuccessStatus: String = serviceConfig.getString("schedules.resubmission-service.resubmit-successful-status")
   lazy val schedulerEnableAdditionalLogs: Boolean = serviceConfig.getBoolean("schedules.resubmission-service.additional-logs.enabled")
+  lazy val mismatchData: Boolean = serviceConfig.getBoolean(s"schedules.resubmission-service.mismatchData.enabled")
 
   //  Date filter parameters
   lazy val dateTimeFilterEnabled: Boolean = serviceConfig.getBoolean(s"schedules.resubmission-service.dateTimeFilter.enabled")

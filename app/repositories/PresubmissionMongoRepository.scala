@@ -130,7 +130,7 @@ class PresubmissionMongoRepository @Inject()(applicationConfig: ApplicationConfi
     Json.toJsObject(schemeData) ++
       Json.obj("createdAt" -> Json.obj("$date" -> Instant.now.toEpochMilli))
 
-  def getStatusForSelectedSchemes(sessionId: String, selectors: Selectors): ERSEnvelope[Seq[JsObject]] = EitherT {
+  def  getStatusForSelectedSchemes(sessionId: String, selectors: Selectors): ERSEnvelope[Seq[JsObject]] = EitherT {
     collection
       .find(filter = selectors.preSubmissionSchemeRefSelector)
       .toFuture()
@@ -139,6 +139,22 @@ class PresubmissionMongoRepository @Inject()(applicationConfig: ApplicationConfi
         mongoRecover(
           repository = className,
           method = "getStatusForSelectedSchemes",
+          sessionId = sessionId,
+          message = "operation failed due to exception from Mongo",
+          optSchemaRefs = None
+        )
+      }
+  }
+
+  def getMetadata(sessionId: String, selectors: Selectors): ERSEnvelope[Seq[JsObject]] = EitherT {
+    collection
+      .find(filter = selectors.dateRangeSelector)
+      .toFuture()
+      .map(_.asRight)
+      .recover {
+        mongoRecover(
+          repository = className,
+          method = "getMetadata",
           sessionId = sessionId,
           message = "operation failed due to exception from Mongo",
           optSchemaRefs = None

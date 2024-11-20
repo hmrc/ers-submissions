@@ -23,7 +23,7 @@ import messages._
 import models._
 import org.mongodb.scala.bson.BsonDocument
 import play.api.Logging
-import play.api.libs.json.{JsError, JsObject, JsPath, JsSuccess, JsonValidationError, Reads}
+import play.api.libs.json._
 import play.api.mvc.Request
 import repositories.{MetadataMongoRepository, PresubmissionMongoRepository, Selectors}
 import services.SubmissionService
@@ -132,4 +132,30 @@ class ResubPresubmissionService @Inject()(metadataRepository: MetadataMongoRepos
       result
     }
   }
+
+  def getPreSubMetadataSelectedSchemeRefDetailsMessage(processFailedSubmissionsConfig: ProcessFailedSubmissionsConfig)
+                                                (implicit hc: HeaderCarrier): ERSEnvelope[String] =
+    for {
+      //fetching the data based on the date parameter
+      preSubmissionStatuses <- presubmissionRepository
+        .getMetadata(Session.id(hc), Selectors(processFailedSubmissionsConfig))
+      preSubmissionSchemeData: Seq[SchemeData] = preSubmissionStatuses
+        .flatMap(validateJson[SchemeData])
+
+      //fetching the data based on the date parameter
+      metadataStatuses <- metadataRepository
+        .getMetadata(Session.id(hc), Selectors(processFailedSubmissionsConfig))
+      metadataErsSummaries: Seq[SchemeData] = metadataStatuses
+        .flatMap(validateJson[SchemeData])
+
+// logic to get the diff list <?>
+
+    } yield {
+      val preSubSchemeRef: Set[String] = preSubmissionSchemeData.map(_.schemeInfo.schemeRef).toSet
+      val metaDataSubSchemeRef: Set[String] = metadataErsSummaries.map(_.schemeInfo.schemeRef).toSet
+      println("preSubmissionSchemeData-----" + preSubmissionSchemeData)
+      println("metadataErsSummaries--------------" + metadataErsSummaries)
+      "result"
+    }
+
 }

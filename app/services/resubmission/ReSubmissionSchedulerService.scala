@@ -61,6 +61,7 @@ class ReSubmissionSchedulerService @Inject()(val applicationConfig: ApplicationC
   }
 
   override def invoke(implicit ec: ExecutionContext): ERSEnvelope[Boolean] = {
+    println("inside invoke method")
     val request: Request[JsObject] = ERSRequest.createERSRequest()
     implicit val hc: HeaderCarrier = getOrCreateCorrelationID(request)
 
@@ -80,6 +81,12 @@ class ReSubmissionSchedulerService @Inject()(val applicationConfig: ApplicationC
       resubPresubmissionService
         .getPreSubSelectedSchemeRefDetailsMessage(processFailedSubmissionsConfig)
         .map(message => logger.info(message))
+    }
+    logIfEnabled(applicationConfig.mismatchData){   //this will be a new boolean which will be false by default
+      //based on that we need to fetch the data from PreSub n metadata and find the SchemeRef that are not present in metadata
+      resubPresubmissionService
+        .getPreSubMetadataSelectedSchemeRefDetailsMessage(processFailedSubmissionsConfig)
+        //.map(message => logger.info(message))
     }
 
     ERSEnvelope(lockService.withLock(resubmit()(request, hc).value).map {
