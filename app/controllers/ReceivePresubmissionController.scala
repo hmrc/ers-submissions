@@ -144,12 +144,4 @@ class ReceivePresubmissionController @Inject()(presubmissionService: Presubmissi
       }, inclusive = true)
       .runWith(Sink.last)
   }
-
-  def runAsync(): Action[AnyContent] = Action {
-    Console.println(s"In route handler: ${LocalDateTime.now()}")
-
-    actorSystem.scheduler.scheduleAtFixedRate(0 minutes, 10 minutes)(myTask)
-
-    Ok
-  }
 }

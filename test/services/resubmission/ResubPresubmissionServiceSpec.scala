@@ -473,7 +473,6 @@ class ResubPresubmissionServiceSpec extends ERSTestHelper with BeforeAndAfterEac
         .thenReturn(ERSEnvelope(ersSummaryAsJsObject))
 
       val result: String = await(resubPresubmissionService.getPreSubMetadataDetailsMessage(processFailedSubmissionsConfig).value).value
-      println("result------"+result)
       result shouldEqual expectedOutput
     }
 
