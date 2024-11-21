@@ -146,7 +146,7 @@ class PresubmissionMongoRepository @Inject()(applicationConfig: ApplicationConfi
       }
   }
 
-  def getMetadata(sessionId: String, selectors: Selectors): ERSEnvelope[Seq[JsObject]] = EitherT {
+  def getPreSubmissionData(sessionId: String, selectors: Selectors): ERSEnvelope[Seq[JsObject]] = EitherT {
     collection
       .find(filter = selectors.dateRangeSelector)
       .toFuture()
@@ -154,7 +154,7 @@ class PresubmissionMongoRepository @Inject()(applicationConfig: ApplicationConfi
       .recover {
         mongoRecover(
           repository = className,
-          method = "getMetadata",
+          method = "getPreSubmissionData",
           sessionId = sessionId,
           message = "operation failed due to exception from Mongo",
           optSchemaRefs = None

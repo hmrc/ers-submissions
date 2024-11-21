@@ -217,7 +217,7 @@ class MetadataMongoRepository @Inject()(val applicationConfig: ApplicationConfig
 
   def getMetadata(sessionId: String, selectors: Selectors): ERSEnvelope[Seq[JsObject]] = EitherT {
     collection
-      .find()
+      .find(filter = selectors.dateRangeSelector)
       .toFuture()
       .map(_.asRight)
       .recover {

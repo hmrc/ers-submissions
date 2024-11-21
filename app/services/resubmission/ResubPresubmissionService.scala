@@ -133,31 +133,28 @@ class ResubPresubmissionService @Inject()(metadataRepository: MetadataMongoRepos
     }
   }
 
-  def getPreSubMetadataSelectedSchemeRefDetailsMessage(processFailedSubmissionsConfig: ProcessFailedSubmissionsConfig)
-                                                (implicit hc: HeaderCarrier): ERSEnvelope[String] =
+  def getPreSubMetadataDetailsMessage(processFailedSubmissionsConfig: ProcessFailedSubmissionsConfig)
+                                     (implicit hc: HeaderCarrier): ERSEnvelope[String] =
     for {
-      //fetching the data based on the date parameter
       preSubmissionStatuses <- presubmissionRepository
-        .getMetadata(Session.id(hc), Selectors(processFailedSubmissionsConfig))
+        .getPreSubmissionData(Session.id(hc), Selectors(processFailedSubmissionsConfig))
       preSubmissionSchemeData: Seq[SchemeData] = preSubmissionStatuses
         .flatMap(validateJson[SchemeData])
 
-      //fetching the data based on the date parameter
       metadataStatuses <- metadataRepository
         .getMetadata(Session.id(hc), Selectors(processFailedSubmissionsConfig))
       metadataErsSummaries: Seq[ErsSummary] = metadataStatuses
         .flatMap(validateJson[ErsSummary])
 
-// logic to get the diff list <?>
+      metadataKeys = metadataErsSummaries.map(data => s"${data.metaData.schemeInfo.schemeRef}_${data.metaData.schemeInfo.taxYear}").toSet
+      preSubmissionKeys = preSubmissionSchemeData.map(data => s"${data.schemeInfo.schemeRef}_${data.schemeInfo.taxYear}").toSet
+      diffKeys = preSubmissionKeys.diff(metadataKeys)
+
+      preSubMetadataLogs = PreSubMetadataLogs(diffKeys,preSubmissionSchemeData)
 
     } yield {
-      val preSubSchemeRef: Set[SchemeInfo] = preSubmissionSchemeData.map(_.schemeInfo).toSet
-      val metaDataSubSchemeRef: Set[SchemeInfo] = metadataErsSummaries.map(_.metaData.schemeInfo).toSet
-
-     //loop
-      println("preSubmissionSchemeData-----" + preSubmissionSchemeData)
-      println("metadataErsSummaries--------------" + metadataErsSummaries)
-      "result"
-    }
+      preSubMetadataLogs.message
+  }
 
 }
+
