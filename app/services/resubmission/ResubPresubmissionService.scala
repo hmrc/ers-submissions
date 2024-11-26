@@ -148,6 +148,8 @@ class ResubPresubmissionService @Inject()(metadataRepository: MetadataMongoRepos
 
       metadataKeys = metadataErsSummaries.map(data => s"${data.metaData.schemeInfo.schemeRef}_${data.metaData.schemeInfo.taxYear}").toSet
       preSubmissionKeys = preSubmissionSchemeData.map(data => s"${data.schemeInfo.schemeRef}_${data.schemeInfo.taxYear}").toSet
+      _ = logger.info(s"[ResubPresubmissionService] PreSubmission data size :  ${preSubmissionKeys.size} and metadata size :  ${metadataKeys.size}")
+
       diffKeys = preSubmissionKeys.diff(metadataKeys)
 
       preSubMetadataLogs = PreSubMetadataLogs(diffKeys,preSubmissionSchemeData)
