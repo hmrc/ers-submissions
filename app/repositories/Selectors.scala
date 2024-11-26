@@ -46,6 +46,10 @@ case class Selectors(processFailedSubmissionsConfig: ProcessFailedSubmissionsCon
     "metaData.schemeInfo.timestamp" -> BsonDocument("$gte" -> LocalDate.parse(date, DateTimeFormatter.ofPattern("dd/MM/yyyy")).atStartOfDay(ZoneId.of("UTC")).toInstant.toEpochMilli))
   )
 
+  val preSubDateRangeSelector: BsonDocument = BsonDocument(processFailedSubmissionsConfig.dateTimeFilter.map(date =>
+    "schemeInfo.timestamp" -> BsonDocument("$gte" -> LocalDate.parse(date, DateTimeFormatter.ofPattern("dd/MM/yyyy")).atStartOfDay(ZoneId.of("UTC")).toInstant.toEpochMilli))
+  )
+
   val allMetadataSelectors: BsonDocument = Seq(
     baseSelector,
     metadataSchemeRefSelector,
