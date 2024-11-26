@@ -16,6 +16,7 @@
 
 package messages
 
+import messages.FinishedResubmissionJob.prefix
 import models.{ErsSummary, SchemeData}
 import uk.gov.hmrc.mongo.lock.LockService
 
@@ -103,4 +104,37 @@ case class PreSubSelectedSchemeRefLogs(selectedErsSummary: Seq[SchemeData]) exte
     } else {
       s"$prefix PreSubSelectedSchemeRefLogs - Selected scheme details: ${selectedErsSummary.map(logLine).mkString("\n", "\n", "\n")}"
     }
+}
+
+case class PreSubMetadataLogs(diffKeys: Set[String], preSubmissionSchemeData: Seq[SchemeData]) {
+  private def logLine(key: String): String = {
+    key.split("_") match {
+      case Array(schemeRef, taxYear) =>
+        val matchingData = preSubmissionSchemeData.filter { data =>
+          (data.schemeInfo.schemeRef, data.schemeInfo.taxYear) match {
+            case (`schemeRef`, `taxYear`) => true
+            case _                        => false
+          }
+        }
+        if (matchingData.nonEmpty) {
+          matchingData.map { schemeData =>
+            s"schemaRef: ${schemeData.schemeInfo.schemeRef}, " +
+              s"schemaType: ${schemeData.schemeInfo.schemeType}, " +
+              s"taxYear: ${schemeData.schemeInfo.taxYear}, " +
+              s"timestamp: ${schemeData.schemeInfo.timestamp}"
+          }.mkString("\n")
+        } else {
+          s"No matching data found for key: $key"
+        }
+      case _ =>
+        s"Invalid key format: $key"
+    }
+  }
+  val message: String = {
+    if (diffKeys.isEmpty) {
+      s"$prefix PreSubMetadataLogs - Could not find any records for the selected keys"
+    } else {
+      s"$prefix PreSubMetadataLogs - Selected scheme details: ${diffKeys.map(logLine).mkString("\n", "\n\n", "\n")}"
+    }
+  }
 }
