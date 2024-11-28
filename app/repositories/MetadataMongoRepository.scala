@@ -218,6 +218,12 @@ class MetadataMongoRepository @Inject()(val applicationConfig: ApplicationConfig
   def getMetadata(sessionId: String, selectors: Selectors): ERSEnvelope[Seq[JsObject]] = EitherT {
     collection
       .find(filter = selectors.dateRangeSelector)
+      .projection(
+        Projections.fields(
+          Projections.include("metaData.schemeInfo.schemeRef","metaData.schemeInfo.taxYear", "metaData.schemeInfo.timestamp"),
+          Projections.excludeId()
+        )
+      )
       .toFuture()
       .map(_.asRight)
       .recover {

@@ -139,31 +139,25 @@ class ResubPresubmissionService @Inject()(metadataRepository: MetadataMongoRepos
       preSubmissionStatuses <- presubmissionRepository
         .getPreSubmissionData(Session.id(hc), Selectors(processFailedSubmissionsConfig))
 
-      test: Seq[SchemeInfo] = preSubmissionStatuses
-        .map(ele => println("ele value------"+ele.value))
-
-
-      preSubmissionSchemeData: Seq[SchemeInfo] = preSubmissionStatuses
-        .flatMap(validateJson[SchemeInfo])
-
-      _= println("preSubmissionStatuses from repo-----------------"+preSubmissionStatuses)
-      _= println("data after mapping-----------------"+preSubmissionSchemeData)
+      preSubmissionSchemeData: Seq[ErsMetaDataDetails] = preSubmissionStatuses
+        .flatMap(validateJson[ErsMetaDataDetails])
 
       metadataStatuses <- metadataRepository
         .getMetadata(Session.id(hc), Selectors(processFailedSubmissionsConfig))
-      metadataErsSummaries: Seq[ErsSummary] = metadataStatuses
-        .flatMap(validateJson[ErsSummary])
 
-      //metadataKeys = metadataErsSummaries.map(data => s"${data.metaData.schemeInfo.schemeRef}_${data.metaData.schemeInfo.taxYear}").toSet
-      //preSubmissionKeys = preSubmissionSchemeData.map(data => s"${data.schemeInfo.schemeRef}_${data.schemeInfo.taxYear}").toSet
+      metadataErsSummaries: Seq[ErsSchemeMetaData] = metadataStatuses
+        .flatMap(validateJson[ErsSchemeMetaData])
 
-      //diffKeys = preSubmissionKeys.diff(metadataKeys)
+      metadataKeys = metadataErsSummaries.map(data => s"${data.metaData.schemeInfo.schemeRef}_${data.metaData.schemeInfo.taxYear}").toSet
 
-      //preSubMetadataLogs = PreSubMetadataLogs(diffKeys,preSubmissionSchemeData)
+      preSubmissionKeys = preSubmissionSchemeData.map(data => s"${data.schemeInfo.schemeRef}_${data.schemeInfo.taxYear}").toSet
+
+    diffKeys = preSubmissionKeys.diff(metadataKeys)
+
+    preSubMetadataLogs = PreSubMetadataLogs(diffKeys,preSubmissionSchemeData)
 
     } yield {
-      null
-     // preSubMetadataLogs.message
+      preSubMetadataLogs.message
   }
 
 }
