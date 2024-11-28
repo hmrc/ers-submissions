@@ -138,23 +138,32 @@ class ResubPresubmissionService @Inject()(metadataRepository: MetadataMongoRepos
     for {
       preSubmissionStatuses <- presubmissionRepository
         .getPreSubmissionData(Session.id(hc), Selectors(processFailedSubmissionsConfig))
-      preSubmissionSchemeData: Seq[SchemeData] = preSubmissionStatuses
-        .flatMap(validateJson[SchemeData])
+
+      test: Seq[SchemeInfo] = preSubmissionStatuses
+        .map(ele => println("ele value------"+ele.value))
+
+
+      preSubmissionSchemeData: Seq[SchemeInfo] = preSubmissionStatuses
+        .flatMap(validateJson[SchemeInfo])
+
+      _= println("preSubmissionStatuses from repo-----------------"+preSubmissionStatuses)
+      _= println("data after mapping-----------------"+preSubmissionSchemeData)
 
       metadataStatuses <- metadataRepository
         .getMetadata(Session.id(hc), Selectors(processFailedSubmissionsConfig))
       metadataErsSummaries: Seq[ErsSummary] = metadataStatuses
         .flatMap(validateJson[ErsSummary])
 
-      metadataKeys = metadataErsSummaries.map(data => s"${data.metaData.schemeInfo.schemeRef}_${data.metaData.schemeInfo.taxYear}").toSet
-      preSubmissionKeys = preSubmissionSchemeData.map(data => s"${data.schemeInfo.schemeRef}_${data.schemeInfo.taxYear}").toSet
+      //metadataKeys = metadataErsSummaries.map(data => s"${data.metaData.schemeInfo.schemeRef}_${data.metaData.schemeInfo.taxYear}").toSet
+      //preSubmissionKeys = preSubmissionSchemeData.map(data => s"${data.schemeInfo.schemeRef}_${data.schemeInfo.taxYear}").toSet
 
-      diffKeys = preSubmissionKeys.diff(metadataKeys)
+      //diffKeys = preSubmissionKeys.diff(metadataKeys)
 
-      preSubMetadataLogs = PreSubMetadataLogs(diffKeys,preSubmissionSchemeData)
+      //preSubMetadataLogs = PreSubMetadataLogs(diffKeys,preSubmissionSchemeData)
 
     } yield {
-      preSubMetadataLogs.message
+      null
+     // preSubMetadataLogs.message
   }
 
 }

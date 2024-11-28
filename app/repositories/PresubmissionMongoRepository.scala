@@ -149,6 +149,8 @@ class PresubmissionMongoRepository @Inject()(applicationConfig: ApplicationConfi
   def getPreSubmissionData(sessionId: String, selectors: Selectors): ERSEnvelope[Seq[JsObject]] = EitherT {
     collection
       .find(filter = selectors.preSubDateRangeSelector)
+      .limit(50)
+      .projection(Projections.fields(Projections.include("schemeInfo"), Projections.excludeId()))
       .toFuture()
       .map(_.asRight)
       .recover {
