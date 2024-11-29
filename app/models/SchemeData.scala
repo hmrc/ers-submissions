@@ -58,8 +58,7 @@ object SubmissionsSchemeData {
 
 case class SubSchemeInfo(schemeRef: String,
                          timestamp: Instant = Instant.now().truncatedTo(ChronoUnit.MILLIS),
-                         taxYear: String,
-                         schemeType: String)
+                         taxYear: String)
 
 object SubSchemeInfo {
   import models.DateTime._

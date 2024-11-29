@@ -221,7 +221,7 @@ class MetadataMongoRepository @Inject()(val applicationConfig: ApplicationConfig
       .projection(
         Projections.fields(
           Projections.include("metaData.schemeInfo.schemeRef",
-            "metaData.schemeInfo.taxYear", "metaData.schemeInfo.timestamp", "metaData.schemeInfo.schemeType"),
+            "metaData.schemeInfo.taxYear", "metaData.schemeInfo.timestamp"),
           Projections.excludeId()
         )
       )

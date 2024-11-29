@@ -120,7 +120,6 @@ case class PreSubMetadataLogs(diffKeys: Set[String], preSubmissionSchemeData: Se
           matchingData.map { schemeData =>
                 s"schemaRef: ${schemeData.schemeInfo.schemeRef}, " +
                 s"taxYear: ${schemeData.schemeInfo.taxYear}, " +
-                s"schemeType: ${schemeData.schemeInfo.schemeType}. " +
                 s"timestamp: ${schemeData.schemeInfo.timestamp}"
           }.mkString("\n")
         } else {

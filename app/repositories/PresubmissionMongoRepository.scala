@@ -151,7 +151,7 @@ class PresubmissionMongoRepository @Inject()(applicationConfig: ApplicationConfi
       .find(filter = selectors.preSubDateRangeSelector)
       .projection(
         Projections.fields(
-          Projections.include("schemeInfo.schemeRef","schemeInfo.taxYear", "schemeInfo.timestamp", "schemeInfo.schemeType"),
+          Projections.include("schemeInfo.schemeRef","schemeInfo.taxYear", "schemeInfo.timestamp"),
           Projections.excludeId()
         )
       )
