@@ -55,3 +55,14 @@ case class SubmissionsSchemeData(schemeInfo: SchemeInfo,
 object SubmissionsSchemeData {
   implicit val format: OFormat[SubmissionsSchemeData] = Json.format[SubmissionsSchemeData]
 }
+
+case class SubSchemeInfo(schemeRef: String,
+                         timestamp: Instant = Instant.now().truncatedTo(ChronoUnit.MILLIS),
+                         taxYear: String,
+                         schemeType: String)
+
+object SubSchemeInfo {
+  import models.DateTime._
+
+  implicit val format: OFormat[SubSchemeInfo] = Json.format[SubSchemeInfo]
+}
