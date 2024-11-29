@@ -93,8 +93,7 @@ class PreSubWithoutMetadataView @Inject() (mongoComponent: MongoComponent)(impli
       Projections.excludeId()
     )
   )
-
-
+  
   protected val pipeline: Seq[Bson] =
     Seq(
       matchMetadata,
