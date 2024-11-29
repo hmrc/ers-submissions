@@ -132,30 +132,5 @@ class ResubPresubmissionService @Inject()(metadataRepository: MetadataMongoRepos
       result
     }
   }
-
-  def getPreSubMetadataDetailsMessage(processFailedSubmissionsConfig: ProcessFailedSubmissionsConfig)
-                                     (implicit hc: HeaderCarrier): ERSEnvelope[String] =
-    for {
-      preSubmissionStatuses <- presubmissionRepository
-        .getPreSubmissionData(Session.id(hc), Selectors(processFailedSubmissionsConfig))
-      preSubmissionSchemeData: Seq[ErsMetaDataDetails] = preSubmissionStatuses
-        .flatMap(validateJson[ErsMetaDataDetails])
-
-      metadataStatuses <- metadataRepository
-        .getMetadata(Session.id(hc), Selectors(processFailedSubmissionsConfig))
-      metadataErsSummaries: Seq[ErsSchemeMetaData] = metadataStatuses
-        .flatMap(validateJson[ErsSchemeMetaData])
-
-      metadataKeys = metadataErsSummaries.map(data => s"${data.metaData.schemeInfo.schemeRef}_${data.metaData.schemeInfo.taxYear}").toSet
-      preSubmissionKeys = preSubmissionSchemeData.map(data => s"${data.schemeInfo.schemeRef}_${data.schemeInfo.taxYear}").toSet
-
-      diffKeys = preSubmissionKeys.diff(metadataKeys)
-
-      preSubMetadataLogs = PreSubMetadataLogs(diffKeys,preSubmissionSchemeData)
-
-    } yield {
-      preSubMetadataLogs.message
-  }
-
 }
 

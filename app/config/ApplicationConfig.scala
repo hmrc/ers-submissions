@@ -58,6 +58,8 @@ class ApplicationConfig @Inject()(serviceConfig: ServicesConfig) {
     } else {
       None
     }
+  lazy val dateTimeFilterForView: String = serviceConfig.getString(s"schedules.generate-pre-sub-without-metadata-view.dateTimeFilter")
+
 
   def lockoutTimeout(jobName: String): Int = serviceConfig.getInt(s"schedules.$jobName.lockTimeout")
   def resubmissionLimit(jobName: String): Int = serviceConfig.getInt(s"schedules.$jobName.resubmissionLimit")
