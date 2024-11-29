@@ -464,7 +464,7 @@ class ResubPresubmissionServiceSpec extends ERSTestHelper with BeforeAndAfterEac
           .as[JsObject]
       )
 
-      val expectedOutput = "[ResubmissionService] PreSubMetadataLogs - Pre-submission records with missing metadata: \nschemaRef: 123, taxYear: 2015/16, schemeType: 123. timestamp: 2023-10-07T10:15:30Z\n"
+      val expectedOutput = "[ResubmissionService] PreSubMetadataLogs - Pre-submission records with missing metadata: \nschemaRef: 123, taxYear: 2015/16, timestamp: 2023-10-07T10:15:30Z\n"
 
       when(mockPresubmissionMongoRepository.getPreSubmissionData(anyString(), any()))
         .thenReturn(ERSEnvelope(schemeDataAsJsObject))
