@@ -14,14 +14,10 @@
  * limitations under the License.
  */
 
-package config
+package models
 
-import com.google.inject.AbstractModule
-import scheduler.{PreSubWithoutMetadataViewImpl, ResubmissionServiceImpl}
-
-class SchedulerModule extends AbstractModule {
-  override def configure(): Unit = {
-    bind(classOf[ResubmissionServiceImpl]).asEagerSingleton()
-    bind(classOf[PreSubWithoutMetadataViewImpl]).asEagerSingleton()
-  }
-}
+case class PreSubWithoutMetadata(
+                                  schemeRef: String,
+                                  taxYear: String,
+                                  timestamp: Long
+                                )
