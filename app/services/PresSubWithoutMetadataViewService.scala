@@ -18,6 +18,7 @@ package services
 
 import common.ERSEnvelope
 import common.ERSEnvelope.ERSEnvelope
+import config.ApplicationConfig
 import models.PreSubWithoutMetadata
 import org.mongodb.scala.MongoCollection
 import repositories.PreSubWithoutMetadataView
@@ -29,7 +30,8 @@ import java.time.format.DateTimeFormatter
 import javax.inject._
 import scala.concurrent.{ExecutionContext, Future}
 
-class PresSubWithoutMetadataViewService @Inject()(preSubWithoutMetadataView: PreSubWithoutMetadataView)
+class PresSubWithoutMetadataViewService @Inject()(val applicationConfig: ApplicationConfig,
+                                                  preSubWithoutMetadataView: PreSubWithoutMetadataView)
   extends ScheduledService[Unit]
     with ErsLogger {
   override val jobName: String = "pres-sub-without-metadata-view-service"
@@ -38,13 +40,13 @@ class PresSubWithoutMetadataViewService @Inject()(preSubWithoutMetadataView: Pre
     for {
       viewRecords: MongoCollection[PreSubWithoutMetadata] <- preSubWithoutMetadataView.initView
       numberOfRecords: Long <- viewRecords.countDocuments().toFuture()
-      _ = if (numberOfRecords < 50) {
+      _ = if (numberOfRecords < applicationConfig.maxNumberOfRecordsToReturn) {
         logPresubmissionRecordsWithoutMetadata(viewRecords)
       } else {
-        logger.info(s"Number of records > 50, $numberOfRecords records returned")
+        logger.info(s"[PresSubWithoutMetadataViewService] Number of records > ${applicationConfig.maxNumberOfRecordsToReturn}, $numberOfRecords records returned from view")
       }
     } yield ()
-    ERSEnvelope[Unit](logger.info("Finished running pres-sub-without-metadata-view-service"))
+    ERSEnvelope[Unit](logger.info("[PresSubWithoutMetadataViewService] Finished running pres-sub-without-metadata-view-service"))
   }
 
   private def logPresubmissionRecordsWithoutMetadata(
@@ -59,12 +61,12 @@ class PresSubWithoutMetadataViewService @Inject()(preSubWithoutMetadataView: Pre
         Future {
           val logLines: Seq[String] = documents
             .map(document =>
-              s"schemeRef: ${document.schemeRef}," +
-                s"taxYear: ${document.taxYear}," +
+              s"schemeRef: ${document.schemeRef}, " +
+                s"taxYear: ${document.taxYear}, " +
                 s"timestamp: ${formatter.format(Instant.ofEpochMilli(document.timestamp))}"
             )
           logger.info(s"[PresSubWithoutMetadataViewService] Presubmission data without metadata: " +
-            s"${logLines.mkString("\n", "\n", "\n")}}"
+            s"${logLines.mkString("\n", "\n", "\n")}"
           )
         }
       }

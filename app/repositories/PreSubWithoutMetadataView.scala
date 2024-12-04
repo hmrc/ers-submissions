@@ -49,7 +49,7 @@ class PreSubWithoutMetadataView @Inject() (mongoComponent: MongoComponent,
       .drop()
       .toFuture()
 
-  def getView(viewName: String): MongoCollection[PreSubWithoutMetadata] =
+  private def getView(viewName: String): MongoCollection[PreSubWithoutMetadata] =
     mongoComponent.database
       .getCollection[PreSubWithoutMetadata](viewName)
       .withCodecRegistry(codecRegistry)
@@ -118,7 +118,7 @@ class PreSubWithoutMetadataView @Inject() (mongoComponent: MongoComponent,
     )
   )
   
-    val pipeline: Seq[Bson] =
+  val pipeline: Seq[Bson] =
     Seq(
       matchMetadata,
       filterForNoMetadata,
