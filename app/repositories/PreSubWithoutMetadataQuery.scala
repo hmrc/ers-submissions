@@ -18,14 +18,10 @@ package repositories
 
 import config.ApplicationConfig
 import models.PreSubWithoutMetadata
-import org.bson.codecs.configuration.CodecRegistries
-import org.mongodb.scala.MongoClient.DEFAULT_CODEC_REGISTRY
-import org.mongodb.scala.MongoCollection
-import org.mongodb.scala.bson.codecs.Macros
 import org.mongodb.scala.bson.conversions.Bson
 import org.mongodb.scala.bson.{BsonArray, BsonDocument, BsonString}
 import org.mongodb.scala.model._
-import uk.gov.hmrc.mongo.MongoComponent
+import play.api.libs.json.{JsError, JsObject, JsPath, JsSuccess, JsonValidationError, Reads}
 
 import java.time.format.DateTimeFormatter
 import java.time.{Instant, LocalDate, ZoneId}
@@ -33,31 +29,8 @@ import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class PreSubWithoutMetadataView @Inject() (mongoComponent: MongoComponent,
+class PreSubWithoutMetadataQuery @Inject()(presubmissionRepository: PresubmissionMongoRepository,
                                            val applicationConfig: ApplicationConfig)(implicit ec: ExecutionContext) {
-
-  private val preSubWithoutMetadataViewName: String = "ers-presubmission-without-metadata"
-
-  private val codecRegistry = CodecRegistries.
-    fromRegistries(CodecRegistries.fromProviders(Macros.createCodecProvider[PreSubWithoutMetadata]()), DEFAULT_CODEC_REGISTRY)
-
-  private def createView(viewName: String, viewOn: String): Future[Unit] =
-    mongoComponent.database.createView(viewName, viewOn, pipeline).toFuture()
-
-  private def dropView(viewName: String): Future[Unit] =
-    getView(viewName)
-      .drop()
-      .toFuture()
-
-  private def getView(viewName: String): MongoCollection[PreSubWithoutMetadata] =
-    mongoComponent.database
-      .getCollection[PreSubWithoutMetadata](viewName)
-      .withCodecRegistry(codecRegistry)
-
-  def initView: Future[MongoCollection[PreSubWithoutMetadata]] =
-    dropView(preSubWithoutMetadataViewName)
-      .map(_ => createView(preSubWithoutMetadataViewName, applicationConfig.presubmissionCollection))
-      .map(_ => getView(preSubWithoutMetadataViewName))
 
   private val letVariables: Seq[Variable[BsonString]] = Seq(
     new Variable("preSubSchemeRef", BsonString("$schemeInfo.schemeRef")),
@@ -122,9 +95,32 @@ class PreSubWithoutMetadataView @Inject() (mongoComponent: MongoComponent,
     Seq(
       matchMetadata,
       filterForNoMetadata,
-      dateFilter(applicationConfig.dateTimeFilterForView),
+      dateFilter(applicationConfig.dateTimeFilterForQuery),
       projectFields
     )
 
-}
+  def validateJson[T](record: JsObject)(implicit reads: Reads[T]): Either[String, T] =
+    record.validate[T] match {
+      case JsSuccess(obj, _) =>
+        Right(obj)
+      case JsError(errors: collection.Seq[(JsPath, collection.Seq[JsonValidationError])]) =>
+         Left(
+           errors
+            .map((e: (JsPath, collection.Seq[JsonValidationError])) => s"${e._1}: ${e._2.mkString(", ")}")
+            .mkString(", ")
+         )
+    }
 
+  def runQuery: Future[(List[String], List[PreSubWithoutMetadata])] =
+    for {
+      preSubWithoutMetadataAsJson: Seq[JsObject] <- presubmissionRepository
+        .collection
+        .aggregate(pipeline)
+        .toFuture()
+      preSubWithoutMetadata = preSubWithoutMetadataAsJson.map(validateJson[PreSubWithoutMetadata])
+    } yield preSubWithoutMetadata
+      .foldLeft((List.empty[String], List.empty[PreSubWithoutMetadata])) {
+        case ((errs, records), Left(error)) => (error :: errs, records)
+        case ((errs, records), Right(record)) => (errs, record :: records)
+      }
+}

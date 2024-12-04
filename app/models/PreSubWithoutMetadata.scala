@@ -16,8 +16,14 @@
 
 package models
 
+import play.api.libs.json.{Format, Json}
+
 case class PreSubWithoutMetadata(
                                   schemeRef: String,
                                   taxYear: String,
                                   timestamp: Long
                                 )
+
+object PreSubWithoutMetadata{
+  implicit val dataFormat: Format[PreSubWithoutMetadata] = Json.format[PreSubWithoutMetadata]
+}

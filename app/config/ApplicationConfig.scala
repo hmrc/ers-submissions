@@ -59,9 +59,9 @@ class ApplicationConfig @Inject()(serviceConfig: ServicesConfig) {
       None
     }
 
-  // Presubmission with missing metadata view
-  lazy val dateTimeFilterForView: String = serviceConfig.getString(s"schedules.generate-pre-sub-without-metadata-view.date-time-filter")
-  lazy val maxNumberOfRecordsToReturn: Int = serviceConfig.getInt(s"schedules.generate-pre-sub-without-metadata-view.max-records")
+  // Presubmission with missing metadata query
+  lazy val dateTimeFilterForQuery: String = serviceConfig.getString(s"schedules.generate-pre-sub-without-metadata-query.date-time-filter")
+  lazy val maxNumberOfRecordsToReturn: Int = serviceConfig.getInt(s"schedules.generate-pre-sub-without-metadata-query.max-records")
 
   def lockoutTimeout(jobName: String): Int = serviceConfig.getInt(s"schedules.$jobName.lockTimeout")
   def resubmissionLimit(jobName: String): Int = serviceConfig.getInt(s"schedules.$jobName.resubmissionLimit")

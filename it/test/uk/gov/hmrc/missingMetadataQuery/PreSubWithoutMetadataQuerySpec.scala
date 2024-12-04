@@ -14,32 +14,30 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.missingMetadataView
+package uk.gov.hmrc.missingMetadataQuery
 
 import _root_.play.api.libs.json.{JsObject, Json}
 import config.ApplicationConfig
 import models.{PreSubWithoutMetadata, SchemeData}
 import org.mockito.Mockito.when
-import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.time.{Seconds, Span}
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.mockito.MockitoSugar
-import uk.gov.hmrc.mongo.test.MongoSupport
+import repositories.Repositories
 
 import java.time.{Instant, LocalDateTime, ZoneOffset}
 import scala.concurrent.ExecutionContext
 
-class PreSubWithoutMetadataViewSpec
+class PreSubWithoutMetadataQuerySpec
   extends AnyWordSpec
     with Matchers
-    with ScalaFutures
-    with MockitoSugar
-    with MongoSupport {
+    with MockitoSugar {
 
   val mockApplicationConfig: ApplicationConfig = mock[ApplicationConfig]
+  val mockRepositories: Repositories = mock[Repositories]
 
-  when(mockApplicationConfig.dateTimeFilterForView).thenReturn("02/05/2023")
+  when(mockApplicationConfig.dateTimeFilterForQuery).thenReturn("02/05/2023")
   when(mockApplicationConfig.metadataCollection).thenReturn("ers-metadata")
   when(mockApplicationConfig.presubmissionCollection).thenReturn("ers-presubmission")
 
@@ -48,9 +46,9 @@ class PreSubWithoutMetadataViewSpec
 
   implicit val ec : ExecutionContext = ExecutionContext.global
 
-  "PreSubWithoutMetadataViewService" should {
+  "PreSubWithoutMetadataQueryService" should {
 
-    "only return presubmission records which were created after the date filter" in new MissingMetadataViewSetup(mockApplicationConfig, mongoComponent) {
+    "only return presubmission records which were created after the date filter" in new MissingMetadataQuerySetup(mockApplicationConfig) {
 
       val metaData: Seq[JsObject] = Seq(
         createMetadataRecord(taxYear = "2017/18", schemeRef = "CSOP00000000001", defaultInstant),
@@ -65,18 +63,19 @@ class PreSubWithoutMetadataViewSpec
       ).map(Json.toJsObject(_))
 
       whenReady(
-        future = getViewResult(metaData, presubmissionData),
+        future = getQueryResult(metaData, presubmissionData),
         timeout = timeout(Span(30, Seconds))
       ) {
-        insertedRecordsAndViewRecords: (Long, Long, Seq[PreSubWithoutMetadata]) => {
-          insertedRecordsAndViewRecords._1 shouldBe 1
-          insertedRecordsAndViewRecords._2 shouldBe 2
-          insertedRecordsAndViewRecords._3 shouldBe Seq.empty[PreSubWithoutMetadata]
+        testQueryResults: TestQueryResults => {
+          testQueryResults.numMetadataRecords shouldBe 1
+          testQueryResults.numPreSubRecords shouldBe 2
+          testQueryResults.queryResults shouldBe Seq.empty[PreSubWithoutMetadata]
+          testQueryResults.queryErrors.length shouldBe 0
         }
       }
     }
 
-    "return no presubmission records if all have a matching metadata record" in new MissingMetadataViewSetup(mockApplicationConfig, mongoComponent) {
+    "return no presubmission records if all have a matching metadata record" in new MissingMetadataQuerySetup(mockApplicationConfig) {
 
       val metaData: Seq[JsObject] = Seq(
         createMetadataRecord(taxYear = "2017/18", schemeRef = "CSOP00000000001", defaultInstant),
@@ -89,18 +88,19 @@ class PreSubWithoutMetadataViewSpec
       ).map(Json.toJsObject(_))
 
       whenReady(
-        future = getViewResult(metaData, presubmissionData),
+        future = getQueryResult(metaData, presubmissionData),
         timeout = timeout(Span(30, Seconds))
       ) {
-        insertedRecordsAndViewRecords: (Long, Long, Seq[PreSubWithoutMetadata]) => {
-          insertedRecordsAndViewRecords._1 shouldBe 2
-          insertedRecordsAndViewRecords._2 shouldBe 2
-          insertedRecordsAndViewRecords._3 shouldBe Seq.empty[PreSubWithoutMetadata]
+        testQueryResults: TestQueryResults => {
+          testQueryResults.numMetadataRecords shouldBe 2
+          testQueryResults.numPreSubRecords shouldBe 2
+          testQueryResults.queryResults shouldBe Seq.empty[PreSubWithoutMetadata]
+          testQueryResults.queryErrors.length shouldBe 0
         }
       }
     }
 
-    "return presubmission records with no linked metadata records" in new MissingMetadataViewSetup(mockApplicationConfig, mongoComponent){
+    "return presubmission records with no linked metadata records" in new MissingMetadataQuerySetup(mockApplicationConfig) {
 
       val metaData: Seq[JsObject] = Seq(
         createMetadataRecord(taxYear = "2017/18", schemeRef = "CSOP00000000001", defaultInstant),
@@ -114,13 +114,14 @@ class PreSubWithoutMetadataViewSpec
       ).map(Json.toJsObject(_))
 
       whenReady(
-        future = getViewResult(metaData, presubmissionData),
+        future = getQueryResult(metaData, presubmissionData),
         timeout = timeout(Span(30, Seconds))
       ) {
-        insertedRecordsAndViewRecords: (Long, Long, Seq[PreSubWithoutMetadata]) => {
-          insertedRecordsAndViewRecords._1 shouldBe 2
-          insertedRecordsAndViewRecords._2 shouldBe 3
-          insertedRecordsAndViewRecords._3 shouldBe Seq(PreSubWithoutMetadata("CSOP00000000001", "2019/20", 1701512130000L))
+        testQueryResults: TestQueryResults => {
+          testQueryResults.numMetadataRecords shouldBe 2
+          testQueryResults.numPreSubRecords shouldBe 3
+          testQueryResults.queryResults shouldBe Seq(PreSubWithoutMetadata("CSOP00000000001", "2019/20", 1701512130000L))
+          testQueryResults.queryErrors.length shouldBe 0
         }
       }
     }
