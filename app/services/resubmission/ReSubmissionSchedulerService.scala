@@ -81,11 +81,6 @@ class ReSubmissionSchedulerService @Inject()(val applicationConfig: ApplicationC
         .getPreSubSelectedSchemeRefDetailsMessage(processFailedSubmissionsConfig)
         .map(message => logger.info(message))
     }
-    logIfEnabled(applicationConfig.schedulerEnablePreSubData){
-      resubPresubmissionService
-        .getPreSubMetadataDetailsMessage(processFailedSubmissionsConfig)
-        .map(message => logger.info(message))
-    }
 
     ERSEnvelope(lockService.withLock(resubmit()(request, hc).value).map {
       case Some(_) =>

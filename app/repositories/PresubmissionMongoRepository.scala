@@ -146,25 +146,4 @@ class PresubmissionMongoRepository @Inject()(applicationConfig: ApplicationConfi
       }
   }
 
-  def getPreSubmissionData(sessionId: String, selectors: Selectors): ERSEnvelope[Seq[JsObject]] = EitherT {
-    collection
-      .find(filter = selectors.preSubDateRangeSelector)
-      .projection(
-        Projections.fields(
-          Projections.include("schemeInfo.schemeRef","schemeInfo.taxYear", "schemeInfo.timestamp"),
-          Projections.excludeId()
-        )
-      )
-      .toFuture()
-      .map(_.asRight)
-      .recover {
-        mongoRecover(
-          repository = className,
-          method = "getPreSubmissionData",
-          sessionId = sessionId,
-          message = "operation failed due to exception from Mongo",
-          optSchemaRefs = None
-        )
-      }
-  }
 }

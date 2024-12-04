@@ -118,14 +118,3 @@ object ErsSummary {
   implicit val format: OFormat[ErsSummary] = Json.format[ErsSummary]
 }
 
-case class ErsSchemeMetaData(metaData: ErsMetaDataDetails)
-
-object ErsSchemeMetaData {
-  implicit val format: OFormat[ErsSchemeMetaData] = Json.format[ErsSchemeMetaData]
-}
-
-
-case class ErsMetaDataDetails(schemeInfo: SubSchemeInfo)
-object ErsMetaDataDetails {
-  implicit val format: OFormat[ErsMetaDataDetails] = Json.format[ErsMetaDataDetails]
-}

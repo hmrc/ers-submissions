@@ -24,7 +24,8 @@ import models._
 import org.mongodb.scala.FindObservable
 import org.mongodb.scala.bson.{BsonDocument, BsonInt64, BsonString, Document, ObjectId}
 import org.mongodb.scala.model.Accumulators._
-import org.mongodb.scala.model.{Aggregates, Filters, Projections}
+import org.mongodb.scala.model.Sorts.ascending
+import org.mongodb.scala.model.{Aggregates, Filters, IndexModel, IndexOptions, Projections}
 import org.mongodb.scala.result.UpdateResult
 import play.api.libs.json.Format.GenericFormat
 import play.api.libs.json.{Format, JsObject, Json}
@@ -44,7 +45,10 @@ class MetadataMongoRepository @Inject()(val applicationConfig: ApplicationConfig
     mongoComponent = mc,
     collectionName = applicationConfig.metadataCollection,
     domainFormat = implicitly[Format[JsObject]],
-    indexes = scala.Seq.empty
+    indexes = Seq(
+      IndexModel(ascending("metaData.schemeInfo.schemeRef"), IndexOptions().name("schemeRef")),
+      IndexModel(ascending("metaData.schemeInfo.taxYear"), IndexOptions().name("taxYear"))
+    )
   ) with RepositoryHelper {
 
   private val objectIdKey: String = "_id"
@@ -215,26 +219,4 @@ class MetadataMongoRepository @Inject()(val applicationConfig: ApplicationConfig
       }
   }
 
-  def getMetadata(sessionId: String, selectors: Selectors): ERSEnvelope[Seq[JsObject]] = EitherT {
-    collection
-      .find(filter = selectors.dateRangeSelector)
-      .projection(
-        Projections.fields(
-          Projections.include("metaData.schemeInfo.schemeRef",
-            "metaData.schemeInfo.taxYear", "metaData.schemeInfo.timestamp"),
-          Projections.excludeId()
-        )
-      )
-      .toFuture()
-      .map(_.asRight)
-      .recover {
-        mongoRecover(
-          repository = className,
-          method = "getMetadata",
-          sessionId = sessionId,
-          message = "operation failed due to exception from Mongo",
-          optSchemaRefs = None
-        )
-      }
-  }
 }
