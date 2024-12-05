@@ -20,18 +20,18 @@ import com.google.inject.Inject
 import org.apache.pekko.actor.ActorSystem
 import play.api.Configuration
 import play.api.inject.ApplicationLifecycle
-import scheduler.SchedulingActor.PreSubWithoutMetadataViewClass
-import services.PresSubWithoutMetadataViewService
+import scheduler.SchedulingActor.PreSubWithoutMetadataQueryClass
+import services.PresSubWithoutMetadataQueryService
 
-class PreSubWithoutMetadataViewImpl @Inject()(
-                                               val config: Configuration,
-                                               val presSubWithoutMetadataViewService: PresSubWithoutMetadataViewService,
-                                               val applicationLifecycle: ApplicationLifecycle
+class PreSubWithoutMetadataQueryImpl @Inject()(
+                                                val config: Configuration,
+                                                val presSubWithoutMetadataQueryService: PresSubWithoutMetadataQueryService,
+                                                val applicationLifecycle: ApplicationLifecycle
                                              ) extends ScheduledJob {
 
-  override def jobName: String = "generate-pre-sub-without-metadata-view"
+  override def jobName: String = "generate-pre-sub-without-metadata-query"
   val actorSystem: ActorSystem = ActorSystem(jobName)
-  val scheduledMessage: PreSubWithoutMetadataViewClass = PreSubWithoutMetadataViewClass(presSubWithoutMetadataViewService)
+  val scheduledMessage: PreSubWithoutMetadataQueryClass = PreSubWithoutMetadataQueryClass(presSubWithoutMetadataQueryService)
 
   schedule
 }

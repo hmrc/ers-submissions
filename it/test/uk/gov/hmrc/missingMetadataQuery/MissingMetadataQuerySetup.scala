@@ -14,33 +14,36 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.missingMetadataView
+package uk.gov.hmrc.missingMetadataQuery
 
 import org.mongodb.scala.{MongoCollection, Observable}
 import play.api.libs.json.JsObject
-import repositories.{MetadataMongoRepository, PreSubWithoutMetadataView, PresubmissionMongoRepository}
+import repositories.{MetadataMongoRepository, PreSubWithoutMetadataQuery, PresubmissionMongoRepository}
 import config.ApplicationConfig
-import models.{ErsMetaData, ErsSummary, PreSubWithoutMetadata, SchemeInfo}
+import models.{ErsMetaData, ErsSummary, SchemeInfo}
 import org.mongodb.scala.bson.Document
-import uk.gov.hmrc.mongo.MongoComponent
+import uk.gov.hmrc.mongo.test.MongoSupport
 
 import java.time.Instant
 import java.time.temporal.ChronoUnit
+import scala.concurrent.duration.{FiniteDuration, DurationLong}
 import scala.concurrent.{ExecutionContext, Future}
 
-class MissingMetadataViewSetup(applicationConfig: ApplicationConfig, mc: MongoComponent)(implicit ec: ExecutionContext){
+class MissingMetadataQuerySetup(applicationConfig: ApplicationConfig)(implicit ec: ExecutionContext) extends MongoSupport {
 
-  val metadataMongoRepository: MetadataMongoRepository = new MetadataMongoRepository(applicationConfig, mc)
+  override def initTimeout: FiniteDuration = 30.seconds
+
+  val metadataMongoRepository: MetadataMongoRepository = new MetadataMongoRepository(applicationConfig, mongoComponent)
   val metadataCollection: MongoCollection[JsObject] = metadataMongoRepository.collection
-  val presubmissionMongoRepository: PresubmissionMongoRepository = new PresubmissionMongoRepository(applicationConfig, mc)
+  val presubmissionMongoRepository: PresubmissionMongoRepository = new PresubmissionMongoRepository(applicationConfig, mongoComponent)
   val presubmissionCollection: MongoCollection[JsObject] = presubmissionMongoRepository.collection
 
-  val preSubWithoutMetadataView: PreSubWithoutMetadataView = new PreSubWithoutMetadataView(mc, applicationConfig)
+  val preSubWithoutMetadataQuery: PreSubWithoutMetadataQuery = new PreSubWithoutMetadataQuery(presubmissionMongoRepository, applicationConfig)
 
   def resetCollections(): Observable[Unit] = {
     for {
-      clearMetaData <- metadataCollection.deleteMany(Document())
-      clearPresubmissionData <- presubmissionCollection.deleteMany(Document())
+      _ <- metadataCollection.deleteMany(Document())
+      _ <- presubmissionCollection.deleteMany(Document())
     } yield ()
   }
 
@@ -64,19 +67,18 @@ class MissingMetadataViewSetup(applicationConfig: ApplicationConfig, mc: MongoCo
     }
   }
 
-  def getViewResult(metaData: Seq[JsObject], presubmissionData: Seq[JsObject]): Future[(Long, Long, Seq[PreSubWithoutMetadata])] =
+  def getQueryResult(metaData: Seq[JsObject], presubmissionData: Seq[JsObject]): Future[TestQueryResults] =
     resetCollections()
       .toFuture()
       .flatMap(_ => storeMultipleErsSummary(metaData))
       .flatMap(_ => storeMultiplePresubmissionData(presubmissionData))
-      .flatMap(_ => preSubWithoutMetadataView.initView)
-      .flatMap((view: MongoCollection[PreSubWithoutMetadata]) =>
+      .flatMap(_ => preSubWithoutMetadataQuery.runQuery)
+      .flatMap(results => {
         for {
-          metadataCount <- countMetadataRecords
-          preSubCount <- countPresubmissionRecords
-          viewRecords <- view.find().toFuture()
-        } yield (metadataCount, preSubCount, viewRecords)
-      )
+          numMetadataRecords: Long <- countMetadataRecords
+          numPreSubRecords: Long <- countPresubmissionRecords
+        } yield TestQueryResults(numMetadataRecords, numPreSubRecords, results._2, results._1)
+      })
 
   def schemeInfo(taxYear: String,
                  schemeRef: String,
@@ -117,6 +119,4 @@ class MissingMetadataViewSetup(applicationConfig: ApplicationConfig, mc: MongoCo
     nofOfRows = None,
     transferStatus = Some("saved")
   )
-
-
 }

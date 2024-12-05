@@ -14,14 +14,13 @@
  * limitations under the License.
  */
 
-package config
+package uk.gov.hmrc.missingMetadataQuery
 
-import com.google.inject.AbstractModule
-import scheduler.{PreSubWithoutMetadataQueryImpl, ResubmissionServiceImpl}
+import models.PreSubWithoutMetadata
 
-class SchedulerModule extends AbstractModule {
-  override def configure(): Unit = {
-    bind(classOf[ResubmissionServiceImpl]).asEagerSingleton()
-    bind(classOf[PreSubWithoutMetadataQueryImpl]).asEagerSingleton()
-  }
-}
+case class TestQueryResults(
+                             numMetadataRecords: Long,
+                             numPreSubRecords: Long,
+                             queryResults: List[PreSubWithoutMetadata],
+                             queryErrors: List[String]
+                           )
