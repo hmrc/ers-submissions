@@ -263,11 +263,12 @@ class ResubPresubmissionServiceSpec extends ERSTestHelper with BeforeAndAfterEac
       val taxYears: Seq[String] = Seq("2015/16", "2016/17", "2017/18", "2018/19", "2019/20", "2020/21", "2021/22")
       val schemeDataAsJsObject: Seq[JsObject] = taxYears
         .map(taxYear =>
-          Json.toJson(getSimpleSchemaData(schemeInfo.copy(taxYear = taxYear))).as[JsObject]
+          Json.toJson(getSimpleSchemaData(schemeInfo.copy(taxYear = taxYear))).as[JsObject] ++
+            Json.obj("createdAt" -> Json.obj("$date" -> Json.obj("$numberLong" -> "1420106400000")))
         )
 
       def createExpectedStringFromTaxYear(taxYear: String): String =
-        s"schemaRef: 123, schemaType: 123, taxYear: $taxYear, timestamp: 2023-10-07T10:15:30Z"
+        s"schemaRef: 123, schemaType: 123, taxYear: $taxYear, timestamp: 2023-10-07T10:15:30Z, createdAt: 2015-01-01T10:00"
 
       val expectedOutput = s"[ResubmissionService] PreSubSelectedSchemeRefLogs - Selected scheme details: " +
         s"${taxYears.map(createExpectedStringFromTaxYear).mkString("\n", "\n", "\n")}"
@@ -293,7 +294,10 @@ class ResubPresubmissionServiceSpec extends ERSTestHelper with BeforeAndAfterEac
 
     "produce a message indicating there are to many submissions to log out when getStatusForSelectedSchemes returns > 50 records" in {
       when(mockPresubmissionMongoRepository.getStatusForSelectedSchemes(anyString(), any()))
-        .thenReturn(ERSEnvelope(Seq.fill(51)(getSimpleSchemaData(schemeInfo)).map(Json.toJson(_).as[JsObject])))
+        .thenReturn(ERSEnvelope(Seq.fill(51)(
+          getSimpleSchemaData(schemeInfo)).map(Json.toJson(_).as[JsObject] ++
+          Json.obj("createdAt" -> Json.obj("$date" -> Json.obj("$numberLong" -> "1420106400000")))
+        )))
 
       val expectedOutput = s"[ResubmissionService] PreSubSelectedSchemeRefLogs - Selected schemes have more then 50 records (51 records selected)"
 
