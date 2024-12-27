@@ -31,6 +31,7 @@ import services.audit.AuditEvents
 import uk.gov.hmrc.http.HeaderCarrier
 import utils.Session
 
+import java.time.{Instant, LocalDateTime, ZoneId}
 import javax.inject.Inject
 import scala.concurrent.ExecutionContext
 
@@ -74,13 +75,23 @@ class ResubPresubmissionService @Inject()(metadataRepository: MetadataMongoRepos
     } yield countToLog
   }
 
+  def extractSchemeDataAndCreatedAt(json: JsObject): Option[(SchemeData, LocalDateTime)] = {
+    val maybeCreatedAt: Option[LocalDateTime] = (json \ "createdAt" \ "$date" \ "$numberLong")
+      .asOpt[String]
+      .map(l => LocalDateTime.ofInstant(Instant.ofEpochMilli(l.toLong), ZoneId.systemDefault()))
+    (validateJson[SchemeData](json), maybeCreatedAt) match {
+      case (Some(schemeData), Some(createdAt)) => Some(schemeData, createdAt)
+      case (_, _) => None
+    }
+  }
+
   def getPreSubSelectedSchemeRefDetailsMessage(processFailedSubmissionsConfig: ProcessFailedSubmissionsConfig)
                                               (implicit hc: HeaderCarrier): ERSEnvelope[String] =
     for {
       preSubmissionStatuses <- presubmissionRepository
         .getStatusForSelectedSchemes(Session.id(hc), Selectors(processFailedSubmissionsConfig))
-      preSubmissionSchemeData: Seq[SchemeData] = preSubmissionStatuses
-        .flatMap(validateJson[SchemeData])
+      preSubmissionSchemeData: Seq[(SchemeData, LocalDateTime)] = preSubmissionStatuses
+        .flatMap(extractSchemeDataAndCreatedAt)
       selectedSchemeRefLogs = PreSubSelectedSchemeRefLogs(preSubmissionSchemeData)
     } yield selectedSchemeRefLogs.message
 

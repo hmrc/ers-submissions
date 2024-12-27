@@ -18,6 +18,7 @@ package messages
 
 import models.{ErsSummary, SchemeData}
 import uk.gov.hmrc.mongo.lock.LockService
+import java.time.LocalDateTime
 
 trait ResubmissionMessages {
   val prefix: String = "[ResubmissionService]"
@@ -86,12 +87,13 @@ case class MetaDataSelectedSchemeRefLogs(selectedErsSummary: Seq[ErsSummary]) ex
     }
 }
 
-case class PreSubSelectedSchemeRefLogs(selectedErsSummary: Seq[SchemeData]) extends ResubmissionMessages {
-  private def logLine(schemeData: SchemeData): String =
-    s"schemaRef: ${schemeData.schemeInfo.schemeRef}, " +
-    s"schemaType: ${schemeData.schemeInfo.schemeType}, " +
-    s"taxYear: ${schemeData.schemeInfo.taxYear}, " +
-    s"timestamp: ${schemeData.schemeInfo.timestamp}"
+case class PreSubSelectedSchemeRefLogs(selectedErsSummary: Seq[(SchemeData, LocalDateTime)]) extends ResubmissionMessages {
+  private def logLine(schemeDataWithCreatedAt: (SchemeData, LocalDateTime)): String =
+    s"schemaRef: ${schemeDataWithCreatedAt._1.schemeInfo.schemeRef}, " +
+      s"schemaType: ${schemeDataWithCreatedAt._1.schemeInfo.schemeType}, " +
+      s"taxYear: ${schemeDataWithCreatedAt._1.schemeInfo.taxYear}, " +
+      s"timestamp: ${schemeDataWithCreatedAt._1.schemeInfo.timestamp}, " +
+      s"createdAt: ${schemeDataWithCreatedAt._2}"
 
   val numberSelectedErsRecords: Int = selectedErsSummary.length
   val message: String =
