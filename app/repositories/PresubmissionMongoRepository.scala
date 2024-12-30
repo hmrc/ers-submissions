@@ -112,7 +112,7 @@ class PresubmissionMongoRepository @Inject()(applicationConfig: ApplicationConfi
   }
 
   def removeJson(schemeInfo: SchemeInfo, sessionId: String): ERSEnvelope[DeleteResult] = EitherT {
-    collection.deleteOne(buildSelector(schemeInfo))
+    collection.deleteMany(buildSelector(schemeInfo))
       .toFuture()
       .map(_.asRight)
       .recover {

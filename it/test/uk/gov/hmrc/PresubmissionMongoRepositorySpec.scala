@@ -87,12 +87,24 @@ class PresubmissionMongoRepositorySpec extends AnyWordSpecLike with Matchers wit
   }
 
   "removeJson" should {
-    "successfully remove the documents for given scheme info" in {
+    "successfully remove a single documents for given scheme info" in {
       val schemeData = Fixtures.schemeData()
       val schemeInfo = schemeData.schemeInfo
       await(presubmissionRepository.storeJson(schemeData, "").value)
       await(presubmissionRepository.count(schemeInfo, "").value).value shouldBe 1
       await(presubmissionRepository.removeJson(schemeInfo, "").value).value shouldBe DeleteResult.acknowledged(1)
+      await(presubmissionRepository.count(schemeInfo, "").value).value shouldBe 0
+    }
+
+    "successfully remove multiple documents for given scheme info" in {
+      val schemeData = Fixtures.schemeData()
+      val schemeInfo = schemeData.schemeInfo
+      await(presubmissionRepository.storeJson(schemeData, "").value)
+      await(presubmissionRepository.storeJson(schemeData, "").value)
+      await(presubmissionRepository.storeJson(schemeData, "").value)
+      await(presubmissionRepository.storeJson(schemeData, "").value)
+      await(presubmissionRepository.count(schemeInfo, "").value).value shouldBe 4
+      await(presubmissionRepository.removeJson(schemeInfo, "").value).value shouldBe DeleteResult.acknowledged(4)
       await(presubmissionRepository.count(schemeInfo, "").value).value shouldBe 0
     }
   }
