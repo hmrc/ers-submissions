@@ -57,7 +57,7 @@ class ReceivePresubmissionControllerSpec extends TestKit(ActorSystem("ReceivePre
   def testFileDownloadService(downloadResponse: String): FileDownloadService = new FileDownloadService(mockApplicationConfig) {
     override def makeRequest(request: HttpRequest): Future[HttpResponse] = Future.successful(HttpResponse(entity = downloadResponse))
 
-    when(mockApplicationConfig.uploadCsvSizeLimit).thenReturn(104857600)
+    when(mockApplicationConfig.uploadCsvSizeLimit).thenReturn(524288000)
     when(mockApplicationConfig.maxGroupSize).thenReturn(10000)
   }
 
