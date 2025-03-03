@@ -10,7 +10,7 @@ import play.sbt.routes.RoutesKeys.routesGenerator
 import uk.gov.hmrc.versioning.SbtGitVersioning.autoImport.majorVersion
 
 ThisBuild / majorVersion := 2
-ThisBuild / scalaVersion := "2.13.12"
+ThisBuild / scalaVersion := "2.13.15"
 
 val appName = "ers-submissions"
 
