@@ -34,9 +34,9 @@ import scala.concurrent.Future
 class FileDownloadService @Inject()(appConfig: ApplicationConfig)(implicit actorSystem: ActorSystem) extends Logging {
 
   def extractEntityData(response: HttpResponse): Source[ByteString, _] = {
-    val uploadCsvSizeLimit = appConfig.uploadCsvSizeLimit
+    val uploadFileSizeLimit = appConfig.uploadFileSizeLimit
     response match {
-      case HttpResponse(org.apache.pekko.http.scaladsl.model.StatusCodes.OK, _, entity, _) => entity.withSizeLimit(uploadCsvSizeLimit).dataBytes
+      case HttpResponse(org.apache.pekko.http.scaladsl.model.StatusCodes.OK, _, entity, _) => entity.withSizeLimit(uploadFileSizeLimit).dataBytes
       case notOkResponse =>
         logger.error(
           s"[ProcessCsvService][extractEntityData] Illegal response from Upscan: ${notOkResponse.status.intValue}, " +

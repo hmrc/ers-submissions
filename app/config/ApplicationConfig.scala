@@ -27,10 +27,10 @@ class ApplicationConfig @Inject()(serviceConfig: ServicesConfig) {
   lazy val presubmissionCollectionTTL: Int = serviceConfig.getInt("settings.presubmission-collection-ttl-days")
   lazy val presubmissionCollectionIndexReplace: Boolean = serviceConfig.getBoolean("settings.presubmission-collection-index-replace")
   lazy val metadataCollection: String = serviceConfig.getString("settings.metadata-collection")
-  lazy val uploadCsvSizeLimit: Int = serviceConfig.getInt("csv.uploadSizeLimit")
-  lazy val maxGroupSize: Int = serviceConfig.getInt("csv.maxGroupSize")
+  lazy val uploadFileSizeLimit: Int = serviceConfig.getInt("file-size.uploadSizeLimit")
+  lazy val maxGroupSize: Int = serviceConfig.getInt("file-size.maxGroupSize")
   //submissionParallelism refers to the number of threads used while submitting the file to the repository.
-  lazy val submissionParallelism: Int = serviceConfig.getInt("csv.submitParallelism")
+  lazy val submissionParallelism: Int = serviceConfig.getInt("file-size.submitParallelism")
 
   lazy val adrBaseURI: String = serviceConfig.baseUrl("ers-stub")
   lazy val adrFullSubmissionURI: String = serviceConfig.getString("microservice.services.ers-stub.full-submission-url")
