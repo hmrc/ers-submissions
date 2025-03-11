@@ -36,7 +36,7 @@ class FileDownloadServiceSpec extends TestKit(ActorSystem("FileDownloadServiceSp
   with ERSTestHelper {
 
   val mockAppConfig: ApplicationConfig = mock[ApplicationConfig]
-  when(mockAppConfig.uploadCsvSizeLimit).thenReturn(10000)
+  when(mockAppConfig.uploadFileSizeLimit).thenReturn(10000)
 
   "fileDownloadService" should {
     "extract entity data" when {
