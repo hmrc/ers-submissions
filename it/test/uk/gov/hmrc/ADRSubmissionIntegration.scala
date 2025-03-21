@@ -30,7 +30,7 @@ import org.scalatest.BeforeAndAfterEach
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 import repositories.{MetadataMongoRepository, PresubmissionMongoRepository}
-import Fixtures.buildErsSummary
+import uk.gov.hmrc.Fixtures.buildErsSummary
 
 import java.time.Instant
 import java.time.temporal.ChronoUnit
@@ -63,6 +63,14 @@ class ADRSubmissionIntegration extends AnyWordSpecLike with Matchers
     super.afterEach()
     await(presubmissionRepository.collection.drop().toFuture())
     await(metadataMongoRepository.collection.drop().toFuture())
+  }
+
+  "metadataMongoRepository" should {
+    "have expected indexes" in {
+      val indexNames = metadataMongoRepository.indexes.map(_.getOptions.getName)
+      val expectedIndexes = Set("schemeRef", "taxYear", "timestamp", "transferStatus")
+      indexNames should contain allElementsOf expectedIndexes
+    }
   }
 
   def getJson(selector: BsonDocument): Future[Seq[ErsSummary]] =

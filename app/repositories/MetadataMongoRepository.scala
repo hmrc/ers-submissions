@@ -47,7 +47,9 @@ class MetadataMongoRepository @Inject()(val applicationConfig: ApplicationConfig
     domainFormat = implicitly[Format[JsObject]],
     indexes = Seq(
       IndexModel(ascending("metaData.schemeInfo.schemeRef"), IndexOptions().name("schemeRef")),
-      IndexModel(ascending("metaData.schemeInfo.taxYear"), IndexOptions().name("taxYear"))
+      IndexModel(ascending("metaData.schemeInfo.taxYear"), IndexOptions().name("taxYear")),
+      IndexModel(ascending("transferStatus"), IndexOptions().name("transferStatus")),
+      IndexModel(ascending("metaData.schemeInfo.timestamp"), IndexOptions().name("timestamp"))
     )
   ) with RepositoryHelper {
 
