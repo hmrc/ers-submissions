@@ -10,7 +10,7 @@ import play.sbt.routes.RoutesKeys.routesGenerator
 import uk.gov.hmrc.versioning.SbtGitVersioning.autoImport.majorVersion
 
 ThisBuild / majorVersion := 2
-ThisBuild / scalaVersion := "2.13.15"
+ThisBuild / scalaVersion := "2.13.16"
 
 val appName = "ers-submissions"
 
@@ -36,7 +36,7 @@ lazy val microservice = Project(appName, file("."))
   .settings(scalaSettings)
   .settings(defaultSettings())
   .settings(
-    scalaVersion := "2.13.15",
+    scalaVersion := "2.13.16",
     libraryDependencies ++= AppDependencies(),
     libraryDependencySchemes ++= Seq("org.scala-lang.modules" %% "scala-xml" % VersionScheme.Always),
     routesGenerator := InjectedRoutesGenerator
