@@ -67,7 +67,9 @@ class SubmissionCommon @Inject()(configUtils: ConfigUtils) extends Logging {
     getNewField(configElem, getConfigElemFieldValueByType(configElem, "value"))
 
   def getFileDataValue(configElem: Config, fileData: ListBuffer[Seq[String]], row: Option[Int]): JsObject = {
-    if (configElem.hasPath("value")) getConfigElemValue(configElem)
+    if (configElem.hasPath("value")) {
+      getConfigElemValue(configElem)
+    }
     else {
       val elemColumn = configElem.getInt("column")
       val elemRow = row.getOrElse(configElem.getInt("row"))

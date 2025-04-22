@@ -62,9 +62,8 @@ class SubmissionService @Inject()(repositories: Repositories,
 
   def transformData(ersSummary: ErsSummary)(implicit request: Request[_], hc: HeaderCarrier): ERSEnvelope[JsObject] = {
     val startTime = System.currentTimeMillis()
-
     val (maxFirstNameLen, maxCountryLen) = (35, 18)
-    
+
     def trimDataIfSizeExceeded(json: JsObject, fieldName: String, jsPath: JsPath, maxLen: Int) = json.transform({
      jsPath.json.update(__.read[JsString].map { field =>
         if (field.as[String].length > maxLen) {
@@ -78,7 +77,7 @@ class SubmissionService @Inject()(repositories: Repositories,
     }) match {
       case JsSuccess(value, _) => value
       case JsError(_) =>
-        logger.info(s"[SubmissionService][transformData] Failed to transform Json Path $jsPath data, attempting to proceed untransformed")
+        logger.error(s"[SubmissionService][transformData] Failed to transform Json Path $jsPath data, attempting to proceed untransformed")
         json
     }
     
@@ -95,18 +94,18 @@ class SubmissionService @Inject()(repositories: Repositories,
     val startTime = System.currentTimeMillis()
 
     val result: ERSEnvelope[Boolean] = adrConnector.sendData(adrData, ersSummary.metaData.schemeInfo.schemeType).flatMap { response =>
+      val correlationID: String = submissionCommon.getCorrelationID(response)
       val transferStatus: String = response.status match {
         case ACCEPTED =>
           metrics.sendToADR(System.currentTimeMillis() - startTime, TimeUnit.MILLISECONDS)
           metrics.successfulSendToADR()
-          val correlationID: String = submissionCommon.getCorrelationID(response)
           auditEvents.sendToAdrEvent("ErsTransferToAdrResponseReceived", ersSummary, Some(correlationID))
           logger.info(s"Data transfer to ADR was successful for ${ersSummary.metaData.schemeInfo.basicLogMessage}, correlationId: $correlationID")
           successStatus
         case _ =>
           metrics.failedSendToADR()
           auditEvents.sendToAdrEvent("ErsTransferToAdrFailed", ersSummary)
-          logger.info(s"Data transfer to ADR failed for ${ersSummary.metaData.schemeInfo.basicLogMessage}")
+          logger.error(s"Data transfer to ADR failed for ${ersSummary.metaData.schemeInfo.basicLogMessage}, correlationId: $correlationID")
           failedStatus
       }
       updatePostsubmission(response.status, transferStatus, ersSummary.metaData.schemeInfo)
