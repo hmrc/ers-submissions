@@ -8,7 +8,7 @@ object AppDependencies {
   val compile: Seq[ModuleID] = Seq(
     "uk.gov.hmrc"             %% "bootstrap-backend-play-30"    % bootstrapVersion,
     "uk.gov.hmrc.mongo"       %% "hmrc-mongo-play-30"           % mongoVersion,
-    "uk.gov.hmrc"             %% "domain-play-30"               % "10.0.0",
+    "uk.gov.hmrc"             %% "domain-play-30"               % "11.0.0",
     "org.apache.pekko"        %% "pekko-connectors-csv"         % pekkoVersion,
     "org.typelevel"           %% "cats-core"                    % "2.13.0",
     "io.github.samueleresca"  %% "pekko-quartz-scheduler"       % "1.2.2-pekko-1.0.x"
