@@ -1,27 +1,15 @@
 
-import scoverage.ScoverageKeys
 import play.routes.compiler.InjectedRoutesGenerator
-
+import play.sbt.routes.RoutesKeys.routesGenerator
 import sbt.*
 import uk.gov.hmrc.DefaultBuildSettings.{defaultSettings, scalaSettings}
 import uk.gov.hmrc.sbtdistributables.SbtDistributablesPlugin
-
-import play.sbt.routes.RoutesKeys.routesGenerator
 import uk.gov.hmrc.versioning.SbtGitVersioning.autoImport.majorVersion
 
 ThisBuild / majorVersion := 2
 ThisBuild / scalaVersion := "2.13.16"
 
 val appName = "ers-submissions"
-
-lazy val scoverageSettings = {
-  Seq(
-    // Semicolon-separated list of regexs matching classes to exclude
-    ScoverageKeys.coverageExcludedPackages := "<empty>;Reverse.*;.*ERSRequest.*;models/.data/..*;prod.*;app.*;models.*;.*BuildInfo.*;view.*;.*Connector.*;repositories.*;.*Config;.*Global.*;prod.Routes;testOnlyDoNotUseInAppConf.*;.*Configuration;.*AuthFilter;.*AuditFilter;.*LoggingFilter;.*Metrics;.*WSHttp.*",
-    ScoverageKeys.coverageMinimumStmtTotal := 86,
-    ScoverageKeys.coverageFailOnMinimum := true,
-  )
-}
 
 lazy val testSettings = Seq(
   javaOptions ++= Seq(
@@ -32,7 +20,7 @@ lazy val testSettings = Seq(
 lazy val microservice = Project(appName, file("."))
   .enablePlugins(play.sbt.PlayScala, SbtDistributablesPlugin)
   .disablePlugins(JUnitXmlReportPlugin) //Required to prevent https://github.com/scalatest/scalatest/issues/1427
-  .settings(scoverageSettings)
+  .settings(CodeCoverageSettings())
   .settings(scalaSettings)
   .settings(defaultSettings())
   .settings(
@@ -54,5 +42,3 @@ lazy val it = project
   .disablePlugins(JUnitXmlReportPlugin) //Required to prevent https://github.com/scalatest/scalatest/issues/1427
   .dependsOn(microservice % "test->test")
   .settings(testSettings)
-
-addCommandAlias("scalastyleAll", "all scalastyle Test/scalastyle")

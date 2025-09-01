@@ -25,7 +25,6 @@ object BsonDocumentHelper {
   }
 
   implicit class BsonOps(bsonDocument: BsonDocument) {
-    //scalastyle:off method.name
     def +:+(toAdd: BsonDocument): BsonDocument = {
       BsonDocument(bsonToSeqOfTuples(bsonDocument) ++ bsonToSeqOfTuples(toAdd))
     }
