@@ -29,9 +29,9 @@ import org.apache.pekko.NotUsed
 import org.apache.pekko.util.ByteString
 import play.api.libs.json.{JsObject, Json}
 
-import scala.util.Try
 import javax.inject.Inject
 import scala.concurrent.ExecutionContext
+import scala.util.Try
 
 class PresubmissionService @Inject()(repositories: Repositories)(implicit ec: ExecutionContext) extends Logging {
 
