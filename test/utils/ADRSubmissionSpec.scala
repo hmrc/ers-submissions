@@ -19,6 +19,7 @@ package utils
 import com.typesafe.config.Config
 import common.ERSEnvelope
 import common.ERSEnvelope.ERSEnvelope
+import connectors.ADRConnector
 import fixtures.Fixtures
 import helpers.ERSTestHelper
 import models.{ErsSummary, MongoGenericError, SchemeInfo}
@@ -29,10 +30,11 @@ import play.api.libs.json.{JsObject, Json}
 import play.api.mvc.Request
 import play.api.test.FakeRequest
 import services.PresubmissionService
-import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 import utils.LoggingAndRexceptions.ADRExceptionEmitter
 
 import scala.collection.mutable.ListBuffer
+import scala.concurrent.{ExecutionContext, Future}
 
 class ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with EitherValues {
 
@@ -40,6 +42,7 @@ class ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with Eithe
   implicit val request: FakeRequest[JsObject] = FakeRequest().withBody(Fixtures.metadataJson)
   val mockSubmissionCommon: SubmissionCommon = mock[SubmissionCommon]
   val mockPresubmissionService: PresubmissionService = mock[PresubmissionService]
+  val mockADRconnector: ADRConnector = mock[ADRConnector]
   val mockAdrExceptionEmitter: ADRExceptionEmitter = app.injector.instanceOf[ADRExceptionEmitter]
   val mockConfig: Config = mock[Config]
   when(mockConfig.getConfig(anyString())).thenReturn(mock[Config])
@@ -47,9 +50,15 @@ class ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with Eithe
   val mockConfigUtils: ConfigUtils = mock[ConfigUtils]
   when(mockConfigUtils.getConfigData(anyString(), anyString(), any[ErsSummary]())(any[HeaderCarrier]())).thenReturn(mockConfig)
 
+  val mockHttpResponse = HttpResponse(200, "Success")
+
   override def beforeEach(): Unit = {
     super.beforeEach()
     reset(mockPresubmissionService)
+    when(mockADRconnector.sendDataStream(any(), any())(any[ExecutionContext], any[HeaderCarrier]))
+      .thenReturn(ERSEnvelope(Future.successful(mockHttpResponse)))
+    when(mockPresubmissionService.compareSheetsNumber(any[Int], any[SchemeInfo]())(any[HeaderCarrier]))
+      .thenReturn(ERSEnvelope(Future.successful((true, 0L))))
   }
 
   val nilReturnJson: JsObject = Json.obj(
@@ -85,7 +94,8 @@ class ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with Eithe
     val mockAdrSubmission: ADRSubmission = new ADRSubmission(
       mockSubmissionCommon,
       mockPresubmissionService,
-      mockConfigUtils
+      mockADRconnector,
+      mockConfigUtils,
     ) {
 
       override def createSubmissionJson(ersSummary: ErsSummary, schemeType: String)
@@ -110,6 +120,7 @@ class ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with Eithe
     val mockAdrSubmission: ADRSubmission = new ADRSubmission(
       mockSubmissionCommon,
       mockPresubmissionService,
+      mockADRconnector,
       mockConfigUtils
     ) {
       override def createSheetsJson(sheetsJson: JsObject, ersSummary: ErsSummary, schemeType: String)
@@ -131,6 +142,7 @@ class ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with Eithe
     val mockAdrSubmission: ADRSubmission = new ADRSubmission(
       mockSubmissionCommon,
       mockPresubmissionService,
+      mockADRconnector,
       mockConfigUtils
     ) {
       when(mockSubmissionCommon.mergeSheetData(any[Config](), any[JsObject], any[JsObject])).thenReturn(sheetsJson)
@@ -167,6 +179,7 @@ class ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with Eithe
       val mockAdrSubmission: ADRSubmission = new ADRSubmission(
         mockSubmissionCommon,
         mockPresubmissionService,
+        mockADRconnector,
         mockConfigUtils
       ) {
         override def buildRoot(configData: Config, metadata: Object, sheetsJson: JsObject, ersSummary: ErsSummary, schemeType: String)

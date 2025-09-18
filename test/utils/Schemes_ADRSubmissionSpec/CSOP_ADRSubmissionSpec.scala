@@ -18,6 +18,7 @@ package utils.Schemes_ADRSubmissionSpec
 
 import com.typesafe.config.Config
 import common.ERSEnvelope
+import connectors.ADRConnector
 import fixtures.{CSOP, Common, Fixtures}
 import helpers.ERSTestHelper
 import models.{SchemeData, SchemeInfo}
@@ -27,17 +28,18 @@ import org.scalatest.{BeforeAndAfter, EitherValues}
 import play.api.libs.json.{JsObject, Json}
 import play.api.test.FakeRequest
 import services.PresubmissionService
-import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 import utils.{ADRSubmission, ConfigUtils, SubmissionCommon}
 
 import scala.collection.mutable.ListBuffer
-import scala.concurrent.Future
+import scala.concurrent.{Future, ExecutionContext}
 
 class CSOP_ADRSubmissionSpec
   extends ERSTestHelper with BeforeAndAfter with EitherValues {
 
   val mockSubmissionCommon: SubmissionCommon = app.injector.instanceOf[SubmissionCommon]
   val mockConfigUtils: ConfigUtils = app.injector.instanceOf[ConfigUtils]
+  val mockADRconnector: ADRConnector = mock[ADRConnector]
   val mockPresubmissionService: PresubmissionService = mock[PresubmissionService]
 
   implicit val hc: HeaderCarrier = new HeaderCarrier()
@@ -46,11 +48,20 @@ class CSOP_ADRSubmissionSpec
   val adrSubmission: ADRSubmission = new ADRSubmission(
     mockSubmissionCommon,
     mockPresubmissionService,
+    mockADRconnector,
     mockConfigUtils
   )
-  def before(fun : => scala.Any): Unit  = {
-    super.before(())
-    reset(mockPresubmissionService)
+
+  val mockHttpResponse = HttpResponse(200, "Success")
+
+  before {
+    reset(mockPresubmissionService, mockADRconnector)
+
+    when(mockADRconnector.sendDataStream(any(), any())(any[ExecutionContext], any[HeaderCarrier]))
+      .thenReturn(ERSEnvelope(Future.successful(mockHttpResponse)))
+
+    when(mockPresubmissionService.compareSheetsNumber(any[Int], any[SchemeInfo]())(any[HeaderCarrier]))
+      .thenReturn(ERSEnvelope(Future.successful((true, 0L))))
   }
 
   "calling generateSubmissionReturn" should {
