@@ -126,7 +126,7 @@ class PresubmissionServiceSpec extends ERSTestHelper with EitherValues {
       collected shouldBe Seq(js)
     }
 
-    "return NoData when count == 0" in {
+    "return NoData when count is 0 or less" in {
       reset(mockPresubmissionRepository)
 
       when(mockPresubmissionRepository.count(anyArg[SchemeInfo](), anyArg[String]()))
@@ -151,7 +151,7 @@ class PresubmissionServiceSpec extends ERSTestHelper with EitherValues {
       when(mockPresubmissionRepository.count(anyArg[SchemeInfo](), anyArg[String]()))
         .thenReturn(ERSEnvelope(1L))
       when(mockPresubmissionRepository.getJsonStream(anyArg[SchemeInfo](), anyInt()))
-        .thenReturn(Source.single(js)) // will be mapped .as[SchemeData] internally
+        .thenReturn(Source.single(js))
 
       val service = new PresubmissionService(mockRepositories) {
         override lazy val presubmissionRepository: PresubmissionMongoRepository = mockPresubmissionRepository

@@ -58,7 +58,7 @@ class ADRConnector @Inject()(applicationConfig: ApplicationConfig,
       }
   }
 
-  def sendDataStream(dataStream: Source[ByteString, _], schemeType: String)(implicit ec: ExecutionContext, hc: HeaderCarrier): common.ERSEnvelope.ERSEnvelope[HttpResponse] = EitherT {
+  def sendDataStream(dataStream: Source[ByteString, _], schemeType: String)(implicit ec: ExecutionContext, hc: HeaderCarrier): ERSEnvelope[HttpResponse] = EitherT {
     val url: String = buildEtmpPath(s"${applicationConfig.adrFullSubmissionURI}/${schemeType.toLowerCase()}")
     val headersForRequest = hc
       .withExtraHeaders(explicitHeaders(): _*)

@@ -60,8 +60,7 @@ class PresubmissionService @Inject()(repositories: Repositories)(implicit ec: Ex
   }
 
   def getJsonStreaming(schemeInfo: SchemeInfo)(implicit hc: HeaderCarrier): ERSEnvelope[Source[JsObject, NotUsed]] = {
-    val sessionId = Session.id(hc)
-    presubmissionRepository.count(schemeInfo, sessionId).flatMap { count =>
+    presubmissionRepository.count(schemeInfo, Session.id(hc)).flatMap { count =>
       if (count > 0) {
         logger.info(s"Starting streaming for ${schemeInfo.basicLogMessage} with $count documents")
         val stream: Source[JsObject, NotUsed] = presubmissionRepository.getJsonStream(schemeInfo)
