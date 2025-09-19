@@ -21,6 +21,8 @@ import cats.syntax.all._
 import com.typesafe.config.ConfigFactory
 import common.ERSEnvelope.ERSEnvelope
 import config.ApplicationConfig
+import org.apache.pekko.stream.scaladsl.Source
+import org.apache.pekko.util.ByteString
 import play.api.libs.json.JsObject
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, StringContextOps}
 import uk.gov.hmrc.http.HttpReads.Implicits._
@@ -55,4 +57,18 @@ class ADRConnector @Inject()(applicationConfig: ApplicationConfig,
         case ex => Left(handleError(ex, "sendData"))
       }
   }
+
+  def sendDataStream(dataStream: Source[ByteString, _], schemeType: String)(implicit ec: ExecutionContext, hc: HeaderCarrier): ERSEnvelope[HttpResponse] = EitherT {
+    val url: String = buildEtmpPath(s"${applicationConfig.adrFullSubmissionURI}/${schemeType.toLowerCase()}")
+    val headersForRequest = hc
+      .withExtraHeaders(explicitHeaders(): _*)
+      .headersForUrl(headerCarrierConfig)(url)
+
+    http.post(url"$url").withBody(dataStream).setHeader(headersForRequest: _*).execute[HttpResponse]
+      .map(_.asRight)
+      .recover {
+        case ex => Left(handleError(ex, "sendDataStream"))
+      }
+  }
+
 }

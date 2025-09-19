@@ -24,6 +24,10 @@ import play.api.Logging
 import repositories.{PresubmissionMongoRepository, Repositories}
 import uk.gov.hmrc.http.HeaderCarrier
 import utils.Session
+import org.apache.pekko.stream.scaladsl.Source
+import org.apache.pekko.NotUsed
+import org.apache.pekko.util.ByteString
+import play.api.libs.json.{JsObject, Json}
 
 import javax.inject.Inject
 import scala.concurrent.ExecutionContext
@@ -52,6 +56,32 @@ class PresubmissionService @Inject()(repositories: Repositories)(implicit ec: Ex
         logger.error(s"No data found in pre-submission repository for: ${schemeInfo.basicLogMessage}")
         ERSEnvelope(NoData())
       }
+    }
+  }
+
+  def getJsonStreaming(schemeInfo: SchemeInfo)(implicit hc: HeaderCarrier): ERSEnvelope[Source[JsObject, NotUsed]] = {
+    presubmissionRepository.count(schemeInfo, Session.id(hc)).flatMap { count =>
+      if (count > 0) {
+        logger.info(s"Starting streaming for ${schemeInfo.basicLogMessage} with $count documents")
+        val stream: Source[JsObject, NotUsed] = presubmissionRepository.getJsonStream(schemeInfo)
+        ERSEnvelope(stream)
+      } else {
+        logger.error(s"No data found for: ${schemeInfo.basicLogMessage}")
+        ERSEnvelope(NoData())
+      }
+    }
+  }
+
+  def getJsonByteStringStream(schemeInfo: SchemeInfo)(implicit hc: HeaderCarrier): ERSEnvelope[Source[ByteString, NotUsed]] = {
+    getJsonStreaming(schemeInfo).flatMap { source =>
+      val schemeDataStream: Source[SchemeData, NotUsed] = source.map(_.as[SchemeData])
+      val jsonStream: Source[ByteString, NotUsed] =
+        Source.single(ByteString("[")) ++
+        schemeDataStream
+          .map(data => ByteString(Json.toJson(data).toString()))
+          .intersperse(ByteString(",")) ++
+        Source.single(ByteString("]"))
+      ERSEnvelope(jsonStream)
     }
   }
 

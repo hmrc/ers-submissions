@@ -92,4 +92,8 @@ trait FakeErsStubService extends BeforeAndAfterAll with ScalaFutures {
   }
 
   stubServer.stubFor(WireMock.post(urlMatching("/.*")).willReturn(WireMock.aResponse().withStatus(202)))
+
+  def verifyPostedTo(path: String): Unit = {
+    stubServer.verify(postRequestedFor(urlPathEqualTo(path)))
+  }
 }
