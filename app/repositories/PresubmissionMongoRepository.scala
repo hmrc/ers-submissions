@@ -18,9 +18,12 @@ package repositories
 
 import cats.data.EitherT
 import cats.syntax.all._
+import common.ERSEnvelope
 import common.ERSEnvelope.ERSEnvelope
 import config.ApplicationConfig
 import models._
+import org.apache.pekko.NotUsed
+import org.apache.pekko.stream.scaladsl.Source
 import org.mongodb.scala.bson.{BsonDocument, BsonInt64, BsonString}
 import org.mongodb.scala.model.Sorts._
 import org.mongodb.scala.model._
@@ -30,8 +33,6 @@ import play.api.libs.json.{Format, JsObject, Json}
 import repositories.helpers.RepositoryHelper
 import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
-import org.apache.pekko.stream.scaladsl.Source
-import org.apache.pekko.NotUsed
 
 import java.time.Instant
 import java.util.concurrent.TimeUnit
@@ -49,7 +50,7 @@ class PresubmissionMongoRepository @Inject()(applicationConfig: ApplicationConfi
       IndexModel(ascending("schemeInfo.schemeRef"), IndexOptions().name("schemeRef")),
       IndexModel(ascending("schemeInfo.timestamp"), IndexOptions().name("timestamp")),
       IndexModel(ascending("createdAt"), indexOptions = IndexOptions().name("timeToLive")
-          .expireAfter(applicationConfig.presubmissionCollectionTTL, TimeUnit.DAYS)
+        .expireAfter(applicationConfig.presubmissionCollectionTTL, TimeUnit.DAYS)
       )
     ),
     replaceIndexes = applicationConfig.presubmissionCollectionIndexReplace
@@ -100,11 +101,12 @@ class PresubmissionMongoRepository @Inject()(applicationConfig: ApplicationConfi
   def getJsonStream(schemeInfo: SchemeInfo, batchSize: Int = 500): Source[JsObject, NotUsed] = {
     logger.info(s"[getJsonStream][selector]: ${buildSelector(schemeInfo).toJson}")
 
-    Source.fromPublisher(
+    Source.fromPublisher {
       collection
         .find(buildSelector(schemeInfo))
         .batchSize(batchSize)
-    ).recover {
+    }
+      .recover {
       case ex =>
         logger.error(s"Streaming operation failed for ${schemeInfo.schemeRef}", ex)
         throw ex
@@ -146,7 +148,7 @@ class PresubmissionMongoRepository @Inject()(applicationConfig: ApplicationConfi
     Json.toJsObject(schemeData) ++
       Json.obj("createdAt" -> Json.obj("$date" -> Instant.now.toEpochMilli))
 
-  def  getStatusForSelectedSchemes(sessionId: String, selectors: Selectors): ERSEnvelope[Seq[JsObject]] = EitherT {
+  def getStatusForSelectedSchemes(sessionId: String, selectors: Selectors): ERSEnvelope[Seq[JsObject]] = EitherT {
     collection
       .find(filter = selectors.preSubmissionSchemeRefSelector)
       .toFuture()

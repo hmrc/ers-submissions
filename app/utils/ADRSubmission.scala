@@ -32,8 +32,7 @@ import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 import scala.concurrent.ExecutionContext
 
 class ADRSubmission @Inject()(submissionCommon: SubmissionCommon,
-                              presubmissionService: PresubmissionService,
-                              adrConnector: ADRConnector,
+                              val presubmissionService: PresubmissionService,
                               configUtils: ConfigUtils)
                              (implicit ec: ExecutionContext) extends Logging {
 
@@ -57,20 +56,7 @@ class ADRSubmission @Inject()(submissionCommon: SubmissionCommon,
       rootJson <- createRootJson(sheetsDataJson, ersSummary, schemeType)
     } yield rootJson
 
-  def createSheetsJson(sheetsJson: JsObject, ersSummary: ErsSummary, schemeType: String)(implicit request: Request[_], hc: HeaderCarrier): ERSEnvelope[JsObject] = {
-    // whether to use streaming or not is currently decided by documentCount threshold of x documents (seems fairly arbitrary).
-    // maybe it would be good to convert everything to streaming instead of having the original approach and the new streaming one
-    presubmissionService.compareSheetsNumber(0, ersSummary.metaData.schemeInfo).flatMap { case (_, documentCount) =>
-      if (documentCount > 20) {
-        createSheetsJsonStreaming(ersSummary, schemeType)
-          .map(_ => sheetsJson)
-      } else {
-        createSheetsJsonOriginal(sheetsJson, ersSummary, schemeType)
-      }
-    }
-  }
-
-  private def createSheetsJsonOriginal(sheetsJson: JsObject, ersSummary: ErsSummary, schemeType: String)(implicit request: Request[_], hc: HeaderCarrier): ERSEnvelope[JsObject] = {
+  private def createSheetsJson(sheetsJson: JsObject, ersSummary: ErsSummary, schemeType: String)(implicit request: Request[_], hc: HeaderCarrier): ERSEnvelope[JsObject] = {
     presubmissionService.getJson(ersSummary.metaData.schemeInfo).map { schemeDataSeq =>
       val sheetNamesAndDataPresent = schemeDataSeq.forall(fd => fd.sheetName.nonEmpty && fd.data.nonEmpty)
 
@@ -88,15 +74,6 @@ class ADRSubmission @Inject()(submissionCommon: SubmissionCommon,
         result ++ submissionCommon.mergeSheetData(configData.getConfig("data_location"), result, data)
       }
     }
-  }
-
-  private def createSheetsJsonStreaming(ersSummary: ErsSummary, schemeType: String)(implicit hc: HeaderCarrier): ERSEnvelope[HttpResponse] = {
-    def submitOnce(): ERSEnvelope[HttpResponse] = {
-      presubmissionService.getJsonByteStringStream(ersSummary.metaData.schemeInfo).flatMap { stream =>
-        adrConnector.sendDataStream(stream, schemeType)
-      }
-    }
-    submitOnce()
   }
 
   def createRootJson(sheetsJson: JsObject, ersSummary: ErsSummary, schemeType: String)(implicit request: Request[_], hc: HeaderCarrier): ERSEnvelope[JsObject] = {

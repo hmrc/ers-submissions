@@ -23,6 +23,7 @@ final case class ResubmissionError() extends ERSError
 final case class JsonFromSheetsCreationError(message: String) extends ERSError
 final case class SchemeDataMappingError(message: String) extends ERSError
 final case class NoData() extends ERSError
+final case class StreamError() extends ERSError // note: maybe use this?? or delete it? who knows?
 
 //Database errors
 abstract class MongoError extends ERSError

@@ -26,6 +26,7 @@ import uk.gov.hmrc.http.HeaderCarrier
 import utils.Session
 import org.apache.pekko.stream.scaladsl.Source
 import org.apache.pekko.NotUsed
+import org.apache.pekko.stream.{ActorAttributes, Supervision}
 import org.apache.pekko.util.ByteString
 import play.api.libs.json.{JsObject, Json}
 
@@ -59,28 +60,22 @@ class PresubmissionService @Inject()(repositories: Repositories)(implicit ec: Ex
     }
   }
 
-  def getJsonStreaming(schemeInfo: SchemeInfo)(implicit hc: HeaderCarrier): ERSEnvelope[Source[JsObject, NotUsed]] = {
-    presubmissionRepository.count(schemeInfo, Session.id(hc)).flatMap { count =>
-      if (count > 0) {
-        logger.info(s"Starting streaming for ${schemeInfo.basicLogMessage} with $count documents")
-        val stream: Source[JsObject, NotUsed] = presubmissionRepository.getJsonStream(schemeInfo)
-        ERSEnvelope(stream)
-      } else {
-        logger.error(s"No data found for: ${schemeInfo.basicLogMessage}")
-        ERSEnvelope(NoData())
-      }
-    }
-  }
-
   def getJsonByteStringStream(schemeInfo: SchemeInfo)(implicit hc: HeaderCarrier): ERSEnvelope[Source[ByteString, NotUsed]] = {
-    getJsonStreaming(schemeInfo).flatMap { source =>
-      val schemeDataStream: Source[SchemeData, NotUsed] = source.map(_.as[SchemeData])
-      val jsonStream: Source[ByteString, NotUsed] =
-        Source.single(ByteString("[")) ++
-        schemeDataStream
+
+    ERSEnvelope(presubmissionRepository.getJsonStream(schemeInfo)).flatMap { source =>
+
+      val strategy : Supervision.Decider = (_ => Supervision.Stop) // todo: is this the right approach? does this catch the errors for _.as[SchemeData] ?
+
+      val schemeDataStream =
+        source
+          .map(_.as[SchemeData])
+          .withAttributes(ActorAttributes.supervisionStrategy(strategy))
           .map(data => ByteString(Json.toJson(data).toString()))
-          .intersperse(ByteString(",")) ++
-        Source.single(ByteString("]"))
+          .intersperse(ByteString(","))
+
+      val jsonStream: Source[ByteString, NotUsed] =
+        Source.single(ByteString("[")) ++ schemeDataStream ++ Source.single(ByteString("]")) // todo: is this needed? if so perhaps add a comment
+
       ERSEnvelope(jsonStream)
     }
   }
@@ -97,6 +92,9 @@ class PresubmissionService @Inject()(repositories: Repositories)(implicit ec: Ex
         logger.warn(s"Deleting old presubmission data failed for: ${schemeInfo.basicLogMessage}")
         ERSEnvelope(false)
     }
+
+  def getSheetCount(schemeInfo: SchemeInfo)(implicit hc: HeaderCarrier): ERSEnvelope[Long] =
+    presubmissionRepository.count(schemeInfo, Session.id(hc))
 
   def compareSheetsNumber(expectedSheets: Int, schemeInfo: SchemeInfo)(implicit hc: HeaderCarrier): ERSEnvelope[(Boolean, Long)] =
     presubmissionRepository.count(schemeInfo, Session.id(hc)).map { existingSheets =>

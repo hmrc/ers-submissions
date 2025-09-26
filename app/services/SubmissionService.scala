@@ -27,7 +27,7 @@ import play.api.libs.json.{JsError, JsObject, JsPath, JsString, JsSuccess, __}
 import play.api.mvc.Request
 import repositories.{MetadataMongoRepository, Repositories}
 import services.audit.AuditEvents
-import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 import utils.{ADRSubmission, Session, SubmissionCommon}
 
 import java.util.concurrent.TimeUnit
@@ -54,10 +54,10 @@ class SubmissionService @Inject()(repositories: Repositories,
 
   def processData(ersSummary: ErsSummary, failedStatus: String, successStatus: String)
                  (implicit request: Request[_], hc: HeaderCarrier): ERSEnvelope[Boolean] = {
-      for {
-        adrData <- transformData(ersSummary)
-        postSubmissionUpdated <- sendToADRUpdatePostData(ersSummary, adrData, failedStatus, successStatus)
-      } yield postSubmissionUpdated
+    for {
+      adrData <- transformData(ersSummary)
+      postSubmissionUpdated <- sendToADRUpdatePostData(ersSummary, adrData, failedStatus, successStatus)
+    } yield postSubmissionUpdated
   }
 
   def transformData(ersSummary: ErsSummary)(implicit request: Request[_], hc: HeaderCarrier): ERSEnvelope[JsObject] = {
@@ -65,7 +65,7 @@ class SubmissionService @Inject()(repositories: Repositories,
     val (maxFirstNameLen, maxCountryLen) = (35, 18)
 
     def trimDataIfSizeExceeded(json: JsObject, fieldName: String, jsPath: JsPath, maxLen: Int) = json.transform({
-     jsPath.json.update(__.read[JsString].map { field =>
+      jsPath.json.update(__.read[JsString].map { field =>
         if (field.as[String].length > maxLen) {
           logger.info(s"[SubmissionService][transformData] $fieldName was greater than $maxLen characters for " +
             s"SchemeRef: ${ersSummary.metaData.schemeInfo.schemeRef}, trimming to allow submission")
@@ -93,7 +93,22 @@ class SubmissionService @Inject()(repositories: Repositories,
                              (implicit hc: HeaderCarrier): ERSEnvelope[Boolean] = {
     val startTime = System.currentTimeMillis()
 
-    val result: ERSEnvelope[Boolean] = adrConnector.sendData(adrData, ersSummary.metaData.schemeInfo.schemeType).flatMap { response =>
+    val schemeType = ersSummary.metaData.schemeInfo.schemeType
+
+    val httpResponseFromADRCall: ERSEnvelope[HttpResponse] = for {
+      sheetCount <- adrSubmission.presubmissionService.getSheetCount(ersSummary.metaData.schemeInfo)
+      response <- if (sheetCount > 20) {
+        for {
+          stream <- adrSubmission.presubmissionService.getJsonByteStringStream(ersSummary.metaData.schemeInfo)
+          result <- adrConnector.sendDataStream(stream, schemeType)
+        } yield result
+      } else {
+        adrConnector.sendData(adrData, schemeType)
+      }
+    } yield response
+
+
+    val result: ERSEnvelope[Boolean] = httpResponseFromADRCall.flatMap { response =>
       val correlationID: String = submissionCommon.getCorrelationID(response)
       val transferStatus: String = response.status match {
         case ACCEPTED =>
@@ -117,17 +132,17 @@ class SubmissionService @Inject()(repositories: Repositories,
                           (implicit hc: HeaderCarrier): ERSEnvelope[Boolean] = {
     val startUpdateTime = System.currentTimeMillis()
     metadataRepository.updateStatus(schemeInfo, transferStatus, Session.id(hc)).flatMap {
-        case true if adrSubmissionStatus == ACCEPTED =>
-          metrics.updatePostsubmissionStatus(System.currentTimeMillis() - startUpdateTime, TimeUnit.MILLISECONDS)
-          logger.info(s"Updated submission transfer status to: [$transferStatus] for ${schemeInfo.basicLogMessage}")
-          ERSEnvelope(true)
-        case true =>
-          metrics.updatePostsubmissionStatus(System.currentTimeMillis() - startUpdateTime, TimeUnit.MILLISECONDS)
-          logger.info(s"Updated submission transfer status to: [$transferStatus] for ${schemeInfo.basicLogMessage}")
-          ERSEnvelope(SubmissionStatusUpdateError(Some(adrSubmissionStatus), Some(transferStatus)))
-        case _ =>
-          logger.info(s"Submission transfer status update to: [$transferStatus] failed for ${schemeInfo.basicLogMessage}")
-          ERSEnvelope(SubmissionStatusUpdateError(Some(adrSubmissionStatus), Some(transferStatus)))
+      case true if adrSubmissionStatus == ACCEPTED =>
+        metrics.updatePostsubmissionStatus(System.currentTimeMillis() - startUpdateTime, TimeUnit.MILLISECONDS)
+        logger.info(s"Updated submission transfer status to: [$transferStatus] for ${schemeInfo.basicLogMessage}")
+        ERSEnvelope(true)
+      case true =>
+        metrics.updatePostsubmissionStatus(System.currentTimeMillis() - startUpdateTime, TimeUnit.MILLISECONDS)
+        logger.info(s"Updated submission transfer status to: [$transferStatus] for ${schemeInfo.basicLogMessage}")
+        ERSEnvelope(SubmissionStatusUpdateError(Some(adrSubmissionStatus), Some(transferStatus)))
+      case _ =>
+        logger.info(s"Submission transfer status update to: [$transferStatus] failed for ${schemeInfo.basicLogMessage}")
+        ERSEnvelope(SubmissionStatusUpdateError(Some(adrSubmissionStatus), Some(transferStatus)))
     }
   }
 }
