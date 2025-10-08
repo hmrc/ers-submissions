@@ -47,8 +47,19 @@ class ADRSubmission @Inject()(submissionCommon: SubmissionCommon,
       createSubmissionJson(ersSummary, schemeType)
     }
     else {
-      createRootJson(EmptyJson, ersSummary, schemeType)
+      createRootJson(EmptyJson, ersSummary, schemeType) // <- clip last two braces off then add the streamed grant data then add the two braces back
     }
+  }
+
+  def generateSubmissionStream(): Unit = {
+    /*
+    * val rootJsonMinusClosingBracing = createRootJson
+    * val sheetStream = createSheetStream
+    *
+    * Then Stream (rootJsonMinusClosingBracing ++ sheetStream ++ the two braces we took off
+    *
+    * */
+    ???
   }
 
   def createSubmissionJson(ersSummary: ErsSummary, schemeType: String)(implicit request: Request[_], hc: HeaderCarrier): ERSEnvelope[JsObject] =
@@ -57,6 +68,7 @@ class ADRSubmission @Inject()(submissionCommon: SubmissionCommon,
       rootJson <- createRootJson(sheetsDataJson, ersSummary, schemeType)
     } yield rootJson
 
+  // note: this is the method that processes the rows so we need to stream in an appropriate way
   def createSheetsJson(sheetsJson: JsObject, ersSummary: ErsSummary, schemeType: String)(implicit request: Request[_], hc: HeaderCarrier): ERSEnvelope[JsObject] = {
     // whether to use streaming or not is currently decided by documentCount threshold of x documents (seems fairly arbitrary).
     // maybe it would be good to convert everything to streaming instead of having the original approach and the new streaming one

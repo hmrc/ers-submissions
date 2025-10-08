@@ -73,15 +73,15 @@ class PresubmissionService @Inject()(repositories: Repositories)(implicit ec: Ex
   }
 
   def getJsonByteStringStream(schemeInfo: SchemeInfo)(implicit hc: HeaderCarrier): ERSEnvelope[Source[ByteString, NotUsed]] = {
-    getJsonStreaming(schemeInfo).flatMap { source =>
-      val schemeDataStream: Source[SchemeData, NotUsed] = source.map(_.as[SchemeData])
-      val jsonStream: Source[ByteString, NotUsed] =
-        Source.single(ByteString("[")) ++
-        schemeDataStream
-          .map(data => ByteString(Json.toJson(data).toString()))
-          .intersperse(ByteString(",")) ++
-        Source.single(ByteString("]"))
-      ERSEnvelope(jsonStream)
+    getJsonStreaming(schemeInfo).map { source =>
+      source
+        .map(_.as[SchemeData])
+        .map(data => ByteString(Json.toJson(data).toString()))
+        .intersperse(
+          start = ByteString("["),
+          inject = ByteString(","),
+          end = ByteString("]")
+        )
     }
   }
 
@@ -97,6 +97,9 @@ class PresubmissionService @Inject()(repositories: Repositories)(implicit ec: Ex
         logger.warn(s"Deleting old presubmission data failed for: ${schemeInfo.basicLogMessage}")
         ERSEnvelope(false)
     }
+
+  def getSheetCount(schemeInfo: SchemeInfo)(implicit hc: HeaderCarrier): ERSEnvelope[Long] =
+    presubmissionRepository.count(schemeInfo, Session.id(hc))
 
   def compareSheetsNumber(expectedSheets: Int, schemeInfo: SchemeInfo)(implicit hc: HeaderCarrier): ERSEnvelope[(Boolean, Long)] =
     presubmissionRepository.count(schemeInfo, Session.id(hc)).map { existingSheets =>

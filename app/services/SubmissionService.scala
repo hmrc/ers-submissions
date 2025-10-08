@@ -39,6 +39,7 @@ class SubmissionService @Inject()(repositories: Repositories,
                                   adrSubmission: ADRSubmission,
                                   submissionCommon: SubmissionCommon,
                                   auditEvents: AuditEvents,
+                                  presubmissionService: PresubmissionService,
                                   metrics: Metrics)(implicit ec: ExecutionContext) extends Logging {
 
   lazy val metadataRepository: MetadataMongoRepository = repositories.metadataRepository
@@ -54,10 +55,20 @@ class SubmissionService @Inject()(repositories: Repositories,
 
   def processData(ersSummary: ErsSummary, failedStatus: String, successStatus: String)
                  (implicit request: Request[_], hc: HeaderCarrier): ERSEnvelope[Boolean] = {
-      for {
-        adrData <- transformData(ersSummary)
-        postSubmissionUpdated <- sendToADRUpdatePostData(ersSummary, adrData, failedStatus, successStatus)
-      } yield postSubmissionUpdated
+    val schemeInfo = ersSummary.metaData.schemeInfo
+
+    presubmissionService.getSheetCount(schemeInfo).flatMap { sheetCount =>
+      if (sheetCount > 0) {
+        logger.info(s"[SubmissionService][processData] Using streaming submission for ${schemeInfo.basicLogMessage}, with $sheetCount documents")
+        sendToADRWithStreaming(ersSummary, failedStatus, successStatus)
+      } else {
+        logger.info(s"[SubmissionService][processData] Using standard submission for ${schemeInfo.basicLogMessage}, with $sheetCount documents")
+        for {
+          adrData <- transformData(ersSummary)
+          postSubmissionUpdated <- sendToADRUpdatePostData(ersSummary, adrData, failedStatus, successStatus)
+        } yield postSubmissionUpdated
+      }
+    }
   }
 
   def transformData(ersSummary: ErsSummary)(implicit request: Request[_], hc: HeaderCarrier): ERSEnvelope[JsObject] = {
@@ -108,12 +119,39 @@ class SubmissionService @Inject()(repositories: Repositories,
           logger.error(s"Data transfer to ADR failed for ${ersSummary.metaData.schemeInfo.basicLogMessage}, correlationId: $correlationID")
           failedStatus
       }
-      updatePostsubmission(response.status, transferStatus, ersSummary.metaData.schemeInfo)
+      updatePostSubmission(response.status, transferStatus, ersSummary.metaData.schemeInfo)
     }
     result
   }
 
-  def updatePostsubmission(adrSubmissionStatus: Int, transferStatus: String, schemeInfo: SchemeInfo)
+  def sendToADRWithStreaming(ersSummary: ErsSummary, failedStatus: String, successStatus: String)
+                            (implicit request: Request[_], hc: HeaderCarrier): ERSEnvelope[Boolean] = {
+    val startTime = System.currentTimeMillis()
+    for {
+      stream <- adrSubmission.generateSubmissionStream(ersSummary) // needs implementing
+      response <- adrConnector.sendDataStream(stream, ersSummary.metaData.schemeInfo.schemeType)
+      updated <- {
+        logger.info(s"[ADR streaming] response.status=${response.status}, body= ${response.body}, headers= ${response.headers}")
+        val correlationID: String = submissionCommon.getCorrelationID(response)
+        val transferStatus: String = response.status match {
+          case ACCEPTED =>
+            metrics.sendToADR(System.currentTimeMillis() - startTime, java.util.concurrent.TimeUnit.MILLISECONDS)
+            metrics.successfulSendToADR()
+            auditEvents.sendToAdrEvent("ErsTransferToAdrResponseReceived", ersSummary, Some(correlationID))
+            logger.info(s"Data transfer to ADR (streaming) was successful for ${ersSummary.metaData.schemeInfo.basicLogMessage}, correlationId: $correlationID")
+            successStatus
+          case _ =>
+            metrics.failedSendToADR()
+            auditEvents.sendToAdrEvent("ErsTransferToAdrFailed", ersSummary)
+            logger.error(s"Data transfer to ADR (streaming) failed for ${ersSummary.metaData.schemeInfo.basicLogMessage}, correlationId: $correlationID")
+            failedStatus
+        }
+        updatePostSubmission(response.status, transferStatus, ersSummary.metaData.schemeInfo)
+      }
+    } yield updated
+  }
+
+  def updatePostSubmission(adrSubmissionStatus: Int, transferStatus: String, schemeInfo: SchemeInfo)
                           (implicit hc: HeaderCarrier): ERSEnvelope[Boolean] = {
     val startUpdateTime = System.currentTimeMillis()
     metadataRepository.updateStatus(schemeInfo, transferStatus, Session.id(hc)).flatMap {
