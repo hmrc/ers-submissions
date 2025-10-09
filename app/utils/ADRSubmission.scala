@@ -29,6 +29,7 @@ import uk.gov.hmrc.http.HeaderCarrier
 import javax.inject.Inject
 import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 import scala.concurrent.ExecutionContext
+import play.api.libs.json._
 
 class ADRSubmission @Inject()(submissionCommon: SubmissionCommon,
                               presubmissionService: PresubmissionService,
@@ -45,18 +46,30 @@ class ADRSubmission @Inject()(submissionCommon: SubmissionCommon,
       createSubmissionJson(ersSummary, schemeType)
     }
     else {
-      createRootJson(EmptyJson, ersSummary, schemeType)
+      // TODO: THIS COULD ALSO DO WITH SOME REFACTORING - createRootJson is called twice
+      createRootJson(ersSummary, schemeType)
     }
   }
 
   def createSubmissionJson(ersSummary: ErsSummary, schemeType: String)(implicit request: Request[_], hc: HeaderCarrier): ERSEnvelope[JsObject] =
     for {
       sheetsDataJson <- createSheetsJson(EmptyJson, ersSummary, schemeType)
-      rootJson <- createRootJson(sheetsDataJson, ersSummary, schemeType)
-    } yield rootJson
+      rootJson <- createRootJson(ersSummary, schemeType)
+    } yield addSheetJsonToRoot(sheetsDataJson, rootJson)
+
+  def addSheetJsonToRoot(sheetsDataJson: JsObject, rootJson: JsObject): JsObject = {
+    val transformer = (__ \ Symbol("submissionReturn")).json.update(
+      __.read[JsObject].map((t: JsObject) => t ++ sheetsDataJson)
+    )
+    val output = rootJson.transform(transformer).asOpt.get
+
+    println("output")
+    println(output)
+    output
+  }
 
   def createSheetsJson(sheetsJson: JsObject, ersSummary: ErsSummary, schemeType: String)(implicit request: Request[_], hc: HeaderCarrier): ERSEnvelope[JsObject] = {
-    presubmissionService.getJson(ersSummary.metaData.schemeInfo).map { schemeDataSeq =>
+    presubmissionService.getJson(ersSummary.metaData.schemeInfo).map { schemeDataSeq: Seq[SchemeData] =>
       val sheetNamesAndDataPresent = schemeDataSeq.forall(fd => fd.sheetName.nonEmpty && fd.data.nonEmpty)
 
       if (schemeDataSeq.nonEmpty && sheetNamesAndDataPresent) {
@@ -75,14 +88,14 @@ class ADRSubmission @Inject()(submissionCommon: SubmissionCommon,
     }
   }
 
-  def createRootJson(sheetsJson: JsObject, ersSummary: ErsSummary, schemeType: String)(implicit request: Request[_], hc: HeaderCarrier): ERSEnvelope[JsObject] = {
+  def createRootJson(ersSummary: ErsSummary, schemeType: String)(implicit request: Request[_], hc: HeaderCarrier): ERSEnvelope[JsObject] = {
     val rootConfigData: Config = configUtils.getConfigData(s"$schemeType/$schemeType", schemeType, ersSummary)
-    ERSEnvelope(buildRoot(rootConfigData, ersSummary, sheetsJson, ersSummary, schemeType))
+    ERSEnvelope(buildRoot(rootConfigData, ersSummary, ersSummary, schemeType))
   }
 
   import scala.jdk.CollectionConverters._
 
-  def buildRoot(configData: Config, metadata: Object, sheetsJson: JsObject, ersSummary: ErsSummary, schemeType: String)
+  def buildRoot(configData: Config, metadata: Object, ersSummary: ErsSummary, schemeType: String)
                (implicit request: Request[_], hc: HeaderCarrier): JsObject = {
     @annotation.tailrec
     def buildRootTail(fieldsConfigList: List[Config], json: JsObject): JsObject = {
@@ -91,7 +104,7 @@ class ADRSubmission @Inject()(submissionCommon: SubmissionCommon,
         case elem :: tail =>
           elem.getString("type") match {
             case "object" =>
-              val elemVal = buildRoot(elem, metadata, sheetsJson, ersSummary, schemeType)
+              val elemVal = buildRoot(elem, metadata, ersSummary, schemeType)
               val updatedJson = json ++ submissionCommon.addObjectValue(elem, elemVal)
               buildRootTail(tail, updatedJson)
             case "array" =>
@@ -123,7 +136,7 @@ class ADRSubmission @Inject()(submissionCommon: SubmissionCommon,
                 val arrayData = configUtils.extractField(elem, metadata)
                 arrayData match {
                   case value: List[Object@unchecked] =>
-                    val elemVal = for (el <- value) yield buildRoot(elem, el, sheetsJson, ersSummary, schemeType)
+                    val elemVal = for (el <- value) yield buildRoot(elem, el, ersSummary, schemeType)
                     val updatedJson = json ++ submissionCommon.addArrayValue(elem, elemVal)
                     buildRootTail(tail, updatedJson)
                   case _ =>
@@ -133,11 +146,11 @@ class ADRSubmission @Inject()(submissionCommon: SubmissionCommon,
             case "common" =>
               val loadConfig: String = elem.getString("load")
               val configData: Config = configUtils.getConfigData(s"common/$loadConfig", loadConfig, ersSummary)
-              val updatedJson = json ++ buildRoot(configData, metadata, sheetsJson, ersSummary, schemeType)
+              val updatedJson = json ++ buildRoot(configData, metadata, ersSummary, schemeType)
               buildRootTail(tail, updatedJson)
             case "sheetData" =>
-              val updatedJson = json ++ sheetsJson
-              buildRootTail(tail, updatedJson)
+              println("SKIPPING SHEET DATA")
+              buildRootTail(tail, json)
             case _ =>
               val updatedJson = json ++ submissionCommon.getMetadataValue(elem, metadata)
               buildRootTail(tail, updatedJson)
