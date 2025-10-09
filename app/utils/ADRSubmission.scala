@@ -19,21 +19,23 @@ package utils
 import com.typesafe.config.Config
 import common.ERSEnvelope
 import common.ERSEnvelope.ERSEnvelope
-import connectors.ADRConnector
 import models._
+import org.apache.pekko.NotUsed
+import org.apache.pekko.stream.scaladsl.Source
+import org.apache.pekko.util.ByteString
 import play.api.Logging
-import play.api.libs.json.{JsObject, Json}
+import play.api.libs.json._
 import play.api.mvc.Request
 import services.PresubmissionService
-import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
+import uk.gov.hmrc.http.HeaderCarrier
 
 import javax.inject.Inject
 import scala.collection.mutable.{ArrayBuffer, ListBuffer}
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
+import scala.collection.concurrent.TrieMap
 
 class ADRSubmission @Inject()(submissionCommon: SubmissionCommon,
                               presubmissionService: PresubmissionService,
-                              adrConnector: ADRConnector,
                               configUtils: ConfigUtils)
                              (implicit ec: ExecutionContext) extends Logging {
 
@@ -47,19 +49,73 @@ class ADRSubmission @Inject()(submissionCommon: SubmissionCommon,
       createSubmissionJson(ersSummary, schemeType)
     }
     else {
-      createRootJson(EmptyJson, ersSummary, schemeType) // <- clip last two braces off then add the streamed grant data then add the two braces back
+      createRootJson(EmptyJson, ersSummary, schemeType)
     }
   }
 
-  def generateSubmissionStream(): Unit = {
-    /*
-    * val rootJsonMinusClosingBracing = createRootJson
-    * val sheetStream = createSheetStream
-    *
-    * Then Stream (rootJsonMinusClosingBracing ++ sheetStream ++ the two braces we took off
-    *
-    * */
-    ???
+  def generateStreamSubmission(ersSummary: ErsSummary)
+                              (implicit request: Request[_], hc: HeaderCarrier): ERSEnvelope[Source[ByteString, NotUsed]] = {
+
+    val schemeType: String = ersSummary.metaData.schemeInfo.schemeType.toUpperCase()
+
+    for {
+      root <- createRootJson(EmptyJson, ersSummary, schemeType)
+      grantStream <- createRowDataStream(ersSummary, schemeType)
+    } yield  {
+      val updatedRoot = root.transform(
+        (__ \ "submissionReturn" \ "optionsGrantedInYear").json.update(
+          __.read[JsBoolean].map(_ => JsBoolean(true))
+        )
+      ).getOrElse(root)
+
+      val jsonString = Json.stringify(updatedRoot)
+      val insertPoint = jsonString.lastIndexOf("}}")
+      val beforeGrant = jsonString.substring(0, insertPoint)
+      val afterGrant = jsonString.substring(insertPoint)
+
+      val openingByteString = ByteString(beforeGrant + ",\"grant\":{\"grants\":[")
+      val closingByteString = ByteString("]}" + afterGrant)
+
+      Source
+        .single(openingByteString)
+        .concat(grantStream)
+        .concat(Source.single(closingByteString))
+    }
+  }
+
+  def createRowDataStream(ersSummary: ErsSummary, schemeType: String)
+                         (implicit request: Request[_], hc: HeaderCarrier): ERSEnvelope[Source[ByteString, NotUsed]] = {
+
+    presubmissionService.getJsonStreaming(ersSummary.metaData.schemeInfo).map { source =>
+
+      val configCache = TrieMap.empty[String, Config]
+
+      source
+        .map(_.as[SchemeData])
+        .mapConcat { schemeData =>
+          val rows = schemeData.data.getOrElse(ListBuffer.empty).toList
+          rows.map(row => (row, schemeData.schemeInfo, schemeData.sheetName))
+        }
+        .mapAsync(parallelism = 2) { case (row, schemeInfo, sheetName) =>
+          Future {
+            val config = configCache.getOrElseUpdate(
+              sheetName,
+              configUtils.getConfigData(s"$schemeType/$sheetName", sheetName, ersSummary)
+            )
+
+            val fullJson =
+              buildJson(config, ListBuffer(row), Some(0), Some(sheetName), Some(schemeInfo))
+
+            val grantObject = (fullJson \ "grant" \ "grants")
+              .asOpt[Seq[JsObject]]
+              .flatMap(_.headOption)
+              .getOrElse(fullJson)
+
+            ByteString(Json.stringify(grantObject))
+          }
+        }
+        .intersperse(ByteString(","))
+    }
   }
 
   def createSubmissionJson(ersSummary: ErsSummary, schemeType: String)(implicit request: Request[_], hc: HeaderCarrier): ERSEnvelope[JsObject] =
@@ -70,19 +126,6 @@ class ADRSubmission @Inject()(submissionCommon: SubmissionCommon,
 
   // note: this is the method that processes the rows so we need to stream in an appropriate way
   def createSheetsJson(sheetsJson: JsObject, ersSummary: ErsSummary, schemeType: String)(implicit request: Request[_], hc: HeaderCarrier): ERSEnvelope[JsObject] = {
-    // whether to use streaming or not is currently decided by documentCount threshold of x documents (seems fairly arbitrary).
-    // maybe it would be good to convert everything to streaming instead of having the original approach and the new streaming one
-    presubmissionService.compareSheetsNumber(0, ersSummary.metaData.schemeInfo).flatMap { case (_, documentCount) =>
-      if (documentCount > 20) {
-        createSheetsJsonStreaming(ersSummary, schemeType)
-          .map(_ => sheetsJson)
-      } else {
-        createSheetsJsonOriginal(sheetsJson, ersSummary, schemeType)
-      }
-    }
-  }
-
-  private def createSheetsJsonOriginal(sheetsJson: JsObject, ersSummary: ErsSummary, schemeType: String)(implicit request: Request[_], hc: HeaderCarrier): ERSEnvelope[JsObject] = {
     presubmissionService.getJson(ersSummary.metaData.schemeInfo).map { schemeDataSeq =>
       val sheetNamesAndDataPresent = schemeDataSeq.forall(fd => fd.sheetName.nonEmpty && fd.data.nonEmpty)
 
@@ -100,15 +143,6 @@ class ADRSubmission @Inject()(submissionCommon: SubmissionCommon,
         result ++ submissionCommon.mergeSheetData(configData.getConfig("data_location"), result, data)
       }
     }
-  }
-
-  private def createSheetsJsonStreaming(ersSummary: ErsSummary, schemeType: String)(implicit hc: HeaderCarrier): ERSEnvelope[HttpResponse] = {
-    def submitOnce(): ERSEnvelope[HttpResponse] = {
-      presubmissionService.getJsonByteStringStream(ersSummary.metaData.schemeInfo).flatMap { stream =>
-        adrConnector.sendDataStream(stream, schemeType)
-      }
-    }
-    submitOnce()
   }
 
   def createRootJson(sheetsJson: JsObject, ersSummary: ErsSummary, schemeType: String)(implicit request: Request[_], hc: HeaderCarrier): ERSEnvelope[JsObject] = {

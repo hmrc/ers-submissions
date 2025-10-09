@@ -128,7 +128,7 @@ class SubmissionService @Inject()(repositories: Repositories,
                             (implicit request: Request[_], hc: HeaderCarrier): ERSEnvelope[Boolean] = {
     val startTime = System.currentTimeMillis()
     for {
-      stream <- adrSubmission.generateSubmissionStream(ersSummary) // needs implementing
+      stream <- adrSubmission.generateStreamSubmission(ersSummary)
       response <- adrConnector.sendDataStream(stream, ersSummary.metaData.schemeInfo.schemeType)
       updated <- {
         logger.info(s"[ADR streaming] response.status=${response.status}, body= ${response.body}, headers= ${response.headers}")
