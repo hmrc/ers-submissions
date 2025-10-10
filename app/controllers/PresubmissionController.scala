@@ -68,19 +68,19 @@ class PresubmissionController @Inject()(presubmissionService: PresubmissionServi
       request.body.validate[SchemeInfo] match {
         case JsSuccess(schemeInfo, _) =>
           val startTime = System.currentTimeMillis()
-          presubmissionService.compareSheetsNumber(validatedSheets, schemeInfo).value.map {
-            case Right((true, _)) =>
+          presubmissionService.getSheetCount(schemeInfo).value.map {
+            case Right(count) if count > 0 =>
               metrics.checkForPresubmission(System.currentTimeMillis() - startTime, TimeUnit.MILLISECONDS)
-              logger.info(s"All presubmission records are found for: ${schemeInfo.basicLogMessage}")
-              Ok("All presubmission records are found.")
-            case Right((false, sheetsInRepository)) =>
-              logger.warn(s"Found $sheetsInRepository presubmission records of expected $validatedSheets records for: ${schemeInfo.basicLogMessage}")
+              logger.info(s"Found $count presubmission records for: ${schemeInfo.basicLogMessage}")
+              Ok(s"Presubmission records found: $count")
+            case Right(0) =>
+              logger.warn(s"No presubmission records found for: ${schemeInfo.basicLogMessage}")
               auditEvents.auditADRTransferFailure(schemeInfo, Map.empty)
-              InternalServerError(s"Not all $validatedSheets records are found for ${schemeInfo.toString}.")
+              InternalServerError(s"No presubmission data found for ${schemeInfo.toString}.")
             case Left(error) =>
               logger.error(s"Check existing presubmission failed for: ${schemeInfo.basicLogMessage} with error: [$error]")
               auditEvents.auditADRTransferFailure(schemeInfo, Map.empty)
-              InternalServerError(s"Not all $validatedSheets records are found for ${schemeInfo.toString}.")
+              InternalServerError(s"Failed to verify presubmission data for ${schemeInfo.toString}.")
           }
         case JsError(jsonErrors) => handleBadRequest(jsonErrors)
       }

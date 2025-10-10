@@ -131,7 +131,6 @@ class SubmissionService @Inject()(repositories: Repositories,
       stream <- adrSubmission.generateStreamSubmission(ersSummary)
       response <- adrConnector.sendDataStream(stream, ersSummary.metaData.schemeInfo.schemeType)
       updated <- {
-        logger.info(s"[ADR streaming] response.status=${response.status}, body= ${response.body}, headers= ${response.headers}")
         val correlationID: String = submissionCommon.getCorrelationID(response)
         val transferStatus: String = response.status match {
           case ACCEPTED =>
