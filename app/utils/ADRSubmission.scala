@@ -16,7 +16,6 @@
 
 package utils
 
-import cats.data.EitherT
 import com.typesafe.config.Config
 import common.ERSEnvelope
 import common.ERSEnvelope.ERSEnvelope
@@ -29,10 +28,8 @@ import uk.gov.hmrc.http.HeaderCarrier
 
 import javax.inject.Inject
 import scala.collection.mutable.{ArrayBuffer, ListBuffer}
-import scala.concurrent.{Await, ExecutionContext, Future}
+import scala.concurrent.ExecutionContext
 import play.api.libs.json._
-
-import scala.concurrent.duration.Duration
 
 class ADRSubmission @Inject()(submissionCommon: SubmissionCommon,
                               presubmissionService: PresubmissionService,
@@ -43,14 +40,12 @@ class ADRSubmission @Inject()(submissionCommon: SubmissionCommon,
 
   def generateSubmission(ersSummary: ErsSummary)(implicit request: Request[_], hc: HeaderCarrier): ERSEnvelope[JsObject] = {
     val schemeType: String = ersSummary.metaData.schemeInfo.schemeType.toUpperCase()
-    println("IN generateSubmission")
     logger.info(s"[ADRSubmission][generateSubmission] ${ersSummary.basicLogMessage} ${ersSummary.metaData.schemeInfo.basicLogMessage}")
 
     createSubmissionJson(ersSummary, schemeType)
   }
 
   def createSubmissionJson(ersSummary: ErsSummary, schemeType: String)(implicit request: Request[_], hc: HeaderCarrier) = {
-    println("IN createSubmissionJson")
     for {
       sheetsDataJson <- createSheetsJson(ersSummary)
       rootJson <- createRootJson(ersSummary, schemeType)
@@ -71,10 +66,10 @@ class ADRSubmission @Inject()(submissionCommon: SubmissionCommon,
     presubmissionService.getSheetData(ersSummary.metaData.schemeInfo).map { schemeDataSeq: Seq[JsObject] =>
       new JsObject(
         Map(
-          "optionsExercisedInYear" -> JsTrue,
-          "exercised" ->
+          "optionsExercisedInYear" -> JsTrue, // TODO: This is a hardcoded value for ease of testing, should be configurable
+          "exercised" -> // TODO: Same as above
             new JsObject(
-              Map("exercisedEvents" -> schemeDataSeq.foldLeft(JsArray.empty)((a: JsArray, b: JsObject) => a :+ b))
+              Map("exercisedEvents" -> schemeDataSeq.foldLeft(JsArray.empty)((a: JsArray, b: JsObject) => a :+ b)) // TODO: Same as 2 above
             )
         )
       )

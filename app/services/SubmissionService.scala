@@ -80,7 +80,8 @@ class SubmissionService @Inject()(repositories: Repositories,
         logger.error(s"[SubmissionService][transformData] Failed to transform Json Path $jsPath data, attempting to proceed untransformed")
         json
     }
-    
+
+    // TODO: COME BACK TO AND FIX
     adrSubmission.generateSubmission(ersSummary)(request, hc)
 //      .map { json =>
 //      metrics.generateJson(System.currentTimeMillis() - startTime, TimeUnit.MILLISECONDS)
@@ -103,7 +104,7 @@ class SubmissionService @Inject()(repositories: Repositories,
           auditEvents.sendToAdrEvent("ErsTransferToAdrResponseReceived", ersSummary, Some(correlationID))
           logger.info(s"Data transfer to ADR was successful for ${ersSummary.metaData.schemeInfo.basicLogMessage}, correlationId: $correlationID")
           successStatus
-        case e: Int =>
+        case _ =>
           metrics.failedSendToADR()
           auditEvents.sendToAdrEvent("ErsTransferToAdrFailed", ersSummary)
           logger.error(s"Data transfer to ADR failed for ${ersSummary.metaData.schemeInfo.basicLogMessage}, correlationId: $correlationID")

@@ -21,13 +21,13 @@ import common.ERSEnvelope
 import common.ERSEnvelope.ERSEnvelope
 import models.{NoData, SchemeData, SchemeDataMappingError, SchemeInfo}
 import play.api.Logging
-import play.api.libs.json.{JsObject, JsValue}
+import play.api.libs.json.JsObject
 import repositories.{PresubmissionMongoRepository, Repositories}
 import uk.gov.hmrc.http.HeaderCarrier
 import utils.Session
 
 import javax.inject.Inject
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.ExecutionContext
 import scala.util.Try
 
 class PresubmissionService @Inject()(repositories: Repositories)(implicit ec: ExecutionContext) extends Logging {
