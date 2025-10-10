@@ -52,7 +52,11 @@ class ADRConnector @Inject()(applicationConfig: ApplicationConfig,
     http.post(url"$url").withBody(adrData).setHeader(headersForRequest: _*).execute[HttpResponse]
       .map(_.asRight)
       .recover {
-        case ex => Left(handleError(ex, "sendData"))
+        case ex: Throwable => {
+          println(ex)
+          ex.printStackTrace()
+          Left(handleError(ex, "sendData"))
+        }
       }
   }
 }

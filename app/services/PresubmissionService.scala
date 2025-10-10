@@ -21,12 +21,13 @@ import common.ERSEnvelope
 import common.ERSEnvelope.ERSEnvelope
 import models.{NoData, SchemeData, SchemeDataMappingError, SchemeInfo}
 import play.api.Logging
+import play.api.libs.json.{JsObject, JsValue}
 import repositories.{PresubmissionMongoRepository, Repositories}
 import uk.gov.hmrc.http.HeaderCarrier
 import utils.Session
 
 import javax.inject.Inject
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Try
 
 class PresubmissionService @Inject()(repositories: Repositories)(implicit ec: ExecutionContext) extends Logging {
@@ -35,6 +36,10 @@ class PresubmissionService @Inject()(repositories: Repositories)(implicit ec: Ex
 
   def storeJson(schemeData: SchemeData)(implicit hc: HeaderCarrier): ERSEnvelope[Boolean] =
     presubmissionRepository.storeJson(schemeData, Session.id(hc))
+
+  def getSheetData(schemeInfo: SchemeInfo)(implicit hc: HeaderCarrier): ERSEnvelope[Seq[JsObject]] = {
+    presubmissionRepository.getSheetsData(schemeInfo, SubmissionDataTemplates.csopOptionExercised)
+  }
 
   def getJson(schemeInfo: SchemeInfo)(implicit hc: HeaderCarrier): ERSEnvelope[scala.Seq[SchemeData]] = {
     presubmissionRepository.getJson(schemeInfo, Session.id(hc)).flatMap { result =>

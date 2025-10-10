@@ -16,6 +16,7 @@
 
 package utils
 
+import cats.data.EitherT
 import com.typesafe.config.Config
 import common.ERSEnvelope
 import common.ERSEnvelope.ERSEnvelope
@@ -28,8 +29,10 @@ import uk.gov.hmrc.http.HeaderCarrier
 
 import javax.inject.Inject
 import scala.collection.mutable.{ArrayBuffer, ListBuffer}
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{Await, ExecutionContext, Future}
 import play.api.libs.json._
+
+import scala.concurrent.duration.Duration
 
 class ADRSubmission @Inject()(submissionCommon: SubmissionCommon,
                               presubmissionService: PresubmissionService,
@@ -40,51 +43,41 @@ class ADRSubmission @Inject()(submissionCommon: SubmissionCommon,
 
   def generateSubmission(ersSummary: ErsSummary)(implicit request: Request[_], hc: HeaderCarrier): ERSEnvelope[JsObject] = {
     val schemeType: String = ersSummary.metaData.schemeInfo.schemeType.toUpperCase()
+    println("IN generateSubmission")
     logger.info(s"[ADRSubmission][generateSubmission] ${ersSummary.basicLogMessage} ${ersSummary.metaData.schemeInfo.basicLogMessage}")
 
-    if (ersSummary.isNilReturn == IsNilReturn.False.toString) {
-      createSubmissionJson(ersSummary, schemeType)
-    }
-    else {
-      // TODO: THIS COULD ALSO DO WITH SOME REFACTORING - createRootJson is called twice
-      createRootJson(ersSummary, schemeType)
-    }
+    createSubmissionJson(ersSummary, schemeType)
   }
 
-  def createSubmissionJson(ersSummary: ErsSummary, schemeType: String)(implicit request: Request[_], hc: HeaderCarrier): ERSEnvelope[JsObject] =
+  def createSubmissionJson(ersSummary: ErsSummary, schemeType: String)(implicit request: Request[_], hc: HeaderCarrier) = {
+    println("IN createSubmissionJson")
     for {
-      sheetsDataJson <- createSheetsJson(EmptyJson, ersSummary, schemeType)
+      sheetsDataJson <- createSheetsJson(ersSummary)
       rootJson <- createRootJson(ersSummary, schemeType)
     } yield addSheetJsonToRoot(sheetsDataJson, rootJson)
+  }
 
   def addSheetJsonToRoot(sheetsDataJson: JsObject, rootJson: JsObject): JsObject = {
     val transformer = (__ \ Symbol("submissionReturn")).json.update(
       __.read[JsObject].map((t: JsObject) => t ++ sheetsDataJson)
     )
     val output = rootJson.transform(transformer).asOpt.get
-
-    println("output")
     println(output)
     output
   }
 
-  def createSheetsJson(sheetsJson: JsObject, ersSummary: ErsSummary, schemeType: String)(implicit request: Request[_], hc: HeaderCarrier): ERSEnvelope[JsObject] = {
-    presubmissionService.getJson(ersSummary.metaData.schemeInfo).map { schemeDataSeq: Seq[SchemeData] =>
-      val sheetNamesAndDataPresent = schemeDataSeq.forall(fd => fd.sheetName.nonEmpty && fd.data.nonEmpty)
-
-      if (schemeDataSeq.nonEmpty && sheetNamesAndDataPresent) {
-        logger.info(s"Found data in pre-submission repository, mapped successfully. File data list size: ${schemeDataSeq.size}, ${ersSummary.metaData.schemeInfo.basicLogMessage}")
-      } else {
-        logger.warn(s"No data returned from pre-submission repository or data is incomplete: ${ersSummary.metaData.schemeInfo.basicLogMessage}")
-      }
-
-      schemeDataSeq.foldLeft(sheetsJson) { (result, fileData) =>
-        val sheetName: String = fileData.sheetName
-        val configData: Config = configUtils.getConfigData(s"$schemeType/$sheetName", sheetName, ersSummary)
-        val data: JsObject = buildJson(configData, fileData.data.get, None, Some(sheetName), Some(fileData.schemeInfo))
-
-        result ++ submissionCommon.mergeSheetData(configData.getConfig("data_location"), result, data)
-      }
+  def createSheetsJson(ersSummary: ErsSummary)(implicit hc: HeaderCarrier): ERSEnvelope[JsObject] = {
+    println("In createSheetsJson")
+    presubmissionService.getSheetData(ersSummary.metaData.schemeInfo).map { schemeDataSeq: Seq[JsObject] =>
+      new JsObject(
+        Map(
+          "optionsExercisedInYear" -> JsTrue,
+          "exercised" ->
+            new JsObject(
+              Map("exercisedEvents" -> schemeDataSeq.foldLeft(JsArray.empty)((a: JsArray, b: JsObject) => a :+ b))
+            )
+        )
+      )
     }
   }
 
@@ -150,7 +143,7 @@ class ADRSubmission @Inject()(submissionCommon: SubmissionCommon,
               buildRootTail(tail, updatedJson)
             case "sheetData" =>
               println("SKIPPING SHEET DATA")
-              buildRootTail(tail, json)
+              json
             case _ =>
               val updatedJson = json ++ submissionCommon.getMetadataValue(elem, metadata)
               buildRootTail(tail, updatedJson)

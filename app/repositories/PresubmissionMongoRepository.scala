@@ -21,7 +21,11 @@ import cats.syntax.all._
 import common.ERSEnvelope.ERSEnvelope
 import config.ApplicationConfig
 import models._
-import org.mongodb.scala.bson.{BsonDocument, BsonInt64, BsonString}
+import org.bson.Document
+import org.mongodb.scala.Observable
+import org.mongodb.scala.bson.{BsonDocument, BsonInt64, BsonString, Document}
+import org.mongodb.scala.model.Aggregates.unwind
+import org.mongodb.scala.model.Projections.{excludeId, fields, include}
 import org.mongodb.scala.model.Sorts._
 import org.mongodb.scala.model._
 import org.mongodb.scala.result.DeleteResult
@@ -34,7 +38,8 @@ import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
 import java.time.Instant
 import java.util.concurrent.TimeUnit
 import javax.inject.{Inject, Singleton}
-import scala.concurrent.ExecutionContext
+import scala.collection
+import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class PresubmissionMongoRepository @Inject()(applicationConfig: ApplicationConfig, mc: MongoComponent)
@@ -89,6 +94,29 @@ class PresubmissionMongoRepository @Inject()(applicationConfig: ApplicationConfi
           repository = className,
           method = "getJson",
           sessionId = sessionId,
+          message = "operation failed due to exception from Mongo",
+          optSchemaRefs = Some(scala.Seq(schemeInfo.schemeRef))
+        )
+      }
+  }
+
+  import org.bson.{Document => SchemeTemplateDocument} // TODO: COME BACK TO.... WEIRD IMPORT
+  def getSheetsData(schemeInfo: SchemeInfo, schemeTemplate: SchemeTemplateDocument): ERSEnvelope[Seq[JsObject]] = EitherT {
+      collection
+      .aggregate(
+        pipeline = scala.Seq(
+          Aggregates.filter(buildSelector(schemeInfo)),
+          Aggregates.unwind("$data"),
+          Aggregates.project(schemeTemplate)
+        )
+      )
+      .toFuture()
+      .map(_.asRight)
+      .recover {
+        mongoRecover(
+          repository = className,
+          method = "count",
+          sessionId = "sessionId",
           message = "operation failed due to exception from Mongo",
           optSchemaRefs = Some(scala.Seq(schemeInfo.schemeRef))
         )

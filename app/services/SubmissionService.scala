@@ -81,12 +81,13 @@ class SubmissionService @Inject()(repositories: Repositories,
         json
     }
     
-    adrSubmission.generateSubmission(ersSummary)(request, hc).map { json =>
-      metrics.generateJson(System.currentTimeMillis() - startTime, TimeUnit.MILLISECONDS)
-      val transformedFirstNameJson = trimDataIfSizeExceeded(json, "firstName", __ \ "submitter" \ "firstName", maxFirstNameLen)
-      val transformedDataJson = trimDataIfSizeExceeded(transformedFirstNameJson, "country", __ \ "submitter" \ "address" \ "country", maxCountryLen)
-      transformedDataJson
-    }
+    adrSubmission.generateSubmission(ersSummary)(request, hc)
+//      .map { json =>
+//      metrics.generateJson(System.currentTimeMillis() - startTime, TimeUnit.MILLISECONDS)
+//      val transformedFirstNameJson = trimDataIfSizeExceeded(json, "firstName", __ \ "submitter" \ "firstName", maxFirstNameLen)
+//      val transformedDataJson = trimDataIfSizeExceeded(transformedFirstNameJson, "country", __ \ "submitter" \ "address" \ "country", maxCountryLen)
+//      transformedDataJson
+//    }
   }
 
   def sendToADRUpdatePostData(ersSummary: ErsSummary, adrData: JsObject, failedStatus: String, successStatus: String)
@@ -102,7 +103,7 @@ class SubmissionService @Inject()(repositories: Repositories,
           auditEvents.sendToAdrEvent("ErsTransferToAdrResponseReceived", ersSummary, Some(correlationID))
           logger.info(s"Data transfer to ADR was successful for ${ersSummary.metaData.schemeInfo.basicLogMessage}, correlationId: $correlationID")
           successStatus
-        case _ =>
+        case e: Int =>
           metrics.failedSendToADR()
           auditEvents.sendToAdrEvent("ErsTransferToAdrFailed", ersSummary)
           logger.error(s"Data transfer to ADR failed for ${ersSummary.metaData.schemeInfo.basicLogMessage}, correlationId: $correlationID")
