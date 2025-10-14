@@ -26,8 +26,7 @@ import uk.gov.hmrc.http.HeaderCarrier
 import utils.Session
 import org.apache.pekko.stream.scaladsl.Source
 import org.apache.pekko.NotUsed
-import org.apache.pekko.util.ByteString
-import play.api.libs.json.{JsObject, Json}
+import play.api.libs.json.JsObject
 
 import javax.inject.Inject
 import scala.concurrent.ExecutionContext
@@ -69,19 +68,6 @@ class PresubmissionService @Inject()(repositories: Repositories)(implicit ec: Ex
         logger.error(s"No data found for: ${schemeInfo.basicLogMessage}")
         ERSEnvelope(NoData())
       }
-    }
-  }
-
-  def getJsonByteStringStream(schemeInfo: SchemeInfo)(implicit hc: HeaderCarrier): ERSEnvelope[Source[ByteString, NotUsed]] = {
-    getJsonStreaming(schemeInfo).map { source =>
-      source
-        .map(_.as[SchemeData])
-        .map(data => ByteString(Json.toJson(data).toString()))
-        .intersperse(
-          start = ByteString("["),
-          inject = ByteString(","),
-          end = ByteString("]")
-        )
     }
   }
 

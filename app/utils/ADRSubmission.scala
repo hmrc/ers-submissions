@@ -21,7 +21,8 @@ import common.ERSEnvelope
 import common.ERSEnvelope.ERSEnvelope
 import models._
 import org.apache.pekko.NotUsed
-import org.apache.pekko.stream.scaladsl.Source
+import org.apache.pekko.stream.Materializer
+import org.apache.pekko.stream.scaladsl.{Source, Sink}
 import org.apache.pekko.util.ByteString
 import play.api.Logging
 import play.api.libs.json._
@@ -33,11 +34,12 @@ import javax.inject.Inject
 import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 import scala.concurrent.{ExecutionContext, Future}
 import scala.collection.concurrent.TrieMap
+import scala.util.{Success, Try, Failure}
 
 class ADRSubmission @Inject()(submissionCommon: SubmissionCommon,
                               presubmissionService: PresubmissionService,
                               configUtils: ConfigUtils)
-                             (implicit ec: ExecutionContext) extends Logging {
+                             (implicit ec: ExecutionContext, mat: Materializer) extends Logging {
 
   private val EmptyJson: JsObject = Json.obj()
 
@@ -55,35 +57,36 @@ class ADRSubmission @Inject()(submissionCommon: SubmissionCommon,
 
   def generateStreamSubmission(ersSummary: ErsSummary)
                               (implicit request: Request[_], hc: HeaderCarrier): ERSEnvelope[Source[ByteString, NotUsed]] = {
-
     val schemeType: String = ersSummary.metaData.schemeInfo.schemeType.toUpperCase()
-
+    val schemeInfo = ersSummary.metaData.schemeInfo
     for {
+      configInfo <- fetchConfigInfo(schemeInfo, schemeType, ersSummary)
       root <- createRootJson(EmptyJson, ersSummary, schemeType)
-      grantStream <- createRowDataStream(ersSummary, schemeType)
-    } yield  {
-      val updatedRoot = root.transform(
-        (__ \ "submissionReturn" \ "optionsGrantedInYear").json.update(
-          __.read[JsBoolean].map(_ => JsBoolean(true))
-        )
-      ).getOrElse(root)
-
+      dataStream <- createRowDataStream(ersSummary, schemeType)
+    } yield {
+      val (dataPath, booleanFlags, rowBasedFields) = configInfo
+      val booleanUpdates: Map[String, JsBoolean] = booleanFlags.map(_ -> JsBoolean(true)).toMap
+      val currentSubReturn: JsObject = (root \ "submissionReturn").asOpt[JsObject]
+        .getOrElse(Json.obj())
+      val updatedSubReturn = currentSubReturn ++ JsObject(booleanUpdates) ++ JsObject(rowBasedFields)
+      val updatedRoot: JsObject = root + ("submissionReturn" -> updatedSubReturn)
       val jsonString = Json.stringify(updatedRoot)
       val insertPoint = jsonString.lastIndexOf("}}")
-      val beforeGrant = jsonString.substring(0, insertPoint)
-      val afterGrant = jsonString.substring(insertPoint)
-
-      val openingByteString = ByteString(beforeGrant + ",\"grant\":{\"grants\":[")
-      val closingByteString = ByteString("]}" + afterGrant)
+      val beforeInsert = jsonString.substring(0, insertPoint)
+      val afterInsert = jsonString.substring(insertPoint)
+      val parentName = dataPath.headOption.getOrElse("grant")
+      val childName = dataPath.drop(1).headOption.getOrElse("grants")
+      val openingByteString = ByteString(beforeInsert + s",\"$parentName\":{\"$childName\":[")
+      val closingByteString = ByteString("]}" + afterInsert)
 
       Source
         .single(openingByteString)
-        .concat(grantStream)
+        .concat(dataStream)
         .concat(Source.single(closingByteString))
     }
   }
 
-  def createRowDataStream(ersSummary: ErsSummary, schemeType: String)
+  private def createRowDataStream(ersSummary: ErsSummary, schemeType: String)
                          (implicit request: Request[_], hc: HeaderCarrier): ERSEnvelope[Source[ByteString, NotUsed]] = {
 
     presubmissionService.getJsonStreaming(ersSummary.metaData.schemeInfo).map { source =>
@@ -102,16 +105,18 @@ class ADRSubmission @Inject()(submissionCommon: SubmissionCommon,
               sheetName,
               configUtils.getConfigData(s"$schemeType/$sheetName", sheetName, ersSummary)
             )
-
-            val fullJson =
-              buildJson(config, ListBuffer(row), Some(0), Some(sheetName), Some(schemeInfo))
-
-            val grantObject = (fullJson \ "grant" \ "grants")
-              .asOpt[Seq[JsObject]]
-              .flatMap(_.headOption)
-              .getOrElse(fullJson)
-
-            ByteString(Json.stringify(grantObject))
+            val fullJson = buildJson(config, ListBuffer(row), Some(0), Some(sheetName), Some(schemeInfo))
+            val path = getDataLocationNames(config)
+            val rowObject: JsObject =
+              if (path.nonEmpty) {
+                val eventArray = path.foldLeft(fullJson: JsValue) { (json, key) =>
+                  (json \ key).getOrElse(Json.obj())
+                }
+                eventArray.asOpt[Seq[JsObject]].flatMap(_.headOption).getOrElse(fullJson)
+              } else {
+                fullJson
+              }
+            ByteString(Json.stringify(rowObject))
           }
         }
         .intersperse(ByteString(","))
@@ -124,7 +129,6 @@ class ADRSubmission @Inject()(submissionCommon: SubmissionCommon,
       rootJson <- createRootJson(sheetsDataJson, ersSummary, schemeType)
     } yield rootJson
 
-  // note: this is the method that processes the rows so we need to stream in an appropriate way
   def createSheetsJson(sheetsJson: JsObject, ersSummary: ErsSummary, schemeType: String)(implicit request: Request[_], hc: HeaderCarrier): ERSEnvelope[JsObject] = {
     presubmissionService.getJson(ersSummary.metaData.schemeInfo).map { schemeDataSeq =>
       val sheetNamesAndDataPresent = schemeDataSeq.forall(fd => fd.sheetName.nonEmpty && fd.data.nonEmpty)
@@ -242,6 +246,95 @@ class ADRSubmission @Inject()(submissionCommon: SubmissionCommon,
           else json
         case _ => json ++ submissionCommon.getFileDataValue(elem, fileData, row)
       }
+    }
+  }
+
+  private def getDataLocationNames(config: Config): List[String] = {
+    @annotation.tailrec
+    def loop(conf: Config, acc: List[String]): List[String] = {
+      val currentName = conf.getString("name")
+      if (conf.hasPath("data_location")) {
+        val nextConf = conf.getConfig("data_location")
+        loop(nextConf, acc :+ currentName)
+      } else {
+        acc :+ currentName
+      }
+    }
+    if (config.hasPath("data_location")) {
+      val dataLoc = config.getConfig("data_location")
+      loop(dataLoc, List.empty)
+    } else {
+      List.empty
+    }
+  }
+
+  private def getStaticBooleanFlags(config: Config): List[String] = {
+    import scala.jdk.CollectionConverters._
+    if (config.hasPath("fields")) {
+      val fields = config.getConfigList("fields").asScala.toList
+      fields.collect {
+        case elem if elem.hasPath("type") && elem.getString("type") == "boolean" &&
+          elem.hasPath("value") && elem.getBoolean("value") =>
+          elem.getString("name")
+      }
+    } else {
+      List.empty
+    }
+  }
+
+  private def extractRowBasedRootFields(config: Config, firstRow: Seq[String]): Map[String, JsValue] = {
+    import scala.jdk.CollectionConverters._
+    if (!config.hasPath("fields")) return Map.empty
+    val fields = config.getConfigList("fields").asScala.toList
+    fields.flatMap { elem =>
+      val fieldType = elem.getString("type")
+      val supported = fieldType == "boolean" || fieldType == "int" || fieldType == "double" || fieldType == "string"
+      if (supported && elem.hasPath("row") && elem.hasPath("column")) {
+        val rowIndex = elem.getInt("row")
+        val colIndex = elem.getInt("column")
+        if (rowIndex == 0 && colIndex >= 0 && colIndex < firstRow.length) {
+          val cell = firstRow(colIndex)
+          if (cell.nonEmpty) {
+            fieldType match {
+              case "boolean" =>
+                if (elem.hasPath("valid_value")) {
+                  val valid = elem.getString("valid_value")
+                  val boolVal = cell.trim.toUpperCase == valid.trim.toUpperCase
+                  Some(elem.getString("name") -> JsBoolean(boolVal))
+                } else None
+              case "int" => cell.toIntOption.map(v => elem.getString("name") -> JsNumber(v))
+              case "double" => cell.toDoubleOption.map(v => elem.getString("name") -> JsNumber(v))
+              case "string" => Some(elem.getString("name") -> JsString(cell))
+            }
+          } else None
+        } else None
+      } else None
+    }.toMap
+  }
+
+  private def fetchConfigInfo(schemeInfo: SchemeInfo, schemeType: String, ersSummary: ErsSummary)
+                             (implicit hc: HeaderCarrier): ERSEnvelope[(List[String], List[String], Map[String, JsValue])] = {
+    presubmissionService.getJsonStreaming(schemeInfo).flatMap { source =>
+      val firstSchemeElement = source.map(_.as[SchemeData]).take(1).runWith(Sink.headOption)
+      val configFuture = firstSchemeElement.map {
+        case Some(schemeData) if schemeData.sheetName.nonEmpty =>
+          Try(configUtils.getConfigData(s"$schemeType/${schemeData.sheetName}", schemeData.sheetName, ersSummary)) match {
+            case Success(config) =>
+              val dataPath = getDataLocationNames(config)
+              val booleanFlags = getStaticBooleanFlags(config)
+              val firstRowOpt = schemeData.data.flatMap(_.headOption)
+              val rowBasedFields = firstRowOpt.map(extractRowBasedRootFields(config, _)).getOrElse(Map.empty[String, JsValue])
+              (dataPath, booleanFlags, rowBasedFields)
+
+            case Failure(ex) =>
+              logger.warn(s"Failed to load config for ${schemeData.sheetName}: ${ex.getMessage}")
+              (List.empty[String], List.empty[String], Map.empty[String, JsValue])
+          }
+        case _ =>
+          logger.warn(s"No scheme data found or empty sheet name for ${schemeInfo.schemeRef}")
+          (List.empty[String], List.empty[String], Map.empty[String, JsValue])
+      }
+      ERSEnvelope(configFuture)
     }
   }
 }
