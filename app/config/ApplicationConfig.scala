@@ -31,6 +31,7 @@ class ApplicationConfig @Inject()(serviceConfig: ServicesConfig) {
   lazy val maxGroupSize: Int = serviceConfig.getInt("file-size.maxGroupSize")
   //submissionParallelism refers to the number of threads used while submitting the file to the repository.
   lazy val submissionParallelism: Int = serviceConfig.getInt("file-size.submitParallelism")
+  lazy val streamBatchSize: Int = serviceConfig.getInt("mongodb.presubmission.streamBatchSize")
 
   lazy val adrBaseURI: String = serviceConfig.baseUrl("ers-stub")
   lazy val adrFullSubmissionURI: String = serviceConfig.getString("microservice.services.ers-stub.full-submission-url")
