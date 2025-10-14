@@ -56,17 +56,18 @@ class SubmissionService @Inject()(repositories: Repositories,
   def processData(ersSummary: ErsSummary, failedStatus: String, successStatus: String)
                  (implicit request: Request[_], hc: HeaderCarrier): ERSEnvelope[Boolean] = {
     val schemeInfo = ersSummary.metaData.schemeInfo
-    val transferStatus = ersSummary.transferStatus.getOrElse("")
 
-    if (transferStatus == "largefile") {
-      logger.info(s"[SubmissionService][processData] Using streaming submission for ${schemeInfo.basicLogMessage} (status: $transferStatus)")
-      sendToADRWithStreaming(ersSummary, failedStatus, successStatus)
-    } else {
-      logger.info(s"[SubmissionService][processData] Using standard submission for ${schemeInfo.basicLogMessage} (status: $transferStatus)")
-      for {
-        adrData <- transformData(ersSummary)
-        postSubmissionUpdated <- sendToADRUpdatePostData(ersSummary, adrData, failedStatus, successStatus)
-      } yield postSubmissionUpdated
+    presubmissionService.getSheetCount(schemeInfo).flatMap { sheetCount =>
+      if (sheetCount > 0) {
+        logger.info(s"[SubmissionService][processData] Using streaming submission for ${schemeInfo.basicLogMessage}, with $sheetCount documents")
+        sendToADRWithStreaming(ersSummary, failedStatus, successStatus)
+      } else {
+        logger.info(s"[SubmissionService][processData] Using standard submission for ${schemeInfo.basicLogMessage}, with $sheetCount documents")
+        for {
+          adrData <- transformData(ersSummary)
+          postSubmissionUpdated <- sendToADRUpdatePostData(ersSummary, adrData, failedStatus, successStatus)
+        } yield postSubmissionUpdated
+      }
     }
   }
 

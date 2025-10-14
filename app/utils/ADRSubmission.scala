@@ -87,7 +87,7 @@ class ADRSubmission @Inject()(submissionCommon: SubmissionCommon,
   }
 
   private def createRowDataStream(ersSummary: ErsSummary, schemeType: String)
-                         (implicit request: Request[_], hc: HeaderCarrier): ERSEnvelope[Source[ByteString, NotUsed]] = {
+                                 (implicit request: Request[_], hc: HeaderCarrier): ERSEnvelope[Source[ByteString, NotUsed]] = {
 
     presubmissionService.getJsonStreaming(ersSummary.metaData.schemeInfo).map { source =>
 
@@ -101,26 +101,34 @@ class ADRSubmission @Inject()(submissionCommon: SubmissionCommon,
         }
         .mapAsync(parallelism = 2) { case (row, schemeInfo, sheetName) =>
           Future {
-            val config = configCache.getOrElseUpdate(
-              sheetName,
-              configUtils.getConfigData(s"$schemeType/$sheetName", sheetName, ersSummary)
-            )
-            val fullJson = buildJson(config, ListBuffer(row), Some(0), Some(sheetName), Some(schemeInfo))
-            val path = getDataLocationNames(config)
-            val rowObject: JsObject =
-              if (path.nonEmpty) {
-                val eventArray = path.foldLeft(fullJson: JsValue) { (json, key) =>
-                  (json \ key).getOrElse(Json.obj())
-                }
-                eventArray.asOpt[Seq[JsObject]].flatMap(_.headOption).getOrElse(fullJson)
-              } else {
-                fullJson
-              }
-            ByteString(Json.stringify(rowObject))
+            processRowToByteString(row, schemeInfo, sheetName, configCache, schemeType, ersSummary)
           }
         }
         .intersperse(ByteString(","))
     }
+  }
+
+  private def processRowToByteString(row: Seq[String], schemeInfo: SchemeInfo, sheetName: String, configCache: TrieMap[String, Config], schemeType: String, ersSummary: ErsSummary
+                                    )(implicit request: Request[_], hc: HeaderCarrier): ByteString = {
+
+    val config = configCache.getOrElseUpdate(
+      sheetName,
+      configUtils.getConfigData(s"$schemeType/$sheetName", sheetName, ersSummary)
+    )
+
+    val fullJson = buildJson(config, ListBuffer(row), Some(0), Some(sheetName), Some(schemeInfo))
+    val path = getDataLocationNames(config)
+
+    val rowObject: JsObject = if (path.nonEmpty) {
+      val eventArray = path.foldLeft(fullJson: JsValue) { (json, key) =>
+        (json \ key).getOrElse(Json.obj())
+      }
+      eventArray.asOpt[Seq[JsObject]].flatMap(_.headOption).getOrElse(fullJson)
+    } else {
+      fullJson
+    }
+
+    ByteString(Json.stringify(rowObject))
   }
 
   def createSubmissionJson(ersSummary: ErsSummary, schemeType: String)(implicit request: Request[_], hc: HeaderCarrier): ERSEnvelope[JsObject] =
