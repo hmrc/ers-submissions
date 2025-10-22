@@ -61,23 +61,21 @@ class ADRSubmission @Inject()(submissionCommon: SubmissionCommon,
     val schemeInfo = ersSummary.metaData.schemeInfo
     for {
       configInfo <- fetchConfigInfo(schemeInfo, schemeType, ersSummary)
-      root <- createRootJson(EmptyJson, ersSummary, schemeType)
+      baseRootJson <- createRootJson(EmptyJson, ersSummary, schemeType)
       dataStream <- createRowDataStream(ersSummary, schemeType)
     } yield {
-      val (dataPath, booleanFlags, rowBasedFields) = configInfo
-      val booleanUpdates: Map[String, JsBoolean] = booleanFlags.map(_ -> JsBoolean(true)).toMap
-      val currentSubReturn: JsObject = (root \ "submissionReturn").asOpt[JsObject]
-        .getOrElse(Json.obj())
-      val updatedSubReturn = currentSubReturn ++ JsObject(booleanUpdates) ++ JsObject(rowBasedFields)
-      val updatedRoot: JsObject = root + ("submissionReturn" -> updatedSubReturn)
-      val jsonString = Json.stringify(updatedRoot)
-      val insertPoint = jsonString.lastIndexOf("}}")
-      val beforeInsert = jsonString.substring(0, insertPoint)
-      val afterInsert = jsonString.substring(insertPoint)
-      val parentName = dataPath.headOption.getOrElse("grant")
-      val childName = dataPath.drop(1).headOption.getOrElse("grants")
-      val openingByteString = ByteString(beforeInsert + s",\"$parentName\":{\"$childName\":[")
-      val closingByteString = ByteString("]}" + afterInsert)
+      val (dataPath, booleanFlags, firstRowMetadata) = configInfo
+
+      val completeRootJson = processRootWithMetadata(baseRootJson, booleanFlags, firstRowMetadata)
+
+      val rootJsonString = Json.stringify(completeRootJson)
+      val dataStreaminsertPoint = rootJsonString.lastIndexOf("}}")
+      val jsonBeforeDataStream = rootJsonString.substring(0, dataStreaminsertPoint)
+      val jsonAfterDataStream = rootJsonString.substring(dataStreaminsertPoint)
+      val arrayWrapper = dataPath.headOption.getOrElse("grant")
+      val dataArray = dataPath.drop(1).headOption.getOrElse("grants")
+      val openingByteString = ByteString(jsonBeforeDataStream + s",\"$arrayWrapper\":{\"$dataArray\":[")
+      val closingByteString = ByteString("]}" + jsonAfterDataStream)
 
       Source
         .single(openingByteString)
@@ -129,6 +127,21 @@ class ADRSubmission @Inject()(submissionCommon: SubmissionCommon,
     }
 
     ByteString(Json.stringify(rowObject))
+  }
+
+  private def processRootWithMetadata(rootJson: JsObject, booleanFlags: List[String], firstRowMetadata: Map[String, JsValue]): JsObject = {
+
+    val booleanUpdates: Map[String, JsBoolean] = booleanFlags.map(_ -> JsBoolean(true)).toMap
+
+    val currentSubmissionReturn: JsObject = (rootJson \ "submissionReturn")
+      .asOpt[JsObject]
+      .getOrElse(Json.obj())
+
+    val processedSubmissionReturn = currentSubmissionReturn ++
+      JsObject(booleanUpdates) ++
+      JsObject(firstRowMetadata)
+
+    rootJson + ("submissionReturn" -> processedSubmissionReturn)
   }
 
   def createSubmissionJson(ersSummary: ErsSummary, schemeType: String)(implicit request: Request[_], hc: HeaderCarrier): ERSEnvelope[JsObject] =
@@ -276,7 +289,7 @@ class ADRSubmission @Inject()(submissionCommon: SubmissionCommon,
     }
   }
 
-  private def getStaticBooleanFlags(config: Config): List[String] = {
+  private def getConfigTrueBooleans(config: Config): List[String] = {
     import scala.jdk.CollectionConverters._
     if (config.hasPath("fields")) {
       val fields = config.getConfigList("fields").asScala.toList
@@ -290,31 +303,24 @@ class ADRSubmission @Inject()(submissionCommon: SubmissionCommon,
     }
   }
 
-  private def extractRowBasedRootFields(config: Config, firstRow: Seq[String]): Map[String, JsValue] = {
+  private def extractEMIAdjustmentMetadata(config: Config, firstRow: Seq[String]): Map[String, JsValue] = {
     import scala.jdk.CollectionConverters._
-    if (!config.hasPath("fields")) return Map.empty
-    val fields = config.getConfigList("fields").asScala.toList
-    fields.flatMap { elem =>
-      val fieldType = elem.getString("type")
-      val supported = fieldType == "boolean" || fieldType == "int" || fieldType == "double" || fieldType == "string"
-      if (supported && elem.hasPath("row") && elem.hasPath("column")) {
-        val rowIndex = elem.getInt("row")
+    config.getConfigList("fields").asScala.flatMap { elem =>
+      if (elem.hasPath("row") && elem.getInt("row") == 0 && elem.hasPath("column")) {
         val colIndex = elem.getInt("column")
-        if (rowIndex == 0 && colIndex >= 0 && colIndex < firstRow.length) {
+        if (colIndex >= 0 && colIndex < firstRow.length && firstRow(colIndex).nonEmpty) {
           val cell = firstRow(colIndex)
-          if (cell.nonEmpty) {
-            fieldType match {
-              case "boolean" =>
-                if (elem.hasPath("valid_value")) {
-                  val valid = elem.getString("valid_value")
-                  val boolVal = cell.trim.toUpperCase == valid.trim.toUpperCase
-                  Some(elem.getString("name") -> JsBoolean(boolVal))
-                } else None
-              case "int" => cell.toIntOption.map(v => elem.getString("name") -> JsNumber(v))
-              case "double" => cell.toDoubleOption.map(v => elem.getString("name") -> JsNumber(v))
-              case "string" => Some(elem.getString("name") -> JsString(cell))
-            }
-          } else None
+          val fieldType = elem.getString("type")
+
+          fieldType match {
+            case "boolean" if elem.hasPath("valid_value") =>
+              val valid = elem.getString("valid_value")
+              val booleanVal = cell.trim.toUpperCase == valid.trim.toUpperCase
+              Some(elem.getString("name") -> JsBoolean(booleanVal))
+            case "string" =>
+              Some(elem.getString("name") -> JsString(cell))
+            case _ => None
+          }
         } else None
       } else None
     }.toMap
@@ -329,10 +335,17 @@ class ADRSubmission @Inject()(submissionCommon: SubmissionCommon,
           Try(configUtils.getConfigData(s"$schemeType/${schemeData.sheetName}", schemeData.sheetName, ersSummary)) match {
             case Success(config) =>
               val dataPath = getDataLocationNames(config)
-              val booleanFlags = getStaticBooleanFlags(config)
-              val firstRowOpt = schemeData.data.flatMap(_.headOption)
-              val rowBasedFields = firstRowOpt.map(extractRowBasedRootFields(config, _)).getOrElse(Map.empty[String, JsValue])
-              (dataPath, booleanFlags, rowBasedFields)
+              val booleanFlags = getConfigTrueBooleans(config)
+
+              val firstRowMetadata = if (schemeData.sheetName == "EMI40_Adjustments_V4") {
+                schemeData.data.flatMap(_.headOption).map { firstRow =>
+                  extractEMIAdjustmentMetadata(config, firstRow)
+                }.getOrElse(Map.empty[String, JsValue])
+              } else {
+                Map.empty[String, JsValue]
+              }
+
+              (dataPath, booleanFlags, firstRowMetadata)
 
             case Failure(ex) =>
               logger.warn(s"Failed to load config for ${schemeData.sheetName}: ${ex.getMessage}")
