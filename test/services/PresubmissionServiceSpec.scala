@@ -22,15 +22,12 @@ import fixtures.Fixtures
 import helpers.ERSTestHelper
 import models._
 import org.mockito.ArgumentMatchers._
-import org.mockito.ArgumentMatchers.{any => anyArg, anyInt}
 import org.mockito.Mockito._
 import org.scalatest.EitherValues
 import play.api.libs.json.{JsObject, Json}
 import play.api.test.FakeRequest
 import repositories.{PresubmissionMongoRepository, Repositories}
 import uk.gov.hmrc.http.HeaderCarrier
-import org.apache.pekko.stream.scaladsl.Source
-import org.apache.pekko.util.ByteString
 
 import scala.concurrent.ExecutionContext
 
@@ -99,85 +96,6 @@ class PresubmissionServiceSpec extends ERSTestHelper with EitherValues {
       val result  = await(presubmissionService.getJson(Fixtures.EMISchemeInfo).value)
 
       result.swap.value shouldBe a[SchemeDataMappingError]
-    }
-  }
-
-  "calling getJsonStreaming" should {
-    "return a Source[JsObject, NotUsed] when count > 0" in {
-      reset(mockPresubmissionRepository)
-
-      when(mockPresubmissionRepository.count(anyArg[SchemeInfo](), anyArg[String]()))
-        .thenReturn(ERSEnvelope(1L))
-
-      val js: JsObject = Json.toJsObject(Fixtures.schemeData)
-      when(mockPresubmissionRepository.getJsonStream(anyArg[SchemeInfo](), anyInt()))
-        .thenReturn(Source.single(js))
-
-      val service = new PresubmissionService(mockRepositories) {
-        override lazy val presubmissionRepository: PresubmissionMongoRepository = mockPresubmissionRepository
-      }
-
-      val either = await(service.getJsonStreaming(Fixtures.EMISchemeInfo).value)
-      val stream = either.value
-
-      val collected: Seq[JsObject] =
-        await(stream.runFold(Seq.empty[JsObject])(_ :+ _))
-
-      collected shouldBe Seq(js)
-    }
-
-    "return NoData when count is 0 or less" in {
-      reset(mockPresubmissionRepository)
-
-      when(mockPresubmissionRepository.count(anyArg[SchemeInfo](), anyArg[String]()))
-        .thenReturn(ERSEnvelope(0L))
-
-      val service = new PresubmissionService(mockRepositories) {
-        override lazy val presubmissionRepository: PresubmissionMongoRepository = mockPresubmissionRepository
-      }
-
-      val either = await(service.getJsonStreaming(Fixtures.EMISchemeInfo).value)
-      either.swap.value shouldBe NoData()
-    }
-  }
-
-  "calling getJsonByteStringStream" should {
-    "wrap the SchemeData stream into a JSON array ByteString" in {
-      reset(mockPresubmissionRepository)
-
-      val js: JsObject = Json.toJsObject(Fixtures.schemeData)
-      val expectedJson = s"[${Json.toJson(Fixtures.schemeData).toString()}]"
-
-      when(mockPresubmissionRepository.count(anyArg[SchemeInfo](), anyArg[String]()))
-        .thenReturn(ERSEnvelope(1L))
-      when(mockPresubmissionRepository.getJsonStream(anyArg[SchemeInfo](), anyInt()))
-        .thenReturn(Source.single(js))
-
-      val service = new PresubmissionService(mockRepositories) {
-        override lazy val presubmissionRepository: PresubmissionMongoRepository = mockPresubmissionRepository
-      }
-
-      val either = await(service.getJsonByteStringStream(Fixtures.EMISchemeInfo).value)
-      val byteStream = either.value
-
-      val allBytes: ByteString =
-        await(byteStream.runFold(ByteString.empty)(_ ++ _))
-
-      allBytes.utf8String shouldBe expectedJson
-    }
-
-    "return NoData when getJsonStreaming finds no data" in {
-      reset(mockPresubmissionRepository)
-
-      when(mockPresubmissionRepository.count(anyArg[SchemeInfo](), anyArg[String]()))
-        .thenReturn(ERSEnvelope(0L))
-
-      val service = new PresubmissionService(mockRepositories) {
-        override lazy val presubmissionRepository: PresubmissionMongoRepository = mockPresubmissionRepository
-      }
-
-      val either = await(service.getJsonByteStringStream(Fixtures.EMISchemeInfo).value)
-      either.swap.value shouldBe NoData()
     }
   }
 

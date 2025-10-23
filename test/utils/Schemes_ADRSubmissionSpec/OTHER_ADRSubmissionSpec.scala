@@ -18,7 +18,6 @@ package utils.Schemes_ADRSubmissionSpec
 
 import com.typesafe.config.Config
 import common.ERSEnvelope
-import connectors.ADRConnector
 import fixtures.{Common, Fixtures, OTHER}
 import helpers.ERSTestHelper
 import models.{SchemeData, SchemeInfo}
@@ -28,11 +27,11 @@ import org.scalatest.{BeforeAndAfter, EitherValues}
 import play.api.libs.json._
 import play.api.test.FakeRequest
 import services.PresubmissionService
-import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
+import uk.gov.hmrc.http.HeaderCarrier
 import utils.{ADRSubmission, ConfigUtils, SubmissionCommon}
 
 import scala.collection.mutable.ListBuffer
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 
 class OTHER_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfter with EitherValues {
 
@@ -41,26 +40,16 @@ class OTHER_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfter with Eit
 
   val mockSubmissionCommon: SubmissionCommon = app.injector.instanceOf[SubmissionCommon]
   val mockPresubmissionService: PresubmissionService = mock[PresubmissionService]
-  val mockADRconnector: ADRConnector = mock[ADRConnector]
   val mockConfigUtils: ConfigUtils = app.injector.instanceOf[ConfigUtils]
 
   val mockAdrSubmission: ADRSubmission = new ADRSubmission(
     mockSubmissionCommon,
     mockPresubmissionService,
-    mockADRconnector,
     mockConfigUtils
   )
-
-  val mockHttpResponse = HttpResponse(200, "Success")
-
-  before {
-    reset(mockPresubmissionService, mockADRconnector)
-
-    when(mockADRconnector.sendDataStream(any(), any())(any[ExecutionContext], any[HeaderCarrier]))
-      .thenReturn(ERSEnvelope(Future.successful(mockHttpResponse)))
-
-    when(mockPresubmissionService.compareSheetsNumber(any[Int], any[SchemeInfo]())(any[HeaderCarrier]))
-      .thenReturn(ERSEnvelope(Future.successful((true, 0L))))
+  def before(fun : => scala.Any): Unit  = {
+    super.before(())
+    reset(mockPresubmissionService)
   }
 
   "calling generateSubmissionReturn for OTHER" should {
