@@ -65,9 +65,11 @@ class ADRSubmission @Inject()(submissionCommon: SubmissionCommon,
       dataStream <- createRowDataStream(ersSummary, schemeType)
     } yield {
       val (dataPath, booleanFlags, firstRowMetadata) = configInfo
-
-      val completeRootJson = processRootWithMetadata(baseRootJson, booleanFlags, firstRowMetadata)
-
+      val booleanUpdates: Map[String, JsBoolean] = booleanFlags.map(_ -> JsBoolean(true)).toMap
+      val currentSubReturn: JsObject = (baseRootJson \ "submissionReturn").asOpt[JsObject]
+        .getOrElse(Json.obj())
+      val updatedSubReturn = currentSubReturn ++ JsObject(booleanUpdates) ++ JsObject(firstRowMetadata)
+      val completeRootJson: JsObject = baseRootJson + ("submissionReturn" -> updatedSubReturn)
       val rootJsonString = Json.stringify(completeRootJson)
       val dataStreaminsertPoint = rootJsonString.lastIndexOf("}}")
       val jsonBeforeDataStream = rootJsonString.substring(0, dataStreaminsertPoint)
@@ -127,21 +129,6 @@ class ADRSubmission @Inject()(submissionCommon: SubmissionCommon,
     }
 
     ByteString(Json.stringify(rowObject))
-  }
-
-  private def processRootWithMetadata(rootJson: JsObject, booleanFlags: List[String], firstRowMetadata: Map[String, JsValue]): JsObject = {
-
-    val booleanUpdates: Map[String, JsBoolean] = booleanFlags.map(_ -> JsBoolean(true)).toMap
-
-    val currentSubmissionReturn: JsObject = (rootJson \ "submissionReturn")
-      .asOpt[JsObject]
-      .getOrElse(Json.obj())
-
-    val processedSubmissionReturn = currentSubmissionReturn ++
-      JsObject(booleanUpdates) ++
-      JsObject(firstRowMetadata)
-
-    rootJson + ("submissionReturn" -> processedSubmissionReturn)
   }
 
   def createSubmissionJson(ersSummary: ErsSummary, schemeType: String)(implicit request: Request[_], hc: HeaderCarrier): ERSEnvelope[JsObject] =
@@ -303,7 +290,7 @@ class ADRSubmission @Inject()(submissionCommon: SubmissionCommon,
     }
   }
 
-  private def extractEMIAdjustmentMetadata(config: Config, firstRow: Seq[String]): Map[String, JsValue] = {
+  private def extractFirstRowMetadata(config: Config, firstRow: Seq[String]): Map[String, JsValue] = {
     import scala.jdk.CollectionConverters._
     config.getConfigList("fields").asScala.flatMap { elem =>
       if (elem.hasPath("row") && elem.getInt("row") == 0 && elem.hasPath("column")) {
@@ -319,6 +306,10 @@ class ADRSubmission @Inject()(submissionCommon: SubmissionCommon,
               Some(elem.getString("name") -> JsBoolean(booleanVal))
             case "string" =>
               Some(elem.getString("name") -> JsString(cell))
+            case "int" =>
+              cell.toIntOption.map(value => elem.getString("name") -> JsNumber(value))
+            case "double" =>
+              cell.toDoubleOption.map(value => elem.getString("name") -> JsNumber(value))
             case _ => None
           }
         } else None
@@ -336,14 +327,10 @@ class ADRSubmission @Inject()(submissionCommon: SubmissionCommon,
             case Success(config) =>
               val dataPath = getDataLocationNames(config)
               val booleanFlags = getConfigTrueBooleans(config)
-
-              val firstRowMetadata = if (schemeData.sheetName == "EMI40_Adjustments_V4") {
-                schemeData.data.flatMap(_.headOption).map { firstRow =>
-                  extractEMIAdjustmentMetadata(config, firstRow)
-                }.getOrElse(Map.empty[String, JsValue])
-              } else {
-                Map.empty[String, JsValue]
-              }
+              val firstRowMetadata = schemeData.data
+                .flatMap(_.headOption)
+                .map(firstRow => extractFirstRowMetadata(config, firstRow))
+                .getOrElse(Map.empty[String, JsValue])
 
               (dataPath, booleanFlags, firstRowMetadata)
 

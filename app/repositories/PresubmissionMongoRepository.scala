@@ -97,8 +97,7 @@ class PresubmissionMongoRepository @Inject()(applicationConfig: ApplicationConfi
       }
   }
 
-  def getJsonStream(schemeInfo: SchemeInfo): Source[JsObject, NotUsed] = {
-    val batchSize = applicationConfig.streamBatchSize
+  def getJsonStream(schemeInfo: SchemeInfo, batchSize: Int = 300): Source[JsObject, NotUsed] = {
     logger.info(s"[getJsonStream][selector]: ${buildSelector(schemeInfo).toJson}")
 
     Source.fromPublisher(
