@@ -30,6 +30,8 @@ import play.api.libs.json.{Format, JsObject, Json}
 import repositories.helpers.RepositoryHelper
 import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
+import org.apache.pekko.stream.scaladsl.Source
+import org.apache.pekko.NotUsed
 
 import java.time.Instant
 import java.util.concurrent.TimeUnit
@@ -93,6 +95,20 @@ class PresubmissionMongoRepository @Inject()(applicationConfig: ApplicationConfi
           optSchemaRefs = Some(scala.Seq(schemeInfo.schemeRef))
         )
       }
+  }
+
+  def getJsonStream(schemeInfo: SchemeInfo, batchSize: Int = 300): Source[JsObject, NotUsed] = {
+    logger.info(s"[getJsonStream][selector]: ${buildSelector(schemeInfo).toJson}")
+
+    Source.fromPublisher(
+      collection
+        .find(buildSelector(schemeInfo))
+        .batchSize(batchSize)
+    ).recover {
+      case ex =>
+        logger.error(s"Streaming operation failed for ${schemeInfo.schemeRef}", ex)
+        throw ex
+    }
   }
 
   def count(schemeInfo: SchemeInfo, sessionId: String): ERSEnvelope[Long] = EitherT {

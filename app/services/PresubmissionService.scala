@@ -24,6 +24,9 @@ import play.api.Logging
 import repositories.{PresubmissionMongoRepository, Repositories}
 import uk.gov.hmrc.http.HeaderCarrier
 import utils.Session
+import org.apache.pekko.stream.scaladsl.Source
+import org.apache.pekko.NotUsed
+import play.api.libs.json.JsObject
 
 import javax.inject.Inject
 import scala.concurrent.ExecutionContext
@@ -55,6 +58,19 @@ class PresubmissionService @Inject()(repositories: Repositories)(implicit ec: Ex
     }
   }
 
+  def getJsonStreaming(schemeInfo: SchemeInfo)(implicit hc: HeaderCarrier): ERSEnvelope[Source[JsObject, NotUsed]] = {
+    presubmissionRepository.count(schemeInfo, Session.id(hc)).flatMap { count =>
+      if (count > 0) {
+        logger.info(s"Starting streaming for ${schemeInfo.basicLogMessage} with $count documents")
+        val stream: Source[JsObject, NotUsed] = presubmissionRepository.getJsonStream(schemeInfo)
+        ERSEnvelope(stream)
+      } else {
+        logger.error(s"No data found for: ${schemeInfo.basicLogMessage}")
+        ERSEnvelope(NoData())
+      }
+    }
+  }
+
   def removeJson(schemeInfo: SchemeInfo)(implicit hc: HeaderCarrier): ERSEnvelope[Boolean] =
     presubmissionRepository.removeJson(schemeInfo, Session.id(hc)).flatMap {
       case result if result.wasAcknowledged() && result.getDeletedCount > 0 =>
@@ -67,6 +83,9 @@ class PresubmissionService @Inject()(repositories: Repositories)(implicit ec: Ex
         logger.warn(s"Deleting old presubmission data failed for: ${schemeInfo.basicLogMessage}")
         ERSEnvelope(false)
     }
+
+  def getSheetCount(schemeInfo: SchemeInfo)(implicit hc: HeaderCarrier): ERSEnvelope[Long] =
+    presubmissionRepository.count(schemeInfo, Session.id(hc))
 
   def compareSheetsNumber(expectedSheets: Int, schemeInfo: SchemeInfo)(implicit hc: HeaderCarrier): ERSEnvelope[(Boolean, Long)] =
     presubmissionRepository.count(schemeInfo, Session.id(hc)).map { existingSheets =>
