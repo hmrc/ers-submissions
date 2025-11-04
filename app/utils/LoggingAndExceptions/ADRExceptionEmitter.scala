@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package utils.LoggingAndRexceptions
+package utils.LoggingAndExceptions
 
 import models.{ADRTransferException, ErsMetaData}
 import services.audit.AuditEvents
@@ -29,7 +29,7 @@ class ADRExceptionEmitter @Inject()(auditEvents: AuditEvents) {
     throw createADRException(ersMetaData, data).initCause(ex)
   }
 
-  def createADRException(ersMetaData: ErsMetaData, data: Map[String, String]): ADRTransferException = {
+  private def createADRException(ersMetaData: ErsMetaData, data: Map[String, String]): ADRTransferException = {
     ADRTransferException(
       ersMetaData,
       data.getOrElse("message","Undefined message"),

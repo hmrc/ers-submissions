@@ -27,7 +27,7 @@ import scheduler.ScheduledService
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.mongo.lock.LockService
 import utils.CorrelationIdHelper
-import utils.LoggingAndRexceptions.ErsLogger
+import utils.LoggingAndExceptions.ErsLogger
 
 import javax.inject.Inject
 import scala.concurrent.ExecutionContext

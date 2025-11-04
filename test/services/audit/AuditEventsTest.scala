@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package services
+package services.audit
 
 import fixtures.Fixtures
 import fixtures.Fixtures.schemeData

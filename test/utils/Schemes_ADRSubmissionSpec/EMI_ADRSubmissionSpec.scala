@@ -23,7 +23,7 @@ import helpers.ERSTestHelper
 import models.{SchemeData, SchemeInfo}
 import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
-import org.scalatest.{BeforeAndAfter, EitherValues}
+import org.scalatest.{BeforeAndAfterEach, EitherValues}
 import play.api.libs.json.{JsObject, Json}
 import play.api.test.FakeRequest
 import services.PresubmissionService
@@ -33,7 +33,7 @@ import utils.{ADRSubmission, ConfigUtils, SubmissionCommon}
 import scala.collection.mutable.ListBuffer
 import scala.concurrent.Future
 
-class EMI_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfter with EitherValues {
+class EMI_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with EitherValues {
 
   implicit val hc: HeaderCarrier = new HeaderCarrier()
   implicit val request: FakeRequest[JsObject] = FakeRequest().withBody(Fixtures.metadataJson)
@@ -48,8 +48,8 @@ class EMI_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfter with Eithe
     mockConfigUtils
   )
 
-  def before(fun : => scala.Any): Unit  = {
-    super.before(())
+  override def beforeEach(): Unit  = {
+    super.beforeEach()
     reset(mockPresubmissionService)
   }
 
@@ -61,7 +61,7 @@ class EMI_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfter with Eithe
         .thenReturn(ERSEnvelope(Future.successful(List())))
 
       val result = await(mockAdrSubmission.generateSubmission(EMI.metadataNilReturn)(request, hc).value)
-      result.value - ("acknowledgementReference") shouldBe Json.parse("""{
+      result.value - "acknowledgementReference" shouldBe Json.parse("""{
                                                                 |"regime":"ERS",
                                                                 |"schemeType":"EMI",
                                                                 |"schemeReference":"XA1100000000000",
@@ -106,7 +106,7 @@ class EMI_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfter with Eithe
       )
 
       val result = await(mockAdrSubmission.generateSubmission(EMI.metadata)(request, hc).value)
-      result.value - ("acknowledgementReference") shouldBe Json.parse("""{
+      result.value - "acknowledgementReference" shouldBe Json.parse("""{
                                                                 |"regime":"ERS",
                                                                 |"schemeType":"EMI",
                                                                 |"schemeReference":"XA1100000000000",
@@ -172,17 +172,17 @@ class EMI_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfter with Eithe
       ).thenReturn(
         ERSEnvelope(Future.successful(
           List(
-            SchemeData(EMI.schemeInfo, "EMI40_Adjustments_V4", None, Some(ListBuffer(EMI.buildAdjustmentsV4(true, "yes")))),
+            SchemeData(EMI.schemeInfo, "EMI40_Adjustments_V4", None, Some(ListBuffer(EMI.buildAdjustmentsV4(withAllFields = true, "yes")))),
             SchemeData(EMI.schemeInfo, "EMI40_Replaced_V4", None, Some(ListBuffer(EMI.buildReplacedV4(true)))),
-            SchemeData(EMI.schemeInfo, "EMI40_RLC_V4", None, Some(ListBuffer(EMI.buildRLCV4(true, "yes", "yes")))),
-            SchemeData(EMI.schemeInfo, "EMI40_NonTaxable_V4", None, Some(ListBuffer(EMI.buildNonTaxableV4(true, "yes", "yes")))),
-            SchemeData(EMI.schemeInfo, "EMI40_Taxable_V4", None, Some(ListBuffer(EMI.buildTaxableV4(true, "yes", "yes", "yes"))))
+            SchemeData(EMI.schemeInfo, "EMI40_RLC_V4", None, Some(ListBuffer(EMI.buildRLCV4(withAllFields = true, "yes", "yes")))),
+            SchemeData(EMI.schemeInfo, "EMI40_NonTaxable_V4", None, Some(ListBuffer(EMI.buildNonTaxableV4(withAllFields = true, "yes", "yes")))),
+            SchemeData(EMI.schemeInfo, "EMI40_Taxable_V4", None, Some(ListBuffer(EMI.buildTaxableV4(withAllFields = true, "yes", "yes", "yes"))))
           )
         )
       ))
 
       val result = await(mockAdrSubmission.generateSubmission(EMI.metadata)(request, hc).value)
-      result.value - ("acknowledgementReference") shouldBe Json.parse("""{
+      result.value - "acknowledgementReference" shouldBe Json.parse("""{
                                                                 |"regime":"ERS",
                                                                 |"schemeType":"EMI",
                                                                 |"schemeReference":"XA1100000000000",
@@ -365,22 +365,22 @@ class EMI_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfter with Eithe
       ).thenReturn(
         ERSEnvelope(Future.successful(
           List(
-            SchemeData(EMI.schemeInfo, "EMI40_Adjustments_V4", None, Some(ListBuffer(EMI.buildAdjustmentsV4(true, "yes")))),
-            SchemeData(EMI.schemeInfo, "EMI40_Adjustments_V4", None, Some(ListBuffer(EMI.buildAdjustmentsV4(true, "yes")))),
+            SchemeData(EMI.schemeInfo, "EMI40_Adjustments_V4", None, Some(ListBuffer(EMI.buildAdjustmentsV4(withAllFields = true, "yes")))),
+            SchemeData(EMI.schemeInfo, "EMI40_Adjustments_V4", None, Some(ListBuffer(EMI.buildAdjustmentsV4(withAllFields = true, "yes")))),
             SchemeData(EMI.schemeInfo, "EMI40_Replaced_V4", None, Some(ListBuffer(EMI.buildReplacedV4(true)))),
             SchemeData(EMI.schemeInfo, "EMI40_Replaced_V4", None, Some(ListBuffer(EMI.buildReplacedV4(true)))),
-            SchemeData(EMI.schemeInfo, "EMI40_RLC_V4", None, Some(ListBuffer(EMI.buildRLCV4(true, "yes", "yes")))),
-            SchemeData(EMI.schemeInfo, "EMI40_RLC_V4", None, Some(ListBuffer(EMI.buildRLCV4(true, "yes", "yes")))),
-            SchemeData(EMI.schemeInfo, "EMI40_NonTaxable_V4", None, Some(ListBuffer(EMI.buildNonTaxableV4(true, "yes", "yes")))),
-            SchemeData(EMI.schemeInfo, "EMI40_NonTaxable_V4", None, Some(ListBuffer(EMI.buildNonTaxableV4(true, "yes", "yes")))),
-            SchemeData(EMI.schemeInfo, "EMI40_Taxable_V4", None, Some(ListBuffer(EMI.buildTaxableV4(true, "yes", "yes", "yes")))),
-            SchemeData(EMI.schemeInfo, "EMI40_Taxable_V4", None, Some(ListBuffer(EMI.buildTaxableV4(true, "yes", "yes", "yes"))))
+            SchemeData(EMI.schemeInfo, "EMI40_RLC_V4", None, Some(ListBuffer(EMI.buildRLCV4(withAllFields = true, "yes", "yes")))),
+            SchemeData(EMI.schemeInfo, "EMI40_RLC_V4", None, Some(ListBuffer(EMI.buildRLCV4(withAllFields = true, "yes", "yes")))),
+            SchemeData(EMI.schemeInfo, "EMI40_NonTaxable_V4", None, Some(ListBuffer(EMI.buildNonTaxableV4(withAllFields = true, "yes", "yes")))),
+            SchemeData(EMI.schemeInfo, "EMI40_NonTaxable_V4", None, Some(ListBuffer(EMI.buildNonTaxableV4(withAllFields = true, "yes", "yes")))),
+            SchemeData(EMI.schemeInfo, "EMI40_Taxable_V4", None, Some(ListBuffer(EMI.buildTaxableV4(withAllFields = true, "yes", "yes", "yes")))),
+            SchemeData(EMI.schemeInfo, "EMI40_Taxable_V4", None, Some(ListBuffer(EMI.buildTaxableV4(withAllFields = true, "yes", "yes", "yes"))))
           )
         )
       ))
 
       val result = await(mockAdrSubmission.generateSubmission(EMI.metadata)(request, hc).value)
-      result.value - ("acknowledgementReference") shouldBe Json.parse("""{
+      result.value - "acknowledgementReference" shouldBe Json.parse("""{
                                                                 |"regime":"ERS",
                                                                 |"schemeType":"EMI",
                                                                 |"schemeReference":"XA1100000000000",
@@ -657,13 +657,13 @@ class EMI_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfter with Eithe
       ).thenReturn(
         ERSEnvelope(Future.successful(
           List(
-            SchemeData(EMI.schemeInfo, "EMI40_Adjustments_V4", None, Some(ListBuffer(EMI.buildAdjustmentsV4(true, "yes"))))
+            SchemeData(EMI.schemeInfo, "EMI40_Adjustments_V4", None, Some(ListBuffer(EMI.buildAdjustmentsV4(withAllFields = true, "yes"))))
           )
         )
       ))
 
       val result = await(mockAdrSubmission.generateSubmission(EMI.metadata)(request, hc).value)
-      result.value - ("acknowledgementReference") shouldBe Json.parse("""{
+      result.value - "acknowledgementReference" shouldBe Json.parse("""{
                                                                 |"regime":"ERS",
                                                                 |"schemeType":"EMI",
                                                                 |"schemeReference":"XA1100000000000",
@@ -750,14 +750,14 @@ class EMI_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfter with Eithe
       ).thenReturn(
         ERSEnvelope(Future.successful(
           List(
-            SchemeData(EMI.schemeInfo, "EMI40_Adjustments_V4", None, Some(ListBuffer(EMI.buildAdjustmentsV4(true, "yes")))),
-            SchemeData(EMI.schemeInfo, "EMI40_Adjustments_V4", None, Some(ListBuffer(EMI.buildAdjustmentsV4(true, "yes"))))
+            SchemeData(EMI.schemeInfo, "EMI40_Adjustments_V4", None, Some(ListBuffer(EMI.buildAdjustmentsV4(withAllFields = true, "yes")))),
+            SchemeData(EMI.schemeInfo, "EMI40_Adjustments_V4", None, Some(ListBuffer(EMI.buildAdjustmentsV4(withAllFields = true, "yes"))))
           )
         )
       ))
 
       val result = await(mockAdrSubmission.generateSubmission(EMI.metadata)(request, hc).value)
-      result.value - ("acknowledgementReference") shouldBe Json.parse("""{
+      result.value - "acknowledgementReference" shouldBe Json.parse("""{
                                                                 |"regime":"ERS",
                                                                 |"schemeType":"EMI",
                                                                 |"schemeReference":"XA1100000000000",
@@ -858,13 +858,13 @@ class EMI_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfter with Eithe
       ).thenReturn(
         ERSEnvelope(Future.successful(
           List(
-            SchemeData(EMI.schemeInfo, "EMI40_RLC_V4", None, Some(ListBuffer(EMI.buildRLCV4(true, "yes", "yes"))))
+            SchemeData(EMI.schemeInfo, "EMI40_RLC_V4", None, Some(ListBuffer(EMI.buildRLCV4(withAllFields = true, "yes", "yes"))))
           )
         )
       ))
 
       val result = await(mockAdrSubmission.generateSubmission(EMI.metadata)(request, hc).value)
-      result.value - ("acknowledgementReference") shouldBe Json.parse("""{
+      result.value - "acknowledgementReference" shouldBe Json.parse("""{
                                                                 |"regime":"ERS",
                                                                 |"schemeType":"EMI",
                                                                 |"schemeReference":"XA1100000000000",
@@ -950,14 +950,14 @@ class EMI_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfter with Eithe
       ).thenReturn(
         ERSEnvelope(Future.successful(
           List(
-            SchemeData(EMI.schemeInfo, "EMI40_RLC_V4", None, Some(ListBuffer(EMI.buildRLCV4(true, "yes", "yes")))),
-            SchemeData(EMI.schemeInfo, "EMI40_RLC_V4", None, Some(ListBuffer(EMI.buildRLCV4(true, "yes", "yes"))))
+            SchemeData(EMI.schemeInfo, "EMI40_RLC_V4", None, Some(ListBuffer(EMI.buildRLCV4(withAllFields = true, "yes", "yes")))),
+            SchemeData(EMI.schemeInfo, "EMI40_RLC_V4", None, Some(ListBuffer(EMI.buildRLCV4(withAllFields = true, "yes", "yes"))))
           )
         )
       ))
 
       val result = await(mockAdrSubmission.generateSubmission(EMI.metadata)(request, hc).value)
-      result.value - ("acknowledgementReference") shouldBe Json.parse("""{
+      result.value - "acknowledgementReference" shouldBe Json.parse("""{
                                                                 |"regime":"ERS",
                                                                 |"schemeType":"EMI",
                                                                 |"schemeReference":"XA1100000000000",
@@ -1059,13 +1059,13 @@ class EMI_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfter with Eithe
       ).thenReturn(
         ERSEnvelope(Future.successful(
           List(
-            SchemeData(EMI.schemeInfo, "EMI40_RLC_V4", None, Some(ListBuffer(EMI.buildRLCV4(true, "yes", "yes"))))
+            SchemeData(EMI.schemeInfo, "EMI40_RLC_V4", None, Some(ListBuffer(EMI.buildRLCV4(withAllFields = true, "yes", "yes"))))
           )
         )
       ))
 
       val result = await(mockAdrSubmission.generateSubmission(EMI.metadata)(request, hc).value)
-      result.value - ("acknowledgementReference") shouldBe Json.parse("""{
+      result.value - "acknowledgementReference" shouldBe Json.parse("""{
                                                                 |"regime":"ERS",
                                                                 |"schemeType":"EMI",
                                                                 |"schemeReference":"XA1100000000000",
@@ -1151,14 +1151,14 @@ class EMI_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfter with Eithe
       ).thenReturn(
         ERSEnvelope(Future.successful(
           List(
-            SchemeData(EMI.schemeInfo, "EMI40_RLC_V4", None, Some(ListBuffer(EMI.buildRLCV4(true, "yes", "yes")))),
-            SchemeData(EMI.schemeInfo, "EMI40_RLC_V4", None, Some(ListBuffer(EMI.buildRLCV4(true, "yes", "yes"))))
+            SchemeData(EMI.schemeInfo, "EMI40_RLC_V4", None, Some(ListBuffer(EMI.buildRLCV4(withAllFields = true, "yes", "yes")))),
+            SchemeData(EMI.schemeInfo, "EMI40_RLC_V4", None, Some(ListBuffer(EMI.buildRLCV4(withAllFields = true, "yes", "yes"))))
           )
         )
       ))
 
       val result = await(mockAdrSubmission.generateSubmission(EMI.metadata)(request, hc).value)
-      result.value - ("acknowledgementReference") shouldBe Json.parse("""{
+      result.value - "acknowledgementReference" shouldBe Json.parse("""{
                                                                 |"regime":"ERS",
                                                                 |"schemeType":"EMI",
                                                                 |"schemeReference":"XA1100000000000",
@@ -1260,13 +1260,13 @@ class EMI_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfter with Eithe
       ).thenReturn(
         ERSEnvelope(Future.successful(
           List(
-            SchemeData(EMI.schemeInfo, "EMI40_NonTaxable_V4", None, Some(ListBuffer(EMI.buildNonTaxableV4(true, "yes", "yes"))))
+            SchemeData(EMI.schemeInfo, "EMI40_NonTaxable_V4", None, Some(ListBuffer(EMI.buildNonTaxableV4(withAllFields = true, "yes", "yes"))))
           )
         )
       ))
 
       val result = await(mockAdrSubmission.generateSubmission(EMI.metadata)(request, hc).value)
-      result.value - ("acknowledgementReference") shouldBe Json.parse("""{
+      result.value - "acknowledgementReference" shouldBe Json.parse("""{
                                                                 |"regime":"ERS",
                                                                 |"schemeType":"EMI",
                                                                 |"schemeReference":"XA1100000000000",
@@ -1353,14 +1353,14 @@ class EMI_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfter with Eithe
       ).thenReturn(
         ERSEnvelope(Future.successful(
           List(
-            SchemeData(EMI.schemeInfo, "EMI40_NonTaxable_V4", None, Some(ListBuffer(EMI.buildNonTaxableV4(true, "yes", "yes")))),
-            SchemeData(EMI.schemeInfo, "EMI40_NonTaxable_V4", None, Some(ListBuffer(EMI.buildNonTaxableV4(true, "yes", "yes"))))
+            SchemeData(EMI.schemeInfo, "EMI40_NonTaxable_V4", None, Some(ListBuffer(EMI.buildNonTaxableV4(withAllFields = true, "yes", "yes")))),
+            SchemeData(EMI.schemeInfo, "EMI40_NonTaxable_V4", None, Some(ListBuffer(EMI.buildNonTaxableV4(withAllFields = true, "yes", "yes"))))
           )
         )
       ))
 
       val result = await(mockAdrSubmission.generateSubmission(EMI.metadata)(request, hc).value)
-      result.value - ("acknowledgementReference") shouldBe Json.parse("""{
+      result.value - "acknowledgementReference" shouldBe Json.parse("""{
                                                                 |"regime":"ERS",
                                                                 |"schemeType":"EMI",
                                                                 |"schemeReference":"XA1100000000000",
@@ -1464,13 +1464,13 @@ class EMI_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfter with Eithe
       ).thenReturn(
         ERSEnvelope(Future.successful(
           List(
-            SchemeData(EMI.schemeInfo, "EMI40_Taxable_V4", None, Some(ListBuffer(EMI.buildTaxableV4(true, "yes", "yes", "yes"))))
+            SchemeData(EMI.schemeInfo, "EMI40_Taxable_V4", None, Some(ListBuffer(EMI.buildTaxableV4(withAllFields = true, "yes", "yes", "yes"))))
           )
         )
       ))
 
       val result = await(mockAdrSubmission.generateSubmission(EMI.metadata)(request, hc).value)
-      result.value - ("acknowledgementReference") shouldBe Json.parse("""{
+      result.value - "acknowledgementReference" shouldBe Json.parse("""{
                                                                 |"regime":"ERS",
                                                                 |"schemeType":"EMI",
                                                                 |"schemeReference":"XA1100000000000",
@@ -1562,14 +1562,14 @@ class EMI_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfter with Eithe
       ).thenReturn(
         ERSEnvelope(Future.successful(
           List(
-            SchemeData(EMI.schemeInfo, "EMI40_Taxable_V4", None, Some(ListBuffer(EMI.buildTaxableV4(true, "yes", "yes", "yes")))),
-            SchemeData(EMI.schemeInfo, "EMI40_Taxable_V4", None, Some(ListBuffer(EMI.buildTaxableV4(true, "yes", "yes", "yes"))))
+            SchemeData(EMI.schemeInfo, "EMI40_Taxable_V4", None, Some(ListBuffer(EMI.buildTaxableV4(withAllFields = true, "yes", "yes", "yes")))),
+            SchemeData(EMI.schemeInfo, "EMI40_Taxable_V4", None, Some(ListBuffer(EMI.buildTaxableV4(withAllFields = true, "yes", "yes", "yes"))))
           )
         )
       ))
 
       val result = await(mockAdrSubmission.generateSubmission(EMI.metadata)(request, hc).value)
-      result.value - ("acknowledgementReference") shouldBe Json.parse("""{
+      result.value - "acknowledgementReference" shouldBe Json.parse("""{
                                                                 |"regime":"ERS",
                                                                 |"schemeType":"EMI",
                                                                 |"schemeReference":"XA1100000000000",

@@ -55,7 +55,7 @@ class SubmissionCommon @Inject()(configUtils: ConfigUtils) extends Logging {
   def getNewField(configElem: Config, elemVal: JsValueWrapper): JsObject =
     Json.obj(configElem.getString("name") -> elemVal)
 
-  def getConfigElemFieldValueByType(configElem: Config, fieldName: String): JsValueWrapper =
+  private def getConfigElemFieldValueByType(configElem: Config, fieldName: String): JsValueWrapper =
     configElem.getString("type") match {
       case "boolean" => configElem.getBoolean(fieldName)
       case "int"     => configElem.getInt(fieldName)
@@ -63,7 +63,7 @@ class SubmissionCommon @Inject()(configUtils: ConfigUtils) extends Logging {
       case _         => throw new IllegalArgumentException("Undefined type")
     }
 
-  def getConfigElemValue(configElem: Config): JsObject =
+  private def getConfigElemValue(configElem: Config): JsObject =
     getNewField(configElem, getConfigElemFieldValueByType(configElem, "value"))
 
   def getFileDataValue(configElem: Config, fileData: ListBuffer[Seq[String]], row: Option[Int]): JsObject = {
@@ -104,7 +104,7 @@ class SubmissionCommon @Inject()(configUtils: ConfigUtils) extends Logging {
    *
    * @param configRow          the row from which to access the 'name' and 'valid_value' fields
    * @param valueFromColumn   value from fileData at the previously specified row & column
-   * @return                  a parsed value with the the correct name and value, or an empty JSON object
+   * @return                  a parsed value with the correct name and value, or an empty JSON object
    */
   private def createValueJson(configRow: Config, valueFromColumn: String): Option[JsObject] = {
     for {

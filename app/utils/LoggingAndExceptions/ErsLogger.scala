@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package utils.LoggingAndRexceptions
+package utils.LoggingAndExceptions
 
 import play.api.Logging
 
@@ -28,11 +28,15 @@ trait ErsLogger extends ErsDataMessages with ErsExceptionMessages with Logging {
   }
 
   def logException(data: Object, ex: Exception, context: Option[String] = None): Unit = {
-    var errorMessage: String = buildExceptionMesssage(ex) + ",\n" + buildDataMessage(data)
-    if(context.isDefined) {
-      errorMessage += s",\nContext: $context"
+    val errorMessage: String = buildExceptionMesssage(ex) + ",\n" + buildDataMessage(data)
+
+    val finalErrorMessage = if(context.isDefined) {
+      errorMessage ++ s",\nContext: $context"
+    } else {
+      errorMessage
     }
-    logger.error(errorMessage)
+
+    logger.error(finalErrorMessage)
   }
 
   def logIfEnabled(logEnabled: Boolean)(block: => Unit): Unit = {

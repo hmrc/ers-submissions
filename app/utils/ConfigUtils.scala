@@ -19,7 +19,7 @@ package utils
 import com.typesafe.config.{Config, ConfigFactory}
 import models.ErsSummary
 import uk.gov.hmrc.http.HeaderCarrier
-import utils.LoggingAndRexceptions.{ADRExceptionEmitter, ErsLogger}
+import utils.LoggingAndExceptions.{ADRExceptionEmitter, ErsLogger}
 
 import javax.inject.Inject
 

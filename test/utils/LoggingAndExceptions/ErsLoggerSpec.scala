@@ -17,7 +17,7 @@
 package utils.LoggingAndExceptions
 
 import helpers.ERSTestHelper
-import utils.LoggingAndRexceptions.ErsLogger
+import utils.LoggingAndExceptions.ErsLogger
 
 class ErsLoggerSpec extends ERSTestHelper {
 
@@ -45,12 +45,12 @@ class ErsLoggerSpec extends ERSTestHelper {
 
     "log error without context if it's not given" in {
       val result = TestErsLogger.logException("data", new Exception("exception message"))
-      result shouldBe (())
+      result shouldBe ()
     }
 
     "log error with context if it's given" in {
       val result = TestErsLogger.logException("data", new Exception("exception message"), Some("context"))
-      result shouldBe (())
+      result shouldBe ()
     }
 
   }

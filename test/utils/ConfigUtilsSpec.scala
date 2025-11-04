@@ -22,7 +22,7 @@ import models.{ADRTransferException, ErsSummary}
 import play.api.mvc.AnyContent
 import play.api.test.FakeRequest
 import uk.gov.hmrc.http.HeaderCarrier
-import utils.LoggingAndRexceptions.ADRExceptionEmitter
+import utils.LoggingAndExceptions.ADRExceptionEmitter
 
 class ConfigUtilsSpec extends ERSTestHelper {
 

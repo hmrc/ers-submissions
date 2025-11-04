@@ -75,7 +75,7 @@ case class MetaDataSelectedSchemeRefLogs(selectedErsSummary: Seq[ErsSummary]) ex
     s"transferStatus: ${ersSummary.transferStatus.getOrElse("transfer status is not defined")}, " +
     s"timestamp: ${ersSummary.metaData.schemeInfo.timestamp}"
 
-  val numberSelectedErsRecords: Int = selectedErsSummary.length
+  private val numberSelectedErsRecords: Int = selectedErsSummary.length
   val message: String =
     if (selectedErsSummary.isEmpty) {
       s"$prefix MetaDataSelectedSchemeRefLogs - Could not find any records for the selected scheme reference"
@@ -95,7 +95,7 @@ case class PreSubSelectedSchemeRefLogs(selectedErsSummary: Seq[(SchemeData, Loca
       s"timestamp: ${schemeDataWithCreatedAt._1.schemeInfo.timestamp}, " +
       s"createdAt: ${schemeDataWithCreatedAt._2}"
 
-  val numberSelectedErsRecords: Int = selectedErsSummary.length
+  private val numberSelectedErsRecords: Int = selectedErsSummary.length
   val message: String =
     if (selectedErsSummary.isEmpty) {
       s"$prefix PreSubSelectedSchemeRefLogs - Could not find any records for the selected scheme reference"

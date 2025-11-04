@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package utils.LoggingAndRexceptions
+package utils.LoggingAndExceptions
 
 import models.ADRTransferException
 

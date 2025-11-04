@@ -34,7 +34,7 @@ import play.api.test.FakeRequest
 import repositories.{MetadataMongoRepository, Repositories}
 import services.audit.AuditEvents
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
-import utils.LoggingAndRexceptions.ADRExceptionEmitter
+import utils.LoggingAndExceptions.ADRExceptionEmitter
 import utils.{ADRSubmission, SubmissionCommon}
 
 import java.util.concurrent.TimeUnit

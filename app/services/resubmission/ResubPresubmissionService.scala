@@ -49,7 +49,7 @@ class ResubPresubmissionService @Inject()(metadataRepository: MetadataMongoRepos
         val jsErrors = errors
           .map((e: (JsPath, collection.Seq[JsonValidationError])) => s"${e._1}: ${e._2.mkString(", ")}")
           .mkString(", ")
-        logger.warn(s"Failed to validate JsObject error: ${jsErrors}")
+        logger.warn(s"Failed to validate JsObject error: $jsErrors")
         None
     }
 
@@ -75,12 +75,13 @@ class ResubPresubmissionService @Inject()(metadataRepository: MetadataMongoRepos
     } yield countToLog
   }
 
-  def extractSchemeDataAndCreatedAt(json: JsObject): Option[(SchemeData, LocalDateTime)] = {
+  private def extractSchemeDataAndCreatedAt(json: JsObject): Option[(SchemeData, LocalDateTime)] = {
     val maybeCreatedAt: Option[LocalDateTime] = (json \ "createdAt" \ "$date" \ "$numberLong")
       .asOpt[String]
       .map(l => LocalDateTime.ofInstant(Instant.ofEpochMilli(l.toLong), ZoneId.systemDefault()))
+
     (validateJson[SchemeData](json), maybeCreatedAt) match {
-      case (Some(schemeData), Some(createdAt)) => Some(schemeData, createdAt)
+      case (Some(schemeData), Some(createdAt)) => Some((schemeData, createdAt))
       case (_, _) => None
     }
   }

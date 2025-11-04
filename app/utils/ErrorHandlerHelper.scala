@@ -22,7 +22,7 @@ import play.api.http.Status.BAD_REQUEST
 import play.api.libs.json.{JsError, JsPath, Json, JsonValidationError}
 import play.api.mvc.Result
 import play.api.mvc.Results.BadRequest
-import uk.gov.hmrc.play.bootstrap.backend.http.ErrorResponse
+import uk.gov.hmrc.play.bootstrap.http.ErrorResponse
 
 import scala.concurrent.Future
 

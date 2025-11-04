@@ -22,7 +22,7 @@ import config.ApplicationConfig
 import models.{ERSError, PreSubWithoutMetadata}
 import repositories.PreSubWithoutMetadataQuery
 import scheduler.ScheduledService
-import utils.LoggingAndRexceptions.ErsLogger
+import utils.LoggingAndExceptions.ErsLogger
 
 import java.time.{Instant, ZoneId}
 import java.time.format.DateTimeFormatter
@@ -54,7 +54,7 @@ class PresSubWithoutMetadataQueryService @Inject()(val applicationConfig: Applic
 
   private def logPresubmissionRecordsWithoutMetadata(
                                                       queryResults: Seq[PreSubWithoutMetadata]
-                                                    )(implicit ec: ExecutionContext): Unit = {
+                                                    ): Unit = {
     val formatter: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").withZone(ZoneId.systemDefault())
     val logLines: Seq[String] = queryResults
       .map(document =>

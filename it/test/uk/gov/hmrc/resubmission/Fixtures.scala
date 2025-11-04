@@ -153,7 +153,7 @@ object Fixtures {
 
   def generatePresubmissionRecordsForMetadata(ersSummaries: Seq[ErsSummary]): Seq[SchemeData] = {
     ersSummaries.map { summary =>
-      SchemeData(CSOP.schemeInfo.copy(timestamp = summary.metaData.schemeInfo.timestamp), "CSOP_OptionsRCL_V4", None, Some(ListBuffer(CSOP.buildOptionsRCL(true, "yes"))))
+      SchemeData(CSOP.schemeInfo.copy(timestamp = summary.metaData.schemeInfo.timestamp), "CSOP_OptionsRCL_V4", None, Some(ListBuffer(CSOP.buildOptionsRCL(withAllFields = true, "yes"))))
     }
   }
 
@@ -173,8 +173,8 @@ object Fixtures {
   ).map(Json.toJsObject(_))
 
   val schemeData: Seq[JsObject] = Seq(
-    SchemeData(CSOP.schemeInfo.copy(timestamp = instantFromDate("30/04/2023")), "CSOP_OptionsRCL_V4", None, Some(ListBuffer(CSOP.buildOptionsRCL(true, "yes")))),
-    SchemeData(CSOP.schemeInfo.copy(timestamp = instantFromDate("10/05/2023")), "CSOP_OptionsRCL_V4", None, Some(ListBuffer(CSOP.buildOptionsRCL(true, "yes")))),
-    SchemeData(CSOP.schemeInfo.copy(timestamp = instantFromDate("20/05/2023")), "CSOP_OptionsRCL_V4", None, Some(ListBuffer(CSOP.buildOptionsRCL(true, "yes"))))
+    SchemeData(CSOP.schemeInfo.copy(timestamp = instantFromDate("30/04/2023")), "CSOP_OptionsRCL_V4", None, Some(ListBuffer(CSOP.buildOptionsRCL(withAllFields = true, "yes")))),
+    SchemeData(CSOP.schemeInfo.copy(timestamp = instantFromDate("10/05/2023")), "CSOP_OptionsRCL_V4", None, Some(ListBuffer(CSOP.buildOptionsRCL(withAllFields = true, "yes")))),
+    SchemeData(CSOP.schemeInfo.copy(timestamp = instantFromDate("20/05/2023")), "CSOP_OptionsRCL_V4", None, Some(ListBuffer(CSOP.buildOptionsRCL(withAllFields = true, "yes"))))
   ).map(Json.toJsObject(_))
 }
