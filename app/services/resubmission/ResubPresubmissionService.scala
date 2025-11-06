@@ -49,7 +49,7 @@ class ResubPresubmissionService @Inject()(metadataRepository: MetadataMongoRepos
         val jsErrors = errors
           .map((e: (JsPath, collection.Seq[JsonValidationError])) => s"${e._1}: ${e._2.mkString(", ")}")
           .mkString(", ")
-        logger.warn(s"Failed to validate JsObject error: ${jsErrors}")
+        logger.warn(s"[ResubPresubmissionService][validateJson] Failed to validate JsObject error: $jsErrors")
         None
     }
 
@@ -135,9 +135,10 @@ class ResubPresubmissionService @Inject()(metadataRepository: MetadataMongoRepos
       processFailedSubmissionsConfig.failedStatus,
       processFailedSubmissionsConfig.resubmitSuccessStatus).map { result =>
       if(result) {
-        logger.info(s"Resubmission completed successfully for schemeRef: ${ersSummary.metaData.schemeInfo.schemeRef}")
+        logger.info(s"[ResubPresubmissionService][startResubmission] Resubmission completed successfully for schemeRef: ${ersSummary.metaData.schemeInfo.schemeRef}")
       } else {
-        logger.error(s"RESUBMISSION_FAILED [startResubmission] Resubmission failed for: ${ersSummary.metaData.schemeInfo.basicLogMessage}")
+        logger.error(s"[ResubPresubmissionService][startResubmission] Resubmission failed for:" +
+          s" ${ersSummary.metaData.schemeInfo.basicLogMessage}")
         auditEvents.sendToAdrEvent("ErsTransferToAdrFailed", ersSummary, source = Some("scheduler"))
       }
       result

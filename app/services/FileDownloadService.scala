@@ -39,7 +39,7 @@ class FileDownloadService @Inject()(appConfig: ApplicationConfig)(implicit actor
       case HttpResponse(org.apache.pekko.http.scaladsl.model.StatusCodes.OK, _, entity, _) => entity.withSizeLimit(uploadFileSizeLimit).dataBytes
       case notOkResponse =>
         logger.error(
-          s"[ProcessCsvService][extractEntityData] Illegal response from Upscan: ${notOkResponse.status.intValue}, " +
+          s"[FileDownloadService][extractEntityData] Illegal response from Upscan: ${notOkResponse.status.intValue}, " +
             s"body: ${notOkResponse.entity.dataBytes}")
         Source.failed(UpstreamErrorResponse("Could not download file from upscan", Status.INTERNAL_SERVER_ERROR))
     }

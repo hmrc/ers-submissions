@@ -41,15 +41,15 @@ class PresSubWithoutMetadataQueryService @Inject()(val applicationConfig: Applic
       _ = if (validQueryRecords.length < applicationConfig.maxNumberOfRecordsToReturn) {
         logPresubmissionRecordsWithoutMetadata(validQueryRecords)
       } else {
-        logger.info(s"[PresSubWithoutMetadataQueryService] Number of records > ${applicationConfig.maxNumberOfRecordsToReturn}, ${validQueryRecords.length} records returned from query")
+        logger.info(s"[PresSubWithoutMetadataQueryService][invoke] Number of records > ${applicationConfig.maxNumberOfRecordsToReturn}, ${validQueryRecords.length} records returned from query")
       }
       _ = if (validationErrors.nonEmpty) {
-        logger.info(s"[PresSubWithoutMetadataQueryService] ${validationErrors.length} validation Errors, showing first 10: ${validationErrors.take(10).mkString(", ")}")
+        logger.info(s"[PresSubWithoutMetadataQueryService][invoke] ${validationErrors.length} validation Errors, showing first 10: ${validationErrors.take(10).mkString(", ")}")
       }
     } yield ()
-    ERSEnvelope[Unit](logger.info("[PresSubWithoutMetadataQueryService] Finished running pres-sub-without-metadata-query-service"))
+    ERSEnvelope[Unit](logger.info("[PresSubWithoutMetadataQueryService][invoke] Finished running pres-sub-without-metadata-query-service"))
   }.recover { case e: ERSError =>
-    logger.error(s"[PresSubWithoutMetadataQueryService] Failed to fetch or log records: $e")
+    logger.error(s"[PresSubWithoutMetadataQueryService][invoke] Failed to fetch or log records: $e")
   }
 
   private def logPresubmissionRecordsWithoutMetadata(
@@ -62,7 +62,7 @@ class PresSubWithoutMetadataQueryService @Inject()(val applicationConfig: Applic
           s"taxYear: ${document.taxYear}, " +
           s"timestamp: ${formatter.format(Instant.ofEpochMilli(document.timestamp))}"
       )
-    logger.info(s"[PresSubWithoutMetadataQueryService] Presubmission data without metadata: " +
+    logger.info(s"[PresSubWithoutMetadataQueryService][logPresubmissionRecordsWithoutMetadata] Presubmission data without metadata: " +
       s"${logLines.mkString("\n", "\n", "\n")}"
     )
   }

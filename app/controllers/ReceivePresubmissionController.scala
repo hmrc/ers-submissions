@@ -59,7 +59,9 @@ class ReceivePresubmissionController @Inject()(presubmissionService: Presubmissi
     authorisedAction(empRef).async(parse.json(maxLength = 1024 * 10000)) {
       implicit request =>
       request.body.validate[SchemeData] match {
-        case JsSuccess(schemeData, _) => storePresubmission(schemeData)
+        case JsSuccess(schemeData, _) =>
+          logger.info(s"[ReceivePresubmissionController][receivePresubmissionJson] storing presubmission data for ${schemeData.schemeInfo.basicLogMessage}")
+          storePresubmission(schemeData)
         case JsError(jsonErrors) => handleBadRequest(jsonErrors)
       }
     }
@@ -68,7 +70,9 @@ class ReceivePresubmissionController @Inject()(presubmissionService: Presubmissi
     authorisedAction(empRef).async(parse.json) {
       implicit request =>
         request.body.validate[SubmissionsSchemeData] match {
-        case JsSuccess(submissionsSchemeData, _) => storePresubmission(submissionsSchemeData)
+        case JsSuccess(submissionsSchemeData, _) =>
+          logger.info(s"[ReceivePresubmissionController][receivePresubmissionJsonV2] storing presubmission data for $empRef")
+          storePresubmission(submissionsSchemeData)
         case JsError(jsonErrors) => handleBadRequest(jsonErrors)
       }
     }
@@ -81,7 +85,7 @@ class ReceivePresubmissionController @Inject()(presubmissionService: Presubmissi
     submitJson(fileSource, submissionsSchemeData).value.map {
       case Right((true, _)) =>
         metrics.storePresubmission(System.currentTimeMillis() - startTime, TimeUnit.MILLISECONDS)
-        logger.info(s"Presubmission data for sheet ${submissionsSchemeData.sheetName} was stored successfully for: ${submissionsSchemeData.schemeInfo.basicLogMessage}")
+        logger.info(s"[ReceivePresubmissionController][storePresubmission] Presubmission data for sheet ${submissionsSchemeData.sheetName} was stored successfully for: ${submissionsSchemeData.schemeInfo.basicLogMessage}")
         auditEvents.publicToProtectedEvent(submissionsSchemeData.schemeInfo, submissionsSchemeData.sheetName, submissionsSchemeData.numberOfRows.toString)
         Ok("Presubmission data is stored successfully.")
       case Right((_, index)) =>
@@ -92,12 +96,12 @@ class ReceivePresubmissionController @Inject()(presubmissionService: Presubmissi
           }
         }
         metrics.failedStorePresubmission()
-        logger.error(s"Storing presubmission data failed for: ${submissionsSchemeData.sheetName}, ${submissionsSchemeData.schemeInfo.basicLogMessage}")
+        logger.error(s"[ReceivePresubmissionController][storePresubmission] Storing presubmission data failed for: ${submissionsSchemeData.sheetName}, ${submissionsSchemeData.schemeInfo.basicLogMessage}")
         auditEvents.auditADRTransferFailure(submissionsSchemeData.schemeInfo, Map.empty)
         InternalServerError("Storing presubmission data failed.")
       case Left(error) =>
         metrics.failedStorePresubmission()
-        logger.error(s"Storing presubmission data failed for: ${submissionsSchemeData.sheetName}, ${submissionsSchemeData.schemeInfo.basicLogMessage} with error: [$error]")
+        logger.error(s"[ReceivePresubmissionController][storePresubmission] Storing presubmission data failed for: ${submissionsSchemeData.sheetName}, ${submissionsSchemeData.schemeInfo.basicLogMessage} with error: [$error]")
         auditEvents.auditADRTransferFailure(submissionsSchemeData.schemeInfo, Map.empty)
         InternalServerError("Storing presubmission data failed.")
     }
@@ -108,17 +112,19 @@ class ReceivePresubmissionController @Inject()(presubmissionService: Presubmissi
     presubmissionService.storeJson(schemeData).value.map {
       case Right(true) =>
         metrics.storePresubmission(System.currentTimeMillis() - startTime, TimeUnit.MILLISECONDS)
-        logger.info(s"Presubmission data for sheet ${schemeData.sheetName} is stored successfully")
+        logger.info(s"[ReceivePresubmissionController][storePresubmission][schemeData] Presubmission data for sheet ${schemeData.sheetName} is stored successfully")
         auditEvents.publicToProtectedEvent(schemeData.schemeInfo, schemeData.sheetName, schemeData.data.getOrElse(Seq()).length.toString)
         Ok("Presubmission data is stored successfully.")
       case Right(false) =>
         metrics.failedStorePresubmission()
-        logger.error(s"Storing presubmission data failed for: ${schemeData.sheetName}, ${schemeData.schemeInfo.basicLogMessage}")
+        logger.error(s"[ReceivePresubmissionController][storePresubmission][schemeData] Storing presubmission data failed for: ${schemeData.sheetName}, " +
+          s"${schemeData.schemeInfo.basicLogMessage}")
         auditEvents.auditADRTransferFailure(schemeData.schemeInfo, Map.empty)
         InternalServerError("Storing presubmission data failed.")
       case Left(error) =>
         metrics.failedStorePresubmission()
-        logger.error(s"Storing presubmission data failed for: ${schemeData.sheetName}, ${schemeData.schemeInfo.basicLogMessage} with error: [$error]")
+        logger.error(s"[ReceivePresubmissionController][storePresubmission][schemeData] Storing presubmission data failed for: ${schemeData.sheetName}," +
+          s" ${schemeData.schemeInfo.basicLogMessage} with error: [$error]")
         auditEvents.auditADRTransferFailure(schemeData.schemeInfo, Map.empty)
         InternalServerError("Storing presubmission data failed.")
     }
@@ -126,10 +132,10 @@ class ReceivePresubmissionController @Inject()(presubmissionService: Presubmissi
 
   private[controllers] def submitJson(fileSource: Source[(Seq[Seq[ByteString]], Long), _], submissionsSchemeData: SubmissionsSchemeData)
                         (implicit hc: HeaderCarrier): ERSEnvelope[(Boolean, Long)] = EitherT {
+    logger.info(s"[ReceivePresubmissionController][submitJson] data from fileSource will be stored in mongo for ${submissionsSchemeData.schemeInfo.basicLogMessage}")
     fileSource.mapAsyncUnordered(appConfig.submissionParallelism)(chunkedRowsWithIndex => {
       val (chunkedRows, index) = chunkedRowsWithIndex
       val checkedData: Option[ListBuffer[scala.Seq[String]]] = Option(chunkedRows.map(_.map(_.utf8String)).to(ListBuffer)).filter(_.nonEmpty)
-
       presubmissionService.storeJson(
         SchemeData(submissionsSchemeData.schemeInfo,
           submissionsSchemeData.sheetName,

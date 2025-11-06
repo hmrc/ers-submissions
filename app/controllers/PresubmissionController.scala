@@ -45,16 +45,19 @@ class PresubmissionController @Inject()(presubmissionService: PresubmissionServi
           val startTime = System.currentTimeMillis()
           presubmissionService.removeJson(schemeInfo).value.map {
             case Right(true) =>
+              logger.info(s"[PresubmissionController][removePresubmissionJson] Old presubmission data is successfully deleted for: ${schemeInfo.basicLogMessage}")
               metrics.removePresubmission(System.currentTimeMillis() - startTime, TimeUnit.MILLISECONDS)
               Ok("Old presubmission data is successfully deleted.")
             case Left(NoData()) =>
+              logger.warn(s"[PresubmissionController][removePresubmissionJson] No data to delete found for: ${schemeInfo.basicLogMessage}")
               Ok("No data to delete found.")
             case Right(false) =>
+              logger.error(s"[PresubmissionController][removePresubmissionJson] Deleting old presubmission data failed. for: ${schemeInfo.basicLogMessage}")
               metrics.failedRemovePresubmission()
               auditEvents.auditADRTransferFailure(schemeInfo, Map.empty)
               InternalServerError("Deleting old presubmission data failed.")
             case Left(error) =>
-              logger.error(s"Deleting old presubmission data failed for: ${schemeInfo.basicLogMessage} with [$error]")
+              logger.error(s"[PresubmissionController][removePresubmissionJson] Deleting old presubmission data failed for: ${schemeInfo.basicLogMessage} with [$error]")
               metrics.failedRemovePresubmission()
               auditEvents.auditADRTransferFailure(schemeInfo, Map.empty)
               InternalServerError("Deleting old presubmission data failed.")
@@ -71,16 +74,16 @@ class PresubmissionController @Inject()(presubmissionService: PresubmissionServi
           presubmissionService.compareSheetsNumber(validatedSheets, schemeInfo).value.map {
             case Right((true, _)) =>
               metrics.checkForPresubmission(System.currentTimeMillis() - startTime, TimeUnit.MILLISECONDS)
-              logger.info(s"All presubmission records are found for: ${schemeInfo.basicLogMessage}")
+              logger.info(s"[PresubmissionController][checkForExistingPresubmission] All presubmission records are found for: ${schemeInfo.basicLogMessage}")
               Ok("All presubmission records are found.")
             case Right((false, sheetsInRepository)) =>
-              logger.warn(s"Found $sheetsInRepository presubmission records of expected $validatedSheets records for: ${schemeInfo.basicLogMessage}")
+              logger.error(s"[PresubmissionController][checkForExistingPresubmission] Found $sheetsInRepository presubmission records of expected $validatedSheets records for: ${schemeInfo.basicLogMessage}")
               auditEvents.auditADRTransferFailure(schemeInfo, Map.empty)
-              InternalServerError(s"Not all $validatedSheets records are found for ${schemeInfo.toString}.")
+              InternalServerError(s"[PresubmissionController][checkForExistingPresubmission] Not all $validatedSheets records are found for ${schemeInfo.toString}.")
             case Left(error) =>
-              logger.error(s"Check existing presubmission failed for: ${schemeInfo.basicLogMessage} with error: [$error]")
+              logger.error(s"[PresubmissionController][checkForExistingPresubmission] Check existing presubmission failed for: ${schemeInfo.basicLogMessage} with error: [$error]")
               auditEvents.auditADRTransferFailure(schemeInfo, Map.empty)
-              InternalServerError(s"Not all $validatedSheets records are found for ${schemeInfo.toString}.")
+              InternalServerError(s"[PresubmissionController][checkForExistingPresubmission] Not all $validatedSheets records are found for ${schemeInfo.toString}.")
           }
         case JsError(jsonErrors) => handleBadRequest(jsonErrors)
       }
