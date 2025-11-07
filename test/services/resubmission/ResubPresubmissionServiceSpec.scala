@@ -56,8 +56,11 @@ class ResubPresubmissionServiceSpec extends ERSTestHelper with BeforeAndAfterEac
 
   val updateResult: UpdateResult = new UpdateResult() {
     override def wasAcknowledged(): Boolean = true
+
     override def getMatchedCount: Long = 1
+
     override def getModifiedCount: Long = 1
+
     override def getUpsertedId: BsonValue = BsonString("123")
   }
 
@@ -94,7 +97,7 @@ class ResubPresubmissionServiceSpec extends ERSTestHelper with BeforeAndAfterEac
     companies = None,
     trustees = None,
     nofOfRows = None,
-    transferStatus  = None
+    transferStatus = None
   )
 
   val processFailedSubmissionsConfig: ProcessFailedSubmissionsConfig = ProcessFailedSubmissionsConfig(
@@ -305,6 +308,35 @@ class ResubPresubmissionServiceSpec extends ERSTestHelper with BeforeAndAfterEac
 
       result shouldEqual expectedOutput
     }
+
+    "filter out scheme data that fails validation" in {
+      val validSchemeData = Json.toJson(SchemeData(
+        schemeInfo = schemeInfo,
+        sheetName = "TestSheet",
+        numberOfParts = None,
+        data = None
+      )).as[JsObject] ++ Json.obj("createdAt" -> Json.obj("$date" -> Json.obj("$numberLong" -> "1420106400000")))
+
+      val invalidSchemeData = Json.obj(
+        "schemeInfo" -> Json.obj(
+          "schemeRef" -> 567, // wrong type - number instead of string
+          "timestamp" -> "invalid-date"
+        ),
+        "sheetName" -> "TestSheet",
+        "createdAt" -> Json.obj("$date" -> Json.obj("$numberLong" -> "1420106400000"))
+      )
+
+      val data = Seq(validSchemeData, invalidSchemeData)
+
+      when(mockPresubmissionMongoRepository.getStatusForSelectedSchemes(anyString(), any()))
+        .thenReturn(ERSEnvelope(data))
+
+      val result = await(resubPresubmissionService.getPreSubSelectedSchemeRefDetailsMessage(processFailedSubmissionsConfig).value).value
+
+      result shouldBe
+        "[ResubmissionService] PreSubSelectedSchemeRefLogs - Selected scheme details: \n" +
+          "schemaRef: 123, schemaType: 123, taxYear: 123, timestamp: 2023-10-07T10:15:30Z, createdAt: 2015-01-01T10:00\n"
+    }
   }
 
   "getMetadataSelectedSchemeRefDetailsMessage" should {
@@ -338,10 +370,10 @@ class ResubPresubmissionServiceSpec extends ERSTestHelper with BeforeAndAfterEac
       )
 
       val taxYearAndTransferStatusString: String = taxYearAndTransferStatus
-      .map{
-        case (taxYear, transferStatus: Option[String]) =>
-          createExpectedStringFromTaxYear(taxYear, transferStatus)
-      }.mkString("\n", "\n", "\n")
+        .map {
+          case (taxYear, transferStatus: Option[String]) =>
+            createExpectedStringFromTaxYear(taxYear, transferStatus)
+        }.mkString("\n", "\n", "\n")
 
       val ersSummaryAsJsObject: Seq[JsObject] = taxYearAndTransferStatus
         .map { case (taxYear, transferStatus) =>
