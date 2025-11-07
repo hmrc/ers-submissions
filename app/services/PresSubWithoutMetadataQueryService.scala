@@ -19,15 +19,15 @@ package services
 import common.ERSEnvelope
 import common.ERSEnvelope.ERSEnvelope
 import config.ApplicationConfig
-import models.{ERSError, PreSubWithoutMetadata}
+import models.PreSubWithoutMetadata
 import repositories.PreSubWithoutMetadataQuery
 import scheduler.ScheduledService
 import utils.LoggingAndExceptions.ErsLogger
 
-import java.time.{Instant, ZoneId}
 import java.time.format.DateTimeFormatter
+import java.time.{Instant, ZoneId}
 import javax.inject._
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
 
 class PresSubWithoutMetadataQueryService @Inject()(val applicationConfig: ApplicationConfig,
                                                    preSubWithoutMetadataQuery: PreSubWithoutMetadataQuery)
@@ -35,21 +35,29 @@ class PresSubWithoutMetadataQueryService @Inject()(val applicationConfig: Applic
     with ErsLogger {
   override val jobName: String = "pres-sub-without-metadata-query-service"
 
+  private val className = "PresSubWithoutMetadataQueryService"
+
   override def invoke(implicit ec: ExecutionContext): ERSEnvelope[Unit] = {
-    for {
-      (validationErrors: Seq[String], validQueryRecords: Seq[PreSubWithoutMetadata]) <- preSubWithoutMetadataQuery.runQuery
-      _ = if (validQueryRecords.length < applicationConfig.maxNumberOfRecordsToReturn) {
-        logPresubmissionRecordsWithoutMetadata(validQueryRecords)
-      } else {
-        logger.info(s"[PresSubWithoutMetadataQueryService] Number of records > ${applicationConfig.maxNumberOfRecordsToReturn}, ${validQueryRecords.length} records returned from query")
+
+    val result: Future[Unit] = preSubWithoutMetadataQuery.runQuery.map {
+      validationInfo => {
+        val (validationErrors: List[String], validQueryRecords: List[PreSubWithoutMetadata]) = validationInfo
+
+        if (validQueryRecords.length < applicationConfig.maxNumberOfRecordsToReturn) {
+          logPresubmissionRecordsWithoutMetadata(validQueryRecords)
+        } else {
+          logInfo(s"[$className] Number of records > ${applicationConfig.maxNumberOfRecordsToReturn}, ${validQueryRecords.length} records returned from query")
+        }
+
+        if (validationErrors.nonEmpty) {
+          logInfo(s"[$className] ${validationErrors.length} validation errors, showing first 10: ${validationErrors.take(10).mkString(", ")}")
+        }
       }
-      _ = if (validationErrors.nonEmpty) {
-        logger.info(s"[PresSubWithoutMetadataQueryService] ${validationErrors.length} validation Errors, showing first 10: ${validationErrors.take(10).mkString(", ")}")
-      }
-    } yield ()
-    ERSEnvelope[Unit](logger.info("[PresSubWithoutMetadataQueryService] Finished running pres-sub-without-metadata-query-service"))
-  }.recover { case e: ERSError =>
-    logger.error(s"[PresSubWithoutMetadataQueryService] Failed to fetch or log records: $e")
+    }.recover { case e: Exception =>
+      logError(s"[$className] Failed to fetch or log records: ${e.getMessage}")
+    }
+
+    ERSEnvelope(result)
   }
 
   private def logPresubmissionRecordsWithoutMetadata(
@@ -62,8 +70,14 @@ class PresSubWithoutMetadataQueryService @Inject()(val applicationConfig: Applic
           s"taxYear: ${document.taxYear}, " +
           s"timestamp: ${formatter.format(Instant.ofEpochMilli(document.timestamp))}"
       )
-    logger.info(s"[PresSubWithoutMetadataQueryService] Presubmission data without metadata: " +
+
+    logInfo(s"[$className] Presubmission data without metadata:" +
       s"${logLines.mkString("\n", "\n", "\n")}"
     )
   }
+
+  def logInfo(message: String): Unit = logger.info(message)
+
+  def logError(message: String): Unit = logger.error(message)
+
 }
