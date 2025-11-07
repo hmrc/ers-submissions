@@ -50,8 +50,6 @@ class PreSubWithoutMetadataQueryServiceSpec
   override def beforeEach(): Unit = {
     super.beforeEach()
     reset(service, mockApplicationConfig, mockPreSubQuery)
-    doNothing().when(service).logInfo(any[String])
-
   }
 
   private val className = "PresSubWithoutMetadataQueryService"
