@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.missingMetadataQuery
 
-import _root_.play.api.libs.json.{JsObject, Json}
+import _root_.play.api.libs.json.{JsNull, JsObject, Json}
 import config.ApplicationConfig
 import models.{PreSubWithoutMetadata, SchemeData}
 import org.mockito.Mockito.when
@@ -44,7 +44,7 @@ class PreSubWithoutMetadataQuerySpec
   val localDateTime: LocalDateTime = LocalDateTime.of(2023, 12, 2, 10, 15, 30)
   val defaultInstant: Instant = localDateTime.toInstant(ZoneOffset.UTC)
 
-  implicit val ec : ExecutionContext = ExecutionContext.global
+  implicit val ec: ExecutionContext = ExecutionContext.global
 
   "PreSubWithoutMetadataQueryService" should {
 
@@ -122,6 +122,43 @@ class PreSubWithoutMetadataQuerySpec
           testQueryResults.numPreSubRecords shouldBe 3
           testQueryResults.queryResults shouldBe Seq(PreSubWithoutMetadata("CSOP00000000001", "2019/20", 1701512130000L))
           testQueryResults.queryErrors.length shouldBe 0
+        }
+      }
+    }
+
+    "return query errors when presubmission records have invalid structure" in new MissingMetadataQuerySetup(mockApplicationConfig) {
+
+      val metaData: Seq[JsObject] = Seq(
+        createMetadataRecord(taxYear = "2017/18", schemeRef = "CSOP00000000001", defaultInstant),
+        createMetadataRecord(taxYear = "2018/19", schemeRef = "CSOP00000000001", defaultInstant)
+      ).map(Json.toJsObject(_) ++ JsObject((Seq("x" -> JsNull))))
+
+      //  has schemeInfo with required fields, but with a wrong type to trigger JsError case in validateJson
+      val presubmissionData: Seq[JsObject] = Seq(
+        JsObject(
+          Seq(
+            "schemeInfo" -> JsObject(
+              Seq(
+                "taxYear" -> Json.toJson("2019/20"),
+                "schemeRef" -> Json.toJson(123), // wrong type - number instead of string
+                "timestamp" -> Json.toJson(defaultInstant.toEpochMilli)
+              )
+            ),
+            "sheetName" -> Json.toJson("CSOP_OptionsRCL_V4")
+          )
+        )
+      )
+
+      whenReady(
+        future = getQueryResult(metaData, presubmissionData),
+        timeout = timeout(Span(30, Seconds))
+      ) {
+        testQueryResults: TestQueryResults => {
+          testQueryResults.numMetadataRecords shouldBe 2
+          testQueryResults.numPreSubRecords shouldBe 1
+          testQueryResults.queryResults shouldBe Seq.empty[PreSubWithoutMetadata]
+          testQueryResults.queryErrors.length shouldBe 1
+          testQueryResults.queryErrors.head shouldBe "/schemeRef: JsonValidationError(List(error.expected.jsstring),List())"
         }
       }
     }
