@@ -36,7 +36,7 @@ trait ErrorHandlerHelper extends Logging {
 
   def handleBadRequest(jsonValidationErrors: scala.collection.Seq[(JsPath, scala.collection.Seq[JsonValidationError])]): Future[Result] = {
     val errorResponseBody = Json.toJson(ErrorResponse(BAD_REQUEST, JsError.toJson(jsonValidationErrors).toString()))
-    logger.warn(s"[ErrorHandlerHelper][handleBadRequest] failed for ${errorResponseBody}")
+    logger.error(s"[ErrorHandlerHelper][handleBadRequest] failed for $errorResponseBody")
     Future.successful(BadRequest(errorResponseBody))
   }
 }
