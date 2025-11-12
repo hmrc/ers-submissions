@@ -25,10 +25,7 @@
 
     <logger name="application" level="INFO"/>
 
-    <logger name="controllers" level="DEBUG"/>
-    <logger name="services" level="DEBUG"/>
-    <logger name="utils" level="DEBUG"/>
-    <logger name="repositories" level="DEBUG"/>
+    <logger name="services" level="INFO"/>
 
     <logger name="connector" level="TRACE">
         <appender-ref ref="STDOUT"/>
