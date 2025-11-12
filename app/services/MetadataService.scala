@@ -36,7 +36,7 @@ class MetadataService @Inject()(metadataMongoRepository: MetadataMongoRepository
   def storeErsSummary(ersSummary: ErsSummary)(implicit hc: HeaderCarrier): ERSEnvelope[Boolean] =
     metadataRepository.storeErsSummary(ersSummary, Session.id(hc)).recover {
       case error =>
-        logger.error(s"Storing data in metadata repository failed with error: [$error] for: ${ersSummary.metaData.schemeInfo}")
+        logger.error(s"[MetadataService][storeErsSummary] Storing data in metadata repository failed with error: [$error] for: ${ersSummary.metaData.schemeInfo}")
         auditEvents.auditError("storeErsSummary", s"Storing data in metadata repository failed with error: [$error]")
         false
     }
@@ -49,11 +49,11 @@ class MetadataService @Inject()(metadataMongoRepository: MetadataMongoRepository
           ersSummary
         }
         else {
-          logger.info("Invalid metadata. Errors: " + isMetadataValid._2.getOrElse(""))
+          logger.warn("[MetadataService][validateErsSummaryFromJson] Invalid metadata. Errors: " + isMetadataValid._2.getOrElse(""))
           JsError(s"Metadata invalid: ${isMetadataValid._2.getOrElse("")}")
         }
       case error: JsError =>
-        logger.info("Invalid request. Errors: " + JsError.toJson(error).toString())
+        logger.warn("[MetadataService][validateErsSummaryFromJson] Invalid request. Errors: " + JsError.toJson(error).toString())
         error
     }
   }

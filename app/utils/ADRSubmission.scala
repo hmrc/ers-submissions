@@ -60,9 +60,9 @@ class ADRSubmission @Inject()(submissionCommon: SubmissionCommon,
       val sheetNamesAndDataPresent = schemeDataSeq.forall(fd => fd.sheetName.nonEmpty && fd.data.nonEmpty)
 
       if (schemeDataSeq.nonEmpty && sheetNamesAndDataPresent) {
-        logger.info(s"Found data in pre-submission repository, mapped successfully. File data list size: ${schemeDataSeq.size}, ${ersSummary.metaData.schemeInfo.basicLogMessage}")
+        logger.info(s"[ADRSubmission][createSheetsJson] Found data in pre-submission repository, mapped successfully. File data list size: ${schemeDataSeq.size}, ${ersSummary.metaData.schemeInfo.basicLogMessage}")
       } else {
-        logger.warn(s"No data returned from pre-submission repository or data is incomplete: ${ersSummary.metaData.schemeInfo.basicLogMessage}")
+        logger.warn(s"[ADRSubmission][createSheetsJson] No data returned from pre-submission repository or data is incomplete: ${ersSummary.metaData.schemeInfo.basicLogMessage}")
       }
 
       schemeDataSeq.foldLeft(sheetsJson) { (result, fileData) =>

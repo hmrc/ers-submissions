@@ -113,13 +113,13 @@ class AuditEvents @Inject()(auditService: AuditService)(implicit ec: ExecutionCo
 
   private def handleResponse(result: AuditResult, transactionName: String): AuditResult = result match {
     case Success =>
-      logger.debug(s"ers-submissions $transactionName audit successful")
+      logger.debug(s"[AuditEvents][handleResponse] ers-submissions $transactionName audit successful")
       Success
     case Failure(err, _) =>
-      logger.warn(s"ers-submissions $transactionName audit error, message: $err")
+      logger.warn(s"[AuditEvents][handleResponse] ers-submissions $transactionName audit error, message: $err")
       Failure(err)
     case Disabled =>
-      logger.warn(s"Auditing disabled")
+      logger.warn(s"[AuditEvents][handleResponse] Auditing disabled")
       Disabled
   }
 }

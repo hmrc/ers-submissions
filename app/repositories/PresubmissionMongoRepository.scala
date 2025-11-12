@@ -78,7 +78,7 @@ class PresubmissionMongoRepository @Inject()(applicationConfig: ApplicationConfi
   }
 
   def getJson(schemeInfo: SchemeInfo, sessionId: String): ERSEnvelope[scala.Seq[JsObject]] = EitherT {
-    logger.info(s"[getJson][selector]: ${buildSelector(schemeInfo).toJson}")
+    logger.info(s"[PresubmissionMongoRepository][getJson][selector]: ${buildSelector(schemeInfo).toJson}")
     collection
       .find(buildSelector(schemeInfo))
       .batchSize(Int.MaxValue)

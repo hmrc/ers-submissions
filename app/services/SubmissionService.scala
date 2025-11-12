@@ -48,7 +48,8 @@ class SubmissionService @Inject()(repositories: Repositories,
     processData(ersSummary, failedStatus, successStatus).recover {
       case error =>
         metadataRepository.updateStatus(ersSummary.metaData.schemeInfo, failedStatus, Session.id(hc))
-        logger.error(s"Processing data failed with error: [$error]. Updating transfer status to: [$failedStatus] for ${ersSummary.metaData.schemeInfo.basicLogMessage}")
+        logger.error(s"[SubmissionService][callProcessData] Processing data failed with error: [$error]. Updating transfer status to: [$failedStatus] " +
+          s"for ${ersSummary.metaData.schemeInfo.basicLogMessage}")
         false
     }
 
@@ -100,12 +101,14 @@ class SubmissionService @Inject()(repositories: Repositories,
           metrics.sendToADR(System.currentTimeMillis() - startTime, TimeUnit.MILLISECONDS)
           metrics.successfulSendToADR()
           auditEvents.sendToAdrEvent("ErsTransferToAdrResponseReceived", ersSummary, Some(correlationID))
-          logger.info(s"Data transfer to ADR was successful for ${ersSummary.metaData.schemeInfo.basicLogMessage}, correlationId: $correlationID")
+          logger.info(s"[SubmissionService][sendToADRUpdatePostData] Data transfer to ADR was successful for" +
+            s" ${ersSummary.metaData.schemeInfo.basicLogMessage}, correlationId: $correlationID")
           successStatus
         case _ =>
           metrics.failedSendToADR()
           auditEvents.sendToAdrEvent("ErsTransferToAdrFailed", ersSummary)
-          logger.error(s"Data transfer to ADR failed for ${ersSummary.metaData.schemeInfo.basicLogMessage}, correlationId: $correlationID")
+          logger.error(s"[SubmissionService][sendToADRUpdatePostData] Data transfer to ADR failed for ${ersSummary.metaData.schemeInfo.basicLogMessage}," +
+            s" correlationId: $correlationID")
           failedStatus
       }
       updatePostsubmission(response.status, transferStatus, ersSummary.metaData.schemeInfo)
@@ -119,14 +122,14 @@ class SubmissionService @Inject()(repositories: Repositories,
     metadataRepository.updateStatus(schemeInfo, transferStatus, Session.id(hc)).flatMap {
         case true if adrSubmissionStatus == ACCEPTED =>
           metrics.updatePostsubmissionStatus(System.currentTimeMillis() - startUpdateTime, TimeUnit.MILLISECONDS)
-          logger.info(s"Updated submission transfer status to: [$transferStatus] for ${schemeInfo.basicLogMessage}")
+          logger.info(s"[SubmissionService][updatePostsubmission] Updated submission transfer status to: [$transferStatus] for ${schemeInfo.basicLogMessage}")
           ERSEnvelope(true)
         case true =>
           metrics.updatePostsubmissionStatus(System.currentTimeMillis() - startUpdateTime, TimeUnit.MILLISECONDS)
-          logger.info(s"Updated submission transfer status to: [$transferStatus] for ${schemeInfo.basicLogMessage}")
+          logger.info(s"[SubmissionService][updatePostsubmission] Updated submission transfer status to: [$transferStatus] for ${schemeInfo.basicLogMessage}")
           ERSEnvelope(SubmissionStatusUpdateError(Some(adrSubmissionStatus), Some(transferStatus)))
         case _ =>
-          logger.info(s"Submission transfer status update to: [$transferStatus] failed for ${schemeInfo.basicLogMessage}")
+          logger.info(s"[SubmissionService][updatePostsubmission] Submission transfer status update to: [$transferStatus] failed for ${schemeInfo.basicLogMessage}")
           ERSEnvelope(SubmissionStatusUpdateError(Some(adrSubmissionStatus), Some(transferStatus)))
     }
   }

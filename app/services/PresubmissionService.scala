@@ -39,17 +39,17 @@ class PresubmissionService @Inject()(repositories: Repositories)(implicit ec: Ex
   def getJson(schemeInfo: SchemeInfo)(implicit hc: HeaderCarrier): ERSEnvelope[scala.Seq[SchemeData]] = {
     presubmissionRepository.getJson(schemeInfo, Session.id(hc)).flatMap { result =>
       if (result.nonEmpty) {
-        logger.info(s"Found data in pre-submission repository for: ${schemeInfo.basicLogMessage}, mapping to scheme data.")
+        logger.info(s"[PresubmissionService][getJson] Found data in pre-submission repository for: ${schemeInfo.basicLogMessage}, mapping to scheme data.")
        Try {
           result.map(_.as[SchemeData])
         }.toEither match {
           case Left(value) =>
-            logger.error(s"Mapping data to SchemeData failed with error: [${value.getMessage}] for ${schemeInfo.basicLogMessage}")
+            logger.error(s"[PresubmissionService][getJson] Mapping data to SchemeData failed with error: [${value.getMessage}] for ${schemeInfo.basicLogMessage}")
             ERSEnvelope(SchemeDataMappingError(value.getMessage))
           case Right(value) => ERSEnvelope(value)
         }
       } else {
-        logger.error(s"No data found in pre-submission repository for: ${schemeInfo.basicLogMessage}")
+        logger.error(s"[PresubmissionService][getJson] No data found in pre-submission repository for: ${schemeInfo.basicLogMessage}")
         ERSEnvelope(NoData())
       }
     }
@@ -58,13 +58,13 @@ class PresubmissionService @Inject()(repositories: Repositories)(implicit ec: Ex
   def removeJson(schemeInfo: SchemeInfo)(implicit hc: HeaderCarrier): ERSEnvelope[Boolean] =
     presubmissionRepository.removeJson(schemeInfo, Session.id(hc)).flatMap {
       case result if result.wasAcknowledged() && result.getDeletedCount > 0 =>
-        logger.info(s"Deleted ${result.getDeletedCount} documents from presubmission repository for: ${schemeInfo.basicLogMessage}")
+        logger.info(s"[PresubmissionService][removeJson] Deleted ${result.getDeletedCount} documents from presubmission repository for: ${schemeInfo.basicLogMessage}")
         ERSEnvelope(true)
       case result if result.wasAcknowledged() =>
-        logger.info(s"No data to delete from presubmission repository for: ${schemeInfo.basicLogMessage}")
+        logger.info(s"[PresubmissionService][removeJson] No data to delete from presubmission repository for: ${schemeInfo.basicLogMessage}")
         ERSEnvelope(NoData())
       case _ =>
-        logger.warn(s"Deleting old presubmission data failed for: ${schemeInfo.basicLogMessage}")
+        logger.warn(s"[PresubmissionService][removeJson] Deleting old presubmission data failed for: ${schemeInfo.basicLogMessage}")
         ERSEnvelope(false)
     }
 
