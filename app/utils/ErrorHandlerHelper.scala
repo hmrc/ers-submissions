@@ -17,20 +17,20 @@
 package utils
 
 import models.{ADRTransferError, ERSError}
-import play.api.Logging
 import play.api.http.Status.BAD_REQUEST
 import play.api.libs.json.{JsError, JsPath, Json, JsonValidationError}
 import play.api.mvc.Result
 import play.api.mvc.Results.BadRequest
 import uk.gov.hmrc.play.bootstrap.http.ErrorResponse
+import utils.LoggingAndExceptions.ErsLogger
 
 import scala.concurrent.Future
 
-trait ErrorHandlerHelper extends Logging {
+trait ErrorHandlerHelper extends ErsLogger {
   val className: String
 
   def handleError(ex: Throwable, methodName: String): ERSError = {
-    logger.error(s"[$className][$methodName] Exception thrown with message ${ex.getMessage}")
+    logError(s"[$className][$methodName] Exception thrown with message ${ex.getMessage}")
     ADRTransferError()
   }
 

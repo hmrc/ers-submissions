@@ -18,25 +18,25 @@ package services
 
 import common.ERSEnvelope.ERSEnvelope
 import models.ErsSummary
-import play.api.Logging
 import play.api.libs.json.{JsError, JsObject, JsResult, JsSuccess}
 import repositories.MetadataMongoRepository
 import services.audit.AuditEvents
 import uk.gov.hmrc.http.HeaderCarrier
+import utils.LoggingAndExceptions.ErsLogger
 import utils.Session
 
 import javax.inject.Inject
 import scala.concurrent.ExecutionContext
 
 class MetadataService @Inject()(metadataMongoRepository: MetadataMongoRepository, auditEvents: AuditEvents)
-                               (implicit ec: ExecutionContext) extends Logging {
+                               (implicit ec: ExecutionContext) extends ErsLogger {
 
   lazy val metadataRepository: MetadataMongoRepository = metadataMongoRepository
 
   def storeErsSummary(ersSummary: ErsSummary)(implicit hc: HeaderCarrier): ERSEnvelope[Boolean] =
     metadataRepository.storeErsSummary(ersSummary, Session.id(hc)).recover {
       case error =>
-        logger.error(s"Storing data in metadata repository failed with error: [$error] for: ${ersSummary.metaData.schemeInfo}")
+        logError(s"Storing data in metadata repository failed with error: [$error] for: ${ersSummary.metaData.schemeInfo}")
         auditEvents.auditError("storeErsSummary", s"Storing data in metadata repository failed with error: [$error]")
         false
     }
@@ -49,11 +49,11 @@ class MetadataService @Inject()(metadataMongoRepository: MetadataMongoRepository
           ersSummary
         }
         else {
-          logger.info("Invalid metadata. Errors: " + isMetadataValid._2.getOrElse(""))
+          logInfo("Invalid metadata. Errors: " + isMetadataValid._2.getOrElse(""))
           JsError(s"Metadata invalid: ${isMetadataValid._2.getOrElse("")}")
         }
       case error: JsError =>
-        logger.info("Invalid request. Errors: " + JsError.toJson(error).toString())
+        logInfo("Invalid request. Errors: " + JsError.toJson(error).toString())
         error
     }
   }
@@ -63,7 +63,7 @@ class MetadataService @Inject()(metadataMongoRepository: MetadataMongoRepository
     val schemeRefEmpty = ersSummary.metaData.schemeInfo.schemeRef.isEmpty
     val schemeTypeEmpty = ersSummary.metaData.schemeInfo.schemeType.isEmpty
 
-    (nilReturnInvalid, schemeRefEmpty,schemeTypeEmpty) match {
+    (nilReturnInvalid, schemeRefEmpty, schemeTypeEmpty) match {
       case (true, _, _) => (false, Some("isNilReturn"))
       case (_, true, _) => (false, Some("schemeRef"))
       case (_, _, true) => (false, Some("schemeType"))

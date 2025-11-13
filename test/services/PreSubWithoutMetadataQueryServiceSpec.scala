@@ -18,7 +18,6 @@ package services
 
 import config.ApplicationConfig
 import models.PreSubWithoutMetadata
-import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito._
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.matchers.should.Matchers
@@ -73,9 +72,9 @@ class PreSubWithoutMetadataQueryServiceSpec
 
       val expectedInfoLog =
         s"""[$className] Presubmission data without metadata:
-          |schemeRef: scheme1, taxYear: 2023-24, timestamp: 2023-01-01 00:00:00
-          |schemeRef: scheme2, taxYear: 2023-24, timestamp: 2023-01-02 00:00:00
-          |""".stripMargin
+           |schemeRef: scheme1, taxYear: 2023-24, timestamp: 2023-01-01 00:00:00
+           |schemeRef: scheme2, taxYear: 2023-24, timestamp: 2023-01-02 00:00:00
+           |""".stripMargin
 
       verify(service).logInfo(expectedInfoLog)
     }
@@ -109,9 +108,9 @@ class PreSubWithoutMetadataQueryServiceSpec
 
       val expectedInfoLogRecords =
         s"""[$className] Presubmission data without metadata:
-          |schemeRef: scheme1, taxYear: 2023-24, timestamp: 2023-01-01 00:00:00
-          |schemeRef: scheme2, taxYear: 2023-24, timestamp: 2023-01-02 00:00:00
-          |""".stripMargin
+           |schemeRef: scheme1, taxYear: 2023-24, timestamp: 2023-01-01 00:00:00
+           |schemeRef: scheme2, taxYear: 2023-24, timestamp: 2023-01-02 00:00:00
+           |""".stripMargin
 
       verify(service).logInfo(expectedInfoLog)
       verify(service).logInfo(expectedInfoLogRecords)

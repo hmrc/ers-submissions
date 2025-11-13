@@ -19,18 +19,20 @@ package scheduler
 import org.apache.pekko.actor.{ActorRef, ActorSystem}
 import org.apache.pekko.extension.quartz.QuartzSchedulerExtension
 import org.quartz.CronExpression
+import play.api.Configuration
 import play.api.inject.ApplicationLifecycle
-import play.api.{Configuration, Logging}
 import scheduler.SchedulingActor.ScheduledMessage
+import utils.LoggingAndExceptions.ErsLogger
 
 import java.time.ZoneId
 import java.util.TimeZone
 import scala.concurrent.Future
 
-trait ScheduledJob extends Logging {
+trait ScheduledJob extends ErsLogger {
   val scheduledMessage: ScheduledMessage[_]
   val config: Configuration
   val actorSystem: ActorSystem
+
   def jobName: String
 
   val applicationLifecycle: ApplicationLifecycle
@@ -54,13 +56,13 @@ trait ScheduledJob extends Logging {
       case (true, true) =>
         scheduler.createSchedule(jobName, description, expression, None, TimeZone.getTimeZone(ZoneId.of(timezone)))
         scheduler.schedule(jobName, schedulingActorRef, scheduledMessage)
-        logger.info(s"Scheduler for $jobName has been started")
+        logInfo(s"Scheduler for $jobName has been started")
         true
       case (true, false) =>
-        logger.info(s"Scheduler for $jobName is disabled as there is no quartz expression or expression is not valid")
+        logInfo(s"Scheduler for $jobName is disabled as there is no quartz expression or expression is not valid")
         false
       case (false, _) =>
-        logger.info(s"Scheduler for $jobName is disabled by configuration")
+        logInfo(s"Scheduler for $jobName is disabled by configuration")
         false
     }
   }

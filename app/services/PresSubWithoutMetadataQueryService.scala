@@ -76,8 +76,4 @@ class PresSubWithoutMetadataQueryService @Inject()(val applicationConfig: Applic
     )
   }
 
-  def logInfo(message: String): Unit = logger.info(message)
-
-  def logError(message: String): Unit = logger.error(message)
-
 }

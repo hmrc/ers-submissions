@@ -18,9 +18,9 @@ package repositories.helpers
 
 import models.{MongoError, MongoGenericError, MongoUnavailableError}
 import org.mongodb.scala.MongoSocketWriteException
-import play.api.Logging
+import utils.LoggingAndExceptions.ErsLogger
 
-trait RepositoryHelper extends Logging {
+trait RepositoryHelper extends ErsLogger {
 
   def mongoRecover[T](repository: String,
                       method: String,
@@ -30,7 +30,7 @@ trait RepositoryHelper extends Logging {
 
     val genericMessage = s"[$repository][$method][SessionId: $sessionId] $message."
 
-    private def logMessage: String = optSchemaRefs.fold(genericMessage){ schemaRefs =>
+    private def logMessage: String = optSchemaRefs.fold(genericMessage) { schemaRefs =>
       s"$genericMessage SchemaRefs: ${schemaRefs.mkString(",")}"
     }
 
@@ -38,10 +38,10 @@ trait RepositoryHelper extends Logging {
 
     override def apply(e: Throwable): Either[MongoError, T] = e match {
       case unavailable: MongoSocketWriteException =>
-        logger.error(s"$logMessage MongoDB is unavailable.", unavailable)
+        logError(s"$logMessage MongoDB is unavailable.", unavailable)
         Left(MongoUnavailableError(unavailable.getMessage))
       case other: Throwable =>
-        logger.error(s"$logMessage Error: ${e.getMessage}.", other)
+        logError(s"$logMessage Error: ${e.getMessage}.", other)
         Left(MongoGenericError(other.getMessage))
     }
   }

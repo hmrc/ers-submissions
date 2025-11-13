@@ -36,7 +36,7 @@ trait ErsLogger extends ErsDataMessages with ErsExceptionMessages with Logging {
       errorMessage
     }
 
-    logger.error(finalErrorMessage)
+    logError(finalErrorMessage)
   }
 
   def logIfEnabled(logEnabled: Boolean)(block: => Unit): Unit = {
@@ -44,4 +44,15 @@ trait ErsLogger extends ErsDataMessages with ErsExceptionMessages with Logging {
       .filter(identity)
       .foreach( _ => block)
   }
+
+  // methods to help with testing
+  def logInfo(message: String): Unit = logger.info(message)
+
+  def logError(message: String): Unit = logger.error(message)
+
+  def logError(message: String, e: Throwable): Unit = logger.error(message, e)
+
+  def logWarn(message: String): Unit = logger.error(message)
+
+  def logWarn(message: String, e: Throwable): Unit = logger.error(message, e)
 }

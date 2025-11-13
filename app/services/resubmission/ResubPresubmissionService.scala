@@ -22,13 +22,13 @@ import common.ERSEnvelope.ERSEnvelope
 import messages._
 import models._
 import org.mongodb.scala.bson.BsonDocument
-import play.api.Logging
 import play.api.libs.json._
 import play.api.mvc.Request
 import repositories.{MetadataMongoRepository, PresubmissionMongoRepository, Selectors}
 import services.SubmissionService
 import services.audit.AuditEvents
 import uk.gov.hmrc.http.HeaderCarrier
+import utils.LoggingAndExceptions.ErsLogger
 import utils.Session
 
 import java.time.{Instant, LocalDateTime, ZoneId}
@@ -39,7 +39,7 @@ class ResubPresubmissionService @Inject()(metadataRepository: MetadataMongoRepos
                                           presubmissionRepository: PresubmissionMongoRepository,
                                           submissionCommonService: SubmissionService,
                                           auditEvents: AuditEvents)
-                                         (implicit ec: ExecutionContext) extends Logging {
+                                         (implicit ec: ExecutionContext) extends ErsLogger {
 
   def validateJson[T](record: JsObject)(implicit reads: Reads[T]): Option[T] =
     record.validate[T] match {
@@ -112,7 +112,7 @@ class ResubPresubmissionService @Inject()(metadataRepository: MetadataMongoRepos
     val failedJobSelector: BsonDocument = metadataRepository.createFailedJobSelector(processFailedSubmissionsConfig)
     for {
       failedJobIds <- metadataRepository.getFailedJobs(failedJobSelector, processFailedSubmissionsConfig)
-      _ = logger.info(NumberOfFailedToBeProcessedMessage(failedJobIds.length).message)
+      _ = logInfo(NumberOfFailedToBeProcessedMessage(failedJobIds.length).message)
       updateResult <- metadataRepository.findAndUpdateByStatus(failedJobIds, Session.id(hc))
       ersSummaries <- metadataRepository.findErsSummaries(failedJobIds, Session.id(hc))
       resubmissionResults <- if (updateResult.wasAcknowledged()) {
@@ -131,14 +131,14 @@ class ResubPresubmissionService @Inject()(metadataRepository: MetadataMongoRepos
 
   def startResubmission(ersSummary: ErsSummary, processFailedSubmissionsConfig: ProcessFailedSubmissionsConfig)
                        (implicit request: Request[_], hc: HeaderCarrier): ERSEnvelope[Boolean] = {
-    logger.info(ProcessingResubmitMessage.message + ersSummary.metaData.schemeInfo.basicLogMessage)
+    logInfo(ProcessingResubmitMessage.message + ersSummary.metaData.schemeInfo.basicLogMessage)
     submissionCommonService.callProcessData(ersSummary,
       processFailedSubmissionsConfig.failedStatus,
       processFailedSubmissionsConfig.resubmitSuccessStatus).map { result =>
-      if(result) {
-        logger.info(s"Resubmission completed successfully for schemeRef: ${ersSummary.metaData.schemeInfo.schemeRef}")
+      if (result) {
+        logInfo(s"Resubmission completed successfully for schemeRef: ${ersSummary.metaData.schemeInfo.schemeRef}")
       } else {
-        logger.error(s"RESUBMISSION_FAILED [startResubmission] Resubmission failed for: ${ersSummary.metaData.schemeInfo.basicLogMessage}")
+        logError(s"RESUBMISSION_FAILED [startResubmission] Resubmission failed for: ${ersSummary.metaData.schemeInfo.basicLogMessage}")
         auditEvents.sendToAdrEvent("ErsTransferToAdrFailed", ersSummary, source = Some("scheduler"))
       }
       result

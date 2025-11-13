@@ -30,6 +30,7 @@ import play.api.libs.json.{Format, JsObject, Json}
 import repositories.helpers.RepositoryHelper
 import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
+import utils.LoggingAndExceptions.ErsLogger
 
 import java.time.Instant
 import java.util.concurrent.TimeUnit
@@ -51,7 +52,7 @@ class PresubmissionMongoRepository @Inject()(applicationConfig: ApplicationConfi
       )
     ),
     replaceIndexes = applicationConfig.presubmissionCollectionIndexReplace
-  ) with RepositoryHelper {
+  ) with RepositoryHelper with ErsLogger {
 
   private val className = getClass.getSimpleName
 
@@ -78,7 +79,7 @@ class PresubmissionMongoRepository @Inject()(applicationConfig: ApplicationConfi
   }
 
   def getJson(schemeInfo: SchemeInfo, sessionId: String): ERSEnvelope[scala.Seq[JsObject]] = EitherT {
-    logger.info(s"[getJson][selector]: ${buildSelector(schemeInfo).toJson}")
+    logInfo(s"[getJson][selector]: ${buildSelector(schemeInfo).toJson}")
     collection
       .find(buildSelector(schemeInfo))
       .batchSize(Int.MaxValue)
