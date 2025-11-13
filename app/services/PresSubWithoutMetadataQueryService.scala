@@ -72,9 +72,7 @@ class PresSubWithoutMetadataQueryService @Inject()(val applicationConfig: Applic
           s"timestamp: ${formatter.format(Instant.ofEpochMilli(document.timestamp))}"
       )
 
-    logInfo(s"[$className][logPresubmissionRecordsWithoutMetadata] Presubmission data without metadata:" +
-      s"${logLines.mkString("\n", "\n", "\n")}"
-    )
+    logInfo(s"[$className][logPresubmissionRecordsWithoutMetadata] Presubmission data without metadata:${logLines.mkString("\n", "\n", "\n")}")
   }
 
 }
