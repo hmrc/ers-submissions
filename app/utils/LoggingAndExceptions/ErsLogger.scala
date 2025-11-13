@@ -28,13 +28,14 @@ trait ErsLogger extends ErsDataMessages with ErsExceptionMessages with Logging {
   }
 
   def logException(data: Object, ex: Exception, context: Option[String] = None): Unit = {
-    val errorMessage: String = buildExceptionMesssage(ex) + ",\n" + buildDataMessage(data)
+    val errorMessage: Seq[String] = Seq(buildExceptionMesssage(ex), buildDataMessage(data))
 
-    val finalErrorMessage = if(context.isDefined) {
-      errorMessage ++ s",\nContext: $context"
-    } else {
-      errorMessage
-    }
+    val finalErrorMessage: String =
+      (if (context.isDefined) {
+        errorMessage ++ s"Context: $context"
+      } else {
+        errorMessage
+      }).mkString("\n")
 
     logError(finalErrorMessage)
   }
@@ -42,7 +43,7 @@ trait ErsLogger extends ErsDataMessages with ErsExceptionMessages with Logging {
   def logIfEnabled(logEnabled: Boolean)(block: => Unit): Unit = {
     Option(logEnabled)
       .filter(identity)
-      .foreach( _ => block)
+      .foreach(_ => block)
   }
 
   // methods to help with testing
