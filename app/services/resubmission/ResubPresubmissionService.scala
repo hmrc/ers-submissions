@@ -22,13 +22,13 @@ import common.ERSEnvelope.ERSEnvelope
 import messages._
 import models._
 import org.mongodb.scala.bson.BsonDocument
+import play.api.Logging
 import play.api.libs.json._
 import play.api.mvc.Request
 import repositories.{MetadataMongoRepository, PresubmissionMongoRepository, Selectors}
 import services.SubmissionService
 import services.audit.AuditEvents
 import uk.gov.hmrc.http.HeaderCarrier
-import utils.LoggingAndExceptions.ErsLogger
 import utils.Session
 
 import java.time.{Instant, LocalDateTime, ZoneId}
@@ -39,7 +39,7 @@ class ResubPresubmissionService @Inject()(metadataRepository: MetadataMongoRepos
                                           presubmissionRepository: PresubmissionMongoRepository,
                                           submissionCommonService: SubmissionService,
                                           auditEvents: AuditEvents)
-                                         (implicit ec: ExecutionContext) extends ErsLogger {
+                                         (implicit ec: ExecutionContext) extends Logging {
 
   def validateJson[T](record: JsObject)(implicit reads: Reads[T]): Option[T] =
     record.validate[T] match {
@@ -49,7 +49,7 @@ class ResubPresubmissionService @Inject()(metadataRepository: MetadataMongoRepos
         val jsErrors = errors
           .map((e: (JsPath, collection.Seq[JsonValidationError])) => s"${e._1}: ${e._2.mkString(", ")}")
           .mkString(", ")
-        logWarn(s"Failed to validate JsObject error: $jsErrors")
+        logger.warn(s"[ResubPresubmissionService][validateJson] Failed to validate JsObject error: $jsErrors")
         None
     }
 
@@ -75,13 +75,12 @@ class ResubPresubmissionService @Inject()(metadataRepository: MetadataMongoRepos
     } yield countToLog
   }
 
-  private def extractSchemeDataAndCreatedAt(json: JsObject): Option[(SchemeData, LocalDateTime)] = {
+  def extractSchemeDataAndCreatedAt(json: JsObject): Option[(SchemeData, LocalDateTime)] = {
     val maybeCreatedAt: Option[LocalDateTime] = (json \ "createdAt" \ "$date" \ "$numberLong")
       .asOpt[String]
       .map(l => LocalDateTime.ofInstant(Instant.ofEpochMilli(l.toLong), ZoneId.systemDefault()))
-
     (validateJson[SchemeData](json), maybeCreatedAt) match {
-      case (Some(schemeData), Some(createdAt)) => Some((schemeData, createdAt))
+      case (Some(schemeData), Some(createdAt)) => Some(schemeData, createdAt)
       case (_, _) => None
     }
   }
@@ -112,7 +111,7 @@ class ResubPresubmissionService @Inject()(metadataRepository: MetadataMongoRepos
     val failedJobSelector: BsonDocument = metadataRepository.createFailedJobSelector(processFailedSubmissionsConfig)
     for {
       failedJobIds <- metadataRepository.getFailedJobs(failedJobSelector, processFailedSubmissionsConfig)
-      _ = logInfo(NumberOfFailedToBeProcessedMessage(failedJobIds.length).message)
+      _ = logger.info(NumberOfFailedToBeProcessedMessage(failedJobIds.length).message)
       updateResult <- metadataRepository.findAndUpdateByStatus(failedJobIds, Session.id(hc))
       ersSummaries <- metadataRepository.findErsSummaries(failedJobIds, Session.id(hc))
       resubmissionResults <- if (updateResult.wasAcknowledged()) {
@@ -123,7 +122,7 @@ class ResubPresubmissionService @Inject()(metadataRepository: MetadataMongoRepos
           }
         }.sequence
       } else {
-        logWarn(NoDataToResubmitMessage.message)
+        logger.warn(NoDataToResubmitMessage.message)
         ERSEnvelope(scala.Seq[Boolean]())
       }
     } yield resubmissionResults.forall(identity)
@@ -131,14 +130,15 @@ class ResubPresubmissionService @Inject()(metadataRepository: MetadataMongoRepos
 
   def startResubmission(ersSummary: ErsSummary, processFailedSubmissionsConfig: ProcessFailedSubmissionsConfig)
                        (implicit request: Request[_], hc: HeaderCarrier): ERSEnvelope[Boolean] = {
-    logInfo(ProcessingResubmitMessage.message + ersSummary.metaData.schemeInfo.basicLogMessage)
+    logger.info(ProcessingResubmitMessage.message + ersSummary.metaData.schemeInfo.basicLogMessage)
     submissionCommonService.callProcessData(ersSummary,
       processFailedSubmissionsConfig.failedStatus,
       processFailedSubmissionsConfig.resubmitSuccessStatus).map { result =>
-      if (result) {
-        logInfo(s"Resubmission completed successfully for schemeRef: ${ersSummary.metaData.schemeInfo.schemeRef}")
+      if(result) {
+        logger.info(s"[ResubPresubmissionService][startResubmission] Resubmission completed successfully for schemeRef: ${ersSummary.metaData.schemeInfo.schemeRef}")
       } else {
-        logError(s"RESUBMISSION_FAILED [startResubmission] Resubmission failed for: ${ersSummary.metaData.schemeInfo.basicLogMessage}")
+        logger.error(s"[ResubPresubmissionService][startResubmission] Resubmission failed for:" +
+          s" ${ersSummary.metaData.schemeInfo.basicLogMessage}")
         auditEvents.sendToAdrEvent("ErsTransferToAdrFailed", ersSummary, source = Some("scheduler"))
       }
       result

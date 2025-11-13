@@ -16,30 +16,30 @@
 
 package services
 
-import config.ApplicationConfig
-import models.SubmissionsSchemeData
 import org.apache.pekko.actor.ActorSystem
 import org.apache.pekko.http.scaladsl.Http
 import org.apache.pekko.http.scaladsl.model.{HttpRequest, HttpResponse}
 import org.apache.pekko.stream.connectors.csv.scaladsl.CsvParsing
 import org.apache.pekko.stream.scaladsl.Source
 import org.apache.pekko.util.ByteString
+import config.ApplicationConfig
+import models.SubmissionsSchemeData
+import play.api.Logging
 import play.api.http.Status
 import uk.gov.hmrc.http.UpstreamErrorResponse
-import utils.LoggingAndExceptions.ErsLogger
 
 import javax.inject.Inject
 import scala.concurrent.Future
 
-class FileDownloadService @Inject()(appConfig: ApplicationConfig)(implicit actorSystem: ActorSystem) extends ErsLogger {
+class FileDownloadService @Inject()(appConfig: ApplicationConfig)(implicit actorSystem: ActorSystem) extends Logging {
 
   def extractEntityData(response: HttpResponse): Source[ByteString, _] = {
     val uploadFileSizeLimit = appConfig.uploadFileSizeLimit
     response match {
       case HttpResponse(org.apache.pekko.http.scaladsl.model.StatusCodes.OK, _, entity, _) => entity.withSizeLimit(uploadFileSizeLimit).dataBytes
       case notOkResponse =>
-        logError(
-          s"[ProcessCsvService][extractEntityData] Illegal response from Upscan: ${notOkResponse.status.intValue}, " +
+        logger.error(
+          s"[FileDownloadService][extractEntityData] Illegal response from Upscan: ${notOkResponse.status.intValue}, " +
             s"body: ${notOkResponse.entity.dataBytes}")
         Source.failed(UpstreamErrorResponse("Could not download file from upscan", Status.INTERNAL_SERVER_ERROR))
     }
