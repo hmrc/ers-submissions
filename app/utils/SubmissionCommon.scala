@@ -17,17 +17,18 @@
 package utils
 
 import com.typesafe.config.Config
-import play.api.Logging
 import play.api.libs.json.Json.JsValueWrapper
 import play.api.libs.json._
 import uk.gov.hmrc.http.HttpResponse
+import utils.LoggingAndExceptions.ErsLogger
+
 import java.time._
 import java.time.format.DateTimeFormatter
 import javax.inject.Inject
 import scala.collection.mutable.ListBuffer
 import scala.util.{Failure, Success, Try}
 
-class SubmissionCommon @Inject()(configUtils: ConfigUtils) extends Logging {
+class SubmissionCommon @Inject()(configUtils: ConfigUtils) extends ErsLogger {
 
   private val EmptyJson: JsObject = Json.obj()
   private val EmptyJsonArray: JsArray = Json.arr()
@@ -36,7 +37,7 @@ class SubmissionCommon @Inject()(configUtils: ConfigUtils) extends Logging {
     response.header("CorrelationId") match {
       case Some(correlationId) => correlationId
       case None =>
-        logger.warn(s"[SubmissionCommon][getCorrelationID] Response headers: ${response.headers.toString()}")
+        logWarn(s"[SubmissionCommon][getCorrelationID] Response headers: ${response.headers.toString()}")
         "missingCorrelationId"
     }
   }
@@ -58,9 +59,9 @@ class SubmissionCommon @Inject()(configUtils: ConfigUtils) extends Logging {
   private def getConfigElemFieldValueByType(configElem: Config, fieldName: String): JsValueWrapper =
     configElem.getString("type") match {
       case "boolean" => configElem.getBoolean(fieldName)
-      case "int"     => configElem.getInt(fieldName)
-      case "string"  => configElem.getString(fieldName)
-      case _         => throw new IllegalArgumentException("Undefined type")
+      case "int" => configElem.getInt(fieldName)
+      case "string" => configElem.getString(fieldName)
+      case _ => throw new IllegalArgumentException("Undefined type")
     }
 
   private def getConfigElemValue(configElem: Config): JsObject =
@@ -80,12 +81,12 @@ class SubmissionCommon @Inject()(configUtils: ConfigUtils) extends Logging {
 
   /** Attempt to retrieve a formatted value from the file data, using 'type', 'valid_value' and 'name' info from config.
    *
-   * @param configElem   config used to check for 'type', 'valid_value', and 'name' keys
-   * @param fileData     data to access values from
-   * @param elemRow     row to access within the data
-   * @param elemColumn  column to access within the row
-   * @return            the parsed value from the row & column, as a JSON object e.g. {"dateOfGrant":"2015-12-09"},
-   *                    or an empty json object
+   * @param configElem config used to check for 'type', 'valid_value', and 'name' keys
+   * @param fileData   data to access values from
+   * @param elemRow    row to access within the data
+   * @param elemColumn column to access within the row
+   * @return the parsed value from the row & column, as a JSON object e.g. {"dateOfGrant":"2015-12-09"},
+   *         or an empty json object
    */
   def handleValueRetrieval(configElem: Config,
                            fileData: ListBuffer[Seq[String]],
@@ -102,9 +103,9 @@ class SubmissionCommon @Inject()(configUtils: ConfigUtils) extends Logging {
 
   /**
    *
-   * @param configRow          the row from which to access the 'name' and 'valid_value' fields
-   * @param valueFromColumn   value from fileData at the previously specified row & column
-   * @return                  a parsed value with the correct name and value, or an empty JSON object
+   * @param configRow       the row from which to access the 'name' and 'valid_value' fields
+   * @param valueFromColumn value from fileData at the previously specified row & column
+   * @return a parsed value with the correct name and value, or an empty JSON object
    */
   private def createValueJson(configRow: Config, valueFromColumn: String): Option[JsObject] = {
     for {
@@ -138,10 +139,10 @@ class SubmissionCommon @Inject()(configUtils: ConfigUtils) extends Logging {
    * This case is handled separately to create the expected empty JSON object,
    * and not an object like { "name" : null } as JsValueWrapper converts empty options to null
    *
-   * @param configRow         config row to retrieve the 'name' and 'valid_value' from
-   * @param valueFromColumn  value to test against the config 'valid_value'
+   * @param configRow       config row to retrieve the 'name' and 'valid_value' from
+   * @param valueFromColumn value to test against the config 'valid_value'
    */
-  private def createBooleanValueJson(configRow: Config, valueFromColumn: String) : Option[JsObject] = {
+  private def createBooleanValueJson(configRow: Config, valueFromColumn: String): Option[JsObject] = {
     for {
       parsedBooleanConfigValue <-
         configUtils

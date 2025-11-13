@@ -74,7 +74,7 @@ class PresubmissionController @Inject()(presubmissionService: PresubmissionServi
               logInfo(s"All presubmission records are found for: ${schemeInfo.basicLogMessage}")
               Ok("All presubmission records are found.")
             case Right((false, sheetsInRepository)) =>
-              logger.warn(s"Found $sheetsInRepository presubmission records of expected $validatedSheets records for: ${schemeInfo.basicLogMessage}")
+              logWarn(s"Found $sheetsInRepository presubmission records of expected $validatedSheets records for: ${schemeInfo.basicLogMessage}")
               auditEvents.auditADRTransferFailure(schemeInfo, Map.empty)
               InternalServerError(s"Not all $validatedSheets records are found for ${schemeInfo.toString}.")
             case Left(error) =>

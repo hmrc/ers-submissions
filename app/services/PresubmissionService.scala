@@ -64,7 +64,7 @@ class PresubmissionService @Inject()(repositories: Repositories)(implicit ec: Ex
         logInfo(s"No data to delete from presubmission repository for: ${schemeInfo.basicLogMessage}")
         ERSEnvelope(NoData())
       case _ =>
-        logger.warn(s"Deleting old presubmission data failed for: ${schemeInfo.basicLogMessage}")
+        logWarn(s"Deleting old presubmission data failed for: ${schemeInfo.basicLogMessage}")
         ERSEnvelope(false)
     }
 

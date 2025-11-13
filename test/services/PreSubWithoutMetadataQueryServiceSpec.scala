@@ -57,8 +57,8 @@ class PreSubWithoutMetadataQueryServiceSpec
 
     val maxRecords = 100
     val testRecords = List(
-      PreSubWithoutMetadata("scheme1", "2023-24", 1672531200000L),
-      PreSubWithoutMetadata("scheme2", "2023-24", 1672617600000L)
+      PreSubWithoutMetadata("scheme1", "2023/24", 1672531200000L),
+      PreSubWithoutMetadata("scheme2", "2023/24", 1672617600000L)
     )
 
     "log individual records when validQueryRecords is less than maxNumberOfRecordsToReturn" in {
@@ -72,8 +72,8 @@ class PreSubWithoutMetadataQueryServiceSpec
 
       val expectedInfoLog =
         s"""[$className] Presubmission data without metadata:
-           |schemeRef: scheme1, taxYear: 2023-24, timestamp: 2023-01-01 00:00:00
-           |schemeRef: scheme2, taxYear: 2023-24, timestamp: 2023-01-02 00:00:00
+           |schemeRef: scheme1, taxYear: 2023/24, timestamp: 2023-01-01 00:00:00
+           |schemeRef: scheme2, taxYear: 2023/24, timestamp: 2023-01-02 00:00:00
            |""".stripMargin
 
       verify(service).logInfo(expectedInfoLog)
@@ -108,8 +108,8 @@ class PreSubWithoutMetadataQueryServiceSpec
 
       val expectedInfoLogRecords =
         s"""[$className] Presubmission data without metadata:
-           |schemeRef: scheme1, taxYear: 2023-24, timestamp: 2023-01-01 00:00:00
-           |schemeRef: scheme2, taxYear: 2023-24, timestamp: 2023-01-02 00:00:00
+           |schemeRef: scheme1, taxYear: 2023/24, timestamp: 2023-01-01 00:00:00
+           |schemeRef: scheme2, taxYear: 2023/24, timestamp: 2023-01-02 00:00:00
            |""".stripMargin
 
       verify(service).logInfo(expectedInfoLog)

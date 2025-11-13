@@ -18,15 +18,15 @@ package services.audit
 
 import models.{ErsSummary, SchemeInfo}
 import org.apache.commons.lang3.exception.ExceptionUtils
-import play.api.Logging
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.audit.http.connector.AuditResult
 import uk.gov.hmrc.play.audit.http.connector.AuditResult.{Disabled, Failure, Success}
+import utils.LoggingAndExceptions.ErsLogger
 
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
-class AuditEvents @Inject()(auditService: AuditService)(implicit ec: ExecutionContext) extends Logging {
+class AuditEvents @Inject()(auditService: AuditService)(implicit ec: ExecutionContext) extends ErsLogger {
 
   def auditRunTimeError(exception: Throwable, contextInfo: String)(implicit hc: HeaderCarrier): Future[AuditResult] = {
     val transactionName = "ERSRunTimeError"
@@ -96,11 +96,11 @@ class AuditEvents @Inject()(auditService: AuditService)(implicit ec: ExecutionCo
     val transactionName = "resubmissionResult"
     auditService.sendEvent(
       "resubmissionResult",
-      eventMap(schemeInfo,Map("result"-> res.toString))
+      eventMap(schemeInfo, Map("result" -> res.toString))
     ).map(handleResponse(_, transactionName))
   }
 
-  def eventMap(schemeInfo: SchemeInfo, additionalMap: Map[String, String] = Map.empty): Map[String,String] = {
+  def eventMap(schemeInfo: SchemeInfo, additionalMap: Map[String, String] = Map.empty): Map[String, String] = {
     Map(
       "schemeRef" -> schemeInfo.schemeRef,
       "schemeId" -> schemeInfo.schemeId,
@@ -116,10 +116,10 @@ class AuditEvents @Inject()(auditService: AuditService)(implicit ec: ExecutionCo
       logger.debug(s"ers-submissions $transactionName audit successful")
       Success
     case Failure(err, _) =>
-      logger.warn(s"ers-submissions $transactionName audit error, message: $err")
+      logWarn(s"ers-submissions $transactionName audit error, message: $err")
       Failure(err)
     case Disabled =>
-      logger.warn(s"Auditing disabled")
+      logWarn(s"Auditing disabled")
       Disabled
   }
 }

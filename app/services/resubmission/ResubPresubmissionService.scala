@@ -49,7 +49,7 @@ class ResubPresubmissionService @Inject()(metadataRepository: MetadataMongoRepos
         val jsErrors = errors
           .map((e: (JsPath, collection.Seq[JsonValidationError])) => s"${e._1}: ${e._2.mkString(", ")}")
           .mkString(", ")
-        logger.warn(s"Failed to validate JsObject error: $jsErrors")
+        logWarn(s"Failed to validate JsObject error: $jsErrors")
         None
     }
 
@@ -123,7 +123,7 @@ class ResubPresubmissionService @Inject()(metadataRepository: MetadataMongoRepos
           }
         }.sequence
       } else {
-        logger.warn(NoDataToResubmitMessage.message)
+        logWarn(NoDataToResubmitMessage.message)
         ERSEnvelope(scala.Seq[Boolean]())
       }
     } yield resubmissionResults.forall(identity)

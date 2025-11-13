@@ -62,7 +62,7 @@ class ADRSubmission @Inject()(submissionCommon: SubmissionCommon,
       if (schemeDataSeq.nonEmpty && sheetNamesAndDataPresent) {
         logInfo(s"Found data in pre-submission repository, mapped successfully. File data list size: ${schemeDataSeq.size}, ${ersSummary.metaData.schemeInfo.basicLogMessage}")
       } else {
-        logger.warn(s"No data returned from pre-submission repository or data is incomplete: ${ersSummary.metaData.schemeInfo.basicLogMessage}")
+        logWarn(s"No data returned from pre-submission repository or data is incomplete: ${ersSummary.metaData.schemeInfo.basicLogMessage}")
       }
 
       schemeDataSeq.foldLeft(sheetsJson) { (result, fileData) =>
