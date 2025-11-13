@@ -68,7 +68,7 @@ class ADRSubmission @Inject()(submissionCommon: SubmissionCommon,
       schemeDataSeq.foldLeft(sheetsJson) { (result, fileData) =>
         val sheetName: String = fileData.sheetName
         val configData: Config = configUtils.getConfigData(s"$schemeType/$sheetName", sheetName, ersSummary)
-        val data: JsObject = buildJson(configData, fileData.data.get, None, Some(sheetName), Some(fileData.schemeInfo))
+        val data: JsObject = buildJson(configData, fileData.data.get, None, Some(sheetName), Some(fileData.schemeInfo)) // todo: handle fileData.data.get
 
         result ++ submissionCommon.mergeSheetData(configData.getConfig("data_location"), result, data)
       }
