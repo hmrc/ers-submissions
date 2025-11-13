@@ -26,7 +26,6 @@ import config.ApplicationConfig
 import controllers.auth.{AuthAction, AuthorisedAction}
 import metrics.Metrics
 import models.{SchemeData, SubmissionsSchemeData}
-import play.api.Logging
 import play.api.libs.json._
 import play.api.mvc._
 import services.audit.AuditEvents

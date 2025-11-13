@@ -24,7 +24,6 @@ import org.apache.pekko.stream.scaladsl.Source
 import org.apache.pekko.util.ByteString
 import config.ApplicationConfig
 import models.SubmissionsSchemeData
-import play.api.Logging
 import play.api.http.Status
 import uk.gov.hmrc.http.UpstreamErrorResponse
 import utils.LoggingAndExceptions.ErsLogger

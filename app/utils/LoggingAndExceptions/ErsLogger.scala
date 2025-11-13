@@ -22,7 +22,7 @@ trait ErsLogger extends ErsDataMessages with ErsExceptionMessages with Logging {
 
   def buildMessage(message: String, data: Option[Object]): String = {
     data match {
-      case Some(_) => message + " for " + buildDataMessage(data.get)
+      case Some(data) => message + " for " + buildDataMessage(data)
       case None => message
     }
   }

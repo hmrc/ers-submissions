@@ -22,7 +22,6 @@ import common.ERSEnvelope.ERSEnvelope
 import messages._
 import models._
 import org.mongodb.scala.bson.BsonDocument
-import play.api.Logging
 import play.api.libs.json._
 import play.api.mvc.Request
 import repositories.{MetadataMongoRepository, PresubmissionMongoRepository, Selectors}
@@ -81,7 +80,7 @@ class ResubPresubmissionService @Inject()(metadataRepository: MetadataMongoRepos
       .asOpt[String]
       .map(l => LocalDateTime.ofInstant(Instant.ofEpochMilli(l.toLong), ZoneId.systemDefault()))
     (validateJson[SchemeData](json), maybeCreatedAt) match {
-      case (Some(schemeData), Some(createdAt)) => Some(schemeData, createdAt)
+      case (Some(schemeData), Some(createdAt)) => Some((schemeData, createdAt))
       case (_, _) => None
     }
   }

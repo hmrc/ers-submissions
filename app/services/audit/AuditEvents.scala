@@ -18,7 +18,6 @@ package services.audit
 
 import models.{ErsSummary, SchemeInfo}
 import org.apache.commons.lang3.exception.ExceptionUtils
-import play.api.Logging
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.audit.http.connector.AuditResult
 import uk.gov.hmrc.play.audit.http.connector.AuditResult.{Disabled, Failure, Success}

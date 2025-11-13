@@ -18,7 +18,6 @@ package controllers
 
 import metrics.Metrics
 import models.{NoData, SchemeInfo}
-import play.api.Logging
 import play.api.libs.json._
 import play.api.mvc._
 import services.PresubmissionService

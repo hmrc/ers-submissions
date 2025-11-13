@@ -21,7 +21,6 @@ import common.ERSEnvelope.ERSEnvelope
 import connectors.ADRConnector
 import metrics.Metrics
 import models.{ErsSummary, SchemeInfo, SubmissionStatusUpdateError}
-import play.api.Logging
 import play.api.http.Status.ACCEPTED
 import play.api.libs.json.{JsError, JsObject, JsPath, JsString, JsSuccess, __}
 import play.api.mvc.Request

@@ -18,7 +18,6 @@ package services
 
 import common.ERSEnvelope.ERSEnvelope
 import models.ErsSummary
-import play.api.Logging
 import play.api.libs.json.{JsError, JsObject, JsResult, JsSuccess}
 import repositories.MetadataMongoRepository
 import services.audit.AuditEvents

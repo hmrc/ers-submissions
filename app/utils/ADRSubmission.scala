@@ -20,7 +20,6 @@ import com.typesafe.config.Config
 import common.ERSEnvelope
 import common.ERSEnvelope.ERSEnvelope
 import models._
-import play.api.Logging
 import play.api.libs.json.{JsObject, Json}
 import play.api.mvc.Request
 import services.PresubmissionService
