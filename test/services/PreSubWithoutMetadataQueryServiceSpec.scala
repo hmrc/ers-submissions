@@ -71,7 +71,7 @@ class PreSubWithoutMetadataQueryServiceSpec
       Await.result(service.invoke.value, Duration.Inf)
 
       val expectedInfoLog =
-        s"""[$className] Presubmission data without metadata:
+        s"""[$className][logPresubmissionRecordsWithoutMetadata] Presubmission data without metadata:
            |schemeRef: scheme1, taxYear: 2023/24, timestamp: 2023-01-01 00:00:00
            |schemeRef: scheme2, taxYear: 2023/24, timestamp: 2023-01-02 00:00:00
            |""".stripMargin
@@ -89,7 +89,7 @@ class PreSubWithoutMetadataQueryServiceSpec
 
       Await.result(service.invoke.value, Duration.Inf)
 
-      val expectedInfoLog = s"[$className] Number of records > 1, 2 records returned from query"
+      val expectedInfoLog = s"[$className][invoke] Number of records > 1, 2 records returned from query"
 
       verify(service).logInfo(expectedInfoLog)
     }
@@ -104,10 +104,10 @@ class PreSubWithoutMetadataQueryServiceSpec
 
       Await.result(service.invoke.value, Duration.Inf)
 
-      val expectedInfoLog = s"[$className] 1 validation errors, showing first 10: $someValidationError"
+      val expectedInfoLog = s"[$className][invoke] 1 validation errors, showing first 10: $someValidationError"
 
       val expectedInfoLogRecords =
-        s"""[$className] Presubmission data without metadata:
+        s"""[$className][logPresubmissionRecordsWithoutMetadata] Presubmission data without metadata:
            |schemeRef: scheme1, taxYear: 2023/24, timestamp: 2023-01-01 00:00:00
            |schemeRef: scheme2, taxYear: 2023/24, timestamp: 2023-01-02 00:00:00
            |""".stripMargin
@@ -124,7 +124,7 @@ class PreSubWithoutMetadataQueryServiceSpec
 
       Await.result(service.invoke.value, Duration.Inf)
 
-      val expectedErrorLog = s"[$className] Failed to fetch or log records: $someValidationError"
+      val expectedErrorLog = s"[$className][invoke] Failed to fetch or log records: $someValidationError"
 
       verify(service).logError(expectedErrorLog)
     }

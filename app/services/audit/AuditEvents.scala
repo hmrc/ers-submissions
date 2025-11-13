@@ -22,11 +22,12 @@ import play.api.Logging
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.audit.http.connector.AuditResult
 import uk.gov.hmrc.play.audit.http.connector.AuditResult.{Disabled, Failure, Success}
+import utils.LoggingAndExceptions.ErsLogger
 
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
-class AuditEvents @Inject()(auditService: AuditService)(implicit ec: ExecutionContext) extends Logging {
+class AuditEvents @Inject()(auditService: AuditService)(implicit ec: ExecutionContext) extends ErsLogger {
 
   def auditRunTimeError(exception: Throwable, contextInfo: String)(implicit hc: HeaderCarrier): Future[AuditResult] = {
     val transactionName = "ERSRunTimeError"
@@ -116,10 +117,10 @@ class AuditEvents @Inject()(auditService: AuditService)(implicit ec: ExecutionCo
       logger.debug(s"[AuditEvents][handleResponse] ers-submissions $transactionName audit successful")
       Success
     case Failure(err, _) =>
-      logger.warn(s"[AuditEvents][handleResponse] ers-submissions $transactionName audit error, message: $err")
+      logWarn(s"[AuditEvents][handleResponse] ers-submissions $transactionName audit error, message: $err")
       Failure(err)
     case Disabled =>
-      logger.warn(s"[AuditEvents][handleResponse] Auditing disabled")
+      logWarn(s"[AuditEvents][handleResponse] Auditing disabled")
       Disabled
   }
 }

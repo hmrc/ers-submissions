@@ -27,18 +27,19 @@ import models.SubmissionsSchemeData
 import play.api.Logging
 import play.api.http.Status
 import uk.gov.hmrc.http.UpstreamErrorResponse
+import utils.LoggingAndExceptions.ErsLogger
 
 import javax.inject.Inject
 import scala.concurrent.Future
 
-class FileDownloadService @Inject()(appConfig: ApplicationConfig)(implicit actorSystem: ActorSystem) extends Logging {
+class FileDownloadService @Inject()(appConfig: ApplicationConfig)(implicit actorSystem: ActorSystem) extends ErsLogger {
 
   def extractEntityData(response: HttpResponse): Source[ByteString, _] = {
     val uploadFileSizeLimit = appConfig.uploadFileSizeLimit
     response match {
       case HttpResponse(org.apache.pekko.http.scaladsl.model.StatusCodes.OK, _, entity, _) => entity.withSizeLimit(uploadFileSizeLimit).dataBytes
       case notOkResponse =>
-        logger.error(
+        logError(
           s"[FileDownloadService][extractEntityData] Illegal response from Upscan: ${notOkResponse.status.intValue}, " +
             s"body: ${notOkResponse.entity.dataBytes}")
         Source.failed(UpstreamErrorResponse("Could not download file from upscan", Status.INTERNAL_SERVER_ERROR))

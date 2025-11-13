@@ -25,6 +25,7 @@ import services._
 import services.audit.AuditEvents
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
+import utils.LoggingAndExceptions.ErsLogger
 import utils.{CorrelationIdHelper, ErrorHandlerHelper}
 
 import java.util.concurrent.TimeUnit
@@ -36,7 +37,7 @@ class SubmissionController @Inject()(submissionCommonService: SubmissionService,
                                      metrics: Metrics,
                                      auditEvents: AuditEvents,
                                      cc: ControllerComponents)
-                                    (implicit val ec: ExecutionContext) extends BackendController(cc) with CorrelationIdHelper with Logging with ErrorHandlerHelper {
+                                    (implicit val ec: ExecutionContext) extends BackendController(cc) with CorrelationIdHelper with ErsLogger with ErrorHandlerHelper {
 
   override val className: String = getClass.getSimpleName
 
@@ -50,15 +51,15 @@ class SubmissionController @Inject()(submissionCommonService: SubmissionService,
           result <- submissionCommonService.callProcessData(ersSummary, Statuses.Failed.toString, Statuses.Sent.toString)(request, hc)
         } yield result).value.map {
           case Right(true) =>
-            logger.info(s"[SubmissionController][receiveMetadataJson] Submission is successfully completed for: ${ersSummary.metaData.schemeInfo.basicLogMessage}")
+            logInfo(s"[SubmissionController][receiveMetadataJson] Submission is successfully completed for: ${ersSummary.metaData.schemeInfo.basicLogMessage}")
             Ok
           case Right(false) =>
             auditEvents.sendToAdrEvent("ErsTransferToAdrFailed", ersSummary)
-            logger.error(s"[SubmissionController][receiveMetadataJson] Processing data failed for: ${ersSummary.metaData.schemeInfo.basicLogMessage}")
+            logError(s"[SubmissionController][receiveMetadataJson] Processing data failed for: ${ersSummary.metaData.schemeInfo.basicLogMessage}")
             InternalServerError("Processing data failed.")
           case Left(error) =>
             auditEvents.sendToAdrEvent("ErsTransferToAdrFailed", ersSummary)
-            logger.error(s"[SubmissionController][receiveMetadataJson] Processing data failed for: ${ersSummary.metaData.schemeInfo.basicLogMessage} with error: [$error]")
+            logError(s"[SubmissionController][receiveMetadataJson] Processing data failed for: ${ersSummary.metaData.schemeInfo.basicLogMessage} with error: [$error]")
             InternalServerError("Processing data failed.")
         }
       case JsError(jsonErrors) => handleBadRequest(jsonErrors)
@@ -72,14 +73,14 @@ class SubmissionController @Inject()(submissionCommonService: SubmissionService,
         metadataService.storeErsSummary(ersSummary).value.map {
           case Right(true) =>
             metrics.saveMetadata(System.currentTimeMillis() - startTime, TimeUnit.MILLISECONDS)
-            logger.info(s"[SubmissionController][saveMetadata] ErsSummary is successfully saved, bundleRef: ${ersSummary.bundleRef}")
+            logInfo(s"[SubmissionController][saveMetadata] ErsSummary is successfully saved, bundleRef: ${ersSummary.bundleRef}")
             Ok("Metadata is successfully stored.")
           case Right(false) =>
-            logger.error(s"[SubmissionController][saveMetadata] Saving ErsSummary failed, bundleRef: ${ersSummary.bundleRef}, ${ersSummary.metaData.schemeInfo.basicLogMessage}")
+            logError(s"[SubmissionController][saveMetadata] Saving ErsSummary failed, bundleRef: ${ersSummary.bundleRef}, ${ersSummary.metaData.schemeInfo.basicLogMessage}")
             auditEvents.auditADRTransferFailure(ersSummary.metaData.schemeInfo, Map.empty)
             InternalServerError("Storing metadata failed.")
           case Left(error) =>
-            logger.error(s"[SubmissionController][saveMetadata] Saving ErsSummary failed, bundleRef: ${ersSummary.bundleRef}, " +
+            logError(s"[SubmissionController][saveMetadata] Saving ErsSummary failed, bundleRef: ${ersSummary.bundleRef}, " +
               s"${ersSummary.metaData.schemeInfo.basicLogMessage} with error: [$error]")
             auditEvents.auditADRTransferFailure(ersSummary.metaData.schemeInfo, Map.empty)
             InternalServerError("Storing metadata failed.")

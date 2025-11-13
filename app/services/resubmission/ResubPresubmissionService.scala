@@ -29,6 +29,7 @@ import repositories.{MetadataMongoRepository, PresubmissionMongoRepository, Sele
 import services.SubmissionService
 import services.audit.AuditEvents
 import uk.gov.hmrc.http.HeaderCarrier
+import utils.LoggingAndExceptions.ErsLogger
 import utils.Session
 
 import java.time.{Instant, LocalDateTime, ZoneId}
@@ -39,7 +40,7 @@ class ResubPresubmissionService @Inject()(metadataRepository: MetadataMongoRepos
                                           presubmissionRepository: PresubmissionMongoRepository,
                                           submissionCommonService: SubmissionService,
                                           auditEvents: AuditEvents)
-                                         (implicit ec: ExecutionContext) extends Logging {
+                                         (implicit ec: ExecutionContext) extends ErsLogger {
 
   def validateJson[T](record: JsObject)(implicit reads: Reads[T]): Option[T] =
     record.validate[T] match {
@@ -49,7 +50,7 @@ class ResubPresubmissionService @Inject()(metadataRepository: MetadataMongoRepos
         val jsErrors = errors
           .map((e: (JsPath, collection.Seq[JsonValidationError])) => s"${e._1}: ${e._2.mkString(", ")}")
           .mkString(", ")
-        logger.warn(s"[ResubPresubmissionService][validateJson] Failed to validate JsObject error: $jsErrors")
+        logWarn(s"[ResubPresubmissionService][validateJson] Failed to validate JsObject error: $jsErrors")
         None
     }
 
@@ -111,7 +112,7 @@ class ResubPresubmissionService @Inject()(metadataRepository: MetadataMongoRepos
     val failedJobSelector: BsonDocument = metadataRepository.createFailedJobSelector(processFailedSubmissionsConfig)
     for {
       failedJobIds <- metadataRepository.getFailedJobs(failedJobSelector, processFailedSubmissionsConfig)
-      _ = logger.info(NumberOfFailedToBeProcessedMessage(failedJobIds.length).message)
+      _ = logInfo(NumberOfFailedToBeProcessedMessage(failedJobIds.length).message)
       updateResult <- metadataRepository.findAndUpdateByStatus(failedJobIds, Session.id(hc))
       ersSummaries <- metadataRepository.findErsSummaries(failedJobIds, Session.id(hc))
       resubmissionResults <- if (updateResult.wasAcknowledged()) {
@@ -122,7 +123,7 @@ class ResubPresubmissionService @Inject()(metadataRepository: MetadataMongoRepos
           }
         }.sequence
       } else {
-        logger.warn(NoDataToResubmitMessage.message)
+        logWarn(NoDataToResubmitMessage.message)
         ERSEnvelope(scala.Seq[Boolean]())
       }
     } yield resubmissionResults.forall(identity)
@@ -130,14 +131,14 @@ class ResubPresubmissionService @Inject()(metadataRepository: MetadataMongoRepos
 
   def startResubmission(ersSummary: ErsSummary, processFailedSubmissionsConfig: ProcessFailedSubmissionsConfig)
                        (implicit request: Request[_], hc: HeaderCarrier): ERSEnvelope[Boolean] = {
-    logger.info(ProcessingResubmitMessage.message + ersSummary.metaData.schemeInfo.basicLogMessage)
+    logInfo(ProcessingResubmitMessage.message + ersSummary.metaData.schemeInfo.basicLogMessage)
     submissionCommonService.callProcessData(ersSummary,
       processFailedSubmissionsConfig.failedStatus,
       processFailedSubmissionsConfig.resubmitSuccessStatus).map { result =>
       if(result) {
-        logger.info(s"[ResubPresubmissionService][startResubmission] Resubmission completed successfully for schemeRef: ${ersSummary.metaData.schemeInfo.schemeRef}")
+        logInfo(s"[ResubPresubmissionService][startResubmission] Resubmission completed successfully for schemeRef: ${ersSummary.metaData.schemeInfo.schemeRef}")
       } else {
-        logger.error(s"[ResubPresubmissionService][startResubmission] Resubmission failed for:" +
+        logError(s"[ResubPresubmissionService][startResubmission] Resubmission failed for:" +
           s" ${ersSummary.metaData.schemeInfo.basicLogMessage}")
         auditEvents.sendToAdrEvent("ErsTransferToAdrFailed", ersSummary, source = Some("scheduler"))
       }

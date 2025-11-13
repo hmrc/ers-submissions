@@ -25,6 +25,7 @@ import play.api.libs.json.{JsObject, Json}
 import play.api.mvc.Request
 import services.PresubmissionService
 import uk.gov.hmrc.http.HeaderCarrier
+import utils.LoggingAndExceptions.ErsLogger
 
 import javax.inject.Inject
 import scala.collection.mutable.{ArrayBuffer, ListBuffer}
@@ -33,13 +34,13 @@ import scala.concurrent.ExecutionContext
 class ADRSubmission @Inject()(submissionCommon: SubmissionCommon,
                               presubmissionService: PresubmissionService,
                               configUtils: ConfigUtils)
-                             (implicit ec: ExecutionContext) extends Logging {
+                             (implicit ec: ExecutionContext) extends ErsLogger {
 
   private val EmptyJson: JsObject = Json.obj()
 
   def generateSubmission(ersSummary: ErsSummary)(implicit request: Request[_], hc: HeaderCarrier): ERSEnvelope[JsObject] = {
     val schemeType: String = ersSummary.metaData.schemeInfo.schemeType.toUpperCase()
-    logger.info(s"[ADRSubmission][generateSubmission] ${ersSummary.basicLogMessage} ${ersSummary.metaData.schemeInfo.basicLogMessage}")
+    logInfo(s"[ADRSubmission][generateSubmission] ${ersSummary.basicLogMessage} ${ersSummary.metaData.schemeInfo.basicLogMessage}")
 
     if (ersSummary.isNilReturn == IsNilReturn.False.toString) {
       createSubmissionJson(ersSummary, schemeType)
@@ -60,9 +61,9 @@ class ADRSubmission @Inject()(submissionCommon: SubmissionCommon,
       val sheetNamesAndDataPresent = schemeDataSeq.forall(fd => fd.sheetName.nonEmpty && fd.data.nonEmpty)
 
       if (schemeDataSeq.nonEmpty && sheetNamesAndDataPresent) {
-        logger.info(s"[ADRSubmission][createSheetsJson] Found data in pre-submission repository, mapped successfully. File data list size: ${schemeDataSeq.size}, ${ersSummary.metaData.schemeInfo.basicLogMessage}")
+        logInfo(s"[ADRSubmission][createSheetsJson] Found data in pre-submission repository, mapped successfully. File data list size: ${schemeDataSeq.size}, ${ersSummary.metaData.schemeInfo.basicLogMessage}")
       } else {
-        logger.warn(s"[ADRSubmission][createSheetsJson] No data returned from pre-submission repository or data is incomplete: ${ersSummary.metaData.schemeInfo.basicLogMessage}")
+        logWarn(s"[ADRSubmission][createSheetsJson] No data returned from pre-submission repository or data is incomplete: ${ersSummary.metaData.schemeInfo.basicLogMessage}")
       }
 
       schemeDataSeq.foldLeft(sheetsJson) { (result, fileData) =>

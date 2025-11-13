@@ -52,7 +52,7 @@ trait ErsLogger extends ErsDataMessages with ErsExceptionMessages with Logging {
 
   def logError(message: String, e: Throwable): Unit = logger.error(message, e)
 
-  def logWarn(message: String): Unit = logger.error(message)
+  def logWarn(message: String): Unit = logger.warn(message)
 
-  def logWarn(message: String, e: Throwable): Unit = logger.error(message, e)
+  def logWarn(message: String, e: Throwable): Unit = logger.warn(message, e)
 }
