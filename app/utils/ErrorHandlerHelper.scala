@@ -17,26 +17,26 @@
 package utils
 
 import models.{ADRTransferError, ERSError}
-import play.api.Logging
 import play.api.http.Status.BAD_REQUEST
 import play.api.libs.json.{JsError, JsPath, Json, JsonValidationError}
 import play.api.mvc.Result
 import play.api.mvc.Results.BadRequest
-import uk.gov.hmrc.play.bootstrap.backend.http.ErrorResponse
+import uk.gov.hmrc.play.bootstrap.http.ErrorResponse
+import utils.LoggingAndExceptions.ErsLogger
 
 import scala.concurrent.Future
 
-trait ErrorHandlerHelper extends Logging {
+trait ErrorHandlerHelper extends ErsLogger {
   val className: String
 
   def handleError(ex: Throwable, methodName: String): ERSError = {
-    logger.error(s"[$className][$methodName] Exception thrown with message ${ex.getMessage}")
+    logError(s"[$className][$methodName] Exception thrown with message ${ex.getMessage}")
     ADRTransferError()
   }
 
   def handleBadRequest(jsonValidationErrors: scala.collection.Seq[(JsPath, scala.collection.Seq[JsonValidationError])]): Future[Result] = {
     val errorResponseBody = Json.toJson(ErrorResponse(BAD_REQUEST, JsError.toJson(jsonValidationErrors).toString()))
-    logger.error(s"[ErrorHandlerHelper][handleBadRequest] failed for $errorResponseBody")
+    logError(s"[ErrorHandlerHelper][handleBadRequest] failed for $errorResponseBody")
     Future.successful(BadRequest(errorResponseBody))
   }
 }

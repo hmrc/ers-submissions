@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package services
+package services.audit
 
 import helpers.ERSTestHelper
 import org.mockito.ArgumentMatchers.any

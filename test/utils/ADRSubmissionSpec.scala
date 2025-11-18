@@ -30,7 +30,7 @@ import play.api.mvc.Request
 import play.api.test.FakeRequest
 import services.PresubmissionService
 import uk.gov.hmrc.http.HeaderCarrier
-import utils.LoggingAndRexceptions.ADRExceptionEmitter
+import utils.LoggingAndExceptions.ADRExceptionEmitter
 
 import scala.collection.mutable.ListBuffer
 

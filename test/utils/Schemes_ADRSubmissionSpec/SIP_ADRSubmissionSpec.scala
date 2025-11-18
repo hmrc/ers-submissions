@@ -23,7 +23,7 @@ import helpers.ERSTestHelper
 import models.{SchemeData, SchemeInfo}
 import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
-import org.scalatest.{BeforeAndAfter, EitherValues}
+import org.scalatest.{BeforeAndAfterEach, EitherValues}
 import play.api.libs.json.{JsObject, Json}
 import play.api.test.FakeRequest
 import services.PresubmissionService
@@ -33,7 +33,7 @@ import utils.{ADRSubmission, ConfigUtils, SubmissionCommon}
 import scala.collection.mutable.ListBuffer
 import scala.concurrent.Future
 
-class SIP_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfter with EitherValues {
+class SIP_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with EitherValues {
 
   implicit val hc: HeaderCarrier = new HeaderCarrier()
   implicit val request: FakeRequest[JsObject] = FakeRequest().withBody(Fixtures.metadataJson)
@@ -48,8 +48,8 @@ class SIP_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfter with Eithe
     mockConfigUtils
   )
 
-  def before(fun : => scala.Any): Unit = {
-    super.before(())
+  override def beforeEach(): Unit = {
+    super.beforeEach()
     reset(mockPresubmissionService)
   }
 
@@ -308,7 +308,7 @@ class SIP_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfter with Eithe
       when(mockPresubmissionService.getJson(any[SchemeInfo]())(any())).thenReturn(
         ERSEnvelope(Future.successful(
           List(
-            SchemeData(SIP.schemeInfo, "SIP_Awards_V4", None, Some(ListBuffer(SIP.buildAwards(true, "yes", "yes"))))
+            SchemeData(SIP.schemeInfo, "SIP_Awards_V4", None, Some(ListBuffer(SIP.buildAwards(withAllFields = true, "yes", "yes"))))
           )
         )
       ))
@@ -430,8 +430,8 @@ class SIP_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfter with Eithe
       ).thenReturn(
         ERSEnvelope(Future.successful(
           List(
-            SchemeData(SIP.schemeInfo, "SIP_Awards_V4", None, Some(ListBuffer(SIP.buildAwards(true, "yes", "yes")))),
-            SchemeData(SIP.schemeInfo, "SIP_Awards_V4", None, Some(ListBuffer(SIP.buildAwards(true, "yes", "yes"))))
+            SchemeData(SIP.schemeInfo, "SIP_Awards_V4", None, Some(ListBuffer(SIP.buildAwards(withAllFields = true, "yes", "yes")))),
+            SchemeData(SIP.schemeInfo, "SIP_Awards_V4", None, Some(ListBuffer(SIP.buildAwards(withAllFields = true, "yes", "yes"))))
           )
         )
       ))
@@ -576,7 +576,7 @@ class SIP_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfter with Eithe
       ).thenReturn(
         ERSEnvelope(Future.successful(
           List(
-            SchemeData(SIP.schemeInfo, "SIP_Out_V4", None, Some(ListBuffer(SIP.buildOutOfPlan(true, "yes", "yes"))))
+            SchemeData(SIP.schemeInfo, "SIP_Out_V4", None, Some(ListBuffer(SIP.buildOutOfPlan(withAllFields = true, "yes", "yes"))))
           )
         )
       ))
@@ -694,8 +694,8 @@ class SIP_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfter with Eithe
       ).thenReturn(
         ERSEnvelope(Future.successful(
           List(
-            SchemeData(SIP.schemeInfo, "SIP_Out_V4", None, Some(ListBuffer(SIP.buildOutOfPlan(true, "yes", "yes")))),
-            SchemeData(SIP.schemeInfo, "SIP_Out_V4", None, Some(ListBuffer(SIP.buildOutOfPlan(true, "yes", "yes"))))
+            SchemeData(SIP.schemeInfo, "SIP_Out_V4", None, Some(ListBuffer(SIP.buildOutOfPlan(withAllFields = true, "yes", "yes")))),
+            SchemeData(SIP.schemeInfo, "SIP_Out_V4", None, Some(ListBuffer(SIP.buildOutOfPlan(withAllFields = true, "yes", "yes"))))
           )
         )
       ))
@@ -832,8 +832,8 @@ class SIP_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfter with Eithe
       ).thenReturn(
         ERSEnvelope(Future.successful(
           List(
-            SchemeData(SIP.schemeInfo, "SIP_Awards_V4", None, Some(ListBuffer(SIP.buildAwards(true, "yes", "yes")))),
-            SchemeData(SIP.schemeInfo, "SIP_Out_V4", None, Some(ListBuffer(SIP.buildOutOfPlan(true, "yes", "yes"))))
+            SchemeData(SIP.schemeInfo, "SIP_Awards_V4", None, Some(ListBuffer(SIP.buildAwards(withAllFields = true, "yes", "yes")))),
+            SchemeData(SIP.schemeInfo, "SIP_Out_V4", None, Some(ListBuffer(SIP.buildOutOfPlan(withAllFields = true, "yes", "yes"))))
           )
         )
       ))
@@ -978,10 +978,10 @@ class SIP_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfter with Eithe
       ).thenReturn(
         ERSEnvelope(Future.successful(
           List(
-            SchemeData(SIP.schemeInfo, "SIP_Awards_V4", None, Some(ListBuffer(SIP.buildAwards(true, "yes", "yes")))),
-            SchemeData(SIP.schemeInfo, "SIP_Awards_V4", None, Some(ListBuffer(SIP.buildAwards(true, "yes", "yes")))),
-            SchemeData(SIP.schemeInfo, "SIP_Out_V4", None, Some(ListBuffer(SIP.buildOutOfPlan(true, "yes", "yes")))),
-            SchemeData(SIP.schemeInfo, "SIP_Out_V4", None, Some(ListBuffer(SIP.buildOutOfPlan(true, "yes", "yes"))))
+            SchemeData(SIP.schemeInfo, "SIP_Awards_V4", None, Some(ListBuffer(SIP.buildAwards(withAllFields = true, "yes", "yes")))),
+            SchemeData(SIP.schemeInfo, "SIP_Awards_V4", None, Some(ListBuffer(SIP.buildAwards(withAllFields = true, "yes", "yes")))),
+            SchemeData(SIP.schemeInfo, "SIP_Out_V4", None, Some(ListBuffer(SIP.buildOutOfPlan(withAllFields = true, "yes", "yes")))),
+            SchemeData(SIP.schemeInfo, "SIP_Out_V4", None, Some(ListBuffer(SIP.buildOutOfPlan(withAllFields = true, "yes", "yes"))))
           )
         )
       ))

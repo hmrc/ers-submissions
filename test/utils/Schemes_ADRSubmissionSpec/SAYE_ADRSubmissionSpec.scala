@@ -23,7 +23,7 @@ import helpers.ERSTestHelper
 import models.{SchemeData, SchemeInfo}
 import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
-import org.scalatest.{BeforeAndAfter, EitherValues}
+import org.scalatest.{BeforeAndAfterEach, EitherValues}
 import play.api.libs.json.{JsObject, Json}
 import play.api.test.FakeRequest
 import services.PresubmissionService
@@ -33,7 +33,7 @@ import utils.{ADRSubmission, ConfigUtils, SubmissionCommon}
 import scala.collection.mutable.ListBuffer
 import scala.concurrent.Future
 
-class SAYE_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfter with EitherValues {
+class SAYE_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with EitherValues {
 
   implicit val hc: HeaderCarrier = new HeaderCarrier()
   implicit val request: FakeRequest[JsObject] = FakeRequest().withBody(Fixtures.metadataJson)
@@ -48,8 +48,8 @@ class SAYE_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfter with Eith
     mockConfigUtils
   )
 
-  def before(fun : => scala.Any): Unit  = {
-    super.before(())
+  override def beforeEach(): Unit  = {
+    super.beforeEach()
     reset(mockPresubmissionService)
   }
 
@@ -825,7 +825,7 @@ class SAYE_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfter with Eith
       ).thenReturn(
         ERSEnvelope(Future.successful(
           List(
-            SchemeData(SAYE.schemeInfo, "SAYE_Exercised_V4", None, Some(ListBuffer(SAYE.buildExercisedV4(true, sharesListedOnSE = "yes", marketValueAgreedHMRC = "yes"))))
+            SchemeData(SAYE.schemeInfo, "SAYE_Exercised_V4", None, Some(ListBuffer(SAYE.buildExercisedV4(allFields = true, sharesListedOnSE = "yes", marketValueAgreedHMRC = "yes"))))
           )
         )
       ))
@@ -946,8 +946,8 @@ class SAYE_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfter with Eith
       ).thenReturn(
         ERSEnvelope(Future.successful(
           List(
-            SchemeData(SAYE.schemeInfo, "SAYE_Exercised_V4", None, Some(ListBuffer(SAYE.buildExercisedV4(true, sharesListedOnSE = "yes", marketValueAgreedHMRC = "yes")))),
-            SchemeData(SAYE.schemeInfo, "SAYE_Exercised_V4", None, Some(ListBuffer(SAYE.buildExercisedV4(true, sharesListedOnSE = "yes", marketValueAgreedHMRC = "yes"))))
+            SchemeData(SAYE.schemeInfo, "SAYE_Exercised_V4", None, Some(ListBuffer(SAYE.buildExercisedV4(allFields = true, sharesListedOnSE = "yes", marketValueAgreedHMRC = "yes")))),
+            SchemeData(SAYE.schemeInfo, "SAYE_Exercised_V4", None, Some(ListBuffer(SAYE.buildExercisedV4(allFields = true, sharesListedOnSE = "yes", marketValueAgreedHMRC = "yes"))))
           )
         )
       ))
@@ -1088,7 +1088,7 @@ class SAYE_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfter with Eith
           List(
             SchemeData(SAYE.schemeInfo, "SAYE_Granted_V4", None, Some(ListBuffer(SAYE.buildGrantedV4("yes", "yes")))),
             SchemeData(SAYE.schemeInfo, "SAYE_RCL_V4", None, Some(ListBuffer(SAYE.buildRCLV4("yes")))),
-            SchemeData(SAYE.schemeInfo, "SAYE_Exercised_V4", None, Some(ListBuffer(SAYE.buildExercisedV4(true, sharesListedOnSE = "yes", marketValueAgreedHMRC = "yes"))))
+            SchemeData(SAYE.schemeInfo, "SAYE_Exercised_V4", None, Some(ListBuffer(SAYE.buildExercisedV4(allFields = true, sharesListedOnSE = "yes", marketValueAgreedHMRC = "yes"))))
           )
         )
       ))
@@ -1242,8 +1242,8 @@ class SAYE_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfter with Eith
             SchemeData(SAYE.schemeInfo, "SAYE_Granted_V4", None, Some(ListBuffer(SAYE.buildGrantedV4("yes", "yes")))),
             SchemeData(SAYE.schemeInfo, "SAYE_RCL_V4", None, Some(ListBuffer(SAYE.buildRCLV4("yes")))),
             SchemeData(SAYE.schemeInfo, "SAYE_RCL_V4", None, Some(ListBuffer(SAYE.buildRCLV4("yes")))),
-            SchemeData(SAYE.schemeInfo, "SAYE_Exercised_V4", None, Some(ListBuffer(SAYE.buildExercisedV4(true, sharesListedOnSE = "yes", marketValueAgreedHMRC = "yes")))),
-            SchemeData(SAYE.schemeInfo, "SAYE_Exercised_V4", None, Some(ListBuffer(SAYE.buildExercisedV4(true, sharesListedOnSE = "yes", marketValueAgreedHMRC = "yes"))))
+            SchemeData(SAYE.schemeInfo, "SAYE_Exercised_V4", None, Some(ListBuffer(SAYE.buildExercisedV4(allFields = true, sharesListedOnSE = "yes", marketValueAgreedHMRC = "yes")))),
+            SchemeData(SAYE.schemeInfo, "SAYE_Exercised_V4", None, Some(ListBuffer(SAYE.buildExercisedV4(allFields = true, sharesListedOnSE = "yes", marketValueAgreedHMRC = "yes"))))
           )
         )
       ))
@@ -1435,8 +1435,8 @@ class SAYE_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfter with Eith
       val result = mockAdrSubmission.buildJson(
       configData,
         ListBuffer(
-          SAYE.buildExercisedV4(true, sharesListedOnSE = "yes", marketValueAgreedHMRC = "yes"),
-          SAYE.buildExercisedV4(false, sharesListedOnSE = "yes", marketValueAgreedHMRC = "yes")
+          SAYE.buildExercisedV4(allFields = true, sharesListedOnSE = "yes", marketValueAgreedHMRC = "yes"),
+          SAYE.buildExercisedV4(allFields = false, sharesListedOnSE = "yes", marketValueAgreedHMRC = "yes")
         )
       )
       result shouldBe Json.parse("""{
@@ -1486,8 +1486,8 @@ class SAYE_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfter with Eith
       val result = mockAdrSubmission.buildJson(
         configData,
         ListBuffer(
-          SAYE.buildExercisedV4(true, sharesListedOnSE = "yes", marketValueAgreedHMRC = "yes"),
-          SAYE.buildExercisedV4(true, sharesListedOnSE = "no", marketValueAgreedHMRC = "yes")
+          SAYE.buildExercisedV4(allFields = true, sharesListedOnSE = "yes", marketValueAgreedHMRC = "yes"),
+          SAYE.buildExercisedV4(allFields = true, sharesListedOnSE = "no", marketValueAgreedHMRC = "yes")
         )
       )
       result shouldBe Json.parse("""{
@@ -1541,8 +1541,8 @@ class SAYE_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfter with Eith
       val result = mockAdrSubmission.buildJson(
         configData,
         ListBuffer(
-          SAYE.buildExercisedV4(true, sharesListedOnSE = "no", marketValueAgreedHMRC = "yes"),
-          SAYE.buildExercisedV4(true, sharesListedOnSE = "no", marketValueAgreedHMRC = "no")
+          SAYE.buildExercisedV4(allFields = true, sharesListedOnSE = "no", marketValueAgreedHMRC = "yes"),
+          SAYE.buildExercisedV4(allFields = true, sharesListedOnSE = "no", marketValueAgreedHMRC = "no")
         )
       )
       result shouldBe Json.parse("""{

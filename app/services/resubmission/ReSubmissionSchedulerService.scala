@@ -27,7 +27,7 @@ import scheduler.ScheduledService
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.mongo.lock.LockService
 import utils.CorrelationIdHelper
-import utils.LoggingAndRexceptions.ErsLogger
+import utils.LoggingAndExceptions.ErsLogger
 
 import javax.inject.Inject
 import scala.concurrent.ExecutionContext
@@ -49,12 +49,12 @@ class ReSubmissionSchedulerService @Inject()(val applicationConfig: ApplicationC
   implicit val processFailedSubmissionsConfig: ProcessFailedSubmissionsConfig = getProcessFailedSubmissionsConfig(resubmissionLimit)
 
   def resubmit()(implicit request: Request[_], hc: HeaderCarrier): ERSEnvelope[Boolean] = {
-    logger.info(ResubmissionLimitMessage(resubmissionLimit).message)
+    logInfo(ResubmissionLimitMessage(resubmissionLimit).message)
     resubPresubmissionService.processFailedSubmissions(processFailedSubmissionsConfig).map { result =>
       if (result) {
-        logger.info(ResubmissionSuccessMessage.message)
+        logInfo(ResubmissionSuccessMessage.message)
       } else {
-        logger.error(ResubmissionFailedMessage.message)
+        logError(ResubmissionFailedMessage.message)
       }
       result
     }
@@ -67,24 +67,24 @@ class ReSubmissionSchedulerService @Inject()(val applicationConfig: ApplicationC
     logIfEnabled(applicationConfig.schedulerEnableAdditionalLogs) {
       resubPresubmissionService
         .logAggregateMetadataMetrics()
-        .map(message => logger.info(message))
+        .map(message => logInfo(message))
       resubPresubmissionService
         .logFailedSubmissionCount(processFailedSubmissionsConfig)
-        .map(message => logger.info(message))
-      logger.info(LockMessage(lockService).message)
+        .map(message => logInfo(message))
+      logInfo(LockMessage(lockService).message)
     }
     logIfEnabled(applicationConfig.schedulerSchemeRefListEnabled) {
       resubPresubmissionService
         .getMetadataSelectedSchemeRefDetailsMessage(processFailedSubmissionsConfig)
-        .map(message => logger.info(message))
+        .map(message => logInfo(message))
       resubPresubmissionService
         .getPreSubSelectedSchemeRefDetailsMessage(processFailedSubmissionsConfig)
-        .map(message => logger.info(message))
+        .map(message => logInfo(message))
     }
 
     ERSEnvelope(lockService.withLock(resubmit()(request, hc).value).map {
       case Some(_) =>
-        logger.info(FinishedResubmissionJob.message)
+        logInfo(FinishedResubmissionJob.message)
         true
       case None =>
         false

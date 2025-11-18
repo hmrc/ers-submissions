@@ -36,7 +36,7 @@ class ADRConnector @Inject()(applicationConfig: ApplicationConfig,
   override val className: String = getClass.getSimpleName
   private val headerCarrierConfig = HeaderCarrier.Config.fromConfig(ConfigFactory.load())
 
-  def buildEtmpPath(path: String): String = s"${applicationConfig.adrBaseURI}/$path"
+  private def buildEtmpPath(path: String): String = s"${applicationConfig.adrBaseURI}/$path"
 
   private def explicitHeaders()(implicit hc: HeaderCarrier): scala.Seq[(String, String)] = scala.Seq(
     "Environment" -> applicationConfig.UrlHeaderEnvironment,

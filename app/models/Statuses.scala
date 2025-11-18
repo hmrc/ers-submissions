@@ -16,10 +16,26 @@
 
 package models
 
-object Statuses extends Enumeration {
-  type Statuses = Value
-  val Saved = Value("saved")
-  val Sent = Value("sent")
-  val Failed = Value("failed")
-  val Process = Value("process")
+sealed trait Statuses {
+  def value: String
+
+  override def toString: String = value
+}
+
+object Statuses {
+  case object Saved extends Statuses {
+    val value = "saved"
+  }
+
+  case object Sent extends Statuses {
+    val value = "sent"
+  }
+
+  case object Failed extends Statuses {
+    val value = "failed"
+  }
+
+  case object Process extends Statuses {
+    val value = "process"
+  }
 }

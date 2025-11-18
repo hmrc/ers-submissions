@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-package utils.LoggingAndRexceptions
+package utils.LoggingAndExceptions
 
 import models.{ErsSummary, SchemeInfo}
 
 trait ErsDataMessages {
 
-  val dataMessagePF: Seq[PartialFunction[Object, String]] = Seq(
+  private val dataMessagePF: Seq[PartialFunction[Object, String]] = Seq(
     buildSchemeInfoMessage,
     buildErsSummaryMessage,
     buildWildcardDataMessage
@@ -37,7 +37,7 @@ trait ErsDataMessages {
   }
 
   def buildErsSummaryMessage: PartialFunction[Object, String] = {
-    case ersSummary: ErsSummary => s"ConfirmationDateTime: ${ersSummary.confirmationDateTime.toString()}\n" +
+    case ersSummary: ErsSummary => s"ConfirmationDateTime: ${ersSummary.confirmationDateTime.toString}\n" +
       s"BundleRef: ${ersSummary.bundleRef},\n" +
       s"isNilReturn: ${ersSummary.isNilReturn},\n" +
       s"fileType: ${ersSummary.fileType.getOrElse("")},\n" +

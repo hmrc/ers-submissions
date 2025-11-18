@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package utils.LoggingAndRexceptions
+package utils.LoggingAndExceptions
 
 import play.api.Logging
 
@@ -22,22 +22,38 @@ trait ErsLogger extends ErsDataMessages with ErsExceptionMessages with Logging {
 
   def buildMessage(message: String, data: Option[Object]): String = {
     data match {
-      case Some(_) => message + " for " + buildDataMessage(data.get)
+      case Some(data) => message + " for " + buildDataMessage(data)
       case None => message
     }
   }
 
   def logException(data: Object, ex: Exception, context: Option[String] = None): Unit = {
-    var errorMessage: String = buildExceptionMesssage(ex) + ",\n" + buildDataMessage(data)
-    if(context.isDefined) {
-      errorMessage += s",\nContext: $context"
-    }
-    logger.error(errorMessage)
+    val errorMessage: Seq[String] = Seq(buildExceptionMesssage(ex), buildDataMessage(data))
+
+    val finalErrorMessage: String =
+      (if (context.isDefined) {
+        errorMessage ++ s"Context: $context"
+      } else {
+        errorMessage
+      }).mkString("\n")
+
+    logError(finalErrorMessage)
   }
 
   def logIfEnabled(logEnabled: Boolean)(block: => Unit): Unit = {
     Option(logEnabled)
       .filter(identity)
-      .foreach( _ => block)
+      .foreach(_ => block)
   }
+
+  // methods to help with testing
+  def logInfo(message: String): Unit = logger.info(message)
+
+  def logError(message: String): Unit = logger.error(message)
+
+  def logError(message: String, e: Throwable): Unit = logger.error(message, e)
+
+  def logWarn(message: String): Unit = logger.warn(message)
+
+  def logWarn(message: String, e: Throwable): Unit = logger.warn(message, e)
 }

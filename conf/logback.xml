@@ -31,7 +31,7 @@
         <appender-ref ref="STDOUT"/>
     </logger>
 
-    <logger name="utils.LoggingAndRexceptions" level="INFO"/>
+    <logger name="utils.LoggingAndExceptions" level="INFO"/>
 
     <root level="INFO">
         <appender-ref ref="ASYNCSTDOUT"/>
