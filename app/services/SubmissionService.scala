@@ -21,10 +21,8 @@ import common.ERSEnvelope.ERSEnvelope
 import connectors.ADRConnector
 import metrics.Metrics
 import models.{ErsSummary, SchemeInfo, SubmissionStatusUpdateError}
-import org.apache.pekko.stream.scaladsl.Source
-import org.apache.pekko.util.ByteString
 import play.api.http.Status.ACCEPTED
-import play.api.libs.json.{JsError, JsObject, JsPath, JsString, JsSuccess, Json, __}
+import play.api.libs.json.{JsError, JsObject, JsPath, JsString, JsSuccess, __}
 import play.api.mvc.Request
 import repositories.{MetadataMongoRepository, Repositories}
 import services.audit.AuditEvents
@@ -63,7 +61,7 @@ class SubmissionService @Inject()(repositories: Repositories,
       } yield postSubmissionUpdated
   }
 
-  def transformData(ersSummary: ErsSummary)(implicit request: Request[_], hc: HeaderCarrier): ERSEnvelope[Source[ByteString, _]] = {
+  def transformData(ersSummary: ErsSummary)(implicit request: Request[_], hc: HeaderCarrier): ERSEnvelope[JsObject] = {
     val startTime = System.currentTimeMillis()
     val (maxFirstNameLen, maxCountryLen) = (35, 18)
 
@@ -88,12 +86,11 @@ class SubmissionService @Inject()(repositories: Repositories,
       metrics.generateJson(System.currentTimeMillis() - startTime, TimeUnit.MILLISECONDS)
       val transformedFirstNameJson = trimDataIfSizeExceeded(json, "firstName", __ \ "submitter" \ "firstName", maxFirstNameLen)
       val transformedDataJson = trimDataIfSizeExceeded(transformedFirstNameJson, "country", __ \ "submitter" \ "address" \ "country", maxCountryLen)
-      val jsonString = Json.stringify(transformedDataJson)
-      Source.single(ByteString(jsonString))
+      transformedDataJson
     }
   }
 
-  def sendToADRUpdatePostData(ersSummary: ErsSummary, adrData: Source[ByteString, _], failedStatus: String, successStatus: String)
+  def sendToADRUpdatePostData(ersSummary: ErsSummary, adrData: JsObject, failedStatus: String, successStatus: String)
                              (implicit hc: HeaderCarrier): ERSEnvelope[Boolean] = {
     val startTime = System.currentTimeMillis()
 
