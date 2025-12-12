@@ -21,7 +21,8 @@ import cats.syntax.all._
 import com.typesafe.config.ConfigFactory
 import common.ERSEnvelope.ERSEnvelope
 import config.ApplicationConfig
-import play.api.libs.json.JsObject
+import org.apache.pekko.stream.scaladsl.Source
+import org.apache.pekko.util.ByteString
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, StringContextOps}
 import uk.gov.hmrc.http.HttpReads.Implicits._
 import uk.gov.hmrc.http.client.HttpClientV2
@@ -43,7 +44,7 @@ class ADRConnector @Inject()(applicationConfig: ApplicationConfig,
     "Authorization" -> applicationConfig.UrlHeaderAuthorization
   ) ++ hc.headers(scala.Seq(HEADER_X_CORRELATION_ID))
 
-  def sendData(adrData: JsObject, schemeType: String)(implicit ec: ExecutionContext, hc: HeaderCarrier): ERSEnvelope[HttpResponse] = EitherT {
+  def sendData(adrData: Source[ByteString, _], schemeType: String)(implicit ec: ExecutionContext, hc: HeaderCarrier): ERSEnvelope[HttpResponse] = EitherT {
     val url: String = buildEtmpPath(s"${applicationConfig.adrFullSubmissionURI}/${schemeType.toLowerCase()}")
     val headersForRequest = hc
       .withExtraHeaders(explicitHeaders(): _*)

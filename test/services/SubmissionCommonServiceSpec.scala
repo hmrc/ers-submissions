@@ -23,6 +23,8 @@ import fixtures.Fixtures
 import helpers.ERSTestHelper
 import metrics.Metrics
 import models._
+import org.apache.pekko.stream.scaladsl.Source
+import org.apache.pekko.util.ByteString
 import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
 import org.mockito.internal.verification.VerificationModeFactory
@@ -120,10 +122,10 @@ class SubmissionCommonServiceSpec extends ERSTestHelper with BeforeAndAfterEach 
     val submissionCommonService: SubmissionService =
     new SubmissionService(repositories, adrConnector, adrSubmission, submissionCommon, auditEvents, metrics) {
 
-      override def transformData(ersSummary: ErsSummary)(implicit request: Request[_], hc: HeaderCarrier): ERSEnvelope[JsObject] =
-        ERSEnvelope(Future.successful(Json.obj()))
+      override def transformData(ersSummary: ErsSummary)(implicit request: Request[_], hc: HeaderCarrier): ERSEnvelope[Source[ByteString, _]] =
+        ERSEnvelope(Future.successful(Source.single(ByteString(Json.stringify(Json.obj())))))
 
-      override def sendToADRUpdatePostData(ersSummary: ErsSummary, adrData: JsObject, failedStatus: String, successStatus: String)
+      override def sendToADRUpdatePostData(ersSummary: ErsSummary, adrData: Source[ByteString, _], failedStatus: String, successStatus: String)
                                           (implicit hc: HeaderCarrier): ERSEnvelope[Boolean] = ERSEnvelope(true)
     }
 
@@ -143,7 +145,9 @@ class SubmissionCommonServiceSpec extends ERSTestHelper with BeforeAndAfterEach 
         .thenReturn(ERSEnvelope(Fixtures.schemeDataJson))
 
       val result = await(submissionCommonService.transformData(Fixtures.metadata).value).value
-      result shouldBe Fixtures.schemeDataJson
+      val byteString = await(result.runReduce(_ ++ _))
+      val resultJson = Json.parse(byteString.utf8String).as[JsObject]
+      resultJson shouldBe Fixtures.schemeDataJson
       verify(metrics, VerificationModeFactory.times(1)).generateJson(any[Long](), any[TimeUnit]())
     }
 
@@ -160,7 +164,9 @@ class SubmissionCommonServiceSpec extends ERSTestHelper with BeforeAndAfterEach 
         .thenReturn(ERSEnvelope(Json.parse(schemeDataJsStr).as[JsObject]))
 
       val result = await(submissionCommonService.transformData(Fixtures.metadata).value).value
-      result shouldBe Json.parse(trimmedSchemeDataJsStr)
+      val byteString = await(result.runReduce(_ ++ _))
+      val resultJson = Json.parse(byteString.utf8String).as[JsObject]
+      resultJson shouldBe Json.parse(trimmedSchemeDataJsStr)
     }
 
     "return JsonFromSheetsCreationError" in {
@@ -183,10 +189,11 @@ class SubmissionCommonServiceSpec extends ERSTestHelper with BeforeAndAfterEach 
     }
 
     "return result from updatePostsubmission if sending to ADR is successful" in {
-      when(adrConnector.sendData(any[JsObject](), anyString())(any[ExecutionContext](), any[HeaderCarrier]()))
+      when(adrConnector.sendData(any[Source[ByteString, _]](), anyString())(any[ExecutionContext](), any[HeaderCarrier]()))
         .thenReturn(ERSEnvelope(Future.successful(HttpResponse(202, ""))))
 
-      val result = await(submissionCommonService.sendToADRUpdatePostData(Fixtures.metadata, Fixtures.metadataJson, Statuses.Failed.toString, Statuses.Sent.toString).value).value
+      val metadataStream: Source[ByteString, _] = Source.single(ByteString(Json.stringify(Fixtures.metadataJson)))
+      val result = await(submissionCommonService.sendToADRUpdatePostData(Fixtures.metadata, metadataStream, Statuses.Failed.toString, Statuses.Sent.toString).value).value
       result shouldBe true
       verify(metrics, VerificationModeFactory.times(1)).sendToADR(any[Long](), any[TimeUnit]())
       verify(metrics, VerificationModeFactory.times(1)).successfulSendToADR()
@@ -194,10 +201,11 @@ class SubmissionCommonServiceSpec extends ERSTestHelper with BeforeAndAfterEach 
     }
 
     "return result from updatePostsubmission if sending to ADR failed" in {
-      when(adrConnector.sendData(any[JsObject](), anyString())(any[ExecutionContext](), any[HeaderCarrier]()))
+      when(adrConnector.sendData(any[Source[ByteString, _]](), anyString())(any[ExecutionContext](), any[HeaderCarrier]()))
         .thenReturn(ERSEnvelope(Future.successful(HttpResponse(500, ""))))
 
-      val result = await(submissionCommonService.sendToADRUpdatePostData(Fixtures.metadata, Fixtures.metadataJson, Statuses.Failed.toString, Statuses.Sent.toString).value)
+      val metadataStream: Source[ByteString, _] = Source.single(ByteString(Json.stringify(Fixtures.metadataJson)))
+      val result = await(submissionCommonService.sendToADRUpdatePostData(Fixtures.metadata, metadataStream, Statuses.Failed.toString, Statuses.Sent.toString).value)
       result.value shouldBe true
       verify(metrics, VerificationModeFactory.times(0)).sendToADR(any[Long](), any[TimeUnit]())
       verify(metrics, VerificationModeFactory.times(0)).successfulSendToADR()
@@ -205,12 +213,13 @@ class SubmissionCommonServiceSpec extends ERSTestHelper with BeforeAndAfterEach 
     }
 
     "return ADRTransferError if sending to ADR or update returns error" in {
-      when(adrConnector.sendData(any[JsObject](), anyString())(any[ExecutionContext](), any[HeaderCarrier]()))
+      when(adrConnector.sendData(any[Source[ByteString, _]](), anyString())(any[ExecutionContext](), any[HeaderCarrier]()))
         .thenReturn(ERSEnvelope(ADRTransferError()))
 
+      val metadataStream: Source[ByteString, _] = Source.single(ByteString(Json.stringify(Fixtures.metadataJson)))
       val result =
         await(submissionCommonService
-          .sendToADRUpdatePostData(Fixtures.metadata, Fixtures.metadataJson, Statuses.Failed.toString, Statuses.Sent.toString).value)
+          .sendToADRUpdatePostData(Fixtures.metadata, metadataStream, Statuses.Failed.toString, Statuses.Sent.toString).value)
 
       result.swap.value shouldBe ADRTransferError()
       verify(metrics, VerificationModeFactory.times(0)).sendToADR(any[Long](), any[TimeUnit]())
