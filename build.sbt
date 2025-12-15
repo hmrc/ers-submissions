@@ -1,15 +1,8 @@
-
-import play.routes.compiler.InjectedRoutesGenerator
-import play.sbt.routes.RoutesKeys.routesGenerator
 import sbt.*
-import uk.gov.hmrc.DefaultBuildSettings.{defaultSettings, scalaSettings}
 import uk.gov.hmrc.sbtdistributables.SbtDistributablesPlugin
-import uk.gov.hmrc.versioning.SbtGitVersioning.autoImport.majorVersion
 
-ThisBuild / majorVersion := 2
+ThisBuild / majorVersion := 1
 ThisBuild / scalaVersion := "2.13.16"
-
-val appName = "ers-submissions"
 
 lazy val testSettings = Seq(
   javaOptions ++= Seq(
@@ -17,20 +10,12 @@ lazy val testSettings = Seq(
   )
 )
 
-lazy val microservice = Project(appName, file("."))
+lazy val microservice = Project("ers-submissions", file("."))
   .enablePlugins(play.sbt.PlayScala, SbtDistributablesPlugin)
   .disablePlugins(JUnitXmlReportPlugin) //Required to prevent https://github.com/scalatest/scalatest/issues/1427
   .settings(CodeCoverageSettings())
-  .settings(scalaSettings)
-  .settings(defaultSettings())
-  .settings(
-    scalaVersion := "2.13.16",
-    libraryDependencies ++= AppDependencies(),
-    libraryDependencySchemes ++= Seq("org.scala-lang.modules" %% "scala-xml" % VersionScheme.Always),
-    routesGenerator := InjectedRoutesGenerator
-  )
+  .settings(libraryDependencies ++= AppDependencies())
   .settings(inConfig(Test)(testSettings))
-  .settings(majorVersion := 1)
   .settings(PlayKeys.playDefaultPort := 9292)
 
 scalacOptions ++= Seq(

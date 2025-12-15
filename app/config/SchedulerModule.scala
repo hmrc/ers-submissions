@@ -18,10 +18,13 @@ package config
 
 import com.google.inject.AbstractModule
 import scheduler.{PreSubWithoutMetadataQueryImpl, ResubmissionServiceImpl}
+import workers.{DropCollectionWorker, DropPostSubmissionCollectionWorker}
 
 class SchedulerModule extends AbstractModule {
   override def configure(): Unit = {
     bind(classOf[ResubmissionServiceImpl]).asEagerSingleton()
     bind(classOf[PreSubWithoutMetadataQueryImpl]).asEagerSingleton()
+    bind(classOf[DropCollectionWorker]).asEagerSingleton()
+    bind(classOf[DropPostSubmissionCollectionWorker]).asEagerSingleton()
   }
 }
