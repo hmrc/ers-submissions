@@ -18,7 +18,7 @@ package scheduler
 
 import org.apache.pekko.actor.{Actor, ActorLogging, Props}
 import scheduler.SchedulingActor._
-import services.PresSubWithoutMetadataQueryService
+import services.{ConfirmationDateTimeMigrationService, CreatedAtMigrationService, PresSubWithoutMetadataQueryService}
 import services.resubmission.ReSubmissionSchedulerService
 
 class SchedulingActor extends Actor with ActorLogging {
@@ -40,4 +40,6 @@ object SchedulingActor {
 
   case class ResubmissionServiceClass(service: ReSubmissionSchedulerService) extends ScheduledMessage[Boolean]
   case class PreSubWithoutMetadataQueryClass(service: PresSubWithoutMetadataQueryService) extends ScheduledMessage[Unit]
+  case class ConfirmationDateTimeMigrationClass(service: ConfirmationDateTimeMigrationService) extends ScheduledMessage[Int]
+  case class CreatedAtMigrationClass(service: CreatedAtMigrationService) extends ScheduledMessage[Int]
 }

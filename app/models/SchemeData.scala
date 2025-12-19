@@ -34,7 +34,8 @@ case class SchemeInfo(schemeRef: String,
 }
 
 object SchemeInfo {
-  import models.DateTime._
+  implicit val dateTimeWrite: Writes[Instant] = (dateTime: Instant) => Json.toJson(dateTime.toEpochMilli)
+  implicit val dateTimeRead: Reads[Instant] = DateTimeFormats.dateTimeRead
 
   implicit val format: OFormat[SchemeInfo] = Json.format[SchemeInfo]
 }
