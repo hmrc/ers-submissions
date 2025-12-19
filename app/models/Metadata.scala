@@ -112,8 +112,7 @@ case class ErsSummary(bundleRef: String,
 
   val basicLogMessage: String = List(s"bundleRef $bundleRef", s"filetype $fileType", s"nofOfRows $nofOfRows", transferStatus).mkString("[",",","]")
 }
-object ErsSummary {
-  import models.DateTime._
+object ErsSummary extends DateTimeFormats {
 
   implicit val format: OFormat[ErsSummary] = Json.format[ErsSummary]
 }

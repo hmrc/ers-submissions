@@ -21,6 +21,7 @@ import cats.syntax.all._
 import common.ERSEnvelope.ERSEnvelope
 import config.ApplicationConfig
 import models._
+import org.bson.BsonType
 import org.mongodb.scala.bson.{BsonDocument, BsonInt64, BsonString}
 import org.mongodb.scala.model.Sorts._
 import org.mongodb.scala.model._
@@ -30,8 +31,8 @@ import play.api.libs.json.{Format, JsObject, Json}
 import repositories.helpers.RepositoryHelper
 import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
+import uk.gov.hmrc.mongo.play.json.formats.MongoJavatimeFormats
 
-import java.time.Instant
 import java.util.concurrent.TimeUnit
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.ExecutionContext
@@ -45,8 +46,7 @@ class PresubmissionMongoRepository @Inject()(applicationConfig: ApplicationConfi
     domainFormat = implicitly[Format[JsObject]],
     indexes = scala.Seq(
       IndexModel(ascending("schemeInfo.schemeRef"), IndexOptions().name("schemeRef")),
-      IndexModel(ascending("schemeInfo.timestamp"), IndexOptions().name("timestamp")),
-      IndexModel(ascending("createdAt"), indexOptions = IndexOptions().name("timeToLive")
+      IndexModel(ascending("createdAt"), indexOptions = IndexOptions().name("schemeInfoTimeToLive")
           .expireAfter(applicationConfig.presubmissionCollectionTTL, TimeUnit.DAYS)
       )
     ),
@@ -128,7 +128,7 @@ class PresubmissionMongoRepository @Inject()(applicationConfig: ApplicationConfi
 
   private def createDocumentToInsert(schemeData: SchemeData): JsObject =
     Json.toJsObject(schemeData) ++
-      Json.obj("createdAt" -> Json.obj("$date" -> Instant.now.toEpochMilli))
+      Json.obj("createdAt" -> MongoJavatimeFormats.instantWrites.writes(schemeData.schemeInfo.timestamp))
 
   def  getStatusForSelectedSchemes(sessionId: String, selectors: Selectors): ERSEnvelope[Seq[JsObject]] = EitherT {
     collection
@@ -139,6 +139,45 @@ class PresubmissionMongoRepository @Inject()(applicationConfig: ApplicationConfi
         mongoRecover(
           repository = className,
           method = "getStatusForSelectedSchemes",
+          sessionId = sessionId,
+          message = "operation failed due to exception from Mongo",
+          optSchemaRefs = None
+        )
+      }
+  }
+
+  def migrateCreatedAtField(sessionId: String = ""): ERSEnvelope[Int] = EitherT {
+    val batchSize = applicationConfig.createdAtMigrationBatchSize
+
+    // Query documents where createdAt either doesn't exist OR is not stored as proper date type
+    val filter = Filters.or(
+      Filters.exists("createdAt", exists = false),
+      Filters.not(Filters.`type`("createdAt", BsonType.DATE_TIME))
+    )
+
+    collection
+      .find(filter)
+      .limit(batchSize)
+      .toFuture()
+      .flatMap { documents =>
+        val updateFutures: scala.Seq[scala.concurrent.Future[org.mongodb.scala.result.UpdateResult]] = documents.map { doc =>
+          // Parse the document to get SchemeData
+          val schemeData = doc.as[SchemeData]
+          val selector = buildSelector(schemeData.schemeInfo)
+
+          // Create updated document with proper createdAt field
+          val updatedDoc = createDocumentToInsert(schemeData)
+
+          collection.replaceOne(selector, updatedDoc).toFuture()
+        }
+
+        scala.concurrent.Future.sequence(updateFutures).map(_.count(_.wasAcknowledged()))
+      }
+      .map(_.asRight)
+      .recover {
+        mongoRecover(
+          repository = className,
+          method = "migrateCreatedAtField",
           sessionId = sessionId,
           message = "operation failed due to exception from Mongo",
           optSchemaRefs = None

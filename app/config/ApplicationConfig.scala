@@ -26,7 +26,11 @@ class ApplicationConfig @Inject()(serviceConfig: ServicesConfig) {
   lazy val presubmissionCollection: String = serviceConfig.getString("settings.presubmission-collection")
   lazy val presubmissionCollectionTTL: Int = serviceConfig.getInt("settings.presubmission-collection-ttl-days")
   lazy val presubmissionCollectionIndexReplace: Boolean = serviceConfig.getBoolean("settings.presubmission-collection-index-replace")
+
   lazy val metadataCollection: String = serviceConfig.getString("settings.metadata-collection")
+  lazy val metadataCollectionTTL: Int = serviceConfig.getInt("settings.metadata-collection-ttl-days")
+  lazy val metadataCollectionIndexReplace: Boolean = serviceConfig.getBoolean("settings.metadata-collection-index-replace")
+
   lazy val uploadFileSizeLimit: Int = serviceConfig.getInt("file-size.uploadSizeLimit")
   lazy val maxGroupSize: Int = serviceConfig.getInt("file-size.maxGroupSize")
   //submissionParallelism refers to the number of threads used while submitting the file to the repository.
@@ -61,6 +65,12 @@ class ApplicationConfig @Inject()(serviceConfig: ServicesConfig) {
   // Presubmission with missing metadata query
   lazy val dateTimeFilterForQuery: String = serviceConfig.getString(s"schedules.generate-pre-sub-without-metadata-query.date-time-filter")
   lazy val maxNumberOfRecordsToReturn: Int = serviceConfig.getInt(s"schedules.generate-pre-sub-without-metadata-query.max-records")
+
+  // Confirmation date time migration
+  lazy val confirmationDateTimeMigrationBatchSize: Int = Try(serviceConfig.getInt("schedules.confirmation-date-time-migration.max-records")).getOrElse(1000)
+
+  // Created at migration
+  lazy val createdAtMigrationBatchSize: Int = Try(serviceConfig.getInt("schedules.created-at-migration.max-records")).getOrElse(1000)
 
   def lockoutTimeout(jobName: String): Int = serviceConfig.getInt(s"schedules.$jobName.lockTimeout")
   def resubmissionLimit(jobName: String): Int = serviceConfig.getInt(s"schedules.$jobName.resubmissionLimit")

@@ -17,11 +17,13 @@
 package config
 
 import com.google.inject.AbstractModule
-import scheduler.{PreSubWithoutMetadataQueryImpl, ResubmissionServiceImpl}
+import scheduler.{ConfirmationDateTimeMigrationJobImpl, CreatedAtMigrationJobImpl, PreSubWithoutMetadataQueryImpl, ResubmissionServiceImpl}
 
 class SchedulerModule extends AbstractModule {
   override def configure(): Unit = {
     bind(classOf[ResubmissionServiceImpl]).asEagerSingleton()
     bind(classOf[PreSubWithoutMetadataQueryImpl]).asEagerSingleton()
+    bind(classOf[ConfirmationDateTimeMigrationJobImpl]).asEagerSingleton()
+    bind(classOf[CreatedAtMigrationJobImpl]).asEagerSingleton()
   }
 }

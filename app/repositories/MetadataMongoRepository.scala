@@ -21,11 +21,12 @@ import cats.implicits.catsSyntaxEitherId
 import common.ERSEnvelope.ERSEnvelope
 import config.ApplicationConfig
 import models._
+import org.bson.BsonType
 import org.mongodb.scala.FindObservable
 import org.mongodb.scala.bson.{BsonDocument, BsonInt64, BsonString, Document, ObjectId}
 import org.mongodb.scala.model.Accumulators._
 import org.mongodb.scala.model.Sorts.ascending
-import org.mongodb.scala.model.{Aggregates, Filters, IndexModel, IndexOptions, Projections}
+import org.mongodb.scala.model._
 import org.mongodb.scala.result.UpdateResult
 import play.api.libs.json.Format.GenericFormat
 import play.api.libs.json.{Format, JsObject, Json}
@@ -35,8 +36,9 @@ import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
 import uk.gov.hmrc.mongo.play.json.formats.MongoFormats
 
+import java.util.concurrent.TimeUnit
 import javax.inject.{Inject, Singleton}
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class MetadataMongoRepository @Inject()(val applicationConfig: ApplicationConfig, mc: MongoComponent)
@@ -49,8 +51,12 @@ class MetadataMongoRepository @Inject()(val applicationConfig: ApplicationConfig
       IndexModel(ascending("metaData.schemeInfo.schemeRef"), IndexOptions().name("schemeRef")),
       IndexModel(ascending("metaData.schemeInfo.taxYear"), IndexOptions().name("taxYear")),
       IndexModel(ascending("transferStatus"), IndexOptions().name("transferStatus")),
-      IndexModel(ascending("metaData.schemeInfo.timestamp"), IndexOptions().name("timestamp"))
-    )
+      IndexModel(ascending("metaData.schemeInfo.timestamp"), IndexOptions().name("timestamp")),
+      IndexModel(ascending("confirmationDateTime"), indexOptions = IndexOptions().name("confirmationDateTimeToLive")
+        .expireAfter(applicationConfig.metadataCollectionTTL, TimeUnit.DAYS)
+      )
+    ),
+    replaceIndexes = applicationConfig.metadataCollectionIndexReplace
   ) with RepositoryHelper {
 
   private val objectIdKey: String = "_id"
@@ -214,6 +220,43 @@ class MetadataMongoRepository @Inject()(val applicationConfig: ApplicationConfig
         mongoRecover(
           repository = className,
           method = "getStatusForSelectedSchemes",
+          sessionId = sessionId,
+          message = "operation failed due to exception from Mongo",
+          optSchemaRefs = None
+        )
+      }
+  }
+
+  def migrateConfirmationDateTimeField(sessionId: String = ""): ERSEnvelope[Int] = EitherT {
+    val batchSize = applicationConfig.confirmationDateTimeMigrationBatchSize
+
+    val filter = Filters.and(
+      Filters.exists("confirmationDateTime"),
+      Filters.not(Filters.`type`("confirmationDateTime", BsonType.DATE_TIME))
+    )
+
+    collection
+      .find(filter)
+      .limit(batchSize)
+      .toFuture()
+      .flatMap { documents =>
+        val updateFutures: Seq[Future[UpdateResult]] = documents.map { doc =>
+          val summary = doc.as[ErsSummary]
+          val selector = buildSelector(summary.metaData.schemeInfo)
+
+          // Re-serialize with proper format - the ErsSummary format will handle Instant correctly
+          val updatedDoc = Json.toJsObject(summary)
+
+          collection.replaceOne(selector, updatedDoc).toFuture()
+        }
+
+        Future.sequence(updateFutures).map(_.count(_.wasAcknowledged()))
+      }
+      .map(_.asRight)
+      .recover {
+        mongoRecover(
+          repository = className,
+          method = "migrateConfirmationDateTimeField",
           sessionId = sessionId,
           message = "operation failed due to exception from Mongo",
           optSchemaRefs = None

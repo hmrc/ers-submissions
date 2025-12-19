@@ -26,11 +26,9 @@
 
     <logger name="application" level="INFO"/>
 
-    <logger name="services" level="INFO"/>
+    <logger name="services" level="DEBUG"/>
 
-    <logger name="workers" level="INFO"/>
-
-    <logger name="scheduler" level="INFO"/>
+    <logger name="scheduler" level="DEBUG"/>
 
     <logger name="connector" level="TRACE">
         <appender-ref ref="STDOUT"/>
