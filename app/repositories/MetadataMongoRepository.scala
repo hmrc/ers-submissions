@@ -29,7 +29,7 @@ import org.mongodb.scala.model.Sorts.ascending
 import org.mongodb.scala.model._
 import org.mongodb.scala.result.UpdateResult
 import play.api.libs.json.Format.GenericFormat
-import play.api.libs.json.{Format, JsObject, Json}
+import play.api.libs.json.{Format, JsObject, JsString, Json}
 import repositories.helpers.RepositoryHelper
 import services.resubmission.ProcessFailedSubmissionsConfig
 import uk.gov.hmrc.mongo.MongoComponent
@@ -240,6 +240,12 @@ class MetadataMongoRepository @Inject()(val applicationConfig: ApplicationConfig
       .limit(batchSize)
       .toFuture()
       .flatMap { documents =>
+        // Debug: Log the raw confirmationDateTime field from the first document
+        documents.headOption.foreach { firstDoc =>
+          val confirmationDateTimeValue = (firstDoc \ "confirmationDateTime").toOption.getOrElse(JsString("{[MISSING]}"))
+          logger.info(s"[migrateConfirmationDateTimeField] First document confirmationDateTime raw value: $confirmationDateTimeValue")
+        }
+
         val updateFutures: Seq[Future[UpdateResult]] = documents.map { doc =>
           val summary = doc.as[ErsSummary]
           val selector = buildSelector(summary.metaData.schemeInfo)
