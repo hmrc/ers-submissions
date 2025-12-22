@@ -67,10 +67,10 @@ class ApplicationConfig @Inject()(serviceConfig: ServicesConfig) {
   lazy val maxNumberOfRecordsToReturn: Int = serviceConfig.getInt(s"schedules.generate-pre-sub-without-metadata-query.max-records")
 
   // Confirmation date time migration
-  lazy val confirmationDateTimeMigrationBatchSize: Int = Try(serviceConfig.getInt("schedules.confirmation-date-time-migration.max-records")).getOrElse(1000)
+  lazy val confirmationDateTimeMigrationBatchSize: Int = Try(serviceConfig.getInt("schedules.confirmation-date-time-migration.max-records")).getOrElse(100)
 
   // Created at migration
-  lazy val createdAtMigrationBatchSize: Int = Try(serviceConfig.getInt("schedules.created-at-migration.max-records")).getOrElse(1000)
+  lazy val createdAtMigrationBatchSize: Int = Try(serviceConfig.getInt("schedules.created-at-migration.max-records")).getOrElse(100)
 
   def lockoutTimeout(jobName: String): Int = serviceConfig.getInt(s"schedules.$jobName.lockTimeout")
   def resubmissionLimit(jobName: String): Int = serviceConfig.getInt(s"schedules.$jobName.resubmissionLimit")
