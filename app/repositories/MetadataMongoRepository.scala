@@ -240,11 +240,14 @@ class MetadataMongoRepository @Inject()(val applicationConfig: ApplicationConfig
       .limit(batchSize)
       .toFuture()
       .flatMap { documents =>
-        // Debug: Log the raw confirmationDateTime field from the first document
-        documents.headOption.foreach { firstDoc =>
-          val confirmationDateTimeValue = (firstDoc \ "confirmationDateTime").toOption.getOrElse(JsString("{[MISSING]}"))
-          logger.info(s"[migrateConfirmationDateTimeField] First document confirmationDateTime raw value: $confirmationDateTimeValue")
-        }
+        // Debug: Build key-value collection of _id -> confirmationDateTime for all documents
+        val idToConfirmationDateTime = documents.map { doc =>
+          val id = (doc \ "_id").asOpt[String].getOrElse("UNKNOWN_ID")
+          val confirmationDateTimeValue = (doc \ "confirmationDateTime").toOption.getOrElse(JsString("MISSING"))
+          s"$id:$confirmationDateTimeValue"
+        }.mkString(", ")
+
+        logger.info(s"[migrateConfirmationDateTimeField] All ${documents.size} documents - ID:confirmationDateTime pairs: $idToConfirmationDateTime")
 
         val updateFutures: Seq[Future[UpdateResult]] = documents.map { doc =>
           val summary = doc.as[ErsSummary]
