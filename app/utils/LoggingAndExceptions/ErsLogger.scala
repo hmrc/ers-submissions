@@ -32,7 +32,7 @@ trait ErsLogger extends ErsDataMessages with ErsExceptionMessages with Logging {
 
     val finalErrorMessage: String =
       (if (context.isDefined) {
-        errorMessage ++ s"Context: $context"
+        errorMessage :+ s"Context: $context"
       } else {
         errorMessage
       }).mkString("\n")

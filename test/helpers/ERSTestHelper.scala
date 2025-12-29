@@ -16,7 +16,6 @@
 
 package helpers
 
-import config.SchedulerModule
 import org.apache.pekko.stream.Materializer
 import org.apache.pekko.util.ByteString
 import org.scalatest.OptionValues
@@ -37,7 +36,6 @@ trait ERSTestHelper extends AnyWordSpecLike with Matchers with OptionValues with
 
   override def fakeApplication(): Application =
     new GuiceApplicationBuilder()
-    .disable[SchedulerModule]
       .build()
 
   val mockCc: ControllerComponents = stubControllerComponents()
