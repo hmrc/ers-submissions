@@ -242,24 +242,35 @@ class MetadataMongoRepository @Inject()(val applicationConfig: ApplicationConfig
       .flatMap { documents =>
         // Debug: Build key-value collection of _id -> confirmationDateTime for all documents
         val idToConfirmationDateTime = documents.map { doc =>
-          val id = (doc \ "_id").asOpt[String].getOrElse("UNKNOWN_ID")
+          val id = (doc \ objectIdKey).as[ObjectId](MongoFormats.objectIdFormat).toString
           val confirmationDateTimeValue = (doc \ "confirmationDateTime").toOption.getOrElse(JsString("MISSING"))
           s"$id:$confirmationDateTimeValue"
         }.mkString(", ")
 
-        logger.info(s"[migrateConfirmationDateTimeField] All ${documents.size} documents - ID:confirmationDateTime pairs: $idToConfirmationDateTime")
+        logInfo(s"[migrateConfirmationDateTimeField] All ${documents.size} documents - ID:confirmationDateTime pairs: $idToConfirmationDateTime")
 
         val updateFutures: Seq[Future[UpdateResult]] = documents.map { doc =>
+          val objectId = (doc \ objectIdKey).as[ObjectId](MongoFormats.objectIdFormat)
           val summary = doc.as[ErsSummary]
-          val selector = buildSelector(summary.metaData.schemeInfo)
+
+          // Use _id as selector to ensure we update the exact document
+          val selector = Filters.equal(objectIdKey, objectId)
 
           // Re-serialize with proper format - the ErsSummary format will handle Instant correctly
-          val updatedDoc = Json.toJsObject(summary)
+          // Preserve the _id field from the original document
+          val updatedDoc = Json.toJsObject(summary) + (objectIdKey -> Json.toJson(objectId)(MongoFormats.objectIdFormat))
 
-          collection.replaceOne(selector, updatedDoc).toFuture()
+          collection.replaceOne(selector, updatedDoc).toFuture().map { result =>
+            if (result.getModifiedCount > 0) {
+              logInfo(s"[migrateConfirmationDateTimeField] Successfully updated document with _id: $objectId")
+            } else {
+              logWarn(s"[migrateConfirmationDateTimeField] Document with _id: $objectId was not modified. Matched: ${result.getMatchedCount}")
+            }
+            result
+          }
         }
 
-        Future.sequence(updateFutures).map(_.count(_.wasAcknowledged()))
+        Future.sequence(updateFutures).map(_.map(_.getModifiedCount).sum.toInt)
       }
       .map(_.asRight)
       .recover {
