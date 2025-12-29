@@ -21,7 +21,6 @@ import cats.implicits.catsSyntaxEitherId
 import common.ERSEnvelope.ERSEnvelope
 import config.ApplicationConfig
 import models._
-import org.bson.BsonType
 import org.mongodb.scala.FindObservable
 import org.mongodb.scala.bson.{BsonDocument, BsonInt64, BsonString, Document, ObjectId}
 import org.mongodb.scala.model.Accumulators._
@@ -29,7 +28,7 @@ import org.mongodb.scala.model.Sorts.ascending
 import org.mongodb.scala.model._
 import org.mongodb.scala.result.UpdateResult
 import play.api.libs.json.Format.GenericFormat
-import play.api.libs.json.{Format, JsObject, JsString, Json}
+import play.api.libs.json.{Format, JsObject, Json}
 import repositories.helpers.RepositoryHelper
 import services.resubmission.ProcessFailedSubmissionsConfig
 import uk.gov.hmrc.mongo.MongoComponent
@@ -38,7 +37,7 @@ import uk.gov.hmrc.mongo.play.json.formats.MongoFormats
 
 import java.util.concurrent.TimeUnit
 import javax.inject.{Inject, Singleton}
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.ExecutionContext
 
 @Singleton
 class MetadataMongoRepository @Inject()(val applicationConfig: ApplicationConfig, mc: MongoComponent)
@@ -220,63 +219,6 @@ class MetadataMongoRepository @Inject()(val applicationConfig: ApplicationConfig
         mongoRecover(
           repository = className,
           method = "getStatusForSelectedSchemes",
-          sessionId = sessionId,
-          message = "operation failed due to exception from Mongo",
-          optSchemaRefs = None
-        )
-      }
-  }
-
-  def migrateConfirmationDateTimeField(sessionId: String = ""): ERSEnvelope[Int] = EitherT {
-    val batchSize = applicationConfig.confirmationDateTimeMigrationBatchSize
-
-    val filter = Filters.and(
-      Filters.exists("confirmationDateTime"),
-      Filters.not(Filters.`type`("confirmationDateTime", BsonType.DATE_TIME))
-    )
-
-    collection
-      .find(filter)
-      .limit(batchSize)
-      .toFuture()
-      .flatMap { documents =>
-        // Debug: Build key-value collection of _id -> confirmationDateTime for all documents
-        val idToConfirmationDateTime = documents.map { doc =>
-          val id = (doc \ objectIdKey).as[ObjectId](MongoFormats.objectIdFormat).toString
-          val confirmationDateTimeValue = (doc \ "confirmationDateTime").toOption.getOrElse(JsString("MISSING"))
-          s"$id:$confirmationDateTimeValue"
-        }.mkString(", ")
-
-        logInfo(s"[migrateConfirmationDateTimeField] All ${documents.size} documents - ID:confirmationDateTime pairs: $idToConfirmationDateTime")
-
-        val updateFutures: Seq[Future[UpdateResult]] = documents.map { doc =>
-          val objectId = (doc \ objectIdKey).as[ObjectId](MongoFormats.objectIdFormat)
-          val summary = doc.as[ErsSummary]
-
-          // Use _id as selector to ensure we update the exact document
-          val selector = Filters.equal(objectIdKey, objectId)
-
-          // Re-serialize with proper format - the ErsSummary format will handle Instant correctly
-          // Preserve the _id field from the original document
-          val updatedDoc = Json.toJsObject(summary) + (objectIdKey -> Json.toJson(objectId)(MongoFormats.objectIdFormat))
-
-          collection.replaceOne(selector, updatedDoc).toFuture().map { result =>
-            if (result.getModifiedCount > 0) {
-              logInfo(s"[migrateConfirmationDateTimeField] Successfully updated document with _id: $objectId")
-            } else {
-              logWarn(s"[migrateConfirmationDateTimeField] Document with _id: $objectId was not modified. Matched: ${result.getMatchedCount}")
-            }
-            result
-          }
-        }
-
-        Future.sequence(updateFutures).map(_.map(_.getModifiedCount).sum.toInt)
-      }
-      .map(_.asRight)
-      .recover {
-        mongoRecover(
-          repository = className,
-          method = "migrateConfirmationDateTimeField",
           sessionId = sessionId,
           message = "operation failed due to exception from Mongo",
           optSchemaRefs = None

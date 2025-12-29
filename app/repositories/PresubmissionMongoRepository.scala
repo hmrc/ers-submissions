@@ -21,7 +21,6 @@ import cats.syntax.all._
 import common.ERSEnvelope.ERSEnvelope
 import config.ApplicationConfig
 import models._
-import org.bson.BsonType
 import org.mongodb.scala.bson.{BsonDocument, BsonInt64, BsonString}
 import org.mongodb.scala.model.Sorts._
 import org.mongodb.scala.model._
@@ -139,45 +138,6 @@ class PresubmissionMongoRepository @Inject()(applicationConfig: ApplicationConfi
         mongoRecover(
           repository = className,
           method = "getStatusForSelectedSchemes",
-          sessionId = sessionId,
-          message = "operation failed due to exception from Mongo",
-          optSchemaRefs = None
-        )
-      }
-  }
-
-  def migrateCreatedAtField(sessionId: String = ""): ERSEnvelope[Int] = EitherT {
-    val batchSize = applicationConfig.createdAtMigrationBatchSize
-
-    // Query documents where createdAt either doesn't exist OR is not stored as proper date type
-    val filter = Filters.or(
-      Filters.exists("createdAt", exists = false),
-      Filters.not(Filters.`type`("createdAt", BsonType.DATE_TIME))
-    )
-
-    collection
-      .find(filter)
-      .limit(batchSize)
-      .toFuture()
-      .flatMap { documents =>
-        val updateFutures: scala.Seq[scala.concurrent.Future[org.mongodb.scala.result.UpdateResult]] = documents.map { doc =>
-          // Parse the document to get SchemeData
-          val schemeData = doc.as[SchemeData]
-          val selector = buildSelector(schemeData.schemeInfo)
-
-          // Create updated document with proper createdAt field
-          val updatedDoc = createDocumentToInsert(schemeData)
-
-          collection.replaceOne(selector, updatedDoc).toFuture()
-        }
-
-        scala.concurrent.Future.sequence(updateFutures).map(_.count(_.wasAcknowledged()))
-      }
-      .map(_.asRight)
-      .recover {
-        mongoRecover(
-          repository = className,
-          method = "migrateCreatedAtField",
           sessionId = sessionId,
           message = "operation failed due to exception from Mongo",
           optSchemaRefs = None
