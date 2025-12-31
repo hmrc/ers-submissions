@@ -37,13 +37,13 @@ import java.time.temporal.ChronoUnit
 import scala.concurrent.Future
 
 class ADRSubmissionIntegration extends AnyWordSpecLike with Matchers
- with BeforeAndAfterEach with FakeErsStubService {
+  with BeforeAndAfterEach with FakeErsStubService {
 
   val app: Application = new GuiceApplicationBuilder().configure(
-    Map("microservice.services.ers-stub.port" -> "19339",
-      "auditing.enabled" -> false
-    )
+    "microservice.services.ers-stub.port" -> "19339",
+    "auditing.enabled" -> false
   ).build()
+
   def wsClient: WSClient = app.injector.instanceOf[WSClient]
 
   private lazy val submissionController = app.injector.instanceOf[SubmissionController]
@@ -67,16 +67,25 @@ class ADRSubmissionIntegration extends AnyWordSpecLike with Matchers
 
   "metadataMongoRepository" should {
     "have expected indexes" in {
-      val indexNames = metadataMongoRepository.indexes.map(_.getOptions.getName)
-      val expectedIndexes = Set("schemeRef", "taxYear", "timestamp", "transferStatus")
+      val indexNames = metadataMongoRepository.indexes.map(_.getOptions.getName).sorted.toSet
+      val expectedIndexes = Seq(
+        "metaData.schemeInfo.schemeRef",
+        "metaData.schemeInfo.taxYear",
+        "metaData.schemeInfo.schemeType",
+        "metaData.schemeInfo.timestamp",
+        "transferStatus",
+        "metaData.schemeInfo.schemeType_transferStatus",
+        "confirmationDateTimeToLive"
+      ).sorted.toSet
+
       indexNames should contain allElementsOf expectedIndexes
     }
   }
 
   def getJson(selector: BsonDocument): Future[Seq[ErsSummary]] =
     metadataMongoRepository.collection.find(
-       filter = selector
-    ).batchSize(Int.MaxValue)
+        filter = selector
+      ).batchSize(Int.MaxValue)
       .map(_.as[ErsSummary])
       .toFuture()
 
@@ -147,9 +156,9 @@ class ADRSubmissionIntegration extends AnyWordSpecLike with Matchers
     }
   }
 
-    "return BAD_REQUEST if invalid request is made" in {
-      val response: Result = await(submissionController.saveMetadata()
-        .apply(FakeRequest().withBody(Fixtures.invalidPayload.as[JsObject])))
-      response.header.status shouldBe BAD_REQUEST
-    }
+  "return BAD_REQUEST if invalid request is made" in {
+    val response: Result = await(submissionController.saveMetadata()
+      .apply(FakeRequest().withBody(Fixtures.invalidPayload.as[JsObject])))
+    response.header.status shouldBe BAD_REQUEST
+  }
 }
