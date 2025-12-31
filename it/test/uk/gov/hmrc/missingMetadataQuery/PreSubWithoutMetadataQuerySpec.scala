@@ -38,8 +38,14 @@ class PreSubWithoutMetadataQuerySpec
   val mockRepositories: Repositories = mock[Repositories]
 
   when(mockApplicationConfig.dateTimeFilterForQuery).thenReturn("02/05/2023")
+
   when(mockApplicationConfig.metadataCollection).thenReturn("ers-metadata")
+  when(mockApplicationConfig.metadataCollectionTTL).thenReturn(1)
+  when(mockApplicationConfig.metadataCollectionIndexReplace).thenReturn(true)
+
   when(mockApplicationConfig.presubmissionCollection).thenReturn("ers-presubmission")
+  when(mockApplicationConfig.presubmissionCollectionTTL).thenReturn(1)
+  when(mockApplicationConfig.presubmissionCollectionIndexReplace).thenReturn(true)
 
   val localDateTime: LocalDateTime = LocalDateTime.of(2023, 12, 2, 10, 15, 30)
   val defaultInstant: Instant = localDateTime.toInstant(ZoneOffset.UTC)
@@ -131,7 +137,7 @@ class PreSubWithoutMetadataQuerySpec
       val metaData: Seq[JsObject] = Seq(
         createMetadataRecord(taxYear = "2017/18", schemeRef = "CSOP00000000001", defaultInstant),
         createMetadataRecord(taxYear = "2018/19", schemeRef = "CSOP00000000001", defaultInstant)
-      ).map(Json.toJsObject(_) ++ JsObject((Seq("x" -> JsNull))))
+      ).map(Json.toJsObject(_) ++ JsObject(Seq("x" -> JsNull)))
 
       //  has schemeInfo with required fields, but with a wrong type to trigger JsError case in validateJson
       val presubmissionData: Seq[JsObject] = Seq(

@@ -47,10 +47,15 @@ class MetadataMongoRepository @Inject()(val applicationConfig: ApplicationConfig
     collectionName = applicationConfig.metadataCollection,
     domainFormat = implicitly[Format[JsObject]],
     indexes = Seq(
-      IndexModel(ascending("metaData.schemeInfo.schemeRef"), IndexOptions().name("schemeRef")),
-      IndexModel(ascending("metaData.schemeInfo.taxYear"), IndexOptions().name("taxYear")),
+      IndexModel(ascending("metaData.schemeInfo.schemeRef"), IndexOptions().name("metaData.schemeInfo.schemeRef")),
+      IndexModel(ascending("metaData.schemeInfo.taxYear"), IndexOptions().name("metaData.schemeInfo.taxYear")),
+      IndexModel(ascending("metaData.schemeInfo.schemeType"), IndexOptions().name("metaData.schemeInfo.schemeType")),
       IndexModel(ascending("transferStatus"), IndexOptions().name("transferStatus")),
-      IndexModel(ascending("metaData.schemeInfo.timestamp"), IndexOptions().name("timestamp")),
+      IndexModel(ascending("metaData.schemeInfo.timestamp"), IndexOptions().name("metaData.schemeInfo.timestamp")),
+      IndexModel(
+        Indexes.ascending("metaData.schemeInfo.schemeType", "transferStatus"),
+        IndexOptions().name("metaData.schemeInfo.schemeType_transferStatus")
+      ),
       IndexModel(ascending("confirmationDateTime"), indexOptions = IndexOptions().name("confirmationDateTimeToLive")
         .expireAfter(applicationConfig.metadataCollectionTTL, TimeUnit.DAYS)
       )
@@ -193,6 +198,7 @@ class MetadataMongoRepository @Inject()(val applicationConfig: ApplicationConfig
     collection
       .aggregate(
         pipeline = scala.Seq(
+          Aggregates.sort(Sorts.ascending("metaData.schemeInfo.schemeType", "transferStatus")),
           Aggregates.group(
             Document("schemeType" -> "$metaData.schemeInfo.schemeType", "transferStatus" -> "$transferStatus"),
             sum("count", 1)
