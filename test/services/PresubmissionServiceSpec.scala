@@ -33,25 +33,26 @@ import scala.concurrent.ExecutionContext
 
 class PresubmissionServiceSpec extends ERSTestHelper with EitherValues {
 
-  implicit val hc: HeaderCarrier = HeaderCarrier()
-  implicit val request: FakeRequest[JsObject] = FakeRequest().withBody(Fixtures.metadataJson)
-  val mockRepositories: Repositories = mock[Repositories]
+  implicit val hc: HeaderCarrier                                = HeaderCarrier()
+  implicit val request: FakeRequest[JsObject]                   = FakeRequest().withBody(Fixtures.metadataJson)
+  val mockRepositories: Repositories                            = mock[Repositories]
   val mockPresubmissionRepository: PresubmissionMongoRepository = mock[PresubmissionMongoRepository]
-  val validGetJsonResult: Seq[JsObject] = Seq(Json.toJsObject(Fixtures.schemeData))
-  val invalidGetJsonResult: Seq[JsObject] = Seq(Json.toJsObject(Fixtures.schemeData) - "sheetName")
-  val deleteResultAcknowledged0: DeleteResult = DeleteResult.acknowledged(0)
-  val deleteResultAcknowledged1: DeleteResult = DeleteResult.acknowledged(1)
-  val deleteResultUnacknowledged: DeleteResult = DeleteResult.unacknowledged()
+  val validGetJsonResult: Seq[JsObject]                         = Seq(Json.toJsObject(Fixtures.schemeData))
+  val invalidGetJsonResult: Seq[JsObject]                       = Seq(Json.toJsObject(Fixtures.schemeData) - "sheetName")
+  val deleteResultAcknowledged0: DeleteResult                   = DeleteResult.acknowledged(0)
+  val deleteResultAcknowledged1: DeleteResult                   = DeleteResult.acknowledged(1)
+  val deleteResultUnacknowledged: DeleteResult                  = DeleteResult.unacknowledged()
 
-  def buildPresubmissionService(storeJsonResult: Option[Boolean] = Some(true),
-                                getJsonResult: Seq[JsObject] = validGetJsonResult,
-                                removeJsonResult: Option[DeleteResult] = Some(deleteResultAcknowledged1))
-                               (implicit ec: ExecutionContext): PresubmissionService =
+  def buildPresubmissionService(
+    storeJsonResult: Option[Boolean] = Some(true),
+    getJsonResult: Seq[JsObject] = validGetJsonResult,
+    removeJsonResult: Option[DeleteResult] = Some(deleteResultAcknowledged1)
+  )(implicit ec: ExecutionContext): PresubmissionService =
     new PresubmissionService(mockRepositories) {
 
       override lazy val presubmissionRepository: PresubmissionMongoRepository = mockPresubmissionRepository
-      when(mockPresubmissionRepository.storeJson(any[SchemeData], any())).thenReturn(
-        ERSEnvelope(storeJsonResult.toRight(MongoGenericError("Mongo operation failed"))))
+      when(mockPresubmissionRepository.storeJson(any[SchemeData], any()))
+        .thenReturn(ERSEnvelope(storeJsonResult.toRight(MongoGenericError("Mongo operation failed"))))
       when(mockPresubmissionRepository.getJson(any[SchemeInfo], any()))
         .thenReturn(ERSEnvelope(getJsonResult))
       when(mockPresubmissionRepository.removeJson(any[SchemeInfo], any()))
@@ -61,19 +62,19 @@ class PresubmissionServiceSpec extends ERSTestHelper with EitherValues {
   "calling storeJson" should {
     "return true if storage is successful" in {
       val presubmissionService = buildPresubmissionService(Some(true))
-      val result = await(presubmissionService.storeJson(Fixtures.schemeData).value)
+      val result               = await(presubmissionService.storeJson(Fixtures.schemeData).value)
       result.value shouldBe true
     }
 
     "return false if storage fails" in {
       val presubmissionService = buildPresubmissionService(Some(false))
-      val result = await(presubmissionService.storeJson(Fixtures.schemeData).value)
+      val result               = await(presubmissionService.storeJson(Fixtures.schemeData).value)
       result.value shouldBe false
     }
 
     "return error if error occurred in repository" in {
       val presubmissionService = buildPresubmissionService(None)
-      val result = await(presubmissionService.storeJson(Fixtures.schemeData).value)
+      val result               = await(presubmissionService.storeJson(Fixtures.schemeData).value)
       result.swap.value shouldBe MongoGenericError("Mongo operation failed")
     }
   }
@@ -81,19 +82,19 @@ class PresubmissionServiceSpec extends ERSTestHelper with EitherValues {
   "calling getJson" should {
     "return List[SchemeData] if finding succeeds" in {
       val presubmissionService = buildPresubmissionService(Some(true))
-      val result = await(presubmissionService.getJson(Fixtures.EMISchemeInfo).value)
+      val result               = await(presubmissionService.getJson(Fixtures.EMISchemeInfo).value)
       result.value.isEmpty shouldBe false
     }
 
     "return NoData() if finding fails" in {
       val presubmissionService = buildPresubmissionService(Some(true), getJsonResult = Seq())
-      val result = await(presubmissionService.getJson(Fixtures.EMISchemeInfo).value)
+      val result               = await(presubmissionService.getJson(Fixtures.EMISchemeInfo).value)
       result.swap.value shouldBe NoData()
     }
 
     "return SchemeDataMappingError if mapping to SchemeData fails" in {
       val presubmissionService = buildPresubmissionService(Some(true), getJsonResult = invalidGetJsonResult)
-      val result  = await(presubmissionService.getJson(Fixtures.EMISchemeInfo).value)
+      val result               = await(presubmissionService.getJson(Fixtures.EMISchemeInfo).value)
 
       result.swap.value shouldBe a[SchemeDataMappingError]
     }
@@ -101,53 +102,61 @@ class PresubmissionServiceSpec extends ERSTestHelper with EitherValues {
 
   "calling removeJson" should {
     "return true if removing is sussessful" in {
-      val presubmissionService = buildPresubmissionService(Some(true), removeJsonResult = Some(deleteResultAcknowledged1))
-      val result = await(presubmissionService.removeJson(Fixtures.EMISchemeInfo).value)
+      val presubmissionService =
+        buildPresubmissionService(Some(true), removeJsonResult = Some(deleteResultAcknowledged1))
+      val result               = await(presubmissionService.removeJson(Fixtures.EMISchemeInfo).value)
       result.value shouldBe true
     }
 
     "return false if remove returns false" in {
-      val presubmissionService = buildPresubmissionService(Some(true), removeJsonResult = Some(deleteResultUnacknowledged))
-      val result = await(presubmissionService.removeJson(Fixtures.EMISchemeInfo).value)
+      val presubmissionService =
+        buildPresubmissionService(Some(true), removeJsonResult = Some(deleteResultUnacknowledged))
+      val result               = await(presubmissionService.removeJson(Fixtures.EMISchemeInfo).value)
       result.value shouldBe false
     }
 
     "return NoData if remove returns true and deleted count 0" in {
-      val presubmissionService = buildPresubmissionService(Some(true), removeJsonResult = Some(deleteResultAcknowledged0))
-      val result = await(presubmissionService.removeJson(Fixtures.EMISchemeInfo).value)
+      val presubmissionService =
+        buildPresubmissionService(Some(true), removeJsonResult = Some(deleteResultAcknowledged0))
+      val result               = await(presubmissionService.removeJson(Fixtures.EMISchemeInfo).value)
       result.swap.value shouldBe NoData()
     }
 
     "return error if error returned from repository" in {
       val presubmissionService = buildPresubmissionService(Some(true), removeJsonResult = None)
-      val result = await(presubmissionService.removeJson(Fixtures.EMISchemeInfo).value)
+      val result               = await(presubmissionService.removeJson(Fixtures.EMISchemeInfo).value)
       result.swap.value shouldBe MongoGenericError("Mongo operation failed")
     }
   }
 
   "calling compareSheetsNumber" should {
-    def buildPresubmissionService(foundSheets: Option[Int]): PresubmissionService = new PresubmissionService(mockRepositories) {
-      override lazy val presubmissionRepository: PresubmissionMongoRepository = mockPresubmissionRepository
-      when(mockPresubmissionRepository.count(any[SchemeInfo](), any()))
-        .thenReturn(ERSEnvelope(foundSheets.map(_.toLong).toRight(MongoGenericError("Mongo operation failed"))))
-    }
+    def buildPresubmissionService(foundSheets: Option[Int]): PresubmissionService =
+      new PresubmissionService(mockRepositories) {
+        override lazy val presubmissionRepository: PresubmissionMongoRepository = mockPresubmissionRepository
+        when(mockPresubmissionRepository.count(any[SchemeInfo](), any()))
+          .thenReturn(ERSEnvelope(foundSheets.map(_.toLong).toRight(MongoGenericError("Mongo operation failed"))))
+      }
 
     "return true and number of found records if expected number of sheets is equal to found ones" in {
       val presubmissionService = buildPresubmissionService(Some(1))
-      val result = await(presubmissionService.compareSheetsNumber(expectedSheets = 1, schemeInfo = Fixtures.EMISchemeInfo).value)
+      val result               =
+        await(presubmissionService.compareSheetsNumber(expectedSheets = 1, schemeInfo = Fixtures.EMISchemeInfo).value)
       result.value shouldBe (true, 1)
     }
 
     "return false and number of found records  if expected number of sheets is not equal to found ones" in {
       val presubmissionService = buildPresubmissionService(Some(1))
-      val result = await(presubmissionService.compareSheetsNumber(expectedSheets = 2, schemeInfo = Fixtures.EMISchemeInfo).value)
+      val result               =
+        await(presubmissionService.compareSheetsNumber(expectedSheets = 2, schemeInfo = Fixtures.EMISchemeInfo).value)
       result.value shouldBe (false, 1)
     }
 
     "return false if error is returned from repository" in {
       val presubmissionService = buildPresubmissionService(None)
-      val result = await(presubmissionService.compareSheetsNumber(expectedSheets = 1, schemeInfo = Fixtures.EMISchemeInfo).value)
+      val result               =
+        await(presubmissionService.compareSheetsNumber(expectedSheets = 1, schemeInfo = Fixtures.EMISchemeInfo).value)
       result.swap.value shouldBe MongoGenericError("Mongo operation failed")
     }
   }
+
 }

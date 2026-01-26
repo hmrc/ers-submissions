@@ -22,51 +22,42 @@ import models._
 object SIP {
 
   val schemeType: String = "SIP"
-  val schemeRef: String = "XA1100000000000"
+  val schemeRef: String  = "XA1100000000000"
 
   // SIP_Awards_V4
-  def buildAwards(withAllFields: Boolean = true, sharesListedOnSE: String, marketValueAgreedHMRC: String): Seq[String] = Seq(
-    "2015-12-09",
-    "1000",
-    "2",
-    {
-      if(withAllFields) "no"
-      else ""
-    },
-    {
-      if(withAllFields) "2/1"
-      else ""
-    },
-    {
-      if(withAllFields) "10.1234"
-      else ""
-    },
-    "100.00",
-    "10.1234",
-    "1000",
-    "1000",
-    "1000",
-    "1000",
-    "1000",
-    "100",
-    sharesListedOnSE,
-    if(sharesListedOnSE == "no") marketValueAgreedHMRC else "",
-    if(sharesListedOnSE == "no" && marketValueAgreedHMRC == "yes") "aa12345678" else ""
-  )
+  def buildAwards(withAllFields: Boolean = true, sharesListedOnSE: String, marketValueAgreedHMRC: String): Seq[String] =
+    Seq(
+      "2015-12-09",
+      "1000",
+      "2",
+      if (withAllFields) "no"
+      else "",
+      if (withAllFields) "2/1"
+      else "",
+      if (withAllFields) "10.1234"
+      else "",
+      "100.00",
+      "10.1234",
+      "1000",
+      "1000",
+      "1000",
+      "1000",
+      "1000",
+      "100",
+      sharesListedOnSE,
+      if (sharesListedOnSE == "no") marketValueAgreedHMRC else "",
+      if (sharesListedOnSE == "no" && marketValueAgreedHMRC == "yes") "aa12345678" else ""
+    )
 
   // SIP_Out_V4
   def buildOutOfPlan(withAllFields: Boolean = true, sharesHeld: String, payeApplied: String): Seq[String] = Seq(
     "2011-10-13",
     "First",
-    {
-      if(withAllFields) "Second"
-      else ""
-    },
+    if (withAllFields) "Second"
+    else "",
     "Last",
-    {
-      if(withAllFields) "NINO"
-      else ""
-    },
+    if (withAllFields) "NINO"
+    else "",
     "123/XZ55555555",
     "100.00",
     "100.00",
@@ -81,7 +72,7 @@ object SIP {
     if (sharesHeld == "no" && payeApplied == "no") "no" else ""
   )
 
-  val schemeInfo: SchemeInfo = SchemeInfo (
+  val schemeInfo: SchemeInfo = SchemeInfo(
     schemeRef = "XA1100000000000",
     schemeId = "123PA12345678",
     taxYear = "2014/15",
@@ -100,6 +91,7 @@ object SIP {
     Some("1234567890"),
     Some("1234567890")
   )
+
   val companyDetailsMin: CompanyDetails = CompanyDetails(
     "testCompany",
     "testAddress1",
@@ -254,4 +246,5 @@ object SIP {
     nofOfRows = None,
     transferStatus = Some("saved")
   )
+
 }

@@ -35,12 +35,12 @@ import scala.concurrent.Future
 
 class OTHER_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with EitherValues {
 
-  implicit val hc: HeaderCarrier = new HeaderCarrier()
+  implicit val hc: HeaderCarrier              = new HeaderCarrier()
   implicit val request: FakeRequest[JsObject] = FakeRequest().withBody(Fixtures.metadataJson)
 
-  val mockSubmissionCommon: SubmissionCommon = app.injector.instanceOf[SubmissionCommon]
+  val mockSubmissionCommon: SubmissionCommon         = app.injector.instanceOf[SubmissionCommon]
   val mockPresubmissionService: PresubmissionService = mock[PresubmissionService]
-  val mockConfigUtils: ConfigUtils = app.injector.instanceOf[ConfigUtils]
+  val mockConfigUtils: ConfigUtils                   = app.injector.instanceOf[ConfigUtils]
 
   val mockAdrSubmission: ADRSubmission = new ADRSubmission(
     mockSubmissionCommon,
@@ -48,7 +48,7 @@ class OTHER_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with
     mockConfigUtils
   )
 
-  override def beforeEach(): Unit  = {
+  override def beforeEach(): Unit = {
     super.beforeEach()
     reset(mockPresubmissionService)
   }
@@ -170,13 +170,43 @@ class OTHER_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with
         ERSEnvelope(
           List(
             SchemeData(OTHER.schemeInfo, "Other_Grants_V4", None, Some(ListBuffer(OTHER.buildGrantedV4()))),
-            SchemeData(OTHER.schemeInfo, "Other_Options_V4", None, Some(ListBuffer(OTHER.buildOptionV4("yes", "yes", "yes", "yes", "yes")))),
-            SchemeData(OTHER.schemeInfo, "Other_Acquisition_V4", None, Some(ListBuffer(OTHER.buildAquisitionV4("yes", "yes", "yes", "yes", "yes", "yes", "yes")))),
-            SchemeData(OTHER.schemeInfo, "Other_RestrictedSecurities_V4", None, Some(ListBuffer(OTHER.buildRestrictedSecuritiesV4("yes", "yes", "no")))),
-            SchemeData(OTHER.schemeInfo, "Other_OtherBenefits_V4", None, Some(ListBuffer(OTHER.buildBenefitsV4("yes")))),
-            SchemeData(OTHER.schemeInfo, "Other_Convertible_V4", None, Some(ListBuffer(OTHER.buildConvertableV4("yes")))),
+            SchemeData(
+              OTHER.schemeInfo,
+              "Other_Options_V4",
+              None,
+              Some(ListBuffer(OTHER.buildOptionV4("yes", "yes", "yes", "yes", "yes")))
+            ),
+            SchemeData(
+              OTHER.schemeInfo,
+              "Other_Acquisition_V4",
+              None,
+              Some(ListBuffer(OTHER.buildAquisitionV4("yes", "yes", "yes", "yes", "yes", "yes", "yes")))
+            ),
+            SchemeData(
+              OTHER.schemeInfo,
+              "Other_RestrictedSecurities_V4",
+              None,
+              Some(ListBuffer(OTHER.buildRestrictedSecuritiesV4("yes", "yes", "no")))
+            ),
+            SchemeData(
+              OTHER.schemeInfo,
+              "Other_OtherBenefits_V4",
+              None,
+              Some(ListBuffer(OTHER.buildBenefitsV4("yes")))
+            ),
+            SchemeData(
+              OTHER.schemeInfo,
+              "Other_Convertible_V4",
+              None,
+              Some(ListBuffer(OTHER.buildConvertableV4("yes")))
+            ),
             SchemeData(OTHER.schemeInfo, "Other_Notional_V4", None, Some(ListBuffer(OTHER.buildNotionalV4("yes")))),
-            SchemeData(OTHER.schemeInfo, "Other_Enhancement_V4", None, Some(ListBuffer(OTHER.buildEnchancementV4("yes")))),
+            SchemeData(
+              OTHER.schemeInfo,
+              "Other_Enhancement_V4",
+              None,
+              Some(ListBuffer(OTHER.buildEnchancementV4("yes")))
+            ),
             SchemeData(OTHER.schemeInfo, "Other_Sold_V4", None, Some(ListBuffer(OTHER.buildSoldV4("yes"))))
           )
         )
@@ -492,29 +522,91 @@ class OTHER_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with
       when(
         mockPresubmissionService.getJson(any[SchemeInfo]())(any())
       ).thenReturn(
-        ERSEnvelope(Future.successful(
-          List(
-            SchemeData(OTHER.schemeInfo, "Other_Grants_V4", None, Some(ListBuffer(OTHER.buildGrantedV4()))),
-            SchemeData(OTHER.schemeInfo, "Other_Grants_V4", None, Some(ListBuffer(OTHER.buildGrantedV4()))),
-            SchemeData(OTHER.schemeInfo, "Other_Options_V4", None, Some(ListBuffer(OTHER.buildOptionV4("yes", "yes", "yes", "yes", "yes")))),
-            SchemeData(OTHER.schemeInfo, "Other_Options_V4", None, Some(ListBuffer(OTHER.buildOptionV4("yes", "yes", "yes", "yes", "yes")))),
-            SchemeData(OTHER.schemeInfo, "Other_Acquisition_V4", None, Some(ListBuffer(OTHER.buildAquisitionV4("yes", "yes", "yes", "yes", "yes", "yes", "yes")))),
-            SchemeData(OTHER.schemeInfo, "Other_Acquisition_V4", None, Some(ListBuffer(OTHER.buildAquisitionV4("yes", "yes", "yes", "yes", "yes", "yes", "yes")))),
-            SchemeData(OTHER.schemeInfo, "Other_RestrictedSecurities_V4", None, Some(ListBuffer(OTHER.buildRestrictedSecuritiesV4("yes", "yes", "no")))),
-            SchemeData(OTHER.schemeInfo, "Other_RestrictedSecurities_V4", None, Some(ListBuffer(OTHER.buildRestrictedSecuritiesV4("yes", "yes", "no")))),
-            SchemeData(OTHER.schemeInfo, "Other_OtherBenefits_V4", None, Some(ListBuffer(OTHER.buildBenefitsV4("yes")))),
-            SchemeData(OTHER.schemeInfo, "Other_OtherBenefits_V4", None, Some(ListBuffer(OTHER.buildBenefitsV4("yes")))),
-            SchemeData(OTHER.schemeInfo, "Other_Convertible_V4", None, Some(ListBuffer(OTHER.buildConvertableV4("yes")))),
-            SchemeData(OTHER.schemeInfo, "Other_Convertible_V4", None, Some(ListBuffer(OTHER.buildConvertableV4("yes")))),
-            SchemeData(OTHER.schemeInfo, "Other_Notional_V4", None, Some(ListBuffer(OTHER.buildNotionalV4("yes")))),
-            SchemeData(OTHER.schemeInfo, "Other_Notional_V4", None, Some(ListBuffer(OTHER.buildNotionalV4("yes")))),
-            SchemeData(OTHER.schemeInfo, "Other_Enhancement_V4", None, Some(ListBuffer(OTHER.buildEnchancementV4("yes")))),
-            SchemeData(OTHER.schemeInfo, "Other_Enhancement_V4", None, Some(ListBuffer(OTHER.buildEnchancementV4("yes")))),
-            SchemeData(OTHER.schemeInfo, "Other_Sold_V4", None, Some(ListBuffer(OTHER.buildSoldV4("yes")))),
-            SchemeData(OTHER.schemeInfo, "Other_Sold_V4", None, Some(ListBuffer(OTHER.buildSoldV4("yes"))))
+        ERSEnvelope(
+          Future.successful(
+            List(
+              SchemeData(OTHER.schemeInfo, "Other_Grants_V4", None, Some(ListBuffer(OTHER.buildGrantedV4()))),
+              SchemeData(OTHER.schemeInfo, "Other_Grants_V4", None, Some(ListBuffer(OTHER.buildGrantedV4()))),
+              SchemeData(
+                OTHER.schemeInfo,
+                "Other_Options_V4",
+                None,
+                Some(ListBuffer(OTHER.buildOptionV4("yes", "yes", "yes", "yes", "yes")))
+              ),
+              SchemeData(
+                OTHER.schemeInfo,
+                "Other_Options_V4",
+                None,
+                Some(ListBuffer(OTHER.buildOptionV4("yes", "yes", "yes", "yes", "yes")))
+              ),
+              SchemeData(
+                OTHER.schemeInfo,
+                "Other_Acquisition_V4",
+                None,
+                Some(ListBuffer(OTHER.buildAquisitionV4("yes", "yes", "yes", "yes", "yes", "yes", "yes")))
+              ),
+              SchemeData(
+                OTHER.schemeInfo,
+                "Other_Acquisition_V4",
+                None,
+                Some(ListBuffer(OTHER.buildAquisitionV4("yes", "yes", "yes", "yes", "yes", "yes", "yes")))
+              ),
+              SchemeData(
+                OTHER.schemeInfo,
+                "Other_RestrictedSecurities_V4",
+                None,
+                Some(ListBuffer(OTHER.buildRestrictedSecuritiesV4("yes", "yes", "no")))
+              ),
+              SchemeData(
+                OTHER.schemeInfo,
+                "Other_RestrictedSecurities_V4",
+                None,
+                Some(ListBuffer(OTHER.buildRestrictedSecuritiesV4("yes", "yes", "no")))
+              ),
+              SchemeData(
+                OTHER.schemeInfo,
+                "Other_OtherBenefits_V4",
+                None,
+                Some(ListBuffer(OTHER.buildBenefitsV4("yes")))
+              ),
+              SchemeData(
+                OTHER.schemeInfo,
+                "Other_OtherBenefits_V4",
+                None,
+                Some(ListBuffer(OTHER.buildBenefitsV4("yes")))
+              ),
+              SchemeData(
+                OTHER.schemeInfo,
+                "Other_Convertible_V4",
+                None,
+                Some(ListBuffer(OTHER.buildConvertableV4("yes")))
+              ),
+              SchemeData(
+                OTHER.schemeInfo,
+                "Other_Convertible_V4",
+                None,
+                Some(ListBuffer(OTHER.buildConvertableV4("yes")))
+              ),
+              SchemeData(OTHER.schemeInfo, "Other_Notional_V4", None, Some(ListBuffer(OTHER.buildNotionalV4("yes")))),
+              SchemeData(OTHER.schemeInfo, "Other_Notional_V4", None, Some(ListBuffer(OTHER.buildNotionalV4("yes")))),
+              SchemeData(
+                OTHER.schemeInfo,
+                "Other_Enhancement_V4",
+                None,
+                Some(ListBuffer(OTHER.buildEnchancementV4("yes")))
+              ),
+              SchemeData(
+                OTHER.schemeInfo,
+                "Other_Enhancement_V4",
+                None,
+                Some(ListBuffer(OTHER.buildEnchancementV4("yes")))
+              ),
+              SchemeData(OTHER.schemeInfo, "Other_Sold_V4", None, Some(ListBuffer(OTHER.buildSoldV4("yes")))),
+              SchemeData(OTHER.schemeInfo, "Other_Sold_V4", None, Some(ListBuffer(OTHER.buildSoldV4("yes"))))
+            )
           )
         )
-      ))
+      )
 
       val result = await(mockAdrSubmission.generateSubmission(OTHER.metadata)(request, hc).value)
       result.value - "acknowledgementReference" shouldBe Json.parse("""{
@@ -1042,7 +1134,7 @@ class OTHER_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with
 
     "create valid JSON for empty Granted V4" in {
 
-      val sheetName: String = "Other_Grants_V4"
+      val sheetName: String  = "Other_Grants_V4"
       val configData: Config = Common.loadConfiguration(OTHER.otherSchemeType, sheetName, mockConfigUtils)
 
       val result = mockAdrSubmission.buildJson(
@@ -1058,7 +1150,7 @@ class OTHER_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with
 
     "create valid JSON for Granted V4" in {
 
-      val sheetName: String = "Other_Grants_V4"
+      val sheetName: String  = "Other_Grants_V4"
       val configData: Config = Common.loadConfiguration(OTHER.otherSchemeType, sheetName, mockConfigUtils)
 
       val result = mockAdrSubmission.buildJson(
@@ -1086,14 +1178,18 @@ class OTHER_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with
     // Options V4
     "create valid JSON for Options V4 with given TaxAvoidance = yes, optionsExercised = yes, sharesListedOnSE = yes, agreedHMRC = yes, valueReceivedOnRACL = yes" in {
 
-      val sheetName: String = "Other_Options_V4"
+      val sheetName: String  = "Other_Options_V4"
       val configData: Config = Common.loadConfiguration(OTHER.otherSchemeType, sheetName, mockConfigUtils)
 
       val result = mockAdrSubmission.buildJson(
         configData,
         ListBuffer(
           OTHER.buildOptionV4(
-            "yes", "yes", "yes", "yes", "yes"
+            "yes",
+            "yes",
+            "yes",
+            "yes",
+            "yes"
           )
         )
       )
@@ -1158,14 +1254,18 @@ class OTHER_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with
 
     "create valid JSON for Options V4 with given TaxAvoidance = no, optionsExercised = yes, sharesListedOnSE = yes, agreedHMRC = yes, valueReceivedOnRACL = yes" in {
 
-      val sheetName: String = "Other_Options_V4"
+      val sheetName: String  = "Other_Options_V4"
       val configData: Config = Common.loadConfiguration(OTHER.otherSchemeType, sheetName, mockConfigUtils)
 
       val result = mockAdrSubmission.buildJson(
         configData,
         ListBuffer(
           OTHER.buildOptionV4(
-            "no", "yes", "yes", "yes", "yes"
+            "no",
+            "yes",
+            "yes",
+            "yes",
+            "yes"
           )
         )
       )
@@ -1229,14 +1329,18 @@ class OTHER_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with
 
     "create valid JSON for Options V4 with given TaxAvoidance = no, optionsExercised = yes, sharesListedOnSE = no, agreedHMRC = yes, valueReceivedOnRACL = yes" in {
 
-      val sheetName: String = "Other_Options_V4"
+      val sheetName: String  = "Other_Options_V4"
       val configData: Config = Common.loadConfiguration(OTHER.otherSchemeType, sheetName, mockConfigUtils)
 
       val result = mockAdrSubmission.buildJson(
         configData,
         ListBuffer(
           OTHER.buildOptionV4(
-            "no", "yes", "no", "yes", "yes"
+            "no",
+            "yes",
+            "no",
+            "yes",
+            "yes"
           )
         )
       )
@@ -1302,14 +1406,18 @@ class OTHER_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with
 
     "create valid JSON for Options V4 with given TaxAvoidance = no, optionsExercised = yes, sharesListedOnSE = no, agreedHMRC = no, valueReceivedOnRACL = yes" in {
 
-      val sheetName: String = "Other_Options_V4"
+      val sheetName: String  = "Other_Options_V4"
       val configData: Config = Common.loadConfiguration(OTHER.otherSchemeType, sheetName, mockConfigUtils)
 
       val result = mockAdrSubmission.buildJson(
         configData,
         ListBuffer(
           OTHER.buildOptionV4(
-            "no", "yes", "no", "no", "yes"
+            "no",
+            "yes",
+            "no",
+            "no",
+            "yes"
           )
         )
       )
@@ -1374,14 +1482,18 @@ class OTHER_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with
 
     "create valid JSON for Options V4 with given TaxAvoidance = no, optionsExercised = yes, sharesListedOnSE = no, agreedHMRC = no, valueReceivedOnRACL = no" in {
 
-      val sheetName: String = "Other_Options_V4"
+      val sheetName: String  = "Other_Options_V4"
       val configData: Config = Common.loadConfiguration(OTHER.otherSchemeType, sheetName, mockConfigUtils)
 
       val result = mockAdrSubmission.buildJson(
         configData,
         ListBuffer(
           OTHER.buildOptionV4(
-            "no", "yes", "no", "no", "no"
+            "no",
+            "yes",
+            "no",
+            "no",
+            "no"
           )
         )
       )
@@ -1446,14 +1558,18 @@ class OTHER_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with
 
     "create valid JSON for Options V4 with given TaxAvoidance = no, optionsExercised = no, sharesListedOnSE = no, agreedHMRC = no, valueReceivedOnRACL = yes" in {
 
-      val sheetName: String = "Other_Options_V4"
+      val sheetName: String  = "Other_Options_V4"
       val configData: Config = Common.loadConfiguration(OTHER.otherSchemeType, sheetName, mockConfigUtils)
 
       val result = mockAdrSubmission.buildJson(
         configData,
         ListBuffer(
           OTHER.buildOptionV4(
-            "no", "no", "no", "no", "yes"
+            "no",
+            "no",
+            "no",
+            "no",
+            "yes"
           )
         )
       )
@@ -1514,14 +1630,18 @@ class OTHER_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with
 
     "create valid JSON for Options V4 with given TaxAvoidance = no, optionsExercised = no, sharesListedOnSE = no, agreedHMRC = no, valueReceivedOnRACL = no" in {
 
-      val sheetName: String = "Other_Options_V4"
+      val sheetName: String  = "Other_Options_V4"
       val configData: Config = Common.loadConfiguration(OTHER.otherSchemeType, sheetName, mockConfigUtils)
 
       val result = mockAdrSubmission.buildJson(
         configData,
         ListBuffer(
           OTHER.buildOptionV4(
-            "no", "no", "no", "no", "no"
+            "no",
+            "no",
+            "no",
+            "no",
+            "no"
           )
         )
       )
@@ -1583,14 +1703,20 @@ class OTHER_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with
 
     "create valid JSON for Aquisition V4 when given taxAvoidance = yes, sharesPartOfLargestClass = yes, sharesListedOnSE = yes, marketValueAgreedHMRC = yes, hasAnElectionBeenMadeToDisregardRestrictions = yes, artificialReductionInValueOnAcquisition = yes, sharesIssuedUnderAnEmployeeShareholderArrangement = yes" in {
 
-      val sheetName: String = "Other_Acquisition_V4"
+      val sheetName: String  = "Other_Acquisition_V4"
       val configData: Config = Common.loadConfiguration(OTHER.otherSchemeType, sheetName, mockConfigUtils)
 
       val result = mockAdrSubmission.buildJson(
         configData,
         ListBuffer(
           OTHER.buildAquisitionV4(
-            "yes", "yes", "yes", "yes", "yes", "yes", "yes"
+            "yes",
+            "yes",
+            "yes",
+            "yes",
+            "yes",
+            "yes",
+            "yes"
           )
         )
       )
@@ -1651,14 +1777,20 @@ class OTHER_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with
 
     "create valid JSON for Aquisition V4 when given taxAvoidance = no, sharesPartOfLargestClass = yes, sharesListedOnSE = yes, marketValueAgreedHMRC = yes, hasAnElectionBeenMadeToDisregardRestrictions = yes, artificialReductionInValueOnAcquisition = yes, sharesIssuedUnderAnEmployeeShareholderArrangement = yes" in {
 
-      val sheetName: String = "Other_Acquisition_V4"
+      val sheetName: String  = "Other_Acquisition_V4"
       val configData: Config = Common.loadConfiguration(OTHER.otherSchemeType, sheetName, mockConfigUtils)
 
       val result = mockAdrSubmission.buildJson(
         configData,
         ListBuffer(
           OTHER.buildAquisitionV4(
-            "no", "yes", "yes", "yes", "yes", "yes", "yes"
+            "no",
+            "yes",
+            "yes",
+            "yes",
+            "yes",
+            "yes",
+            "yes"
           )
         )
       )
@@ -1718,14 +1850,20 @@ class OTHER_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with
 
     "create valid JSON for Aquisition V4 when given taxAvoidance = no, sharesPartOfLargestClass = yes, sharesListedOnSE = no, marketValueAgreedHMRC = yes, hasAnElectionBeenMadeToDisregardRestrictions = yes, artificialReductionInValueOnAcquisition = yes, sharesIssuedUnderAnEmployeeShareholderArrangement = yes" in {
 
-      val sheetName: String = "Other_Acquisition_V4"
+      val sheetName: String  = "Other_Acquisition_V4"
       val configData: Config = Common.loadConfiguration(OTHER.otherSchemeType, sheetName, mockConfigUtils)
 
       val result = mockAdrSubmission.buildJson(
         configData,
         ListBuffer(
           OTHER.buildAquisitionV4(
-            "no", "yes", "no", "yes", "yes", "yes", "yes"
+            "no",
+            "yes",
+            "no",
+            "yes",
+            "yes",
+            "yes",
+            "yes"
           )
         )
       )
@@ -1787,14 +1925,20 @@ class OTHER_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with
 
     "create valid JSON for Aquisition V4 when given taxAvoidance = no, sharesPartOfLargestClass = yes, sharesListedOnSE = no, marketValueAgreedHMRC = no, hasAnElectionBeenMadeToDisregardRestrictions = yes, artificialReductionInValueOnAcquisition = yes, sharesIssuedUnderAnEmployeeShareholderArrangement = yes" in {
 
-      val sheetName: String = "Other_Acquisition_V4"
+      val sheetName: String  = "Other_Acquisition_V4"
       val configData: Config = Common.loadConfiguration(OTHER.otherSchemeType, sheetName, mockConfigUtils)
 
       val result = mockAdrSubmission.buildJson(
         configData,
         ListBuffer(
           OTHER.buildAquisitionV4(
-            "no", "yes", "no", "no", "yes", "yes", "yes"
+            "no",
+            "yes",
+            "no",
+            "no",
+            "yes",
+            "yes",
+            "yes"
           )
         )
       )
@@ -1855,14 +1999,20 @@ class OTHER_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with
 
     "create valid JSON for Aquisition V4 when given taxAvoidance = no, sharesPartOfLargestClass = no, sharesListedOnSE = no, marketValueAgreedHMRC = no, hasAnElectionBeenMadeToDisregardRestrictions = yes, artificialReductionInValueOnAcquisition = yes, sharesIssuedUnderAnEmployeeShareholderArrangement = yes" in {
 
-      val sheetName: String = "Other_Acquisition_V4"
+      val sheetName: String  = "Other_Acquisition_V4"
       val configData: Config = Common.loadConfiguration(OTHER.otherSchemeType, sheetName, mockConfigUtils)
 
       val result = mockAdrSubmission.buildJson(
         configData,
         ListBuffer(
           OTHER.buildAquisitionV4(
-            "no", "no", "no", "no", "yes", "yes", "yes"
+            "no",
+            "no",
+            "no",
+            "no",
+            "yes",
+            "yes",
+            "yes"
           )
         )
       )
@@ -1921,14 +2071,20 @@ class OTHER_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with
 
     "create valid JSON for Aquisition V4 when given taxAvoidance = no, sharesPartOfLargestClass = no, sharesListedOnSE = no, marketValueAgreedHMRC = no, hasAnElectionBeenMadeToDisregardRestrictions = no, artificialReductionInValueOnAcquisition = yes, sharesIssuedUnderAnEmployeeShareholderArrangement = yes" in {
 
-      val sheetName: String = "Other_Acquisition_V4"
+      val sheetName: String  = "Other_Acquisition_V4"
       val configData: Config = Common.loadConfiguration(OTHER.otherSchemeType, sheetName, mockConfigUtils)
 
       val result = mockAdrSubmission.buildJson(
         configData,
         ListBuffer(
           OTHER.buildAquisitionV4(
-            "no", "no", "no", "no", "no", "yes", "yes"
+            "no",
+            "no",
+            "no",
+            "no",
+            "no",
+            "yes",
+            "yes"
           )
         )
       )
@@ -1986,14 +2142,20 @@ class OTHER_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with
 
     "create valid JSON for Aquisition V4 when given taxAvoidance = no, sharesPartOfLargestClass = no, sharesListedOnSE = no, marketValueAgreedHMRC = no, hasAnElectionBeenMadeToDisregardRestrictions = no, artificialReductionInValueOnAcquisition = no, sharesIssuedUnderAnEmployeeShareholderArrangement = yes" in {
 
-      val sheetName: String = "Other_Acquisition_V4"
+      val sheetName: String  = "Other_Acquisition_V4"
       val configData: Config = Common.loadConfiguration(OTHER.otherSchemeType, sheetName, mockConfigUtils)
 
       val result = mockAdrSubmission.buildJson(
         configData,
         ListBuffer(
           OTHER.buildAquisitionV4(
-            "no", "no", "no", "no", "no", "no", "yes"
+            "no",
+            "no",
+            "no",
+            "no",
+            "no",
+            "no",
+            "yes"
           )
         )
       )
@@ -2050,14 +2212,20 @@ class OTHER_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with
 
     "create valid JSON for Aquisition V4 when given taxAvoidance = no, sharesPartOfLargestClass = no, sharesListedOnSE = no, marketValueAgreedHMRC = no, hasAnElectionBeenMadeToDisregardRestrictions = no, artificialReductionInValueOnAcquisition = no, sharesIssuedUnderAnEmployeeShareholderArrangement = no" in {
 
-      val sheetName: String = "Other_Acquisition_V4"
+      val sheetName: String  = "Other_Acquisition_V4"
       val configData: Config = Common.loadConfiguration(OTHER.otherSchemeType, sheetName, mockConfigUtils)
 
       val result = mockAdrSubmission.buildJson(
         configData,
         ListBuffer(
           OTHER.buildAquisitionV4(
-            "no", "no", "no", "no", "no", "no", "no"
+            "no",
+            "no",
+            "no",
+            "no",
+            "no",
+            "no",
+            "no"
           )
         )
       )
@@ -2115,14 +2283,16 @@ class OTHER_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with
 
     "create valid JSON for Restricted Securities V4 if TaxAvoidance and SE are given and Agreed HMRC is not" in {
 
-      val sheetName: String = "Other_RestrictedSecurities_V4"
+      val sheetName: String  = "Other_RestrictedSecurities_V4"
       val configData: Config = Common.loadConfiguration(OTHER.otherSchemeType, sheetName, mockConfigUtils)
 
       val result = mockAdrSubmission.buildJson(
         configData,
         ListBuffer(
           OTHER.buildRestrictedSecuritiesV4(
-            "yes", "yes", "no"
+            "yes",
+            "yes",
+            "no"
           )
         )
       )
@@ -2159,14 +2329,16 @@ class OTHER_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with
 
     "create valid JSON for Restricted Securities V4 if TaxAvoidance and SE are not given and Agreed HMRC is given" in {
 
-      val sheetName: String = "Other_RestrictedSecurities_V4"
+      val sheetName: String  = "Other_RestrictedSecurities_V4"
       val configData: Config = Common.loadConfiguration(OTHER.otherSchemeType, sheetName, mockConfigUtils)
 
       val result = mockAdrSubmission.buildJson(
         configData,
         ListBuffer(
           OTHER.buildRestrictedSecuritiesV4(
-            "no", "no", "yes"
+            "no",
+            "no",
+            "yes"
           )
         )
       )
@@ -2204,14 +2376,16 @@ class OTHER_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with
 
     "create valid JSON for Restricted Securities V4 if TaxAvoidance is given and SE and Agreed HMRC are not" in {
 
-      val sheetName: String = "Other_RestrictedSecurities_V4"
+      val sheetName: String  = "Other_RestrictedSecurities_V4"
       val configData: Config = Common.loadConfiguration(OTHER.otherSchemeType, sheetName, mockConfigUtils)
 
       val result = mockAdrSubmission.buildJson(
         configData,
         ListBuffer(
           OTHER.buildRestrictedSecuritiesV4(
-            "yes", "no", "no"
+            "yes",
+            "no",
+            "no"
           )
         )
       )
@@ -2249,7 +2423,7 @@ class OTHER_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with
 
     "create valid JSON for Restricted Securities V4 with different values" in {
 
-      val sheetName: String = "Other_RestrictedSecurities_V4"
+      val sheetName: String  = "Other_RestrictedSecurities_V4"
       val configData: Config = Common.loadConfiguration(OTHER.otherSchemeType, sheetName, mockConfigUtils)
 
       val result = mockAdrSubmission.buildJson(
@@ -2341,7 +2515,7 @@ class OTHER_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with
 
     "create valid JSON for Benefits V4 if TaxAvoidance = yes" in {
 
-      val sheetName: String = "Other_OtherBenefits_V4"
+      val sheetName: String  = "Other_OtherBenefits_V4"
       val configData: Config = Common.loadConfiguration(OTHER.otherSchemeType, sheetName, mockConfigUtils)
 
       val result = mockAdrSubmission.buildJson(
@@ -2379,7 +2553,7 @@ class OTHER_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with
 
     "create valid JSON for Benefits V4 if TaxAvoidance = no" in {
 
-      val sheetName: String = "Other_OtherBenefits_V4"
+      val sheetName: String  = "Other_OtherBenefits_V4"
       val configData: Config = Common.loadConfiguration(OTHER.otherSchemeType, sheetName, mockConfigUtils)
 
       val result = mockAdrSubmission.buildJson(
@@ -2418,7 +2592,7 @@ class OTHER_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with
 
     "create valid JSON for Convertable V4 if TaxAvoidance = yes" in {
 
-      val sheetName: String = "Other_Convertible_V4"
+      val sheetName: String  = "Other_Convertible_V4"
       val configData: Config = Common.loadConfiguration(OTHER.otherSchemeType, sheetName, mockConfigUtils)
 
       val result = mockAdrSubmission.buildJson(
@@ -2458,7 +2632,7 @@ class OTHER_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with
 
     "create valid JSON for Convertable V4 if TaxAvoidance = no" in {
 
-      val sheetName: String = "Other_Convertible_V4"
+      val sheetName: String  = "Other_Convertible_V4"
       val configData: Config = Common.loadConfiguration(OTHER.otherSchemeType, sheetName, mockConfigUtils)
 
       val result = mockAdrSubmission.buildJson(
@@ -2499,7 +2673,7 @@ class OTHER_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with
 
     "create valid JSON for Notional V4 if TaxAvoidance = yes" in {
 
-      val sheetName: String = "Other_Notional_V4"
+      val sheetName: String  = "Other_Notional_V4"
       val configData: Config = Common.loadConfiguration(OTHER.otherSchemeType, sheetName, mockConfigUtils)
 
       val result = mockAdrSubmission.buildJson(
@@ -2537,7 +2711,7 @@ class OTHER_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with
 
     "create valid JSON for Notional V4 if TaxAvoidance = no" in {
 
-      val sheetName: String = "Other_Notional_V4"
+      val sheetName: String  = "Other_Notional_V4"
       val configData: Config = Common.loadConfiguration(OTHER.otherSchemeType, sheetName, mockConfigUtils)
 
       val result = mockAdrSubmission.buildJson(
@@ -2576,7 +2750,7 @@ class OTHER_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with
 
     "create valid JSON for Enchancement V4 if TaxAvoidance = yes" in {
 
-      val sheetName: String = "Other_Enhancement_V4"
+      val sheetName: String  = "Other_Enhancement_V4"
       val configData: Config = Common.loadConfiguration(OTHER.otherSchemeType, sheetName, mockConfigUtils)
 
       val result = mockAdrSubmission.buildJson(
@@ -2615,7 +2789,7 @@ class OTHER_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with
 
     "create valid JSON for Enchancement V4 if TaxAvoidance = no" in {
 
-      val sheetName: String = "Other_Enhancement_V4"
+      val sheetName: String  = "Other_Enhancement_V4"
       val configData: Config = Common.loadConfiguration(OTHER.otherSchemeType, sheetName, mockConfigUtils)
 
       val result = mockAdrSubmission.buildJson(
@@ -2655,7 +2829,7 @@ class OTHER_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with
 
     "create valid JSON for Sold V4 if TaxAvoidance = yes" in {
 
-      val sheetName: String = "Other_Sold_V4"
+      val sheetName: String  = "Other_Sold_V4"
       val configData: Config = Common.loadConfiguration(OTHER.otherSchemeType, sheetName, mockConfigUtils)
 
       val result = mockAdrSubmission.buildJson(
@@ -2694,7 +2868,7 @@ class OTHER_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with
 
     "create valid JSON for Sold V4 if TaxAvoidance = no" in {
 
-      val sheetName: String = "Other_Sold_V4"
+      val sheetName: String  = "Other_Sold_V4"
       val configData: Config = Common.loadConfiguration(OTHER.otherSchemeType, sheetName, mockConfigUtils)
 
       val result = mockAdrSubmission.buildJson(

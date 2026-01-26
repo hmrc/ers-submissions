@@ -36,27 +36,32 @@ import java.time.Instant
 import java.time.temporal.ChronoUnit
 import scala.concurrent.Future
 
-class ADRSubmissionIntegration extends AnyWordSpecLike with Matchers
-  with BeforeAndAfterEach with FakeErsStubService {
+class ADRSubmissionIntegration extends AnyWordSpecLike with Matchers with BeforeAndAfterEach with FakeErsStubService {
 
-  val app: Application = new GuiceApplicationBuilder().configure(
-    "microservice.services.ers-stub.port" -> "19339",
-    "auditing.enabled" -> false
-  ).build()
+  val app: Application = new GuiceApplicationBuilder()
+    .configure(
+      "microservice.services.ers-stub.port" -> "19339",
+      "auditing.enabled"                    -> false
+    )
+    .build()
 
   def wsClient: WSClient = app.injector.instanceOf[WSClient]
 
-  private lazy val submissionController = app.injector.instanceOf[SubmissionController]
+  private lazy val submissionController    = app.injector.instanceOf[SubmissionController]
   private lazy val presubmissionRepository = app.injector.instanceOf[PresubmissionMongoRepository]
   private lazy val metadataMongoRepository = app.injector.instanceOf[MetadataMongoRepository]
-  val timestamp: Instant = Instant.now().truncatedTo(ChronoUnit.MILLIS)
+  val timestamp: Instant                   = Instant.now().truncatedTo(ChronoUnit.MILLIS)
 
   override protected def beforeEach(): Unit = {
     super.beforeEach()
-    await(presubmissionRepository.storeJson(
-      Fixtures.schemeData(Some(timestamp)),
-      ""
-    ).value)
+    await(
+      presubmissionRepository
+        .storeJson(
+          Fixtures.schemeData(Some(timestamp)),
+          ""
+        )
+        .value
+    )
   }
 
   override protected def afterEach(): Unit = {
@@ -67,7 +72,7 @@ class ADRSubmissionIntegration extends AnyWordSpecLike with Matchers
 
   "metadataMongoRepository" should {
     "have expected indexes" in {
-      val indexNames = metadataMongoRepository.indexes.map(_.getOptions.getName).sorted.toSet
+      val indexNames      = metadataMongoRepository.indexes.map(_.getOptions.getName).sorted.toSet
       val expectedIndexes = Seq(
         "metaData.schemeInfo.schemeRef",
         "metaData.schemeInfo.taxYear",
@@ -83,58 +88,69 @@ class ADRSubmissionIntegration extends AnyWordSpecLike with Matchers
   }
 
   def getJson(selector: BsonDocument): Future[Seq[ErsSummary]] =
-    metadataMongoRepository.collection.find(
+    metadataMongoRepository.collection
+      .find(
         filter = selector
-      ).batchSize(Int.MaxValue)
+      )
+      .batchSize(Int.MaxValue)
       .map(_.as[ErsSummary])
       .toFuture()
 
-  //submit-metadata
+  // submit-metadata
   "Receiving data for submission" should {
     "return OK if valid metadata is received, filedata is extracted from database and it's successfully sent to ADR" in {
       val ersSummary = buildErsSummary(timestamp = timestamp)
       val schemaInfo = ersSummary.metaData.schemeInfo
-      val selector = metadataMongoRepository.buildSelector(schemaInfo)
-      val data = Fixtures.buildErsSummaryPayload(ersSummary)
+      val selector   = metadataMongoRepository.buildSelector(schemaInfo)
+      val data       = Fixtures.buildErsSummaryPayload(ersSummary)
 
       await(metadataMongoRepository.storeErsSummary(ersSummary, "").value)
       val metadataAfterSave: Seq[ErsSummary] = await(getJson(selector))
 
-      metadataAfterSave.length shouldBe 1
+      metadataAfterSave.length                  shouldBe 1
       metadataAfterSave.head.transferStatus.get shouldBe "saved"
 
-      val res: Result = await(submissionController.receiveMetadataJson()
-        .apply(FakeRequest().withBody(data.as[JsObject])))
+      val res: Result = await(
+        submissionController
+          .receiveMetadataJson()
+          .apply(FakeRequest().withBody(data.as[JsObject]))
+      )
       res.header.status shouldBe OK
 
       val metadata = await(getJson(selector))
-      metadata.length shouldBe 1
+      metadata.length                  shouldBe 1
       metadata.head.transferStatus.get shouldBe "sent"
     }
 
     "return OK if valid metadata is received for nil return and it's successfully sent to ADR" in {
       val ersSummary = buildErsSummary(timestamp = timestamp)
       val schemaInfo = ersSummary.metaData.schemeInfo
-      val selector = metadataMongoRepository.buildSelector(schemaInfo)
-      val data = Fixtures.buildErsSummaryPayload(ersSummary)
+      val selector   = metadataMongoRepository.buildSelector(schemaInfo)
+      val data       = Fixtures.buildErsSummaryPayload(ersSummary)
 
       await(metadataMongoRepository.storeErsSummary(ersSummary, "").value)
       val metadataAfterSave = await(getJson(selector))
-      metadataAfterSave.length shouldBe 1
+      metadataAfterSave.length                  shouldBe 1
       metadataAfterSave.head.transferStatus.get shouldBe "saved"
 
-      val res: Result = await(submissionController.receiveMetadataJson()
-        .apply(FakeRequest().withBody(data.as[JsObject])))
+      val res: Result = await(
+        submissionController
+          .receiveMetadataJson()
+          .apply(FakeRequest().withBody(data.as[JsObject]))
+      )
       res.header.status shouldBe OK
 
       val metadata = await(getJson(selector))
-      metadata.length shouldBe 1
+      metadata.length                  shouldBe 1
       metadata.head.transferStatus.get shouldBe "sent"
     }
 
     "return BAD_REQUEST if invalid request is made" in {
-      val response: Result = await(submissionController.receiveMetadataJson()
-        .apply(FakeRequest().withBody(Fixtures.invalidPayload.as[JsObject])))
+      val response: Result = await(
+        submissionController
+          .receiveMetadataJson()
+          .apply(FakeRequest().withBody(Fixtures.invalidPayload.as[JsObject]))
+      )
       response.header.status shouldBe BAD_REQUEST
     }
   }
@@ -144,21 +160,28 @@ class ADRSubmissionIntegration extends AnyWordSpecLike with Matchers
     "return OK and save metadata if valid metadata is sent" in {
       val ersSummary = buildErsSummary(isNilReturn = true)
       val schemaInfo = ersSummary.metaData.schemeInfo
-      val selector = metadataMongoRepository.buildSelector(schemaInfo)
+      val selector   = metadataMongoRepository.buildSelector(schemaInfo)
 
-      val response: Result = await(submissionController.saveMetadata()
-        .apply(FakeRequest().withBody(Fixtures.buildErsSummaryPayload(ersSummary).as[JsObject])))
+      val response: Result = await(
+        submissionController
+          .saveMetadata()
+          .apply(FakeRequest().withBody(Fixtures.buildErsSummaryPayload(ersSummary).as[JsObject]))
+      )
       response.header.status shouldBe OK
       val result = await(getJson(selector))
 
-      result.length shouldBe 1
+      result.length        shouldBe 1
       result.head.toString shouldBe ersSummary.toString
     }
   }
 
   "return BAD_REQUEST if invalid request is made" in {
-    val response: Result = await(submissionController.saveMetadata()
-      .apply(FakeRequest().withBody(Fixtures.invalidPayload.as[JsObject])))
+    val response: Result = await(
+      submissionController
+        .saveMetadata()
+        .apply(FakeRequest().withBody(Fixtures.invalidPayload.as[JsObject]))
+    )
     response.header.status shouldBe BAD_REQUEST
   }
+
 }

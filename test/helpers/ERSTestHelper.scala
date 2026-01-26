@@ -40,9 +40,9 @@ trait ERSTestHelper extends AnyWordSpecLike with Matchers with OptionValues with
       .disable[SchedulerModule]
       .build()
 
-  val mockCc: ControllerComponents = stubControllerComponents()
+  val mockCc: ControllerComponents        = stubControllerComponents()
   implicit def materializer: Materializer = Play.materializer(fakeApplication())
-  implicit val ec: ExecutionContext = mockCc.executionContext
+  implicit val ec: ExecutionContext       = mockCc.executionContext
 
   def status(result: Future[Result]): Int = Await.result(result, 10.seconds).header.status
 
@@ -51,9 +51,8 @@ trait ERSTestHelper extends AnyWordSpecLike with Matchers with OptionValues with
     bodyBytes.decodeString(Charset.defaultCharset().name)
   }
 
-  def bodyOf(resultF: Future[Result]): Future[String] = {
+  def bodyOf(resultF: Future[Result]): Future[String] =
     resultF.map(bodyOf)
-  }
 
   def await[T](future: Future[T], timeout: FiniteDuration = 10.seconds): T = Await.result(future, timeout)
 }

@@ -33,20 +33,26 @@ import javax.inject.Inject
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
 
-class ReSubmissionSchedulerService @Inject()(val applicationConfig: ApplicationConfig,
-                                             lockRepositoryProvider: LockRepositoryProvider,
-                                             resubPresubmissionService: ResubPresubmissionService)(implicit ec: ExecutionContext)
-  extends ScheduledService[Boolean]
-    with ErsLogger
-    with SchedulerConfig
-    with CorrelationIdHelper {
+class ReSubmissionSchedulerService @Inject() (
+  val applicationConfig: ApplicationConfig,
+  lockRepositoryProvider: LockRepositoryProvider,
+  resubPresubmissionService: ResubPresubmissionService
+)(implicit ec: ExecutionContext)
+    extends ScheduledService[Boolean] with ErsLogger with SchedulerConfig with CorrelationIdHelper {
 
-  override val jobName: String = "resubmission-service"
+  override val jobName: String  = "resubmission-service"
   private val resubmissionLimit = getResubmissionLimit(jobName)
-  private val lockoutTimeout = getLockoutTimeout(jobName)
-  private val lockService: LockService = LockService(lockRepositoryProvider.repo, lockId = "resubmission-service-job-lock",
-    ttl = Duration.create(lockoutTimeout, SECONDS))
-  implicit val processFailedSubmissionsConfig: ProcessFailedSubmissionsConfig = getProcessFailedSubmissionsConfig(resubmissionLimit)
+  private val lockoutTimeout    = getLockoutTimeout(jobName)
+
+  private val lockService: LockService = LockService(
+    lockRepositoryProvider.repo,
+    lockId = "resubmission-service-job-lock",
+    ttl = Duration.create(lockoutTimeout, SECONDS)
+  )
+
+  implicit val processFailedSubmissionsConfig: ProcessFailedSubmissionsConfig = getProcessFailedSubmissionsConfig(
+    resubmissionLimit
+  )
 
   def resubmit()(implicit request: Request[_], hc: HeaderCarrier): ERSEnvelope[Boolean] = {
     logInfo(ResubmissionLimitMessage(resubmissionLimit).message)
@@ -86,8 +92,9 @@ class ReSubmissionSchedulerService @Inject()(val applicationConfig: ApplicationC
       case Some(_) =>
         logInfo(FinishedResubmissionJob.message)
         true
-      case None =>
+      case None    =>
         false
     })
   }
+
 }

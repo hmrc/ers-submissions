@@ -26,9 +26,11 @@ trait ResubmissionMessages {
 }
 
 case class LockMessage(lockService: LockService) extends ResubmissionMessages {
+
   override val message: String = s"$prefix Searching for records to resubmit " +
     s"using database lock with id: ${lockService.lockId} " +
     s"(duration: ${lockService.ttl} and repository: ${lockService.lockRepository}"
+
 }
 
 case object FinishedResubmissionJob extends ResubmissionMessages {
@@ -64,11 +66,14 @@ case class ResubmissionLimitMessage(resubmissionLimit: Long) extends Resubmissio
 }
 
 case class AggregatedLogs(aggregatedLogs: Seq[AggregatedLog]) extends ResubmissionMessages {
+
   val message: String = s"$prefix Aggregated view of submissions:" +
     s"${aggregatedLogs.map(_.logLine).mkString("\n", "\n", "\n")}"
+
 }
 
 case class MetaDataSelectedSchemeRefLogs(selectedErsSummary: Seq[ErsSummary]) extends ResubmissionMessages {
+
   private def logLine(ersSummary: ErsSummary): String = s"schemaRef: ${ersSummary.metaData.schemeInfo.schemeRef}, " +
     s"schemaType: ${ersSummary.metaData.schemeInfo.schemeType}, " +
     s"taxYear: ${ersSummary.metaData.schemeInfo.taxYear}, " +
@@ -76,18 +81,21 @@ case class MetaDataSelectedSchemeRefLogs(selectedErsSummary: Seq[ErsSummary]) ex
     s"timestamp: ${ersSummary.metaData.schemeInfo.timestamp}"
 
   private val numberSelectedErsRecords: Int = selectedErsSummary.length
+
   val message: String =
     if (selectedErsSummary.isEmpty) {
       s"$prefix MetaDataSelectedSchemeRefLogs - Could not find any records for the selected scheme reference"
-    }
-    else if (numberSelectedErsRecords > 50){
+    } else if (numberSelectedErsRecords > 50) {
       s"$prefix MetaDataSelectedSchemeRefLogs - Selected schemes have more then 50 records ($numberSelectedErsRecords records selected)"
     } else {
       s"$prefix MetaDataSelectedSchemeRefLogs - Selected scheme details: ${selectedErsSummary.map(logLine).mkString("\n", "\n", "\n")}"
     }
+
 }
 
-case class PreSubSelectedSchemeRefLogs(selectedErsSummary: Seq[(SchemeData, LocalDateTime)]) extends ResubmissionMessages {
+case class PreSubSelectedSchemeRefLogs(selectedErsSummary: Seq[(SchemeData, LocalDateTime)])
+    extends ResubmissionMessages {
+
   private def logLine(schemeDataWithCreatedAt: (SchemeData, LocalDateTime)): String =
     s"schemaRef: ${schemeDataWithCreatedAt._1.schemeInfo.schemeRef}, " +
       s"schemaType: ${schemeDataWithCreatedAt._1.schemeInfo.schemeType}, " +
@@ -96,13 +104,14 @@ case class PreSubSelectedSchemeRefLogs(selectedErsSummary: Seq[(SchemeData, Loca
       s"createdAt: ${schemeDataWithCreatedAt._2}"
 
   private val numberSelectedErsRecords: Int = selectedErsSummary.length
+
   val message: String =
     if (selectedErsSummary.isEmpty) {
       s"$prefix PreSubSelectedSchemeRefLogs - Could not find any records for the selected scheme reference"
-    }
-    else if (numberSelectedErsRecords > 50){
+    } else if (numberSelectedErsRecords > 50) {
       s"$prefix PreSubSelectedSchemeRefLogs - Selected schemes have more then 50 records ($numberSelectedErsRecords records selected)"
     } else {
       s"$prefix PreSubSelectedSchemeRefLogs - Selected scheme details: ${selectedErsSummary.map(logLine).mkString("\n", "\n", "\n")}"
     }
+
 }

@@ -31,16 +31,19 @@ import utils.LoggingAndExceptions.ErsLogger
 import javax.inject.Inject
 import scala.concurrent.Future
 
-class FileDownloadService @Inject()(appConfig: ApplicationConfig)(implicit actorSystem: ActorSystem) extends ErsLogger {
+class FileDownloadService @Inject() (appConfig: ApplicationConfig)(implicit actorSystem: ActorSystem)
+    extends ErsLogger {
 
   def extractEntityData(response: HttpResponse): Source[ByteString, _] = {
     val uploadFileSizeLimit = appConfig.uploadFileSizeLimit
     response match {
-      case HttpResponse(org.apache.pekko.http.scaladsl.model.StatusCodes.OK, _, entity, _) => entity.withSizeLimit(uploadFileSizeLimit).dataBytes
-      case notOkResponse =>
+      case HttpResponse(org.apache.pekko.http.scaladsl.model.StatusCodes.OK, _, entity, _) =>
+        entity.withSizeLimit(uploadFileSizeLimit).dataBytes
+      case notOkResponse                                                                   =>
         logError(
           s"[FileDownloadService][extractEntityData] Illegal response from Upscan: ${notOkResponse.status.intValue}, " +
-            s"body: ${notOkResponse.entity.dataBytes}")
+            s"body: ${notOkResponse.entity.dataBytes}"
+        )
         Source.failed(UpstreamErrorResponse("Could not download file from upscan", Status.INTERNAL_SERVER_ERROR))
     }
   }
@@ -49,17 +52,20 @@ class FileDownloadService @Inject()(appConfig: ApplicationConfig)(implicit actor
     _.flatMapConcat(extractEntityData)
       .via(CsvParsing.lineScanner())
 
-  def schemeDataToChunksWithIndex(schemeData: SubmissionsSchemeData, maxGroupSize: Int = appConfig.maxGroupSize): Source[(Seq[Seq[ByteString]], Long), _] = {
+  def schemeDataToChunksWithIndex(
+    schemeData: SubmissionsSchemeData,
+    maxGroupSize: Int = appConfig.maxGroupSize
+  ): Source[(Seq[Seq[ByteString]], Long), _] =
     extractBodyOfRequest(streamFile(schemeData.data.downloadUrl))
       .grouped(maxGroupSize)
       .zipWithIndex
-  }
 
-  private[services] def streamFile(downloadUrl: String): Source[HttpResponse, _] = {
+  private[services] def streamFile(downloadUrl: String): Source[HttpResponse, _] =
     Source
       .single(HttpRequest(uri = downloadUrl))
       .mapAsync(parallelism = 1)(makeRequest)
-  }
 
-  private[services] def makeRequest(request: HttpRequest): Future[HttpResponse] = Http()(actorSystem).singleRequest(request)
+  private[services] def makeRequest(request: HttpRequest): Future[HttpResponse] =
+    Http()(actorSystem).singleRequest(request)
+
 }

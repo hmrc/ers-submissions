@@ -24,7 +24,7 @@ object CSOP {
   val testConfirmationDateTime: Instant = LocalDateTime.parse("2015-05-21T11:12:00").atZone(ZoneId.of("UTC")).toInstant
 
   val schemeType: String = "CSOP"
-  val schemeRef: String = "XA1100000000000"
+  val schemeRef: String  = "XA1100000000000"
 
   val schemeInfo: SchemeInfo = SchemeInfo(
     schemeRef = schemeRef,
@@ -58,32 +58,29 @@ object CSOP {
     moneyExchanged,
     if (moneyExchanged == "yes") "10.9821" else "",
     "First",
-    {
-      if (withAllFields) "Second"
-      else ""
-    },
+    if (withAllFields) "Second"
+    else "",
     "Last",
-    {
-      if (withAllFields) "NINO"
-      else ""
-    },
+    if (withAllFields) "NINO"
+    else "",
     "123/XZ55555555",
     "no"
   )
 
   // CSOP_OptionsExercised_V4
-  def buildOptionsExercised(withAllFields: Boolean = true, sharesListedOnSE: String, marketValueAgreedHMRC: String, payeOperated: String): Seq[String] = Seq(
+  def buildOptionsExercised(
+    withAllFields: Boolean = true,
+    sharesListedOnSE: String,
+    marketValueAgreedHMRC: String,
+    payeOperated: String
+  ): Seq[String] = Seq(
     "2015-12-09",
     "First",
-    {
-      if (withAllFields) "Second"
-      else ""
-    },
+    if (withAllFields) "Second"
+    else "",
     "Last",
-    {
-      if (withAllFields) "NINO"
-      else ""
-    },
+    if (withAllFields) "NINO"
+    else "",
     "123/XZ55555555",
     "2015-12-10",
     "100.00",
@@ -112,6 +109,7 @@ object CSOP {
     Some("1234567890"),
     Some("1234567890")
   )
+
   val companyDetailsMin: CompanyDetails = CompanyDetails(
     "testCompany",
     "testAddress1",
@@ -275,4 +273,5 @@ object CSOP {
     nofOfRows = None,
     transferStatus = Some("saved")
   )
+
 }

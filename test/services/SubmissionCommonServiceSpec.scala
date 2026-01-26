@@ -42,17 +42,17 @@ import scala.concurrent.{ExecutionContext, Future}
 
 class SubmissionCommonServiceSpec extends ERSTestHelper with BeforeAndAfterEach with EitherValues {
 
-  implicit val hc: HeaderCarrier = new HeaderCarrier()
+  implicit val hc: HeaderCarrier   = new HeaderCarrier()
   implicit val request: Request[_] = FakeRequest()
 
-  val auditEvents: AuditEvents = mock[AuditEvents]
+  val auditEvents: AuditEvents                        = mock[AuditEvents]
   val mockMetadataRepository: MetadataMongoRepository = mock[MetadataMongoRepository]
-  val repositories: Repositories = mock[Repositories]
-  val adrExceptionEmmiter: ADRExceptionEmitter = app.injector.instanceOf[ADRExceptionEmitter]
-  val adrConnector: ADRConnector = mock[ADRConnector]
-  val adrSubmission: ADRSubmission = mock[ADRSubmission]
-  val submissionCommon: SubmissionCommon = mock[SubmissionCommon]
-  val metrics: Metrics = mock[Metrics]
+  val repositories: Repositories                      = mock[Repositories]
+  val adrExceptionEmmiter: ADRExceptionEmitter        = app.injector.instanceOf[ADRExceptionEmitter]
+  val adrConnector: ADRConnector                      = mock[ADRConnector]
+  val adrSubmission: ADRSubmission                    = mock[ADRSubmission]
+  val submissionCommon: SubmissionCommon              = mock[SubmissionCommon]
+  val metrics: Metrics                                = mock[Metrics]
 
   override def beforeEach(): Unit = {
     super.beforeEach()
@@ -66,12 +66,13 @@ class SubmissionCommonServiceSpec extends ERSTestHelper with BeforeAndAfterEach 
       val submissionCommonService: SubmissionService =
         new SubmissionService(repositories, adrConnector, adrSubmission, submissionCommon, auditEvents, metrics) {
 
-        override lazy val metadataRepository: MetadataMongoRepository = mockMetadataRepository
-        override def processData(ersSummary: ErsSummary, failedStatus: String, successStatus: String)
-                                (implicit request: Request[_], hc: HeaderCarrier): ERSEnvelope[Boolean] = {
-          ERSEnvelope(true)
+          override lazy val metadataRepository: MetadataMongoRepository = mockMetadataRepository
+          override def processData(ersSummary: ErsSummary, failedStatus: String, successStatus: String)(implicit
+            request: Request[_],
+            hc: HeaderCarrier
+          ): ERSEnvelope[Boolean]                                       =
+            ERSEnvelope(true)
         }
-      }
 
       val result = await(submissionCommonService.callProcessData(Fixtures.EMISummaryDate, "failed", "success").value)
       result.value shouldBe true
@@ -81,15 +82,16 @@ class SubmissionCommonServiceSpec extends ERSTestHelper with BeforeAndAfterEach 
       val submissionCommonService: SubmissionService =
         new SubmissionService(repositories, adrConnector, adrSubmission, submissionCommon, auditEvents, metrics) {
 
-        override lazy val metadataRepository: MetadataMongoRepository = mockMetadataRepository
-        when(mockMetadataRepository.updateStatus(any[SchemeInfo](), anyString(), any()))
-          .thenReturn(ERSEnvelope(true))
+          override lazy val metadataRepository: MetadataMongoRepository = mockMetadataRepository
+          when(mockMetadataRepository.updateStatus(any[SchemeInfo](), anyString(), any()))
+            .thenReturn(ERSEnvelope(true))
 
-        override def processData(ersSummary: ErsSummary, failedStatus: String, successStatus: String)
-                                (implicit request: Request[_], hc: HeaderCarrier): ERSEnvelope[Boolean] = {
-          ERSEnvelope(ADRTransferError())
+          override def processData(ersSummary: ErsSummary, failedStatus: String, successStatus: String)(implicit
+            request: Request[_],
+            hc: HeaderCarrier
+          ): ERSEnvelope[Boolean] =
+            ERSEnvelope(ADRTransferError())
         }
-      }
 
       val result = await(submissionCommonService.callProcessData(Fixtures.EMISummaryDate, "failed", "success").value)
 
@@ -104,11 +106,12 @@ class SubmissionCommonServiceSpec extends ERSTestHelper with BeforeAndAfterEach 
           when(mockMetadataRepository.updateStatus(any[SchemeInfo](), anyString(), any()))
             .thenReturn(ERSEnvelope(true))
 
-        override def processData(ersSummary: ErsSummary, failedStatus: String, successStatus: String)
-                                (implicit request: Request[_], hc: HeaderCarrier): ERSEnvelope[Boolean] = {
-          ERSEnvelope(MongoGenericError("test message"))
+          override def processData(ersSummary: ErsSummary, failedStatus: String, successStatus: String)(implicit
+            request: Request[_],
+            hc: HeaderCarrier
+          ): ERSEnvelope[Boolean] =
+            ERSEnvelope(MongoGenericError("test message"))
         }
-      }
 
       val result = await(submissionCommonService.callProcessData(Fixtures.EMISummaryDate, "failed", "success").value)
 
@@ -118,14 +121,21 @@ class SubmissionCommonServiceSpec extends ERSTestHelper with BeforeAndAfterEach 
 
   "processData" should {
     val submissionCommonService: SubmissionService =
-    new SubmissionService(repositories, adrConnector, adrSubmission, submissionCommon, auditEvents, metrics) {
+      new SubmissionService(repositories, adrConnector, adrSubmission, submissionCommon, auditEvents, metrics) {
 
-      override def transformData(ersSummary: ErsSummary)(implicit request: Request[_], hc: HeaderCarrier): ERSEnvelope[JsObject] =
-        ERSEnvelope(Future.successful(Json.obj()))
+        override def transformData(ersSummary: ErsSummary)(implicit
+          request: Request[_],
+          hc: HeaderCarrier
+        ): ERSEnvelope[JsObject] =
+          ERSEnvelope(Future.successful(Json.obj()))
 
-      override def sendToADRUpdatePostData(ersSummary: ErsSummary, adrData: JsObject, failedStatus: String, successStatus: String)
-                                          (implicit hc: HeaderCarrier): ERSEnvelope[Boolean] = ERSEnvelope(true)
-    }
+        override def sendToADRUpdatePostData(
+          ersSummary: ErsSummary,
+          adrData: JsObject,
+          failedStatus: String,
+          successStatus: String
+        )(implicit hc: HeaderCarrier): ERSEnvelope[Boolean] = ERSEnvelope(true)
+      }
 
     "return the result of storePostSubmissionData" in {
       val result = await(submissionCommonService.processData(Fixtures.EMISummaryDate, "failed", "success").value).value
@@ -135,8 +145,7 @@ class SubmissionCommonServiceSpec extends ERSTestHelper with BeforeAndAfterEach 
 
   "transformData" should {
     val submissionCommonService: SubmissionService =
-      new SubmissionService(repositories, adrConnector, adrSubmission, submissionCommon, auditEvents, metrics) {
-    }
+      new SubmissionService(repositories, adrConnector, adrSubmission, submissionCommon, auditEvents, metrics) {}
 
     "return created json" in {
       when(adrSubmission.generateSubmission(any[ErsSummary]())(any[Request[_]](), any[HeaderCarrier]))
@@ -178,15 +187,25 @@ class SubmissionCommonServiceSpec extends ERSTestHelper with BeforeAndAfterEach 
     val submissionCommonService: SubmissionService =
       new SubmissionService(repositories, adrConnector, adrSubmission, submissionCommon, auditEvents, metrics) {
 
-      override def updatePostsubmission(adrSubmissionStatus: Int, status: String, ersSummary: SchemeInfo)
-                                       (implicit hc: HeaderCarrier): ERSEnvelope[Boolean] = ERSEnvelope(true)
-    }
+        override def updatePostsubmission(adrSubmissionStatus: Int, status: String, ersSummary: SchemeInfo)(implicit
+          hc: HeaderCarrier
+        ): ERSEnvelope[Boolean] = ERSEnvelope(true)
+      }
 
     "return result from updatePostsubmission if sending to ADR is successful" in {
       when(adrConnector.sendData(any[JsObject](), anyString())(any[ExecutionContext](), any[HeaderCarrier]()))
         .thenReturn(ERSEnvelope(Future.successful(HttpResponse(202, ""))))
 
-      val result = await(submissionCommonService.sendToADRUpdatePostData(Fixtures.metadata, Fixtures.metadataJson, Statuses.Failed.toString, Statuses.Sent.toString).value).value
+      val result = await(
+        submissionCommonService
+          .sendToADRUpdatePostData(
+            Fixtures.metadata,
+            Fixtures.metadataJson,
+            Statuses.Failed.toString,
+            Statuses.Sent.toString
+          )
+          .value
+      ).value
       result shouldBe true
       verify(metrics, VerificationModeFactory.times(1)).sendToADR(any[Long](), any[TimeUnit]())
       verify(metrics, VerificationModeFactory.times(1)).successfulSendToADR()
@@ -197,7 +216,16 @@ class SubmissionCommonServiceSpec extends ERSTestHelper with BeforeAndAfterEach 
       when(adrConnector.sendData(any[JsObject](), anyString())(any[ExecutionContext](), any[HeaderCarrier]()))
         .thenReturn(ERSEnvelope(Future.successful(HttpResponse(500, ""))))
 
-      val result = await(submissionCommonService.sendToADRUpdatePostData(Fixtures.metadata, Fixtures.metadataJson, Statuses.Failed.toString, Statuses.Sent.toString).value)
+      val result = await(
+        submissionCommonService
+          .sendToADRUpdatePostData(
+            Fixtures.metadata,
+            Fixtures.metadataJson,
+            Statuses.Failed.toString,
+            Statuses.Sent.toString
+          )
+          .value
+      )
       result.value shouldBe true
       verify(metrics, VerificationModeFactory.times(0)).sendToADR(any[Long](), any[TimeUnit]())
       verify(metrics, VerificationModeFactory.times(0)).successfulSendToADR()
@@ -209,8 +237,16 @@ class SubmissionCommonServiceSpec extends ERSTestHelper with BeforeAndAfterEach 
         .thenReturn(ERSEnvelope(ADRTransferError()))
 
       val result =
-        await(submissionCommonService
-          .sendToADRUpdatePostData(Fixtures.metadata, Fixtures.metadataJson, Statuses.Failed.toString, Statuses.Sent.toString).value)
+        await(
+          submissionCommonService
+            .sendToADRUpdatePostData(
+              Fixtures.metadata,
+              Fixtures.metadataJson,
+              Statuses.Failed.toString,
+              Statuses.Sent.toString
+            )
+            .value
+        )
 
       result.swap.value shouldBe ADRTransferError()
       verify(metrics, VerificationModeFactory.times(0)).sendToADR(any[Long](), any[TimeUnit]())
@@ -229,8 +265,11 @@ class SubmissionCommonServiceSpec extends ERSTestHelper with BeforeAndAfterEach 
       when(mockMetadataRepository.updateStatus(any[SchemeInfo](), anyString(), any()))
         .thenReturn(ERSEnvelope(true))
 
-      val result = await(submissionCommonService
-        .updatePostsubmission(202, "sent", Fixtures.metadata.metaData.schemeInfo).value).value
+      val result = await(
+        submissionCommonService
+          .updatePostsubmission(202, "sent", Fixtures.metadata.metaData.schemeInfo)
+          .value
+      ).value
 
       result shouldBe true
       verify(metrics, VerificationModeFactory.times(1)).updatePostsubmissionStatus(any[Long](), any[TimeUnit]())
@@ -240,8 +279,11 @@ class SubmissionCommonServiceSpec extends ERSTestHelper with BeforeAndAfterEach 
       when(mockMetadataRepository.updateStatus(any[SchemeInfo](), anyString(), any()))
         .thenReturn(ERSEnvelope(true))
 
-      val result = await(submissionCommonService
-          .updatePostsubmission(INTERNAL_SERVER_ERROR, "sent", Fixtures.metadata.metaData.schemeInfo).value)
+      val result = await(
+        submissionCommonService
+          .updatePostsubmission(INTERNAL_SERVER_ERROR, "sent", Fixtures.metadata.metaData.schemeInfo)
+          .value
+      )
 
       result.swap.value shouldBe SubmissionStatusUpdateError(Some(INTERNAL_SERVER_ERROR), Some("sent"))
       verify(metrics, VerificationModeFactory.times(1)).updatePostsubmissionStatus(any[Long](), any[TimeUnit]())
@@ -252,8 +294,11 @@ class SubmissionCommonServiceSpec extends ERSTestHelper with BeforeAndAfterEach 
         .thenReturn(ERSEnvelope(MongoGenericError("update failed")))
 
       val result =
-        await(submissionCommonService
-          .updatePostsubmission(INTERNAL_SERVER_ERROR, "failed", Fixtures.metadata.metaData.schemeInfo).value)
+        await(
+          submissionCommonService
+            .updatePostsubmission(INTERNAL_SERVER_ERROR, "failed", Fixtures.metadata.metaData.schemeInfo)
+            .value
+        )
 
       result.swap.value shouldBe MongoGenericError("update failed")
       verify(metrics, VerificationModeFactory.times(0)).updatePostsubmissionStatus(any[Long](), any[TimeUnit]())
@@ -264,11 +309,15 @@ class SubmissionCommonServiceSpec extends ERSTestHelper with BeforeAndAfterEach 
         .thenReturn(ERSEnvelope(false))
 
       val result =
-        await(submissionCommonService
-          .updatePostsubmission(INTERNAL_SERVER_ERROR, "failed", Fixtures.metadata.metaData.schemeInfo).value)
+        await(
+          submissionCommonService
+            .updatePostsubmission(INTERNAL_SERVER_ERROR, "failed", Fixtures.metadata.metaData.schemeInfo)
+            .value
+        )
 
       result.swap.value shouldBe SubmissionStatusUpdateError(Some(INTERNAL_SERVER_ERROR), Some("failed"))
       verify(metrics, VerificationModeFactory.times(0)).updatePostsubmissionStatus(any[Long](), any[TimeUnit]())
     }
   }
+
 }

@@ -23,12 +23,13 @@ import utils.LoggingAndExceptions.{ADRExceptionEmitter, ErsLogger}
 
 import javax.inject.Inject
 
-class ConfigUtils @Inject()(adrExceptionEmitter: ADRExceptionEmitter) extends ErsLogger {
+class ConfigUtils @Inject() (adrExceptionEmitter: ADRExceptionEmitter) extends ErsLogger {
 
-  def getConfigData(configPath: String, configValue: String, ersSummary: ErsSummary)(implicit hc: HeaderCarrier): Config = {
-    try {
+  def getConfigData(configPath: String, configValue: String, ersSummary: ErsSummary)(implicit
+    hc: HeaderCarrier
+  ): Config =
+    try
       ConfigFactory.load(s"schemes/$configPath").getConfig(configValue)
-    }
     catch {
       case ex: Exception =>
         val data = Map(
@@ -38,33 +39,29 @@ class ConfigUtils @Inject()(adrExceptionEmitter: ADRExceptionEmitter) extends Er
         logException(ersSummary.metaData.schemeInfo, ex, Some(buildEmiterMessage(data)))
         adrExceptionEmitter.auditAndThrowWithStackTrace(ersSummary.metaData, data, ex)
     }
-  }
 
-  def getClearData(data: Object): Object = {
+  def getClearData(data: Object): Object =
     data match {
       case Some(innerData: Object) => innerData
-      case _ => data
+      case _                       => data
     }
-  }
 
-  def extractField(configData: Config, data: Object): Object = {
-    if(!configData.hasPath("extract") || data.isInstanceOf[Option[_]]) {
+  def extractField(configData: Config, data: Object): Object =
+    if (!configData.hasPath("extract") || data.isInstanceOf[Option[_]]) {
       data
     } else {
       val currentElem: Config = configData.getConfig("extract")
-      val field = data.getClass.getDeclaredField(currentElem.getString("name"))
+      val field               = data.getClass.getDeclaredField(currentElem.getString("name"))
       field.setAccessible(true)
-      val result: Object = getClearData(field.get(data))
+      val result: Object      = getClearData(field.get(data))
       extractField(currentElem, result)
     }
-  }
 
-   def getConfigStringOpt(configElem: Config, path: String): Option[String] = {
-    try {
+  def getConfigStringOpt(configElem: Config, path: String): Option[String] =
+    try
       Some(configElem.getString(path))
-    } catch {
+    catch {
       case _: Exception => None
     }
-  }
 
 }

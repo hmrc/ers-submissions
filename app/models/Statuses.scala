@@ -23,6 +23,7 @@ sealed trait Statuses {
 }
 
 object Statuses {
+
   case object Saved extends Statuses {
     val value = "saved"
   }
@@ -38,4 +39,5 @@ object Statuses {
   case object Process extends Statuses {
     val value = "process"
   }
+
 }

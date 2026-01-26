@@ -22,26 +22,22 @@ import models._
 object SAYE {
 
   val sayeSchemeType: String = "SAYE"
-  val schemeRef: String = "XA1100000000000"
+  val schemeRef: String      = "XA1100000000000"
 
   def buildExercisedV4(allFields: Boolean, sharesListedOnSE: String, marketValueAgreedHMRC: String): Seq[String] = Seq(
     "2014-01-01",
     "First",
-    {
-      if(allFields)"Second"
-      else ""
-    },
+    if (allFields) "Second"
+    else "",
     "Last",
-    {
-      if(allFields)"NINO"
-      else ""
-    },
+    if (allFields) "NINO"
+    else "",
     "123/XZ55555555",
     "2015-12-31",
     "10.12",
     sharesListedOnSE,
-    if(sharesListedOnSE == "no") marketValueAgreedHMRC else "",
-    if(sharesListedOnSE == "no" && marketValueAgreedHMRC == "yes") "aa12345678" else "",
+    if (sharesListedOnSE == "no") marketValueAgreedHMRC else "",
+    if (sharesListedOnSE == "no" && marketValueAgreedHMRC == "yes") "aa12345678" else "",
     "10.1234",
     "10.1234",
     "11.1234",
@@ -56,14 +52,18 @@ object SAYE {
     "10.1234",
     "10.1234",
     sharesListedOnSE,
-    if(sharesListedOnSE == "no") marketValueAgreedHMRC else "",
-    if(sharesListedOnSE == "no" && marketValueAgreedHMRC == "yes") "aa12345678" else ""
+    if (sharesListedOnSE == "no") marketValueAgreedHMRC else "",
+    if (sharesListedOnSE == "no" && marketValueAgreedHMRC == "yes") "aa12345678" else ""
   )
 
-  def buildRCLV4(wasMoneyOrValueGiven:String="yes",secondName:String="Second",nino:String="NINO"): Seq[String] = Seq(
+  def buildRCLV4(
+    wasMoneyOrValueGiven: String = "yes",
+    secondName: String = "Second",
+    nino: String = "NINO"
+  ): Seq[String] = Seq(
     "2015-12-31",
     wasMoneyOrValueGiven,
-    if(wasMoneyOrValueGiven == "yes") "10.1234" else "",
+    if (wasMoneyOrValueGiven == "yes") "10.1234" else "",
     "First",
     secondName,
     "Last",
@@ -72,7 +72,7 @@ object SAYE {
     "yes"
   )
 
-  val schemeInfo: SchemeInfo = SchemeInfo (
+  val schemeInfo: SchemeInfo = SchemeInfo(
     schemeRef = "XA1100000000000",
     schemeId = "123PA12345678",
     taxYear = "2014/15",
@@ -276,4 +276,5 @@ object SAYE {
     nofOfRows = None,
     transferStatus = Some("saved")
   )
+
 }

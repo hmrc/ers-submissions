@@ -35,12 +35,12 @@ import scala.concurrent.Future
 
 class SAYE_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with EitherValues {
 
-  implicit val hc: HeaderCarrier = new HeaderCarrier()
+  implicit val hc: HeaderCarrier              = new HeaderCarrier()
   implicit val request: FakeRequest[JsObject] = FakeRequest().withBody(Fixtures.metadataJson)
 
-  val mockSubmissionCommon: SubmissionCommon = app.injector.instanceOf[SubmissionCommon]
+  val mockSubmissionCommon: SubmissionCommon         = app.injector.instanceOf[SubmissionCommon]
   val mockPresubmissionService: PresubmissionService = mock[PresubmissionService]
-  val mockConfigUtils: ConfigUtils = app.injector.instanceOf[ConfigUtils]
+  val mockConfigUtils: ConfigUtils                   = app.injector.instanceOf[ConfigUtils]
 
   val mockAdrSubmission: ADRSubmission = new ADRSubmission(
     mockSubmissionCommon,
@@ -48,7 +48,7 @@ class SAYE_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with 
     mockConfigUtils
   )
 
-  override def beforeEach(): Unit  = {
+  override def beforeEach(): Unit = {
     super.beforeEach()
     reset(mockPresubmissionService)
   }
@@ -63,7 +63,8 @@ class SAYE_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with 
         ERSEnvelope(Future.successful(List()))
       )
 
-      val result = await(mockAdrSubmission.generateSubmission(SAYE.ersSummaryNilReturnWithoutAltAmmends)(request, hc).value)
+      val result =
+        await(mockAdrSubmission.generateSubmission(SAYE.ersSummaryNilReturnWithoutAltAmmends)(request, hc).value)
       result.value - "acknowledgementReference" shouldBe Json.parse("""{
                                                                 |"regime":"ERS",
                                                                 |"schemeType":"SAYE",
@@ -116,7 +117,8 @@ class SAYE_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with 
         ERSEnvelope(Future.successful(List()))
       )
 
-      val result = await(mockAdrSubmission.generateSubmission(SAYE.ersSummaryNilReturnWithSomeAltAmmends)(request, hc).value)
+      val result =
+        await(mockAdrSubmission.generateSubmission(SAYE.ersSummaryNilReturnWithSomeAltAmmends)(request, hc).value)
       result.value - "acknowledgementReference" shouldBe Json.parse("""{
                                                                 |"regime":"ERS",
                                                                 |"schemeType":"SAYE",
@@ -182,7 +184,8 @@ class SAYE_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with 
         ERSEnvelope(Future.successful(List()))
       )
 
-      val result = await(mockAdrSubmission.generateSubmission(SAYE.ersSummaryNilReturnWithAllAltAmmends)(request, hc).value)
+      val result =
+        await(mockAdrSubmission.generateSubmission(SAYE.ersSummaryNilReturnWithAllAltAmmends)(request, hc).value)
       result.value - "acknowledgementReference" shouldBe Json.parse("""{
                                                                 |"regime":"ERS",
                                                                 |"schemeType":"SAYE",
@@ -346,12 +349,14 @@ class SAYE_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with 
       when(
         mockPresubmissionService.getJson(any[SchemeInfo]())(any())
       ).thenReturn(
-        ERSEnvelope(Future.successful(
-          List(
-            SchemeData(SAYE.schemeInfo, "SAYE_Granted_V4", None, Some(ListBuffer(SAYE.buildGrantedV4("yes", "yes"))))
+        ERSEnvelope(
+          Future.successful(
+            List(
+              SchemeData(SAYE.schemeInfo, "SAYE_Granted_V4", None, Some(ListBuffer(SAYE.buildGrantedV4("yes", "yes"))))
+            )
           )
         )
-      ))
+      )
 
       val result = await(mockAdrSubmission.generateSubmission(SAYE.ersSumarryWithAllAmmends)(request, hc).value)
       result.value - "acknowledgementReference" shouldBe Json.parse("""{
@@ -457,13 +462,15 @@ class SAYE_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with 
       when(
         mockPresubmissionService.getJson(any[SchemeInfo]())(any())
       ).thenReturn(
-        ERSEnvelope(Future.successful(
-          List(
-            SchemeData(SAYE.schemeInfo, "SAYE_Granted_V4", None, Some(ListBuffer(SAYE.buildGrantedV4("yes", "yes")))),
-            SchemeData(SAYE.schemeInfo, "SAYE_Granted_V4", None, Some(ListBuffer(SAYE.buildGrantedV4("yes", "yes"))))
+        ERSEnvelope(
+          Future.successful(
+            List(
+              SchemeData(SAYE.schemeInfo, "SAYE_Granted_V4", None, Some(ListBuffer(SAYE.buildGrantedV4("yes", "yes")))),
+              SchemeData(SAYE.schemeInfo, "SAYE_Granted_V4", None, Some(ListBuffer(SAYE.buildGrantedV4("yes", "yes"))))
+            )
           )
         )
-      ))
+      )
 
       val result = await(mockAdrSubmission.generateSubmission(SAYE.ersSumarryWithAllAmmends)(request, hc).value)
       result.value - "acknowledgementReference" shouldBe Json.parse("""{
@@ -577,12 +584,14 @@ class SAYE_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with 
       when(
         mockPresubmissionService.getJson(any[SchemeInfo]())(any())
       ).thenReturn(
-        ERSEnvelope(Future.successful(
-          List(
-            SchemeData(SAYE.schemeInfo, "SAYE_RCL_V4", None, Some(ListBuffer(SAYE.buildRCLV4("yes"))))
+        ERSEnvelope(
+          Future.successful(
+            List(
+              SchemeData(SAYE.schemeInfo, "SAYE_RCL_V4", None, Some(ListBuffer(SAYE.buildRCLV4("yes"))))
+            )
           )
         )
-      ))
+      )
 
       val result = await(mockAdrSubmission.generateSubmission(SAYE.ersSumarryWithAllAmmends)(request, hc).value)
       result.value - "acknowledgementReference" shouldBe Json.parse("""{
@@ -693,13 +702,15 @@ class SAYE_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with 
       when(
         mockPresubmissionService.getJson(any[SchemeInfo]())(any())
       ).thenReturn(
-        ERSEnvelope(Future.successful(
-          List(
-            SchemeData(SAYE.schemeInfo, "SAYE_RCL_V4", None, Some(ListBuffer(SAYE.buildRCLV4("yes")))),
-            SchemeData(SAYE.schemeInfo, "SAYE_RCL_V4", None, Some(ListBuffer(SAYE.buildRCLV4("yes"))))
+        ERSEnvelope(
+          Future.successful(
+            List(
+              SchemeData(SAYE.schemeInfo, "SAYE_RCL_V4", None, Some(ListBuffer(SAYE.buildRCLV4("yes")))),
+              SchemeData(SAYE.schemeInfo, "SAYE_RCL_V4", None, Some(ListBuffer(SAYE.buildRCLV4("yes"))))
+            )
           )
         )
-      ))
+      )
 
       val result = await(mockAdrSubmission.generateSubmission(SAYE.ersSumarryWithAllAmmends)(request, hc).value)
       result.value - "acknowledgementReference" shouldBe Json.parse("""{
@@ -823,12 +834,23 @@ class SAYE_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with 
       when(
         mockPresubmissionService.getJson(any[SchemeInfo]())(any())
       ).thenReturn(
-        ERSEnvelope(Future.successful(
-          List(
-            SchemeData(SAYE.schemeInfo, "SAYE_Exercised_V4", None, Some(ListBuffer(SAYE.buildExercisedV4(allFields = true, sharesListedOnSE = "yes", marketValueAgreedHMRC = "yes"))))
+        ERSEnvelope(
+          Future.successful(
+            List(
+              SchemeData(
+                SAYE.schemeInfo,
+                "SAYE_Exercised_V4",
+                None,
+                Some(
+                  ListBuffer(
+                    SAYE.buildExercisedV4(allFields = true, sharesListedOnSE = "yes", marketValueAgreedHMRC = "yes")
+                  )
+                )
+              )
+            )
           )
         )
-      ))
+      )
 
       val result = await(mockAdrSubmission.generateSubmission(SAYE.ersSumarryWithAllAmmends)(request, hc).value)
       result.value - "acknowledgementReference" shouldBe Json.parse("""{
@@ -944,13 +966,33 @@ class SAYE_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with 
       when(
         mockPresubmissionService.getJson(any[SchemeInfo]())(any())
       ).thenReturn(
-        ERSEnvelope(Future.successful(
-          List(
-            SchemeData(SAYE.schemeInfo, "SAYE_Exercised_V4", None, Some(ListBuffer(SAYE.buildExercisedV4(allFields = true, sharesListedOnSE = "yes", marketValueAgreedHMRC = "yes")))),
-            SchemeData(SAYE.schemeInfo, "SAYE_Exercised_V4", None, Some(ListBuffer(SAYE.buildExercisedV4(allFields = true, sharesListedOnSE = "yes", marketValueAgreedHMRC = "yes"))))
+        ERSEnvelope(
+          Future.successful(
+            List(
+              SchemeData(
+                SAYE.schemeInfo,
+                "SAYE_Exercised_V4",
+                None,
+                Some(
+                  ListBuffer(
+                    SAYE.buildExercisedV4(allFields = true, sharesListedOnSE = "yes", marketValueAgreedHMRC = "yes")
+                  )
+                )
+              ),
+              SchemeData(
+                SAYE.schemeInfo,
+                "SAYE_Exercised_V4",
+                None,
+                Some(
+                  ListBuffer(
+                    SAYE.buildExercisedV4(allFields = true, sharesListedOnSE = "yes", marketValueAgreedHMRC = "yes")
+                  )
+                )
+              )
+            )
           )
         )
-      ))
+      )
 
       val result = await(mockAdrSubmission.generateSubmission(SAYE.ersSumarryWithAllAmmends)(request, hc).value)
       result.value - "acknowledgementReference" shouldBe Json.parse("""{
@@ -1084,14 +1126,25 @@ class SAYE_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with 
       when(
         mockPresubmissionService.getJson(any[SchemeInfo]())(any())
       ).thenReturn(
-        ERSEnvelope(Future.successful(
-          List(
-            SchemeData(SAYE.schemeInfo, "SAYE_Granted_V4", None, Some(ListBuffer(SAYE.buildGrantedV4("yes", "yes")))),
-            SchemeData(SAYE.schemeInfo, "SAYE_RCL_V4", None, Some(ListBuffer(SAYE.buildRCLV4("yes")))),
-            SchemeData(SAYE.schemeInfo, "SAYE_Exercised_V4", None, Some(ListBuffer(SAYE.buildExercisedV4(allFields = true, sharesListedOnSE = "yes", marketValueAgreedHMRC = "yes"))))
+        ERSEnvelope(
+          Future.successful(
+            List(
+              SchemeData(SAYE.schemeInfo, "SAYE_Granted_V4", None, Some(ListBuffer(SAYE.buildGrantedV4("yes", "yes")))),
+              SchemeData(SAYE.schemeInfo, "SAYE_RCL_V4", None, Some(ListBuffer(SAYE.buildRCLV4("yes")))),
+              SchemeData(
+                SAYE.schemeInfo,
+                "SAYE_Exercised_V4",
+                None,
+                Some(
+                  ListBuffer(
+                    SAYE.buildExercisedV4(allFields = true, sharesListedOnSE = "yes", marketValueAgreedHMRC = "yes")
+                  )
+                )
+              )
+            )
           )
         )
-      ))
+      )
 
       val result = await(mockAdrSubmission.generateSubmission(SAYE.ersSumarryWithAllAmmends)(request, hc).value)
       result.value - "acknowledgementReference" shouldBe Json.parse("""{
@@ -1236,17 +1289,37 @@ class SAYE_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with 
       when(
         mockPresubmissionService.getJson(any[SchemeInfo]())(any())
       ).thenReturn(
-        ERSEnvelope(Future.successful(
-          List(
-            SchemeData(SAYE.schemeInfo, "SAYE_Granted_V4", None, Some(ListBuffer(SAYE.buildGrantedV4("yes", "yes")))),
-            SchemeData(SAYE.schemeInfo, "SAYE_Granted_V4", None, Some(ListBuffer(SAYE.buildGrantedV4("yes", "yes")))),
-            SchemeData(SAYE.schemeInfo, "SAYE_RCL_V4", None, Some(ListBuffer(SAYE.buildRCLV4("yes")))),
-            SchemeData(SAYE.schemeInfo, "SAYE_RCL_V4", None, Some(ListBuffer(SAYE.buildRCLV4("yes")))),
-            SchemeData(SAYE.schemeInfo, "SAYE_Exercised_V4", None, Some(ListBuffer(SAYE.buildExercisedV4(allFields = true, sharesListedOnSE = "yes", marketValueAgreedHMRC = "yes")))),
-            SchemeData(SAYE.schemeInfo, "SAYE_Exercised_V4", None, Some(ListBuffer(SAYE.buildExercisedV4(allFields = true, sharesListedOnSE = "yes", marketValueAgreedHMRC = "yes"))))
+        ERSEnvelope(
+          Future.successful(
+            List(
+              SchemeData(SAYE.schemeInfo, "SAYE_Granted_V4", None, Some(ListBuffer(SAYE.buildGrantedV4("yes", "yes")))),
+              SchemeData(SAYE.schemeInfo, "SAYE_Granted_V4", None, Some(ListBuffer(SAYE.buildGrantedV4("yes", "yes")))),
+              SchemeData(SAYE.schemeInfo, "SAYE_RCL_V4", None, Some(ListBuffer(SAYE.buildRCLV4("yes")))),
+              SchemeData(SAYE.schemeInfo, "SAYE_RCL_V4", None, Some(ListBuffer(SAYE.buildRCLV4("yes")))),
+              SchemeData(
+                SAYE.schemeInfo,
+                "SAYE_Exercised_V4",
+                None,
+                Some(
+                  ListBuffer(
+                    SAYE.buildExercisedV4(allFields = true, sharesListedOnSE = "yes", marketValueAgreedHMRC = "yes")
+                  )
+                )
+              ),
+              SchemeData(
+                SAYE.schemeInfo,
+                "SAYE_Exercised_V4",
+                None,
+                Some(
+                  ListBuffer(
+                    SAYE.buildExercisedV4(allFields = true, sharesListedOnSE = "yes", marketValueAgreedHMRC = "yes")
+                  )
+                )
+              )
+            )
           )
         )
-      ))
+      )
 
       val result = await(mockAdrSubmission.generateSubmission(SAYE.ersSumarryWithAllAmmends)(request, hc).value)
       result.value - "acknowledgementReference" shouldBe Json.parse("""{
@@ -1426,14 +1499,15 @@ class SAYE_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with 
     }
 
   }
-  //SAYE_Exercised_V4
+
+  // SAYE_Exercised_V4
   "calling generateJson for Exercised_V4" should {
 
     val configData: Config = Common.loadConfiguration(SAYE.sayeSchemeType, "SAYE_Exercised_V4", mockConfigUtils)
 
     "create a valid JSON with allFields = (true or false), sharesListedOnSE = \"yes\", marketValueAgreedHMRC = \"yes\"" in {
       val result = mockAdrSubmission.buildJson(
-      configData,
+        configData,
         ListBuffer(
           SAYE.buildExercisedV4(allFields = true, sharesListedOnSE = "yes", marketValueAgreedHMRC = "yes"),
           SAYE.buildExercisedV4(allFields = false, sharesListedOnSE = "yes", marketValueAgreedHMRC = "yes")
@@ -1684,9 +1758,12 @@ class SAYE_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with 
 
     "create valid JSON with wasMoneyOrValueGiven = \"yes\"" in {
 
-      val result = mockAdrSubmission.buildJson(configData,ListBuffer(
-        SAYE.buildRCLV4(wasMoneyOrValueGiven="yes")
-      ))
+      val result = mockAdrSubmission.buildJson(
+        configData,
+        ListBuffer(
+          SAYE.buildRCLV4(wasMoneyOrValueGiven = "yes")
+        )
+      )
 
       result shouldBe Json.parse("""{
                                    |"optionsReleasedCancelledInYear":true,
@@ -1713,9 +1790,12 @@ class SAYE_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with 
 
     "create valid JSON with wasMoneyOrValueGiven = \"no\"" in {
 
-      val result = mockAdrSubmission.buildJson(configData,ListBuffer(
-        SAYE.buildRCLV4(wasMoneyOrValueGiven="no")
-      ))
+      val result = mockAdrSubmission.buildJson(
+        configData,
+        ListBuffer(
+          SAYE.buildRCLV4(wasMoneyOrValueGiven = "no")
+        )
+      )
 
       result shouldBe Json.parse("""{
                                    |"optionsReleasedCancelledInYear":true,
@@ -1741,9 +1821,12 @@ class SAYE_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with 
 
     "create valid JSON without a secondName" in {
 
-      val result = mockAdrSubmission.buildJson(configData,ListBuffer(
-        SAYE.buildRCLV4(secondName="")
-      ))
+      val result = mockAdrSubmission.buildJson(
+        configData,
+        ListBuffer(
+          SAYE.buildRCLV4(secondName = "")
+        )
+      )
 
       result shouldBe Json.parse("""{
                                    |"optionsReleasedCancelledInYear":true,
@@ -1769,9 +1852,12 @@ class SAYE_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with 
 
     "create valid JSON without a nino" in {
 
-      val result = mockAdrSubmission.buildJson(configData,ListBuffer(
-        SAYE.buildRCLV4(nino="")
-      ))
+      val result = mockAdrSubmission.buildJson(
+        configData,
+        ListBuffer(
+          SAYE.buildRCLV4(nino = "")
+        )
+      )
 
       result shouldBe Json.parse("""{
                                    |"optionsReleasedCancelledInYear":true,

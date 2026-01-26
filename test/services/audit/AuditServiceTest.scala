@@ -30,15 +30,16 @@ import uk.gov.hmrc.play.audit.model.DataEvent
 class AuditServiceTest extends ERSTestHelper {
 
   implicit val request: FakeRequest[AnyContent] = FakeRequest()
-  implicit val hc: HeaderCarrier = new HeaderCarrier
+  implicit val hc: HeaderCarrier                = new HeaderCarrier
 
   val mockAuditConnector: AuditConnector = mock[AuditConnector]
+
   val auditTest: AuditService = new AuditService(mockAuditConnector) {
     override def generateTags(hc: HeaderCarrier): Map[String, String] = Map("tags" -> "someTags")
   }
 
   "auditer should send message" in {
-    auditTest.sendEvent("source",  Map("details1" -> "randomDetail"))
+    auditTest.sendEvent("source", Map("details1" -> "randomDetail"))
 
     verify(mockAuditConnector, VerificationModeFactory.times(1))
       .sendEvent(any())(any(), any())
@@ -59,4 +60,5 @@ class AuditServiceTest extends ERSTestHelper {
     result.detail      shouldBe testDataEvent.detail
     result.tags        shouldBe testDataEvent.tags
   }
+
 }

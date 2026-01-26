@@ -18,6 +18,6 @@ package models
 
 object IsNilReturn extends Enumeration {
   type IsNilReturn = Value
-  val True = Value("2")
+  val True  = Value("2")
   val False = Value("1")
 }

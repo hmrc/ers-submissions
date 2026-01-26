@@ -26,11 +26,13 @@ import java.time.temporal.ChronoUnit
 import java.time.{Instant, LocalDateTime, ZoneId}
 
 object Common extends ERSTestHelper {
-  val testConfirmationDateTime: Instant = LocalDateTime.parse("2015-05-21T11:12:00").atZone(ZoneId.of("UTC")).toInstant.truncatedTo(ChronoUnit.MILLIS)
 
-  def loadConfiguration(schemeType: String, sheetName: String, configUtils: ConfigUtils): Config = {
+  val testConfirmationDateTime: Instant =
+    LocalDateTime.parse("2015-05-21T11:12:00").atZone(ZoneId.of("UTC")).toInstant.truncatedTo(ChronoUnit.MILLIS)
+
+  def loadConfiguration(schemeType: String, sheetName: String, configUtils: ConfigUtils): Config =
     running(app) {
       configUtils.getConfigData(schemeType + "/" + sheetName, sheetName, Fixtures.EMISummaryDate)(new HeaderCarrier())
     }
-  }
+
 }

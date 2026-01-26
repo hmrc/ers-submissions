@@ -16,10 +16,12 @@
 
 package services.resubmission
 
-case class ProcessFailedSubmissionsConfig(resubmissionLimit: Int,
-                                          searchStatusList: List[String],
-                                          schemeRefList: Option[List[String]],
-                                          resubmitScheme: Option[String],
-                                          dateTimeFilter: Option[String],
-                                          failedStatus: String,
-                                          resubmitSuccessStatus: String)
+case class ProcessFailedSubmissionsConfig(
+  resubmissionLimit: Int,
+  searchStatusList: List[String],
+  schemeRefList: Option[List[String]],
+  resubmitScheme: Option[String],
+  dateTimeFilter: Option[String],
+  failedStatus: String,
+  resubmitSuccessStatus: String
+)

@@ -1,5 +1,5 @@
 import sbt.Setting
-import scoverage.ScoverageKeys.{coverageMinimumStmtTotal, *}
+import scoverage.ScoverageKeys.{*, coverageMinimumStmtTotal}
 
 object CodeCoverageSettings {
 

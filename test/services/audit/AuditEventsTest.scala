@@ -34,94 +34,105 @@ import uk.gov.hmrc.play.audit.http.connector.AuditResult.{Disabled, Failure, Suc
 import java.time.{ZoneId, ZonedDateTime}
 import scala.concurrent.Future
 
-class AuditEventsTest
-  extends ERSTestHelper with BeforeAndAfterEach {
+class AuditEventsTest extends ERSTestHelper with BeforeAndAfterEach {
 
   implicit val request: FakeRequest[AnyContent] = FakeRequest()
-  implicit var hc: HeaderCarrier = new HeaderCarrier()
-  val rsc: ErsMetaData = ErsMetaData(SchemeInfo(schemeRef = "", schemeId = "", taxYear = "", schemeName = "", schemeType = ""),"",Some(""),"",Some(""),Some(""))
+  implicit var hc: HeaderCarrier                = new HeaderCarrier()
+
+  val rsc: ErsMetaData = ErsMetaData(
+    SchemeInfo(schemeRef = "", schemeId = "", taxYear = "", schemeName = "", schemeType = ""),
+    "",
+    Some(""),
+    "",
+    Some(""),
+    Some("")
+  )
+
   val mockAuditConnector: AuditConnector = mock[AuditConnector]
-  val mockAuditService: AuditService = mock[AuditService]
-  val testAuditEvents = new AuditEvents(mockAuditService)
+  val mockAuditService: AuditService     = mock[AuditService]
+  val testAuditEvents                    = new AuditEvents(mockAuditService)
 
   override protected def beforeEach(): Unit = {
     reset(mockAuditService)
     super.beforeEach()
   }
 
-for (eventResult <- Seq(Success, Failure("failed"), Disabled)) {
-  s"it should audit runtime errors with result $eventResult" in {
-    when(mockAuditService.sendEvent(any(), any())(any())).thenReturn(Future.successful(eventResult))
+  for (eventResult <- Seq(Success, Failure("failed"), Disabled)) {
+    s"it should audit runtime errors with result $eventResult" in {
+      when(mockAuditService.sendEvent(any(), any())(any())).thenReturn(Future.successful(eventResult))
 
-    val result = await(testAuditEvents.auditRunTimeError(new RuntimeException, "some context"))
+      val result = await(testAuditEvents.auditRunTimeError(new RuntimeException, "some context"))
 
-    result shouldBe eventResult
+      result shouldBe eventResult
 
-    verify(mockAuditService, VerificationModeFactory.times(1))
-      .sendEvent(any(), any())(any())
+      verify(mockAuditService, VerificationModeFactory.times(1))
+        .sendEvent(any(), any())(any())
+    }
+
+    s"it should audit generic error with result $eventResult" in {
+      when(mockAuditService.sendEvent(any(), any())(any())).thenReturn(Future.successful(eventResult))
+
+      val result = await(testAuditEvents.auditError("someContext", "someMessage"))
+
+      result shouldBe eventResult
+
+      verify(mockAuditService, VerificationModeFactory.times(1))
+        .sendEvent(any(), any())(any())
+    }
+
+    s"public to protected audit event with result $eventResult" in {
+      when(mockAuditService.sendEvent(any(), any())(any())).thenReturn(Future.successful(eventResult))
+
+      val result = await(
+        testAuditEvents.publicToProtectedEvent(
+          schemeInfo = schemeData.schemeInfo,
+          sheetName = schemeData.sheetName,
+          numRows = schemeData.data.getOrElse(Seq()).length.toString
+        )
+      )
+
+      result shouldBe eventResult
+
+      verify(mockAuditService, VerificationModeFactory.times(1))
+        .sendEvent(any(), any())(any())
+    }
+
+    s"send To Adr Event audit event with result $eventResult" in {
+      when(mockAuditService.sendEvent(any(), any())(any())).thenReturn(Future.successful(eventResult))
+
+      val result = await(testAuditEvents.sendToAdrEvent("send To Adr Event", Fixtures.EMISummaryDate))
+
+      result shouldBe eventResult
+
+      verify(mockAuditService, VerificationModeFactory.times(1))
+        .sendEvent(any(), any())(any())
+    }
+
+    s"send resubmissionResult Event audit event with result $eventResult" in {
+      when(mockAuditService.sendEvent(any(), any())(any())).thenReturn(Future.successful(eventResult))
+
+      val result = await(testAuditEvents.resubmissionResult(Fixtures.schemeInfo, res = true))
+
+      result shouldBe eventResult
+
+      verify(mockAuditService, VerificationModeFactory.times(1))
+        .sendEvent(any(), any())(any())
+    }
   }
-
-  s"it should audit generic error with result $eventResult" in {
-    when(mockAuditService.sendEvent(any(), any())(any())).thenReturn(Future.successful(eventResult))
-
-    val result = await(testAuditEvents.auditError("someContext", "someMessage"))
-
-    result shouldBe eventResult
-
-    verify(mockAuditService, VerificationModeFactory.times(1))
-      .sendEvent(any(), any())(any())
-  }
-
-  s"public to protected audit event with result $eventResult" in {
-    when(mockAuditService.sendEvent(any(), any())(any())).thenReturn(Future.successful(eventResult))
-
-    val result = await(testAuditEvents.publicToProtectedEvent(
-      schemeInfo = schemeData.schemeInfo,
-      sheetName = schemeData.sheetName,
-      numRows = schemeData.data.getOrElse(Seq()).length.toString))
-
-    result shouldBe eventResult
-
-    verify(mockAuditService, VerificationModeFactory.times(1))
-      .sendEvent(any(), any())(any())
-  }
-
-  s"send To Adr Event audit event with result $eventResult" in {
-    when(mockAuditService.sendEvent(any(), any())(any())).thenReturn(Future.successful(eventResult))
-
-    val result = await(testAuditEvents.sendToAdrEvent("send To Adr Event", Fixtures.EMISummaryDate))
-
-    result shouldBe eventResult
-
-    verify(mockAuditService, VerificationModeFactory.times(1))
-      .sendEvent(any(), any())(any())
-  }
-
-  s"send resubmissionResult Event audit event with result $eventResult" in {
-    when(mockAuditService.sendEvent(any(), any())(any())).thenReturn(Future.successful(eventResult))
-
-    val result = await(testAuditEvents.resubmissionResult(Fixtures.schemeInfo, res = true))
-
-    result shouldBe eventResult
-
-    verify(mockAuditService, VerificationModeFactory.times(1))
-      .sendEvent(any(), any())(any())
-  }
-}
 
   "eventMap should return the correct map when no additional maps are added" in {
-    val timestamp = ZonedDateTime.of(2015,12,5,12,50,55,0, ZoneId.of("UTC")).toInstant
+    val timestamp = ZonedDateTime.of(2015, 12, 5, 12, 50, 55, 0, ZoneId.of("UTC")).toInstant
 
     val testSchemeInfo: Map[String, String] = Map(
-      "schemeRef" -> "XA1100000000000",
-      "schemeId" -> "123PA12345678",
+      "schemeRef"  -> "XA1100000000000",
+      "schemeId"   -> "123PA12345678",
       "schemeType" -> "EMI",
       "schemeName" -> "My scheme",
-      "timestamp" -> timestamp.toString,
-      "taxYear" -> "2014/15"
+      "timestamp"  -> timestamp.toString,
+      "taxYear"    -> "2014/15"
     )
 
-  val result: Map[String, String] = testAuditEvents.eventMap(Fixtures.schemeInfo)
+    val result: Map[String, String] = testAuditEvents.eventMap(Fixtures.schemeInfo)
 
     result shouldBe testSchemeInfo
   }

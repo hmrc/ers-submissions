@@ -31,10 +31,10 @@ import _root_.play.api.test.Helpers._
 
 case class ResubmissionJobSetUp(app: Application) {
 
-  val metadataMongoRepository: MetadataMongoRepository = app.injector.instanceOf[MetadataMongoRepository]
-  val collection: MongoCollection[JsObject] = metadataMongoRepository.collection
+  val metadataMongoRepository: MetadataMongoRepository           = app.injector.instanceOf[MetadataMongoRepository]
+  val collection: MongoCollection[JsObject]                      = metadataMongoRepository.collection
   val presubmissionMongoRepository: PresubmissionMongoRepository = app.injector.instanceOf[PresubmissionMongoRepository]
-  val collectionPs: MongoCollection[JsObject] = presubmissionMongoRepository.collection
+  val collectionPs: MongoCollection[JsObject]                    = presubmissionMongoRepository.collection
   await(collection.drop().toFuture())
   await(collectionPs.drop().toFuture())
 
@@ -43,21 +43,20 @@ case class ResubmissionJobSetUp(app: Application) {
   implicit val ec: ExecutionContext = app.injector.instanceOf[ExecutionContext]
 
   def countMetadataRecordsWithSelector(filter: Bson): Long = await(
-    collection.countDocuments(filter)
+    collection
+      .countDocuments(filter)
       .toFuture()
   )
 
-  def storeMultipleErsSummary(ersSummaries: Seq[JsObject])(implicit ec: ExecutionContext): Future[Boolean] = {
+  def storeMultipleErsSummary(ersSummaries: Seq[JsObject])(implicit ec: ExecutionContext): Future[Boolean] =
     collection.insertMany(ersSummaries).toFuture().map { res =>
       res.wasAcknowledged()
     }
-  }
 
-  def storeMultiplePresubmissionData(presubmissionData: Seq[JsObject])(implicit ec: ExecutionContext): Future[Boolean] = {
+  def storeMultiplePresubmissionData(presubmissionData: Seq[JsObject])(implicit ec: ExecutionContext): Future[Boolean] =
     collectionPs.insertMany(presubmissionData).toFuture().map { res =>
       res.wasAcknowledged()
     }
-  }
 
   val processFailedSubmissionsConfig: ProcessFailedSubmissionsConfig =
     getJob.resubmissionService.getProcessFailedSubmissionsConfig(
@@ -67,6 +66,8 @@ case class ResubmissionJobSetUp(app: Application) {
   val failedJobSelector: BsonDocument = metadataMongoRepository.createFailedJobSelector(processFailedSubmissionsConfig)
 
   val successResubmitTransferStatusSelector: Bson = Filters.eq(
-    "transferStatus", app.configuration.get[String]("schedules.resubmission-service.resubmit-successful-status")
+    "transferStatus",
+    app.configuration.get[String]("schedules.resubmission-service.resubmit-successful-status")
   )
+
 }
