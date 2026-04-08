@@ -27,7 +27,8 @@ class ErsExceptionMessagesSpec extends ERSTestHelper {
 
   "calling buildExceptionMesssage" should {
     "return correct message if ADRTransferException is given" in {
-      val result = TestExceptionMessages.buildExceptionMesssage(ADRTransferException(Fixtures.EMIMetaData, "message", "context"))
+      val result =
+        TestExceptionMessages.buildExceptionMesssage(ADRTransferException(Fixtures.EMIMetaData, "message", "context"))
       result shouldBe "ADRTransferException: message,\ncontext: context"
     }
 
@@ -36,4 +37,5 @@ class ErsExceptionMessagesSpec extends ERSTestHelper {
       result shouldBe "Exception: message"
     }
   }
+
 }

@@ -16,6 +16,4 @@
 
 package models
 
-case class ADRTransferException(ersMetaData: ErsMetaData,
-                                message: String,
-                                context: String) extends Exception(message)
+case class ADRTransferException(ersMetaData: ErsMetaData, message: String, context: String) extends Exception(message)

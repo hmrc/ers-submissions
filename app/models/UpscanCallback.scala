@@ -18,13 +18,15 @@ package models
 
 import play.api.libs.json.{JsObject, Json, Reads, Writes}
 
-case class UpscanCallback(name: String,
-                          downloadUrl: String,
-                          length: Option[Long] = None,
-                          contentType: Option[String] = None,
-                          customMetadata: Option[JsObject] = None,
-                          noOfRows: Option[Int] = None,
-                          _type: Option[String] = None)
+case class UpscanCallback(
+  name: String,
+  downloadUrl: String,
+  length: Option[Long] = None,
+  contentType: Option[String] = None,
+  customMetadata: Option[JsObject] = None,
+  noOfRows: Option[Int] = None,
+  _type: Option[String] = None
+)
 
 object UpscanCallback {
   implicit val upscanCallbackWrites: Writes[UpscanCallback] = Json.writes[UpscanCallback]

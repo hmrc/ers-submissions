@@ -29,9 +29,9 @@ class CorrelationIdHelperSpec extends ERSTestHelper with CorrelationIdHelper {
 
       val result = getOrCreateCorrelationID(fakeRequest)
 
-      result.extraHeaders.isEmpty shouldBe false
+      result.extraHeaders.isEmpty         shouldBe false
       result.extraHeaders.head._2.isEmpty shouldBe false
-      noException should be thrownBy UUID.fromString(result.extraHeaders.head._2)
+      noException                           should be thrownBy UUID.fromString(result.extraHeaders.head._2)
     }
 
     "not add the HEADER_X_CORRELATION_ID header to the HeaderCarrier extra headers if present" in {
@@ -39,8 +39,9 @@ class CorrelationIdHelperSpec extends ERSTestHelper with CorrelationIdHelper {
 
       val result = getOrCreateCorrelationID(fakeRequest)
 
-      result.extraHeaders shouldBe empty
+      result.extraHeaders                                        shouldBe empty
       result.headers(scala.Seq(HEADER_X_CORRELATION_ID)).head._2 shouldBe "existingHeader"
     }
   }
+
 }

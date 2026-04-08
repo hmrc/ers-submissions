@@ -20,11 +20,12 @@ import models.ADRTransferException
 
 trait ErsExceptionMessages {
 
-  def buildExceptionMesssage(ex: Exception): String = {
+  def buildExceptionMesssage(ex: Exception): String =
     ex match {
-      case adrEx: ADRTransferException => s"ADRTransferException: ${adrEx.message},\n" +
-        s"context: ${adrEx.context}"
-      case ex: Exception => s"Exception: ${ex.getMessage}"
+      case adrEx: ADRTransferException =>
+        s"ADRTransferException: ${adrEx.message},\n" +
+          s"context: ${adrEx.context}"
+      case ex: Exception               => s"Exception: ${ex.getMessage}"
     }
-  }
+
 }

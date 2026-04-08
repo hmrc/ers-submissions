@@ -18,7 +18,12 @@ package models
 
 sealed trait ERSError
 final case class ADRTransferError(transferStatus: Option[Int] = None) extends ERSError
-final case class SubmissionStatusUpdateError(adrSubmissionTransferStatus: Option[Int] = None, transferStatus: Option[String] = None) extends ERSError
+
+final case class SubmissionStatusUpdateError(
+  adrSubmissionTransferStatus: Option[Int] = None,
+  transferStatus: Option[String] = None
+) extends ERSError
+
 final case class ResubmissionError() extends ERSError
 final case class JsonFromSheetsCreationError(message: String) extends ERSError
 final case class SchemeDataMappingError(message: String) extends ERSError

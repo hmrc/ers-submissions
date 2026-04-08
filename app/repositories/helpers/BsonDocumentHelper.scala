@@ -20,14 +20,15 @@ import scala.jdk.CollectionConverters._
 import org.mongodb.scala.bson.{BsonDocument, BsonValue}
 
 object BsonDocumentHelper {
-  private[helpers] def bsonToSeqOfTuples(bson: BsonDocument): Seq[(String, BsonValue)] = {
+
+  private[helpers] def bsonToSeqOfTuples(bson: BsonDocument): Seq[(String, BsonValue)] =
     bson.entrySet().asScala.toSeq.map(javaMap => (javaMap.getKey, javaMap.getValue))
-  }
 
   implicit class BsonOps(bsonDocument: BsonDocument) {
-    def +:+(toAdd: BsonDocument): BsonDocument = {
+
+    def +:+(toAdd: BsonDocument): BsonDocument =
       BsonDocument(bsonToSeqOfTuples(bsonDocument) ++ bsonToSeqOfTuples(toAdd))
-    }
+
   }
 
 }

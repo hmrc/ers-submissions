@@ -25,26 +25,27 @@ trait ErsDataMessages {
     buildErsSummaryMessage,
     buildWildcardDataMessage
   )
-  val buildDataMessage: PartialFunction[Object, String] = dataMessagePF.reduce(_ orElse _)
 
-  def buildEmiterMessage: PartialFunction[Object, String] = {
-    case data: Map[String @unchecked, String @unchecked] =>
-      s"${data.getOrElse("message", "Undefined message")} in ${data.getOrElse("context", "Undefined context")}"
+  val buildDataMessage: PartialFunction[Object, String]           = dataMessagePF.reduce(_ orElse _)
+
+  def buildEmiterMessage: PartialFunction[Object, String] = { case data: Map[String @unchecked, String @unchecked] =>
+    s"${data.getOrElse("message", "Undefined message")} in ${data.getOrElse("context", "Undefined context")}"
   }
 
-  def buildSchemeInfoMessage: PartialFunction[Object, String] = {
-    case schemeInfo: SchemeInfo => s"SchemeInfo: ${schemeInfo.toString}"
+  def buildSchemeInfoMessage: PartialFunction[Object, String] = { case schemeInfo: SchemeInfo =>
+    s"SchemeInfo: ${schemeInfo.toString}"
   }
 
-  def buildErsSummaryMessage: PartialFunction[Object, String] = {
-    case ersSummary: ErsSummary => s"ConfirmationDateTime: ${ersSummary.confirmationDateTime.toString}\n" +
+  def buildErsSummaryMessage: PartialFunction[Object, String] = { case ersSummary: ErsSummary =>
+    s"ConfirmationDateTime: ${ersSummary.confirmationDateTime.toString}\n" +
       s"BundleRef: ${ersSummary.bundleRef},\n" +
       s"isNilReturn: ${ersSummary.isNilReturn},\n" +
       s"fileType: ${ersSummary.fileType.getOrElse("")},\n" +
       buildSchemeInfoMessage(ersSummary.metaData.schemeInfo)
   }
 
-  def buildWildcardDataMessage: PartialFunction[Object, String] = {
-    case data: Object => data.toString
+  def buildWildcardDataMessage: PartialFunction[Object, String] = { case data: Object =>
+    data.toString
   }
+
 }

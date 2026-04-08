@@ -26,25 +26,23 @@ import org.scalatest.wordspec.AnyWordSpecLike
 import org.scalatestplus.play.guice.GuiceOneServerPerSuite
 import uk.gov.hmrc.{FakeErsStubService, Fixtures}
 
-class ResubJobWithDateFilterEnabledSpec extends AnyWordSpecLike
-  with Matchers
-  with GuiceOneServerPerSuite
-  with FakeErsStubService {
+class ResubJobWithDateFilterEnabledSpec
+    extends AnyWordSpecLike with Matchers with GuiceOneServerPerSuite with FakeErsStubService {
 
   val applicationConfig: Map[String, Any] = Map(
-    "microservice.services.ers-stub.port" -> "19339",
-    "schedules.resubmission-service.enabled" -> true,
-    "schedules.resubmission-service.dateTimeFilter.enabled" -> true,
-    "schedules.resubmission-service.dateTimeFilter.filter" -> "01/05/2023",
-    "schedules.resubmission-service.schemaRefsFilter.enabled" -> false,
-    "schedules.resubmission-service.schemaFilter.enabled" -> false,
-    "schedules.resubmission-service.schemaFilter.filter" -> "CSOP",
-    "schedules.resubmission-service.resubmissionLimit" -> 10,
-    "schedules.resubmission-service.resubmit-list-statuses" -> "failed",
-    "schedules.resubmission-service.resubmit-fail-status" -> "failedResubmission",
+    "microservice.services.ers-stub.port"                       -> "19339",
+    "schedules.resubmission-service.enabled"                    -> true,
+    "schedules.resubmission-service.dateTimeFilter.enabled"     -> true,
+    "schedules.resubmission-service.dateTimeFilter.filter"      -> "01/05/2023",
+    "schedules.resubmission-service.schemaRefsFilter.enabled"   -> false,
+    "schedules.resubmission-service.schemaFilter.enabled"       -> false,
+    "schedules.resubmission-service.schemaFilter.filter"        -> "CSOP",
+    "schedules.resubmission-service.resubmissionLimit"          -> 10,
+    "schedules.resubmission-service.resubmit-list-statuses"     -> "failed",
+    "schedules.resubmission-service.resubmit-fail-status"       -> "failedResubmission",
     "schedules.resubmission-service.resubmit-successful-status" -> "successResubmit",
-    "auditing.enabled" -> false,
-    "schedules.resubmission-service.additional-logs.enabled" -> true
+    "auditing.enabled"                                          -> false,
+    "schedules.resubmission-service.additional-logs.enabled"    -> true
   )
 
   override lazy val app: Application = new GuiceApplicationBuilder()
@@ -54,16 +52,18 @@ class ResubJobWithDateFilterEnabledSpec extends AnyWordSpecLike
     .build()
 
   "With dateTimeFiltering enabled ResubPresubmissionServiceJob" should {
-    "resubmit failed jobs with the correct transfer status, schema type and submitted after dateTimeFilter" in new ResubmissionJobSetUp(app = app) {
+    "resubmit failed jobs with the correct transfer status, schema type and submitted after dateTimeFilter" in new ResubmissionJobSetUp(
+      app = app
+    ) {
 
-      val storeDocs: Boolean = await(storeMultipleErsSummary(Fixtures.ersSummaries))
+      val storeDocs: Boolean           = await(storeMultipleErsSummary(Fixtures.ersSummaries))
       val storePresubmissions: Boolean = await(storeMultiplePresubmissionData(Fixtures.schemeData))
-      storeDocs shouldBe true
+      storeDocs           shouldBe true
       storePresubmissions shouldBe true
 
-      countMetadataRecordsWithSelector(Filters.empty()) shouldBe 6
+      countMetadataRecordsWithSelector(Filters.empty())                       shouldBe 6
       countMetadataRecordsWithSelector(successResubmitTransferStatusSelector) shouldBe 1
-      countMetadataRecordsWithSelector(failedJobSelector) shouldBe 2
+      countMetadataRecordsWithSelector(failedJobSelector)                     shouldBe 2
 
       val updateCompleted: Either[ERSError, Boolean] = await(getJob.scheduledMessage.service.invoke.value)
       updateCompleted shouldBe Right(true)
@@ -71,7 +71,8 @@ class ResubJobWithDateFilterEnabledSpec extends AnyWordSpecLike
       countMetadataRecordsWithSelector(Filters.empty()) shouldBe 6
 
       countMetadataRecordsWithSelector(successResubmitTransferStatusSelector) shouldBe 3
-      countMetadataRecordsWithSelector(failedJobSelector) shouldBe 0
+      countMetadataRecordsWithSelector(failedJobSelector)                     shouldBe 0
     }
   }
+
 }

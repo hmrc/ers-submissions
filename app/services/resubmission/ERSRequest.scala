@@ -25,15 +25,15 @@ import play.api.mvc.{Headers, Request}
 
 object ERSRequest {
 
-  def createERSRequest(): Request[JsObject] = {
+  def createERSRequest(): Request[JsObject] =
 
     new Request[JsObject] {
 
-       override def connection: RemoteConnection = new RemoteConnection {
-         override def secure: Boolean = false
-         override def clientCertificateChain: Option[Seq[X509Certificate]]  = None
-         override def remoteAddress: InetAddress = ???
-       }
+      override def connection: RemoteConnection = new RemoteConnection {
+        override def secure: Boolean                                      = false
+        override def clientCertificateChain: Option[Seq[X509Certificate]] = None
+        override def remoteAddress: InetAddress                           = ???
+      }
 
       override def target: RequestTarget = new RequestTarget {
         override def uri: URI = new URI("ers-submissions")
@@ -50,17 +50,16 @@ object ERSRequest {
       override def method: String = "POST"
 
       override def headers: Headers = new Headers(Seq()) {
-         protected val data: Seq[(String, Seq[String])] = Seq()
+        protected val data: Seq[(String, Seq[String])] = Seq()
       }
 
-      override def attrs: TypedMap = {
+      override def attrs: TypedMap =
         TypedMap(
           TypedEntry(TypedKey("Id"), 1),
           TypedEntry(TypedKey("Tags"), Map())
         )
-      }
 
       override def version: String = ""
     }
-  }
+
 }

@@ -45,13 +45,15 @@ trait SchedulerConfig {
 
   def getLockoutTimeout(jobName: String): Int = applicationConfig.lockoutTimeout(jobName)
 
-  def getProcessFailedSubmissionsConfig(resubmissionLimit: Int): ProcessFailedSubmissionsConfig = ProcessFailedSubmissionsConfig(
-    resubmissionLimit,
-    searchStatusList,
-    schemeRefList,
-    resubmitScheme,
-    dateTimeFilter,
-    failedStatus,
-    resubmitSuccessStatus
-  )
+  def getProcessFailedSubmissionsConfig(resubmissionLimit: Int): ProcessFailedSubmissionsConfig =
+    ProcessFailedSubmissionsConfig(
+      resubmissionLimit,
+      searchStatusList,
+      schemeRefList,
+      resubmitScheme,
+      dateTimeFilter,
+      failedStatus,
+      resubmitSuccessStatus
+    )
+
 }

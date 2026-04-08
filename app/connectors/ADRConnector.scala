@@ -30,29 +30,37 @@ import utils.{CorrelationIdHelper, ErrorHandlerHelper}
 import javax.inject.Inject
 import scala.concurrent.ExecutionContext
 
-class ADRConnector @Inject()(applicationConfig: ApplicationConfig,
-                             http: HttpClientV2) extends ErrorHandlerHelper with CorrelationIdHelper {
+class ADRConnector @Inject() (applicationConfig: ApplicationConfig, http: HttpClientV2)
+    extends ErrorHandlerHelper with CorrelationIdHelper {
 
-  override val className: String = getClass.getSimpleName
+  override val className: String  = getClass.getSimpleName
   private val headerCarrierConfig = HeaderCarrier.Config.fromConfig(ConfigFactory.load())
 
   private def buildEtmpPath(path: String): String = s"${applicationConfig.adrBaseURI}/$path"
 
   private def explicitHeaders()(implicit hc: HeaderCarrier): scala.Seq[(String, String)] = scala.Seq(
-    "Environment" -> applicationConfig.UrlHeaderEnvironment,
+    "Environment"   -> applicationConfig.UrlHeaderEnvironment,
     "Authorization" -> applicationConfig.UrlHeaderAuthorization
   ) ++ hc.headers(scala.Seq(HEADER_X_CORRELATION_ID))
 
-  def sendData(adrData: JsObject, schemeType: String)(implicit ec: ExecutionContext, hc: HeaderCarrier): ERSEnvelope[HttpResponse] = EitherT {
-    val url: String = buildEtmpPath(s"${applicationConfig.adrFullSubmissionURI}/${schemeType.toLowerCase()}")
+  def sendData(adrData: JsObject, schemeType: String)(implicit
+    ec: ExecutionContext,
+    hc: HeaderCarrier
+  ): ERSEnvelope[HttpResponse] = EitherT {
+    val url: String       = buildEtmpPath(s"${applicationConfig.adrFullSubmissionURI}/${schemeType.toLowerCase()}")
     val headersForRequest = hc
       .withExtraHeaders(explicitHeaders(): _*)
       .headersForUrl(headerCarrierConfig)(url)
 
-    http.post(url"$url").withBody(adrData).setHeader(headersForRequest: _*).execute[HttpResponse]
+    http
+      .post(url"$url")
+      .withBody(adrData)
+      .setHeader(headersForRequest: _*)
+      .execute[HttpResponse]
       .map(_.asRight)
-      .recover {
-        case ex => Left(handleError(ex, "sendData"))
+      .recover { case ex =>
+        Left(handleError(ex, "sendData"))
       }
   }
+
 }

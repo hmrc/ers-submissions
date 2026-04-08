@@ -22,23 +22,27 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.http.HeaderCarrierConverter
 
 trait CorrelationIdHelper {
-  protected val HEADER_X_CORRELATION_ID: String = "X-Correlation-Id"
+  protected val HEADER_X_CORRELATION_ID: String                              = "X-Correlation-Id"
+
   protected def getOrCreateCorrelationID(request: Request[_]): HeaderCarrier = {
     val hcFromRequest: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
-    val hc: HeaderCarrier =
+    val hc: HeaderCarrier            =
       hcFromRequest
         .headers(scala.Seq(HEADER_X_CORRELATION_ID)) match {
-          case Nil =>
-            hcFromRequest
-              .withExtraHeaders((
+        case Nil =>
+          hcFromRequest
+            .withExtraHeaders(
+              (
                 HEADER_X_CORRELATION_ID,
                 UUID
                   .randomUUID()
                   .toString
-              ))
-          case _ =>
-            hcFromRequest
-        }
+              )
+            )
+        case _   =>
+          hcFromRequest
+      }
     hc
   }
+
 }

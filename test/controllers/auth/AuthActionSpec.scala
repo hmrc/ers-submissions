@@ -19,7 +19,9 @@ package controllers.auth
 import helpers.ERSTestHelper
 import org.mockito.Mockito._
 import org.scalatest.BeforeAndAfterEach
-import uk.gov.hmrc.auth.core.{AuthConnector, BearerTokenExpired, ConfidenceLevel, Enrolment, InsufficientConfidenceLevel}
+import uk.gov.hmrc.auth.core.{
+  AuthConnector, BearerTokenExpired, ConfidenceLevel, Enrolment, InsufficientConfidenceLevel
+}
 import org.mockito.ArgumentMatchers.{any, eq => eqTo}
 import play.api.http.Status
 import play.api.mvc.{AnyContent, BodyParser, PlayBodyParsers, Request, Result, Results}
@@ -34,7 +36,7 @@ import scala.util.Try
 class AuthActionSpec extends ERSTestHelper with BeforeAndAfterEach {
 
   val mockAuthConnector: AuthConnector = mock[AuthConnector]
-  val mockBodyParser: PlayBodyParsers = mock[PlayBodyParsers]
+  val mockBodyParser: PlayBodyParsers  = mock[PlayBodyParsers]
 
   override protected def beforeEach(): Unit = {
     super.beforeEach()
@@ -42,10 +44,10 @@ class AuthActionSpec extends ERSTestHelper with BeforeAndAfterEach {
   }
 
   def authAction(empRef: String): AuthAction = new AuthAction {
-    override val optionalEmpRef: Option[EmpRef] = Try(EmpRef.fromIdentifiers(empRef)).toOption
-    override def authConnector: AuthConnector = mockAuthConnector
-    override implicit val executionContext: ExecutionContext = ec
-    override def parser: BodyParser[AnyContent] = mockBodyParser.default
+    override val optionalEmpRef: Option[EmpRef]              = Try(EmpRef.fromIdentifiers(empRef)).toOption
+    override def authConnector: AuthConnector                = mockAuthConnector
+    implicit override val executionContext: ExecutionContext = ec
+    override def parser: BodyParser[AnyContent]              = mockBodyParser.default
   }
 
   def defaultAsyncBody: Request[_] => Result = _ => Results.Ok("Successful")
@@ -56,7 +58,6 @@ class AuthActionSpec extends ERSTestHelper with BeforeAndAfterEach {
       .withIdentifier("TaxOfficeReference", taxOfficeReference)
       .withDelegatedAuthRule("ers-auth")
 
-
   "AuthAction" should {
     "perform the action if the user is authorised " in {
       when(
@@ -65,7 +66,8 @@ class AuthActionSpec extends ERSTestHelper with BeforeAndAfterEach {
             eqTo(getEnrolmentPredicate("123", "2343234")),
             eqTo(EmptyRetrieval)
           )(
-            any(), any()
+            any(),
+            any()
           )
       ).thenReturn(Future.successful(()))
 
@@ -85,7 +87,8 @@ class AuthActionSpec extends ERSTestHelper with BeforeAndAfterEach {
             eqTo(getEnrolmentPredicate("123", "2343234")),
             eqTo(EmptyRetrieval)
           )(
-            any(), any()
+            any(),
+            any()
           )
       ).thenReturn(Future.failed(InsufficientConfidenceLevel("failed")))
 
@@ -100,7 +103,8 @@ class AuthActionSpec extends ERSTestHelper with BeforeAndAfterEach {
             eqTo(getEnrolmentPredicate("123", "2343234")),
             eqTo(EmptyRetrieval)
           )(
-            any(), any()
+            any(),
+            any()
           )
       ).thenReturn(Future.failed(BearerTokenExpired("failed")))
 
@@ -115,7 +119,8 @@ class AuthActionSpec extends ERSTestHelper with BeforeAndAfterEach {
             eqTo(getEnrolmentPredicate("123", "2343234")),
             eqTo(EmptyRetrieval)
           )(
-            any(), any()
+            any(),
+            any()
           )
       ).thenReturn(Future.failed(InsufficientConfidenceLevel("failed")))
 

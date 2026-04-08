@@ -28,27 +28,29 @@ import scheduler.SchedulingActor.ResubmissionServiceClass
 import services.resubmission.ReSubmissionSchedulerService
 
 class ScheduledJobSpec extends AnyWordSpecLike with Matchers with MockitoSugar {
-  val jobNameTest = "testJobName"
-  val mockActorSystem: ActorSystem = mock[ActorSystem]
-  val mockService: ReSubmissionSchedulerService = mock[ReSubmissionSchedulerService]
-  val mockApplicationLifecycle: ApplicationLifecycle = mock[ApplicationLifecycle]
+  val jobNameTest                                            = "testJobName"
+  val mockActorSystem: ActorSystem                           = mock[ActorSystem]
+  val mockService: ReSubmissionSchedulerService              = mock[ReSubmissionSchedulerService]
+  val mockApplicationLifecycle: ApplicationLifecycle         = mock[ApplicationLifecycle]
   val mockQuartzSchedulerExtension: QuartzSchedulerExtension = mock[QuartzSchedulerExtension]
 
   class Setup(cronString: String, enabled: Boolean = false) {
+
     val testConfig: Configuration = Configuration(
-      s"schedules.$jobNameTest.expression" -> s"$cronString",
-      s"schedules.$jobNameTest.enabled" -> enabled,
+      s"schedules.$jobNameTest.expression"  -> s"$cronString",
+      s"schedules.$jobNameTest.enabled"     -> enabled,
       s"schedules.$jobNameTest.description" -> "testDescription"
     )
 
     val job: ScheduledJob = new ScheduledJob {
       override lazy val scheduledMessage: SchedulingActor.ScheduledMessage[_] = ResubmissionServiceClass(mockService)
-      override val config: Configuration = testConfig
-      override lazy val actorSystem: ActorSystem = mockActorSystem
-      override lazy val jobName: String = jobNameTest
-      override lazy val scheduler: QuartzSchedulerExtension = mockQuartzSchedulerExtension
-      override lazy val applicationLifecycle: ApplicationLifecycle = mockApplicationLifecycle
+      override val config: Configuration                                      = testConfig
+      override lazy val actorSystem: ActorSystem                              = mockActorSystem
+      override lazy val jobName: String                                       = jobNameTest
+      override lazy val scheduler: QuartzSchedulerExtension                   = mockQuartzSchedulerExtension
+      override lazy val applicationLifecycle: ApplicationLifecycle            = mockApplicationLifecycle
     }
+
   }
 
   "expression should read from string correctly with underscores" in new Setup("0_*/10_0-23_?_*_*_*") {
@@ -67,10 +69,10 @@ class ScheduledJobSpec extends AnyWordSpecLike with Matchers with MockitoSugar {
     job.isValid shouldBe false
   }
 
-  //run job every 10 seconds every hour
+  // run job every 10 seconds every hour
   "expression once converted should convert to a cron expression success" in new Setup("*/10_0_0-23_?_*_*_*") {
     val parsed = new CronExpression(job.expression)
-    parsed.getCronExpression shouldBe "*/10 0 0-23 ? * * *"
+    parsed.getCronExpression    shouldBe "*/10 0 0-23 ? * * *"
     parsed.getExpressionSummary shouldBe
       """seconds: 0,10,20,30,40,50
         |minutes: 0
@@ -86,10 +88,12 @@ class ScheduledJobSpec extends AnyWordSpecLike with Matchers with MockitoSugar {
         |""".stripMargin
   }
 
-  //run job every 5 minutes between 8-18
-  "expression for local dev once converted should convert to a cron expression success" in new Setup("0_*/5_8-18_*_*_?") {
+  // run job every 5 minutes between 8-18
+  "expression for local dev once converted should convert to a cron expression success" in new Setup(
+    "0_*/5_8-18_*_*_?"
+  ) {
     val parsed = new CronExpression(job.expression)
-    parsed.getCronExpression shouldBe "0 */5 8-18 * * ?"
+    parsed.getCronExpression    shouldBe "0 */5 8-18 * * ?"
     parsed.getExpressionSummary shouldBe
       """seconds: 0
         |minutes: 0,5,10,15,20,25,30,35,40,45,50,55
@@ -105,10 +109,10 @@ class ScheduledJobSpec extends AnyWordSpecLike with Matchers with MockitoSugar {
         |""".stripMargin
   }
 
-  //run job every 5 minutes between 8-18
+  // run job every 5 minutes between 8-18
   "expression for QA once converted should convert to a cron expression success" in new Setup("0_*/5_8-18_*_*_?") {
     val parsed = new CronExpression(job.expression)
-    parsed.getCronExpression shouldBe "0 */5 8-18 * * ?"
+    parsed.getCronExpression    shouldBe "0 */5 8-18 * * ?"
     parsed.getExpressionSummary shouldBe
       """seconds: 0
         |minutes: 0,5,10,15,20,25,30,35,40,45,50,55
@@ -124,10 +128,12 @@ class ScheduledJobSpec extends AnyWordSpecLike with Matchers with MockitoSugar {
         |""".stripMargin
   }
 
-  //run job every 10 minutes between 18-8
-  "expression for Staging/Prod once converted should convert to a cron expression success" in new Setup("0_*/10_18-23,0-8_*_*_?") {
+  // run job every 10 minutes between 18-8
+  "expression for Staging/Prod once converted should convert to a cron expression success" in new Setup(
+    "0_*/10_18-23,0-8_*_*_?"
+  ) {
     val parsed = new CronExpression(job.expression)
-    parsed.getCronExpression shouldBe "0 */10 18-23,0-8 * * ?"
+    parsed.getCronExpression    shouldBe "0 */10 18-23,0-8 * * ?"
     parsed.getExpressionSummary shouldBe
       """seconds: 0
         |minutes: 0,10,20,30,40,50
@@ -154,4 +160,5 @@ class ScheduledJobSpec extends AnyWordSpecLike with Matchers with MockitoSugar {
   "scheduler NOT called if enabled and cron config invalid" in new Setup("testInvalidCronString", enabled = true) {
     job.schedule shouldBe false
   }
+
 }

@@ -19,8 +19,8 @@ package uk.gov.hmrc.missingMetadataQuery
 import models.PreSubWithoutMetadata
 
 case class TestQueryResults(
-                             numMetadataRecords: Long,
-                             numPreSubRecords: Long,
-                             queryResults: List[PreSubWithoutMetadata],
-                             queryErrors: List[String]
-                           )
+  numMetadataRecords: Long,
+  numPreSubRecords: Long,
+  queryResults: List[PreSubWithoutMetadata],
+  queryErrors: List[String]
+)

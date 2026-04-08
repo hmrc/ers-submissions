@@ -29,13 +29,10 @@ import repositories.Repositories
 import java.time.{Instant, LocalDateTime, ZoneOffset}
 import scala.concurrent.ExecutionContext
 
-class PreSubWithoutMetadataQuerySpec
-  extends AnyWordSpec
-    with Matchers
-    with MockitoSugar {
+class PreSubWithoutMetadataQuerySpec extends AnyWordSpec with Matchers with MockitoSugar {
 
   val mockApplicationConfig: ApplicationConfig = mock[ApplicationConfig]
-  val mockRepositories: Repositories = mock[Repositories]
+  val mockRepositories: Repositories           = mock[Repositories]
 
   when(mockApplicationConfig.dateTimeFilterForQuery).thenReturn("02/05/2023")
 
@@ -48,40 +45,52 @@ class PreSubWithoutMetadataQuerySpec
   when(mockApplicationConfig.presubmissionCollectionIndexReplace).thenReturn(true)
 
   val localDateTime: LocalDateTime = LocalDateTime.of(2023, 12, 2, 10, 15, 30)
-  val defaultInstant: Instant = localDateTime.toInstant(ZoneOffset.UTC)
+  val defaultInstant: Instant      = localDateTime.toInstant(ZoneOffset.UTC)
 
   implicit val ec: ExecutionContext = ExecutionContext.global
 
   "PreSubWithoutMetadataQueryService" should {
 
-    "only return presubmission records which were created after the date filter" in new MissingMetadataQuerySetup(mockApplicationConfig) {
+    "only return presubmission records which were created after the date filter" in new MissingMetadataQuerySetup(
+      mockApplicationConfig
+    ) {
 
       val metaData: Seq[JsObject] = Seq(
-        createMetadataRecord(taxYear = "2017/18", schemeRef = "CSOP00000000001", defaultInstant),
+        createMetadataRecord(taxYear = "2017/18", schemeRef = "CSOP00000000001", defaultInstant)
       ).map(Json.toJsObject(_))
 
       val localDateTimeBeforeDateFilter: LocalDateTime = LocalDateTime.of(2023, 5, 1, 10, 15, 30)
-      val instantBeforeDateFilter: Instant = localDateTimeBeforeDateFilter.toInstant(ZoneOffset.UTC)
+      val instantBeforeDateFilter: Instant             = localDateTimeBeforeDateFilter.toInstant(ZoneOffset.UTC)
 
       val presubmissionData: Seq[JsObject] = Seq(
-        SchemeData(schemeInfo(taxYear = "2017/18", schemeRef = "CSOP00000000001", instantBeforeDateFilter), "CSOP_OptionsRCL_V4", None, None),
-        SchemeData(schemeInfo(taxYear = "2018/19", schemeRef = "CSOP00000000001", instantBeforeDateFilter), "CSOP_OptionsRCL_V4", None, None),
+        SchemeData(
+          schemeInfo(taxYear = "2017/18", schemeRef = "CSOP00000000001", instantBeforeDateFilter),
+          "CSOP_OptionsRCL_V4",
+          None,
+          None
+        ),
+        SchemeData(
+          schemeInfo(taxYear = "2018/19", schemeRef = "CSOP00000000001", instantBeforeDateFilter),
+          "CSOP_OptionsRCL_V4",
+          None,
+          None
+        )
       ).map(Json.toJsObject(_))
 
       whenReady(
         future = getQueryResult(metaData, presubmissionData),
         timeout = timeout(Span(30, Seconds))
-      ) {
-        testQueryResults: TestQueryResults => {
-          testQueryResults.numMetadataRecords shouldBe 1
-          testQueryResults.numPreSubRecords shouldBe 2
-          testQueryResults.queryResults shouldBe Seq.empty[PreSubWithoutMetadata]
-          testQueryResults.queryErrors.length shouldBe 0
-        }
+      ) { testQueryResults: TestQueryResults =>
+        testQueryResults.numMetadataRecords shouldBe 1
+        testQueryResults.numPreSubRecords   shouldBe 2
+        testQueryResults.queryResults       shouldBe Seq.empty[PreSubWithoutMetadata]
+        testQueryResults.queryErrors.length shouldBe 0
       }
     }
 
-    "return no presubmission records if all have a matching metadata record" in new MissingMetadataQuerySetup(mockApplicationConfig) {
+    "return no presubmission records if all have a matching metadata record" in new MissingMetadataQuerySetup(
+      mockApplicationConfig
+    ) {
 
       val metaData: Seq[JsObject] = Seq(
         createMetadataRecord(taxYear = "2017/18", schemeRef = "CSOP00000000001", defaultInstant),
@@ -89,24 +98,34 @@ class PreSubWithoutMetadataQuerySpec
       ).map(Json.toJsObject(_))
 
       val presubmissionData: Seq[JsObject] = Seq(
-        SchemeData(schemeInfo(taxYear = "2017/18", schemeRef = "CSOP00000000001", defaultInstant), "CSOP_OptionsRCL_V4", None, None),
-        SchemeData(schemeInfo(taxYear = "2018/19", schemeRef = "CSOP00000000001", defaultInstant), "CSOP_OptionsRCL_V4", None, None),
+        SchemeData(
+          schemeInfo(taxYear = "2017/18", schemeRef = "CSOP00000000001", defaultInstant),
+          "CSOP_OptionsRCL_V4",
+          None,
+          None
+        ),
+        SchemeData(
+          schemeInfo(taxYear = "2018/19", schemeRef = "CSOP00000000001", defaultInstant),
+          "CSOP_OptionsRCL_V4",
+          None,
+          None
+        )
       ).map(Json.toJsObject(_))
 
       whenReady(
         future = getQueryResult(metaData, presubmissionData),
         timeout = timeout(Span(30, Seconds))
-      ) {
-        testQueryResults: TestQueryResults => {
-          testQueryResults.numMetadataRecords shouldBe 2
-          testQueryResults.numPreSubRecords shouldBe 2
-          testQueryResults.queryResults shouldBe Seq.empty[PreSubWithoutMetadata]
-          testQueryResults.queryErrors.length shouldBe 0
-        }
+      ) { testQueryResults: TestQueryResults =>
+        testQueryResults.numMetadataRecords shouldBe 2
+        testQueryResults.numPreSubRecords   shouldBe 2
+        testQueryResults.queryResults       shouldBe Seq.empty[PreSubWithoutMetadata]
+        testQueryResults.queryErrors.length shouldBe 0
       }
     }
 
-    "return presubmission records with no linked metadata records" in new MissingMetadataQuerySetup(mockApplicationConfig) {
+    "return presubmission records with no linked metadata records" in new MissingMetadataQuerySetup(
+      mockApplicationConfig
+    ) {
 
       val metaData: Seq[JsObject] = Seq(
         createMetadataRecord(taxYear = "2017/18", schemeRef = "CSOP00000000001", defaultInstant),
@@ -114,25 +133,40 @@ class PreSubWithoutMetadataQuerySpec
       ).map(Json.toJsObject(_))
 
       val presubmissionData: Seq[JsObject] = Seq(
-        SchemeData(schemeInfo(taxYear = "2017/18", schemeRef = "CSOP00000000001", defaultInstant), "CSOP_OptionsRCL_V4", None, None),
-        SchemeData(schemeInfo(taxYear = "2018/19", schemeRef = "CSOP00000000001", defaultInstant), "CSOP_OptionsRCL_V4", None, None),
-        SchemeData(schemeInfo(taxYear = "2019/20", schemeRef = "CSOP00000000001", defaultInstant), "CSOP_OptionsRCL_V4", None, None)
+        SchemeData(
+          schemeInfo(taxYear = "2017/18", schemeRef = "CSOP00000000001", defaultInstant),
+          "CSOP_OptionsRCL_V4",
+          None,
+          None
+        ),
+        SchemeData(
+          schemeInfo(taxYear = "2018/19", schemeRef = "CSOP00000000001", defaultInstant),
+          "CSOP_OptionsRCL_V4",
+          None,
+          None
+        ),
+        SchemeData(
+          schemeInfo(taxYear = "2019/20", schemeRef = "CSOP00000000001", defaultInstant),
+          "CSOP_OptionsRCL_V4",
+          None,
+          None
+        )
       ).map(Json.toJsObject(_))
 
       whenReady(
         future = getQueryResult(metaData, presubmissionData),
         timeout = timeout(Span(30, Seconds))
-      ) {
-        testQueryResults: TestQueryResults => {
-          testQueryResults.numMetadataRecords shouldBe 2
-          testQueryResults.numPreSubRecords shouldBe 3
-          testQueryResults.queryResults shouldBe Seq(PreSubWithoutMetadata("CSOP00000000001", "2019/20", 1701512130000L))
-          testQueryResults.queryErrors.length shouldBe 0
-        }
+      ) { testQueryResults: TestQueryResults =>
+        testQueryResults.numMetadataRecords shouldBe 2
+        testQueryResults.numPreSubRecords   shouldBe 3
+        testQueryResults.queryResults       shouldBe Seq(PreSubWithoutMetadata("CSOP00000000001", "2019/20", 1701512130000L))
+        testQueryResults.queryErrors.length shouldBe 0
       }
     }
 
-    "return query errors when presubmission records have invalid structure" in new MissingMetadataQuerySetup(mockApplicationConfig) {
+    "return query errors when presubmission records have invalid structure" in new MissingMetadataQuerySetup(
+      mockApplicationConfig
+    ) {
 
       val metaData: Seq[JsObject] = Seq(
         createMetadataRecord(taxYear = "2017/18", schemeRef = "CSOP00000000001", defaultInstant),
@@ -145,12 +179,12 @@ class PreSubWithoutMetadataQuerySpec
           Seq(
             "schemeInfo" -> JsObject(
               Seq(
-                "taxYear" -> Json.toJson("2019/20"),
+                "taxYear"   -> Json.toJson("2019/20"),
                 "schemeRef" -> Json.toJson(123), // wrong type - number instead of string
                 "timestamp" -> Json.toJson(defaultInstant.toEpochMilli)
               )
             ),
-            "sheetName" -> Json.toJson("CSOP_OptionsRCL_V4")
+            "sheetName"  -> Json.toJson("CSOP_OptionsRCL_V4")
           )
         )
       )
@@ -158,15 +192,14 @@ class PreSubWithoutMetadataQuerySpec
       whenReady(
         future = getQueryResult(metaData, presubmissionData),
         timeout = timeout(Span(30, Seconds))
-      ) {
-        testQueryResults: TestQueryResults => {
-          testQueryResults.numMetadataRecords shouldBe 2
-          testQueryResults.numPreSubRecords shouldBe 1
-          testQueryResults.queryResults shouldBe Seq.empty[PreSubWithoutMetadata]
-          testQueryResults.queryErrors.length shouldBe 1
-          testQueryResults.queryErrors.head shouldBe "/schemeRef: JsonValidationError(List(error.expected.jsstring),List())"
-        }
+      ) { testQueryResults: TestQueryResults =>
+        testQueryResults.numMetadataRecords shouldBe 2
+        testQueryResults.numPreSubRecords   shouldBe 1
+        testQueryResults.queryResults       shouldBe Seq.empty[PreSubWithoutMetadata]
+        testQueryResults.queryErrors.length shouldBe 1
+        testQueryResults.queryErrors.head   shouldBe "/schemeRef: JsonValidationError(List(error.expected.jsstring),List())"
       }
     }
   }
+
 }

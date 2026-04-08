@@ -35,12 +35,12 @@ import scala.concurrent.Future
 
 class SIP_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with EitherValues {
 
-  implicit val hc: HeaderCarrier = new HeaderCarrier()
+  implicit val hc: HeaderCarrier              = new HeaderCarrier()
   implicit val request: FakeRequest[JsObject] = FakeRequest().withBody(Fixtures.metadataJson)
 
-  val mockSubmissionCommon: SubmissionCommon = app.injector.instanceOf[SubmissionCommon]
+  val mockSubmissionCommon: SubmissionCommon         = app.injector.instanceOf[SubmissionCommon]
   val mockPresubmissionService: PresubmissionService = mock[PresubmissionService]
-  val mockConfigUtils: ConfigUtils = app.injector.instanceOf[ConfigUtils]
+  val mockConfigUtils: ConfigUtils                   = app.injector.instanceOf[ConfigUtils]
 
   val mockAdrSubmission: ADRSubmission = new ADRSubmission(
     mockSubmissionCommon,
@@ -100,9 +100,11 @@ class SIP_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with E
 
     "create valid NilReturn with some ammends" in {
 
-      when(mockPresubmissionService.getJson(any[SchemeInfo]())(any())).thenReturn(ERSEnvelope(Future.successful(List())))
+      when(mockPresubmissionService.getJson(any[SchemeInfo]())(any()))
+        .thenReturn(ERSEnvelope(Future.successful(List())))
 
-      val result = await(mockAdrSubmission.generateSubmission(SIP.metadataNilReturnWithSomeAltAmmends)(request, hc).value)
+      val result =
+        await(mockAdrSubmission.generateSubmission(SIP.metadataNilReturnWithSomeAltAmmends)(request, hc).value)
       result.value - "acknowledgementReference" shouldBe Json.parse("""{
                                                                 |"regime":"ERS",
                                                                 |"schemeType":"SIP",
@@ -158,7 +160,8 @@ class SIP_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with E
       when(mockPresubmissionService.getJson(any[SchemeInfo]())(any()))
         .thenReturn(ERSEnvelope(Future.successful(List())))
 
-      val result = await(mockAdrSubmission.generateSubmission(SIP.metadataNilReturnWithAllAltAmmends)(request, hc).value)
+      val result =
+        await(mockAdrSubmission.generateSubmission(SIP.metadataNilReturnWithAllAltAmmends)(request, hc).value)
       result.value - "acknowledgementReference" shouldBe Json.parse("""{
                                                                 |"regime":"ERS",
                                                                 |"schemeType":"SIP",
@@ -306,12 +309,19 @@ class SIP_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with E
     "create valid not NilReturn with Awards_V4, participants and trustees without data" in {
 
       when(mockPresubmissionService.getJson(any[SchemeInfo]())(any())).thenReturn(
-        ERSEnvelope(Future.successful(
-          List(
-            SchemeData(SIP.schemeInfo, "SIP_Awards_V4", None, Some(ListBuffer(SIP.buildAwards(withAllFields = true, "yes", "yes"))))
+        ERSEnvelope(
+          Future.successful(
+            List(
+              SchemeData(
+                SIP.schemeInfo,
+                "SIP_Awards_V4",
+                None,
+                Some(ListBuffer(SIP.buildAwards(withAllFields = true, "yes", "yes")))
+              )
+            )
           )
         )
-      ))
+      )
 
       val result = await(mockAdrSubmission.generateSubmission(SIP.metadata)(request, hc).value)
       result.value - "acknowledgementReference" shouldBe Json.parse("""{
@@ -428,13 +438,25 @@ class SIP_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with E
       when(
         mockPresubmissionService.getJson(any[SchemeInfo]())(any())
       ).thenReturn(
-        ERSEnvelope(Future.successful(
-          List(
-            SchemeData(SIP.schemeInfo, "SIP_Awards_V4", None, Some(ListBuffer(SIP.buildAwards(withAllFields = true, "yes", "yes")))),
-            SchemeData(SIP.schemeInfo, "SIP_Awards_V4", None, Some(ListBuffer(SIP.buildAwards(withAllFields = true, "yes", "yes"))))
+        ERSEnvelope(
+          Future.successful(
+            List(
+              SchemeData(
+                SIP.schemeInfo,
+                "SIP_Awards_V4",
+                None,
+                Some(ListBuffer(SIP.buildAwards(withAllFields = true, "yes", "yes")))
+              ),
+              SchemeData(
+                SIP.schemeInfo,
+                "SIP_Awards_V4",
+                None,
+                Some(ListBuffer(SIP.buildAwards(withAllFields = true, "yes", "yes")))
+              )
+            )
           )
         )
-      ))
+      )
 
       val result = await(mockAdrSubmission.generateSubmission(SIP.metadata)(request, hc).value)
       result.value - "acknowledgementReference" shouldBe Json.parse("""{
@@ -574,12 +596,19 @@ class SIP_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with E
       when(
         mockPresubmissionService.getJson(any[SchemeInfo]())(any())
       ).thenReturn(
-        ERSEnvelope(Future.successful(
-          List(
-            SchemeData(SIP.schemeInfo, "SIP_Out_V4", None, Some(ListBuffer(SIP.buildOutOfPlan(withAllFields = true, "yes", "yes"))))
+        ERSEnvelope(
+          Future.successful(
+            List(
+              SchemeData(
+                SIP.schemeInfo,
+                "SIP_Out_V4",
+                None,
+                Some(ListBuffer(SIP.buildOutOfPlan(withAllFields = true, "yes", "yes")))
+              )
+            )
           )
         )
-      ))
+      )
 
       val result = await(mockAdrSubmission.generateSubmission(SIP.metadata)(request, hc).value)
       result.value - "acknowledgementReference" shouldBe Json.parse("""{
@@ -692,13 +721,25 @@ class SIP_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with E
       when(
         mockPresubmissionService.getJson(any[SchemeInfo]())(any())
       ).thenReturn(
-        ERSEnvelope(Future.successful(
-          List(
-            SchemeData(SIP.schemeInfo, "SIP_Out_V4", None, Some(ListBuffer(SIP.buildOutOfPlan(withAllFields = true, "yes", "yes")))),
-            SchemeData(SIP.schemeInfo, "SIP_Out_V4", None, Some(ListBuffer(SIP.buildOutOfPlan(withAllFields = true, "yes", "yes"))))
+        ERSEnvelope(
+          Future.successful(
+            List(
+              SchemeData(
+                SIP.schemeInfo,
+                "SIP_Out_V4",
+                None,
+                Some(ListBuffer(SIP.buildOutOfPlan(withAllFields = true, "yes", "yes")))
+              ),
+              SchemeData(
+                SIP.schemeInfo,
+                "SIP_Out_V4",
+                None,
+                Some(ListBuffer(SIP.buildOutOfPlan(withAllFields = true, "yes", "yes")))
+              )
+            )
           )
         )
-      ))
+      )
 
       val result = await(mockAdrSubmission.generateSubmission(SIP.metadata)(request, hc).value)
       result.value - "acknowledgementReference" shouldBe Json.parse("""{
@@ -830,13 +871,25 @@ class SIP_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with E
       when(
         mockPresubmissionService.getJson(any[SchemeInfo]())(any())
       ).thenReturn(
-        ERSEnvelope(Future.successful(
-          List(
-            SchemeData(SIP.schemeInfo, "SIP_Awards_V4", None, Some(ListBuffer(SIP.buildAwards(withAllFields = true, "yes", "yes")))),
-            SchemeData(SIP.schemeInfo, "SIP_Out_V4", None, Some(ListBuffer(SIP.buildOutOfPlan(withAllFields = true, "yes", "yes"))))
+        ERSEnvelope(
+          Future.successful(
+            List(
+              SchemeData(
+                SIP.schemeInfo,
+                "SIP_Awards_V4",
+                None,
+                Some(ListBuffer(SIP.buildAwards(withAllFields = true, "yes", "yes")))
+              ),
+              SchemeData(
+                SIP.schemeInfo,
+                "SIP_Out_V4",
+                None,
+                Some(ListBuffer(SIP.buildOutOfPlan(withAllFields = true, "yes", "yes")))
+              )
+            )
           )
         )
-      ))
+      )
 
       val result = await(mockAdrSubmission.generateSubmission(SIP.metadata)(request, hc).value)
       result.value - "acknowledgementReference" shouldBe Json.parse("""{
@@ -976,15 +1029,37 @@ class SIP_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with E
       when(
         mockPresubmissionService.getJson(any[SchemeInfo]())(any())
       ).thenReturn(
-        ERSEnvelope(Future.successful(
-          List(
-            SchemeData(SIP.schemeInfo, "SIP_Awards_V4", None, Some(ListBuffer(SIP.buildAwards(withAllFields = true, "yes", "yes")))),
-            SchemeData(SIP.schemeInfo, "SIP_Awards_V4", None, Some(ListBuffer(SIP.buildAwards(withAllFields = true, "yes", "yes")))),
-            SchemeData(SIP.schemeInfo, "SIP_Out_V4", None, Some(ListBuffer(SIP.buildOutOfPlan(withAllFields = true, "yes", "yes")))),
-            SchemeData(SIP.schemeInfo, "SIP_Out_V4", None, Some(ListBuffer(SIP.buildOutOfPlan(withAllFields = true, "yes", "yes"))))
+        ERSEnvelope(
+          Future.successful(
+            List(
+              SchemeData(
+                SIP.schemeInfo,
+                "SIP_Awards_V4",
+                None,
+                Some(ListBuffer(SIP.buildAwards(withAllFields = true, "yes", "yes")))
+              ),
+              SchemeData(
+                SIP.schemeInfo,
+                "SIP_Awards_V4",
+                None,
+                Some(ListBuffer(SIP.buildAwards(withAllFields = true, "yes", "yes")))
+              ),
+              SchemeData(
+                SIP.schemeInfo,
+                "SIP_Out_V4",
+                None,
+                Some(ListBuffer(SIP.buildOutOfPlan(withAllFields = true, "yes", "yes")))
+              ),
+              SchemeData(
+                SIP.schemeInfo,
+                "SIP_Out_V4",
+                None,
+                Some(ListBuffer(SIP.buildOutOfPlan(withAllFields = true, "yes", "yes")))
+              )
+            )
           )
         )
-      ))
+      )
 
       val result = await(mockAdrSubmission.generateSubmission(SIP.metadata)(request, hc).value)
       result.value - "acknowledgementReference" shouldBe Json.parse("""{
@@ -1547,4 +1622,5 @@ class SIP_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with E
     }
 
   }
+
 }

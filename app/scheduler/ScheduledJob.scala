@@ -41,19 +41,22 @@ trait ScheduledJob extends ErsLogger {
 
   private lazy val schedulingActorRef: ActorRef = actorSystem.actorOf(SchedulingActor.props())
 
-  private[scheduler] lazy val enabled: Boolean = config.getOptional[Boolean](s"schedules.$jobName.enabled").getOrElse(false)
+  private[scheduler] lazy val enabled: Boolean =
+    config.getOptional[Boolean](s"schedules.$jobName.enabled").getOrElse(false)
 
   private lazy val description: Option[String] = config.getOptional[String](s"schedules.$jobName.description")
 
-  private[scheduler] lazy val expression: String = config.getOptional[String](s"schedules.$jobName.expression") map (_.replaceAll("_", " ")) getOrElse ""
+  private[scheduler] lazy val expression: String =
+    config.getOptional[String](s"schedules.$jobName.expression") map (_.replaceAll("_", " ")) getOrElse ""
 
-  private lazy val timezone: String = config.getOptional[String](s"schedules.$jobName.timezone").getOrElse(TimeZone.getDefault.getID)
+  private lazy val timezone: String =
+    config.getOptional[String](s"schedules.$jobName.timezone").getOrElse(TimeZone.getDefault.getID)
 
   private[scheduler] lazy val isValid = expression.nonEmpty && CronExpression.isValidExpression(expression)
 
-  lazy val schedule: Boolean = {
+  lazy val schedule: Boolean =
     (enabled, isValid) match {
-      case (true, true) =>
+      case (true, true)  =>
         scheduler.createSchedule(jobName, description, expression, None, TimeZone.getTimeZone(ZoneId.of(timezone)))
         scheduler.schedule(jobName, schedulingActorRef, scheduledMessage)
         logInfo(s"Scheduler for $jobName has been started")
@@ -61,14 +64,14 @@ trait ScheduledJob extends ErsLogger {
       case (true, false) =>
         logInfo(s"Scheduler for $jobName is disabled as there is no quartz expression or expression is not valid")
         false
-      case (false, _) =>
+      case (false, _)    =>
         logInfo(s"Scheduler for $jobName is disabled by configuration")
         false
     }
-  }
 
   applicationLifecycle.addStopHook { () =>
     Future.successful(scheduler.cancelJob(jobName))
     Future.successful(scheduler.shutdown(waitForJobsToComplete = false))
   }
+
 }

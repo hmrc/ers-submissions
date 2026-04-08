@@ -32,11 +32,11 @@ import scala.collection.mutable.ListBuffer
 
 class PresubmissionMongoRepositorySpec extends AnyWordSpecLike with Matchers with BeforeAndAfterEach with EitherValues {
 
-  lazy val app: Application = new GuiceApplicationBuilder().configure(
-    Map(
-      "microservice.services.auth.port" -> "18500",
-      "settings.presubmission-collection-ttl-days" -> 365)
-  ).build()
+  lazy val app: Application = new GuiceApplicationBuilder()
+    .configure(
+      Map("microservice.services.auth.port" -> "18500", "settings.presubmission-collection-ttl-days" -> 365)
+    )
+    .build()
 
   def wsClient: WSClient = app.injector.instanceOf[WSClient]
 
@@ -57,8 +57,8 @@ class PresubmissionMongoRepositorySpec extends AnyWordSpecLike with Matchers wit
     "successfully insert the scheme data" in {
       val schemeData = Fixtures.schemeData()
       val schemeInfo = schemeData.schemeInfo
-      await(presubmissionRepository.storeJson(schemeData, "").value).value shouldBe  true
-      await(presubmissionRepository.count(schemeInfo, "").value).value shouldBe 1
+      await(presubmissionRepository.storeJson(schemeData, "").value).value shouldBe true
+      await(presubmissionRepository.count(schemeInfo, "").value).value     shouldBe 1
     }
   }
 
@@ -70,9 +70,9 @@ class PresubmissionMongoRepositorySpec extends AnyWordSpecLike with Matchers wit
 
       val result = await(presubmissionRepository.getJson(schemeInfo, "").value).value.head
 
-      (result \ "schemeInfo").as[JsObject] shouldBe Json.toJsObject(schemeInfo)
-      (result \ "sheetName").as[String] shouldBe schemeData.sheetName
-      (result \ "numberOfParts").asOpt[Int] shouldBe schemeData.numberOfParts
+      (result \ "schemeInfo").as[JsObject]             shouldBe Json.toJsObject(schemeInfo)
+      (result \ "sheetName").as[String]                shouldBe schemeData.sheetName
+      (result \ "numberOfParts").asOpt[Int]            shouldBe schemeData.numberOfParts
       (result \ "data").asOpt[ListBuffer[Seq[String]]] shouldBe schemeData.data
     }
   }
@@ -91,9 +91,9 @@ class PresubmissionMongoRepositorySpec extends AnyWordSpecLike with Matchers wit
       val schemeData = Fixtures.schemeData()
       val schemeInfo = schemeData.schemeInfo
       await(presubmissionRepository.storeJson(schemeData, "").value)
-      await(presubmissionRepository.count(schemeInfo, "").value).value shouldBe 1
+      await(presubmissionRepository.count(schemeInfo, "").value).value      shouldBe 1
       await(presubmissionRepository.removeJson(schemeInfo, "").value).value shouldBe DeleteResult.acknowledged(1)
-      await(presubmissionRepository.count(schemeInfo, "").value).value shouldBe 0
+      await(presubmissionRepository.count(schemeInfo, "").value).value      shouldBe 0
     }
 
     "successfully remove multiple documents for given scheme info" in {
@@ -103,9 +103,10 @@ class PresubmissionMongoRepositorySpec extends AnyWordSpecLike with Matchers wit
       await(presubmissionRepository.storeJson(schemeData, "").value)
       await(presubmissionRepository.storeJson(schemeData, "").value)
       await(presubmissionRepository.storeJson(schemeData, "").value)
-      await(presubmissionRepository.count(schemeInfo, "").value).value shouldBe 4
+      await(presubmissionRepository.count(schemeInfo, "").value).value      shouldBe 4
       await(presubmissionRepository.removeJson(schemeInfo, "").value).value shouldBe DeleteResult.acknowledged(4)
-      await(presubmissionRepository.count(schemeInfo, "").value).value shouldBe 0
+      await(presubmissionRepository.count(schemeInfo, "").value).value      shouldBe 0
     }
   }
+
 }

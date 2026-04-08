@@ -33,9 +33,10 @@ class ErrorHandlerHelperSpec extends ERSTestHelper with ErrorHandlerHelper {
   "handleBadRequest" should {
     "return BadRequest" in {
       val somePath = __ \ "somePath"
-      val errors = scala.collection.Seq((somePath, scala.collection.Seq(JsonValidationError("someMessage"))))
+      val errors   = scala.collection.Seq((somePath, scala.collection.Seq(JsonValidationError("someMessage"))))
 
       status(handleBadRequest(errors)) shouldBe BAD_REQUEST
     }
   }
+
 }

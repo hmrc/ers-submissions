@@ -24,9 +24,10 @@ class ErsLoggerSpec extends ERSTestHelper {
   object TestErsLogger extends ErsLogger {
     override def buildExceptionMesssage(ex: Exception): String = "exception message"
 
-    override val buildDataMessage: PartialFunction[Object, String] = {
-      case _ => "data message"
+    override val buildDataMessage: PartialFunction[Object, String] = { case _ =>
+      "data message"
     }
+
   }
 
   "calling buildMessage" should {
@@ -54,4 +55,5 @@ class ErsLoggerSpec extends ERSTestHelper {
     }
 
   }
+
 }

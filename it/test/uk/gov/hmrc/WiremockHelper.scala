@@ -27,10 +27,10 @@ import org.scalatest.{BeforeAndAfterAll, Suite}
 trait WiremockHelper {
   val wiremockPort = 11111
   val wiremockHost = "localhost"
-  val url = s"http://$wiremockHost:$wiremockPort"
+  val url          = s"http://$wiremockHost:$wiremockPort"
 
   lazy val wmConfig: WireMockConfiguration = wireMockConfig().port(wiremockPort)
-  lazy val wireMockServer = new WireMockServer(wmConfig)
+  lazy val wireMockServer                  = new WireMockServer(wmConfig)
 
   def startWiremock(): Unit = {
     wireMockServer.start()
@@ -66,9 +66,23 @@ trait FakeAuthService extends BeforeAndAfterAll with ScalaFutures {
     downloadServer.stop()
   }
 
-  authServer.stubFor(WireMock.post(urlMatching("/auth/authorise")).willReturn(WireMock.aResponse().withStatus(200).withBody("""{}""")))
-  downloadServer.stubFor(WireMock.get(urlMatching("/fakeDownload")).willReturn(WireMock.aResponse().withStatus(200)
-    .withBody(""""no", "no", "yes", "3", "2015-12-09", "John", "", "Doe", "AA123456A", "123/XZ55555555", "10.1234", "100.12", "10.1234", "10.1234"""")))
+  authServer.stubFor(
+    WireMock.post(urlMatching("/auth/authorise")).willReturn(WireMock.aResponse().withStatus(200).withBody("""{}"""))
+  )
+
+  downloadServer.stubFor(
+    WireMock
+      .get(urlMatching("/fakeDownload"))
+      .willReturn(
+        WireMock
+          .aResponse()
+          .withStatus(200)
+          .withBody(
+            """"no", "no", "yes", "3", "2015-12-09", "John", "", "Doe", "AA123456A", "123/XZ55555555", "10.1234", "100.12", "10.1234", "10.1234""""
+          )
+      )
+  )
+
 }
 
 trait FakeErsStubService extends BeforeAndAfterAll with ScalaFutures {

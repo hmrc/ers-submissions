@@ -24,14 +24,15 @@ import services.resubmission.ReSubmissionSchedulerService
 class SchedulingActor extends Actor with ActorLogging {
   import context.dispatcher
 
-  override def receive: Receive = {
-    case message: ScheduledMessage[_] =>
-      log.info(s"Received update request from the ${message.getClass.getSimpleName}")
-      message.service.invoke
+  override def receive: Receive = { case message: ScheduledMessage[_] =>
+    log.info(s"Received update request from the ${message.getClass.getSimpleName}")
+    message.service.invoke
   }
+
 }
 
 object SchedulingActor {
+
   sealed trait ScheduledMessage[A] {
     val service: ScheduledService[A]
   }

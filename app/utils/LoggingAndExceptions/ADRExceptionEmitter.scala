@@ -22,18 +22,20 @@ import uk.gov.hmrc.http.HeaderCarrier
 
 import javax.inject.Inject
 
-class ADRExceptionEmitter @Inject()(auditEvents: AuditEvents) {
-  def auditAndThrowWithStackTrace(ersMetaData: ErsMetaData, data: Map[String, String], ex: Exception)
-                                 (implicit hc: HeaderCarrier): Nothing = {
+class ADRExceptionEmitter @Inject() (auditEvents: AuditEvents) {
+
+  def auditAndThrowWithStackTrace(ersMetaData: ErsMetaData, data: Map[String, String], ex: Exception)(implicit
+    hc: HeaderCarrier
+  ): Nothing = {
     auditEvents.auditRunTimeError(ex, data("context"))
     throw createADRException(ersMetaData, data).initCause(ex)
   }
 
-  private def createADRException(ersMetaData: ErsMetaData, data: Map[String, String]): ADRTransferException = {
+  private def createADRException(ersMetaData: ErsMetaData, data: Map[String, String]): ADRTransferException =
     ADRTransferException(
       ersMetaData,
-      data.getOrElse("message","Undefined message"),
+      data.getOrElse("message", "Undefined message"),
       data.getOrElse("context", "Undefined context")
     )
-  }
+
 }

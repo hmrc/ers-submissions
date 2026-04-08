@@ -30,9 +30,9 @@ class RepositoryHelperSpec extends AnyWordSpec with Matchers {
   "mongoRecover" should {
 
     val repository = "TestRepository"
-    val method = "testMethod"
-    val message = "Test operation failed"
-    val sessionId = "session-123"
+    val method     = "testMethod"
+    val message    = "Test operation failed"
+    val sessionId  = "session-123"
 
     "return true for isDefinedAt  given an Exception" in {
       val partialFunction = helper.mongoRecover[String](repository, method, message, sessionId)
@@ -60,4 +60,5 @@ class RepositoryHelperSpec extends AnyWordSpec with Matchers {
     }
 
   }
+
 }

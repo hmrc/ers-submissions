@@ -22,7 +22,7 @@ import models._
 object CSOP {
 
   val schemeType: String = "CSOP"
-  val schemeRef: String = "XA1100000000000"
+  val schemeRef: String  = "XA1100000000000"
 
   val schemeInfo: SchemeInfo = SchemeInfo(
     schemeRef = schemeRef,
@@ -45,8 +45,8 @@ object CSOP {
     "10.9821",
     "8.2587",
     sharesListedOnSE,
-    if(sharesListedOnSE == "no") marketValueAgreedHMRC else "",
-    if(sharesListedOnSE == "no" && marketValueAgreedHMRC == "yes") "aa12345678" else "",
+    if (sharesListedOnSE == "no") marketValueAgreedHMRC else "",
+    if (sharesListedOnSE == "no" && marketValueAgreedHMRC == "yes") "aa12345678" else "",
     "no"
   )
 
@@ -54,34 +54,31 @@ object CSOP {
   def buildOptionsRCL(withAllFields: Boolean = true, moneyExchanged: String): Seq[String] = Seq(
     "2015-12-09",
     moneyExchanged,
-    if(moneyExchanged == "yes") "10.9821" else "",
+    if (moneyExchanged == "yes") "10.9821" else "",
     "First",
-    {
-      if(withAllFields) "Second"
-      else ""
-    },
+    if (withAllFields) "Second"
+    else "",
     "Last",
-    {
-      if(withAllFields) "NINO"
-      else ""
-    },
+    if (withAllFields) "NINO"
+    else "",
     "123/XZ55555555",
     "no"
   )
 
   // CSOP_OptionsExercised_V4
-  def buildOptionsExercised(withAllFields: Boolean = true, sharesListedOnSE: String, marketValueAgreedHMRC: String, payeOperated: String): Seq[String] = Seq(
+  def buildOptionsExercised(
+    withAllFields: Boolean = true,
+    sharesListedOnSE: String,
+    marketValueAgreedHMRC: String,
+    payeOperated: String
+  ): Seq[String] = Seq(
     "2015-12-09",
     "First",
-    {
-      if(withAllFields) "Second"
-      else ""
-    },
+    if (withAllFields) "Second"
+    else "",
     "Last",
-    {
-      if(withAllFields) "NINO"
-      else ""
-    },
+    if (withAllFields) "NINO"
+    else "",
     "123/XZ55555555",
     "2015-12-10",
     "100.00",
@@ -90,11 +87,11 @@ object CSOP {
     "10.1234",
     "10.1234",
     "10.1234",
-    if(sharesListedOnSE == "no") marketValueAgreedHMRC else "",
-    if(sharesListedOnSE == "no" && marketValueAgreedHMRC == "yes") "aa12345678" else "",
+    if (sharesListedOnSE == "no") marketValueAgreedHMRC else "",
+    if (sharesListedOnSE == "no" && marketValueAgreedHMRC == "yes") "aa12345678" else "",
     "yes",
     payeOperated,
-    if(payeOperated == "yes") "10.1234" else "",
+    if (payeOperated == "yes") "10.1234" else "",
     "yes",
     "yes"
   )
@@ -274,4 +271,5 @@ object CSOP {
     nofOfRows = None,
     transferStatus = Some("saved")
   )
+
 }

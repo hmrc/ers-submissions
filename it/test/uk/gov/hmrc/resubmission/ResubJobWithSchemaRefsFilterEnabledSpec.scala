@@ -31,27 +31,25 @@ import java.time.{Instant, LocalDate, ZoneId}
 import java.time.format.DateTimeFormatter
 import scala.collection.mutable.ListBuffer
 
-class ResubJobWithSchemaRefsFilterEnabledSpec extends AnyWordSpecLike
-  with Matchers
-  with GuiceOneServerPerSuite
-  with FakeErsStubService {
+class ResubJobWithSchemaRefsFilterEnabledSpec
+    extends AnyWordSpecLike with Matchers with GuiceOneServerPerSuite with FakeErsStubService {
 
   val applicationConfig: Map[String, Any] = Map(
-    "microservice.services.ers-stub.port" -> "19339",
-    "schedules.resubmission-service.enabled" -> true,
-    "schedules.resubmission-service.dateTimeFilter.enabled" -> false,
-    "schedules.resubmission-service.schemaRefsFilter.enabled" -> true,
-    "schedules.resubmission-service.schemaFilter.enabled" -> false,
-    "schedules.resubmission-service.schemaRefsFilter.filter" -> "123,789,101",
-    "schedules.resubmission-service.resubmissionLimit" -> 2,
-    "schedules.resubmission-service.resubmit-list-statuses" -> "failed",
-    "schedules.resubmission-service.resubmit-fail-status" -> "failedResubmission",
+    "microservice.services.ers-stub.port"                       -> "19339",
+    "schedules.resubmission-service.enabled"                    -> true,
+    "schedules.resubmission-service.dateTimeFilter.enabled"     -> false,
+    "schedules.resubmission-service.schemaRefsFilter.enabled"   -> true,
+    "schedules.resubmission-service.schemaFilter.enabled"       -> false,
+    "schedules.resubmission-service.schemaRefsFilter.filter"    -> "123,789,101",
+    "schedules.resubmission-service.resubmissionLimit"          -> 2,
+    "schedules.resubmission-service.resubmit-list-statuses"     -> "failed",
+    "schedules.resubmission-service.resubmit-fail-status"       -> "failedResubmission",
     "schedules.resubmission-service.resubmit-successful-status" -> "successResubmit",
-    "auditing.enabled" -> false,
-    "schedules.resubmission-service.additional-logs.enabled" -> true
+    "auditing.enabled"                                          -> false,
+    "schedules.resubmission-service.additional-logs.enabled"    -> true
   )
 
-  val formatter: DateTimeFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy")
+  val formatter: DateTimeFormatter           = DateTimeFormatter.ofPattern("dd/MM/yyyy")
   def instantFromDate(date: String): Instant = LocalDate.parse(date, formatter).atStartOfDay(ZoneId.of("UTC")).toInstant
 
   val submissionDatesAndSchemeRefs: Seq[(Instant, String)] = Seq(
@@ -64,7 +62,12 @@ class ResubJobWithSchemaRefsFilterEnabledSpec extends AnyWordSpecLike
 
   val ersSummaries: Seq[ErsSummary] = submissionDatesAndSchemeRefs.map {
     case (submissionDate: Instant, schemeRef: String) =>
-      Fixtures.buildErsSummary(transferStatus = Some("failed"), schemaType = "CSOP", timestamp = submissionDate, schemeRef = schemeRef)
+      Fixtures.buildErsSummary(
+        transferStatus = Some("failed"),
+        schemaType = "CSOP",
+        timestamp = submissionDate,
+        schemeRef = schemeRef
+      )
   } ++ Seq(
     Fixtures.buildErsSummary(transferStatus = Some("passed"), schemaType = "CSOP"),
     Fixtures.buildErsSummary(transferStatus = Some("successResubmit"), schemaType = "CSOP")
@@ -90,28 +93,30 @@ class ResubJobWithSchemaRefsFilterEnabledSpec extends AnyWordSpecLike
     "resubmit failed jobs with the correct transfer status and in the scheme filter list" +
       ", assigning successful jobs with the correct status" in new ResubmissionJobSetUp(app = app) {
 
-      val storeDocs: Boolean = await(storeMultipleErsSummary(ersSummaries.map(Json.toJsObject(_))))
-      val storePresubmissions: Boolean = await(storeMultiplePresubmissionData(presubmissionsData.map(Json.toJsObject(_))))
-      storeDocs shouldBe true
-      storePresubmissions shouldBe true
+        val storeDocs: Boolean           = await(storeMultipleErsSummary(ersSummaries.map(Json.toJsObject(_))))
+        val storePresubmissions: Boolean =
+          await(storeMultiplePresubmissionData(presubmissionsData.map(Json.toJsObject(_))))
+        storeDocs           shouldBe true
+        storePresubmissions shouldBe true
 
-      countMetadataRecordsWithSelector(Filters.empty()) shouldBe 7
-      countMetadataRecordsWithSelector(successResubmitTransferStatusSelector) shouldBe 1
-      countMetadataRecordsWithSelector(failedJobSelector) shouldBe 3
+        countMetadataRecordsWithSelector(Filters.empty())                       shouldBe 7
+        countMetadataRecordsWithSelector(successResubmitTransferStatusSelector) shouldBe 1
+        countMetadataRecordsWithSelector(failedJobSelector)                     shouldBe 3
 
-      val firstUpdateCompleted: Either[ERSError, Boolean] = await(getJob.scheduledMessage.service.invoke.value)
-      firstUpdateCompleted shouldBe Right(true)
+        val firstUpdateCompleted: Either[ERSError, Boolean] = await(getJob.scheduledMessage.service.invoke.value)
+        firstUpdateCompleted shouldBe Right(true)
 
-      countMetadataRecordsWithSelector(Filters.empty()) shouldBe 7
-      countMetadataRecordsWithSelector(successResubmitTransferStatusSelector) shouldBe 3 // 2 resubmissions
-      countMetadataRecordsWithSelector(failedJobSelector) shouldBe 1
+        countMetadataRecordsWithSelector(Filters.empty())                       shouldBe 7
+        countMetadataRecordsWithSelector(successResubmitTransferStatusSelector) shouldBe 3 // 2 resubmissions
+        countMetadataRecordsWithSelector(failedJobSelector)                     shouldBe 1
 
-      val secondUpdateCompleted: Either[ERSError, Boolean] = await(getJob.scheduledMessage.service.invoke.value)
-      secondUpdateCompleted shouldBe Right(true)
+        val secondUpdateCompleted: Either[ERSError, Boolean] = await(getJob.scheduledMessage.service.invoke.value)
+        secondUpdateCompleted shouldBe Right(true)
 
-      countMetadataRecordsWithSelector(Filters.empty()) shouldBe 7
-      countMetadataRecordsWithSelector(successResubmitTransferStatusSelector) shouldBe 4 // 1 resubmission
-      countMetadataRecordsWithSelector(failedJobSelector) shouldBe 0
-    }
+        countMetadataRecordsWithSelector(Filters.empty())                       shouldBe 7
+        countMetadataRecordsWithSelector(successResubmitTransferStatusSelector) shouldBe 4 // 1 resubmission
+        countMetadataRecordsWithSelector(failedJobSelector)                     shouldBe 0
+      }
   }
+
 }
