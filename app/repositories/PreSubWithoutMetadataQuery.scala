@@ -29,8 +29,10 @@ import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class PreSubWithoutMetadataQuery @Inject()(presubmissionRepository: PresubmissionMongoRepository,
-                                           val applicationConfig: ApplicationConfig)(implicit ec: ExecutionContext) {
+class PreSubWithoutMetadataQuery @Inject() (
+  presubmissionRepository: PresubmissionMongoRepository,
+  val applicationConfig: ApplicationConfig
+)(implicit ec: ExecutionContext) {
 
   private val letVariables: Seq[Variable[BsonString]] = Seq(
     new Variable("preSubSchemeRef", BsonString("$schemeInfo.schemeRef")),
@@ -65,7 +67,7 @@ class PreSubWithoutMetadataQuery @Inject()(presubmissionRepository: Presubmissio
     )
   )
 
-  private def dateFilter(startDate: String): BsonDocument = {
+  private def dateFilter(startDate: String): BsonDocument =
     BsonDocument(
       "$match" -> BsonDocument(
         "schemeInfo.timestamp" -> BsonDocument(
@@ -74,9 +76,8 @@ class PreSubWithoutMetadataQuery @Inject()(presubmissionRepository: Presubmissio
         )
       )
     )
-  }
 
- private def convertToEpoch(dateStr: String): Long = {
+  private def convertToEpoch(dateStr: String): Long = {
     val formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy")
     val localDate = LocalDate.parse(dateStr, formatter)
     localDate.atStartOfDay(ZoneId.systemDefault()).toInstant.toEpochMilli
@@ -90,7 +91,7 @@ class PreSubWithoutMetadataQuery @Inject()(presubmissionRepository: Presubmissio
       Projections.excludeId()
     )
   )
-  
+
   val pipeline: Seq[Bson] =
     Seq(
       matchMetadata,
@@ -101,26 +102,26 @@ class PreSubWithoutMetadataQuery @Inject()(presubmissionRepository: Presubmissio
 
   def validateJson[T](record: JsObject)(implicit reads: Reads[T]): Either[String, T] =
     record.validate[T] match {
-      case JsSuccess(obj, _) =>
+      case JsSuccess(obj, _)                                                              =>
         Right(obj)
       case JsError(errors: collection.Seq[(JsPath, collection.Seq[JsonValidationError])]) =>
-         Left(
-           errors
+        Left(
+          errors
             .map((e: (JsPath, collection.Seq[JsonValidationError])) => s"${e._1}: ${e._2.mkString(", ")}")
             .mkString(", ")
-         )
+        )
     }
 
   def runQuery: Future[(List[String], List[PreSubWithoutMetadata])] =
     for {
-      preSubWithoutMetadataAsJson: Seq[JsObject] <- presubmissionRepository
-        .collection
-        .aggregate(pipeline)
-        .toFuture()
-      preSubWithoutMetadata = preSubWithoutMetadataAsJson.map(validateJson[PreSubWithoutMetadata])
+      preSubWithoutMetadataAsJson: Seq[JsObject] <- presubmissionRepository.collection
+                                                      .aggregate(pipeline)
+                                                      .toFuture()
+      preSubWithoutMetadata                       = preSubWithoutMetadataAsJson.map(validateJson[PreSubWithoutMetadata])
     } yield preSubWithoutMetadata
       .foldLeft((List.empty[String], List.empty[PreSubWithoutMetadata])) {
-        case ((errs, records), Left(error)) => (error :: errs, records)
+        case ((errs, records), Left(error))   => (error :: errs, records)
         case ((errs, records), Right(record)) => (errs, record :: records)
       }
+
 }

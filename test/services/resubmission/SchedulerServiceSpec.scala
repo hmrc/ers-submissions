@@ -32,10 +32,10 @@ import scala.concurrent.Future
 
 class SchedulerServiceSpec extends ERSTestHelper with BeforeAndAfterEach with EitherValues {
 
-  implicit val hc: HeaderCarrier = HeaderCarrier()
-  implicit val request: Request[_] = FakeRequest()
-  val mockApplicationConfig: ApplicationConfig = app.injector.instanceOf[ApplicationConfig]
-  val mockMongoLockRepository: DefaultLockRepositoryProvider = mock[DefaultLockRepositoryProvider]
+  implicit val hc: HeaderCarrier                               = HeaderCarrier()
+  implicit val request: Request[_]                             = FakeRequest()
+  val mockApplicationConfig: ApplicationConfig                 = app.injector.instanceOf[ApplicationConfig]
+  val mockMongoLockRepository: DefaultLockRepositoryProvider   = mock[DefaultLockRepositoryProvider]
   val mockResubPresubmissionService: ResubPresubmissionService = mock[ResubPresubmissionService]
 
   override def beforeEach(): Unit = {
@@ -46,39 +46,37 @@ class SchedulerServiceSpec extends ERSTestHelper with BeforeAndAfterEach with Ei
   "resubmit" should {
 
     "return the result of processFailedGridFSSubmissions if processFailedSubmissions returns true" in {
-      val schedulerService: ReSubmissionSchedulerService = new ReSubmissionSchedulerService(
-        mockApplicationConfig,
-        mockMongoLockRepository,
-        mockResubPresubmissionService)
+      val schedulerService: ReSubmissionSchedulerService =
+        new ReSubmissionSchedulerService(mockApplicationConfig, mockMongoLockRepository, mockResubPresubmissionService)
 
-      when(mockResubPresubmissionService.processFailedSubmissions(any())(any(), any())).thenReturn(ERSEnvelope(Future.successful(true)))
+      when(mockResubPresubmissionService.processFailedSubmissions(any())(any(), any()))
+        .thenReturn(ERSEnvelope(Future.successful(true)))
 
       val result = await(schedulerService.resubmit().value)
       result.value shouldBe true
     }
 
     "return the result of processFailedGridFSSubmissions if processFailedSubmissions returns false" in {
-      val schedulerService: ReSubmissionSchedulerService = new ReSubmissionSchedulerService(
-        mockApplicationConfig,
-        mockMongoLockRepository,
-        mockResubPresubmissionService)
+      val schedulerService: ReSubmissionSchedulerService =
+        new ReSubmissionSchedulerService(mockApplicationConfig, mockMongoLockRepository, mockResubPresubmissionService)
 
-      when(mockResubPresubmissionService.processFailedSubmissions(any())(any(), any())).thenReturn(ERSEnvelope(Future.successful(false)))
+      when(mockResubPresubmissionService.processFailedSubmissions(any())(any(), any()))
+        .thenReturn(ERSEnvelope(Future.successful(false)))
 
       val result = await(schedulerService.resubmit().value)
       result.value shouldBe false
     }
 
     "return ResubmissionError if resubmitting gridFS data returns error" in {
-      val schedulerService: ReSubmissionSchedulerService = new ReSubmissionSchedulerService(
-        mockApplicationConfig,
-        mockMongoLockRepository,
-        mockResubPresubmissionService)
+      val schedulerService: ReSubmissionSchedulerService =
+        new ReSubmissionSchedulerService(mockApplicationConfig, mockMongoLockRepository, mockResubPresubmissionService)
 
-      when(mockResubPresubmissionService.processFailedSubmissions(any())(any(), any())).thenReturn(ERSEnvelope(ResubmissionError()))
+      when(mockResubPresubmissionService.processFailedSubmissions(any())(any(), any()))
+        .thenReturn(ERSEnvelope(ResubmissionError()))
 
       val result = await(schedulerService.resubmit().value)
       result.swap.value shouldBe ResubmissionError()
     }
   }
+
 }

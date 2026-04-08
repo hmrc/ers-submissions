@@ -22,38 +22,40 @@ import java.time.Instant
 import java.time.temporal.ChronoUnit
 import scala.collection.mutable.ListBuffer
 
+case class SchemeInfo(
+  schemeRef: String,
+  timestamp: Instant = Instant.now().truncatedTo(ChronoUnit.MILLIS),
+  schemeId: String,
+  taxYear: String,
+  schemeName: String,
+  schemeType: String
+) {
 
-case class SchemeInfo(schemeRef: String,
-                      timestamp: Instant = Instant.now().truncatedTo(ChronoUnit.MILLIS),
-                      schemeId: String,
-                      taxYear: String,
-                      schemeName: String,
-                      schemeType: String) {
+  val basicLogMessage: String =
+    List(schemeRef, schemeType, taxYear, timestamp.toEpochMilli.toString).mkString("[", ",", "]")
 
-  val basicLogMessage: String = List(schemeRef, schemeType, taxYear, timestamp.toEpochMilli.toString).mkString("[",",","]")
 }
 
 object SchemeInfo {
   implicit val dateTimeWrite: Writes[Instant] = (dateTime: Instant) => Json.toJson(dateTime.toEpochMilli)
-  implicit val dateTimeRead: Reads[Instant] = DateTimeFormats.dateTimeRead
+  implicit val dateTimeRead: Reads[Instant]   = DateTimeFormats.dateTimeRead
 
   implicit val format: OFormat[SchemeInfo] = Json.format[SchemeInfo]
 }
 
-case class SchemeData(schemeInfo: SchemeInfo,
-                      sheetName: String,
-                      numberOfParts: Option[Int],
-                      data: Option[ListBuffer[scala.Seq[String]]])
+case class SchemeData(
+  schemeInfo: SchemeInfo,
+  sheetName: String,
+  numberOfParts: Option[Int],
+  data: Option[ListBuffer[scala.Seq[String]]]
+)
+
 object SchemeData {
   implicit val format: OFormat[SchemeData] = Json.format[SchemeData]
 }
 
-case class SubmissionsSchemeData(schemeInfo: SchemeInfo,
-                                 sheetName: String,
-                                 data: UpscanCallback,
-                                 numberOfRows: Int)
+case class SubmissionsSchemeData(schemeInfo: SchemeInfo, sheetName: String, data: UpscanCallback, numberOfRows: Int)
 
 object SubmissionsSchemeData {
   implicit val format: OFormat[SubmissionsSchemeData] = Json.format[SubmissionsSchemeData]
 }
-

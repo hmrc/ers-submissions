@@ -29,20 +29,21 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 import repositories.PresubmissionMongoRepository
 
-class ValidatorIntegrationSpec extends AnyWordSpecLike with Matchers
-  with BeforeAndAfterEach with FakeAuthService with EitherValues {
+class ValidatorIntegrationSpec
+    extends AnyWordSpecLike with Matchers with BeforeAndAfterEach with FakeAuthService with EitherValues {
 
-  lazy val app: Application = new GuiceApplicationBuilder().configure(
-    Map("microservice.services.auth.port" -> "18500",
-      "auditing.enabled" -> false
+  lazy val app: Application = new GuiceApplicationBuilder()
+    .configure(
+      Map("microservice.services.auth.port" -> "18500", "auditing.enabled" -> false)
     )
-  ).build()
+    .build()
 
   def wsClient: WSClient = app.injector.instanceOf[WSClient]
 
   private lazy val presubmissionRepository = app.injector.instanceOf[PresubmissionMongoRepository]
 
-  val receivePresubmissionController: ReceivePresubmissionController = app.injector.instanceOf[ReceivePresubmissionController]
+  val receivePresubmissionController: ReceivePresubmissionController =
+    app.injector.instanceOf[ReceivePresubmissionController]
 
   val presubmissionController: PresubmissionController = app.injector.instanceOf[PresubmissionController]
 
@@ -55,17 +56,29 @@ class ValidatorIntegrationSpec extends AnyWordSpecLike with Matchers
   "Sending data from validator" should {
 
     "return BAD_REQUEST if invalid object is sent" in {
-      val response = await(receivePresubmissionController.receivePresubmissionJsonV2("ABC%2F1234")
-        .apply(FakeRequest().withBody(Json.parse("{ \"key\": \"value\" }"))
-          .withHeaders(("Authorization", "Bearer123"))))
+      val response = await(
+        receivePresubmissionController
+          .receivePresubmissionJsonV2("ABC%2F1234")
+          .apply(
+            FakeRequest()
+              .withBody(Json.parse("{ \"key\": \"value\" }"))
+              .withHeaders(("Authorization", "Bearer123"))
+          )
+      )
       response.header.status shouldBe BAD_REQUEST
     }
 
     "be stored successfully in database" in {
       val submissionsSchemeData: SubmissionsSchemeData = Fixtures.submissionsSchemeData
-      val response = await(receivePresubmissionController.receivePresubmissionJsonV2("ABC%2F1234")
-        .apply(FakeRequest().withBody(Fixtures.submissionsSchemeDataJson(submissionsSchemeData))
-          .withHeaders(("Authorization", "Bearer123"))))
+      val response                                     = await(
+        receivePresubmissionController
+          .receivePresubmissionJsonV2("ABC%2F1234")
+          .apply(
+            FakeRequest()
+              .withBody(Fixtures.submissionsSchemeDataJson(submissionsSchemeData))
+              .withHeaders(("Authorization", "Bearer123"))
+          )
+      )
       response.header.status shouldBe OK
 
       val presubmissionData = await(presubmissionRepository.getJson(submissionsSchemeData.schemeInfo, "").value).value
@@ -80,19 +93,28 @@ class ValidatorIntegrationSpec extends AnyWordSpecLike with Matchers
 
     "successfully remove data by session Id and scheme ref" in {
       val submissionsSchemeData: SubmissionsSchemeData = Fixtures.submissionsSchemeData
-      val schemeInfo = submissionsSchemeData.schemeInfo
-      val response = await(receivePresubmissionController.receivePresubmissionJsonV2("ABC%2F1234")
-        .apply(FakeRequest().withBody(Fixtures.submissionsSchemeDataJson(submissionsSchemeData))
-          .withHeaders(("Authorization", "Bearer123"))))
-      
+      val schemeInfo                                   = submissionsSchemeData.schemeInfo
+      val response                                     = await(
+        receivePresubmissionController
+          .receivePresubmissionJsonV2("ABC%2F1234")
+          .apply(
+            FakeRequest()
+              .withBody(Fixtures.submissionsSchemeDataJson(submissionsSchemeData))
+              .withHeaders(("Authorization", "Bearer123"))
+          )
+      )
+
       response.header.status shouldBe OK
 
       val presubmissionData = await(presubmissionRepository.getJson(submissionsSchemeData.schemeInfo, "").value).value
       presubmissionData.length shouldBe 1
       presubmissionData.head.equals(Fixtures.schemeData())
 
-      val removeResponse = await(presubmissionController.removePresubmissionJson()
-        .apply(FakeRequest().withBody(Fixtures.schemeInfoPayload(schemeInfo).as[JsObject])))
+      val removeResponse = await(
+        presubmissionController
+          .removePresubmissionJson()
+          .apply(FakeRequest().withBody(Fixtures.schemeInfoPayload(schemeInfo).as[JsObject]))
+      )
       removeResponse.header.status shouldBe OK
 
       val presubmissionDataAfterRemove = await(presubmissionRepository.getJson(Fixtures.schemeInfo(), "").value).value
@@ -106,37 +128,56 @@ class ValidatorIntegrationSpec extends AnyWordSpecLike with Matchers
 
     "return OK if expected records are equal to existing ones" in {
       val submissionsSchemeData: SubmissionsSchemeData = Fixtures.submissionsSchemeData
-      val schemeInfo = submissionsSchemeData.schemeInfo
-      val response = await(receivePresubmissionController.receivePresubmissionJsonV2("ABC%2F1234")
-        .apply(FakeRequest().withBody(Fixtures.submissionsSchemeDataJson(submissionsSchemeData))
-          .withHeaders(("Authorization", "Bearer123"))))
+      val schemeInfo                                   = submissionsSchemeData.schemeInfo
+      val response                                     = await(
+        receivePresubmissionController
+          .receivePresubmissionJsonV2("ABC%2F1234")
+          .apply(
+            FakeRequest()
+              .withBody(Fixtures.submissionsSchemeDataJson(submissionsSchemeData))
+              .withHeaders(("Authorization", "Bearer123"))
+          )
+      )
 
       response.header.status shouldBe OK
       val presubmissionData = await(presubmissionRepository.getJson(schemeInfo, "").value).value
       presubmissionData.length shouldBe 1
       presubmissionData.head.equals(Fixtures.schemeData())
 
-      val checkResponse = await(presubmissionController.checkForExistingPresubmission(1)
-        .apply(FakeRequest().withBody(Fixtures.schemeInfoPayload(schemeInfo).as[JsObject])))
+      val checkResponse = await(
+        presubmissionController
+          .checkForExistingPresubmission(1)
+          .apply(FakeRequest().withBody(Fixtures.schemeInfoPayload(schemeInfo).as[JsObject]))
+      )
 
       checkResponse.header.status shouldBe OK
     }
 
     "return InternalServerError if expected records are not equal to existing ones" in {
       val submissionsSchemeData: SubmissionsSchemeData = Fixtures.submissionsSchemeData
-      val schemeInfo = submissionsSchemeData.schemeInfo
-      val response = await(receivePresubmissionController.receivePresubmissionJsonV2("ABC%2F1234")
-        .apply(FakeRequest().withBody(Fixtures.submissionsSchemeDataJson(submissionsSchemeData))
-        .withHeaders(("Authorization", "Bearer123"))))
+      val schemeInfo                                   = submissionsSchemeData.schemeInfo
+      val response                                     = await(
+        receivePresubmissionController
+          .receivePresubmissionJsonV2("ABC%2F1234")
+          .apply(
+            FakeRequest()
+              .withBody(Fixtures.submissionsSchemeDataJson(submissionsSchemeData))
+              .withHeaders(("Authorization", "Bearer123"))
+          )
+      )
 
       response.header.status shouldBe OK
       val presubmissionData = await(presubmissionRepository.getJson(schemeInfo, "").value).value
       presubmissionData.length shouldBe 1
       presubmissionData.head.equals(Fixtures.schemeData())
 
-      val checkResponse = await(presubmissionController.checkForExistingPresubmission(2)
-        .apply(FakeRequest().withBody(Fixtures.schemeInfoPayload(schemeInfo).as[JsObject])))
+      val checkResponse = await(
+        presubmissionController
+          .checkForExistingPresubmission(2)
+          .apply(FakeRequest().withBody(Fixtures.schemeInfoPayload(schemeInfo).as[JsObject]))
+      )
       checkResponse.header.status shouldBe INTERNAL_SERVER_ERROR
     }
   }
+
 }

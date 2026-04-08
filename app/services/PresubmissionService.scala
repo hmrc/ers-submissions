@@ -29,47 +29,61 @@ import javax.inject.Inject
 import scala.concurrent.ExecutionContext
 import scala.util.Try
 
-class PresubmissionService @Inject()(repositories: Repositories)(implicit ec: ExecutionContext) extends ErsLogger {
+class PresubmissionService @Inject() (repositories: Repositories)(implicit ec: ExecutionContext) extends ErsLogger {
 
   lazy val presubmissionRepository: PresubmissionMongoRepository = repositories.presubmissionRepository
 
   def storeJson(schemeData: SchemeData)(implicit hc: HeaderCarrier): ERSEnvelope[Boolean] =
     presubmissionRepository.storeJson(schemeData, Session.id(hc))
 
-  def getJson(schemeInfo: SchemeInfo)(implicit hc: HeaderCarrier): ERSEnvelope[scala.Seq[SchemeData]] = {
+  def getJson(schemeInfo: SchemeInfo)(implicit hc: HeaderCarrier): ERSEnvelope[scala.Seq[SchemeData]] =
     presubmissionRepository.getJson(schemeInfo, Session.id(hc)).flatMap { result =>
       if (result.nonEmpty) {
-        logInfo(s"[PresubmissionService][getJson] Found data in pre-submission repository for: ${schemeInfo.basicLogMessage}, mapping to scheme data.")
+        logInfo(
+          s"[PresubmissionService][getJson] Found data in pre-submission repository for: ${schemeInfo.basicLogMessage}, mapping to scheme data."
+        )
         Try {
           result.map(_.as[SchemeData])
         }.toEither match {
-          case Left(value) =>
-            logError(s"[PresubmissionService][getJson] Mapping data to SchemeData failed with error: [${value.getMessage}] for ${schemeInfo.basicLogMessage}")
+          case Left(value)  =>
+            logError(
+              s"[PresubmissionService][getJson] Mapping data to SchemeData failed with error: [${value.getMessage}] for ${schemeInfo.basicLogMessage}"
+            )
             ERSEnvelope(SchemeDataMappingError(value.getMessage))
           case Right(value) => ERSEnvelope(value)
         }
       } else {
-        logError(s"[PresubmissionService][getJson] No data found in pre-submission repository for: ${schemeInfo.basicLogMessage}")
+        logError(
+          s"[PresubmissionService][getJson] No data found in pre-submission repository for: ${schemeInfo.basicLogMessage}"
+        )
         ERSEnvelope(NoData())
       }
     }
-  }
 
   def removeJson(schemeInfo: SchemeInfo)(implicit hc: HeaderCarrier): ERSEnvelope[Boolean] =
     presubmissionRepository.removeJson(schemeInfo, Session.id(hc)).flatMap {
       case result if result.wasAcknowledged() && result.getDeletedCount > 0 =>
-        logInfo(s"[PresubmissionService][removeJson] Deleted ${result.getDeletedCount} documents from presubmission repository for: ${schemeInfo.basicLogMessage}")
+        logInfo(
+          s"[PresubmissionService][removeJson] Deleted ${result.getDeletedCount} documents from presubmission repository for: ${schemeInfo.basicLogMessage}"
+        )
         ERSEnvelope(true)
-      case result if result.wasAcknowledged() =>
-        logInfo(s"[PresubmissionService][removeJson] No data to delete from presubmission repository for: ${schemeInfo.basicLogMessage}")
+      case result if result.wasAcknowledged()                               =>
+        logInfo(
+          s"[PresubmissionService][removeJson] No data to delete from presubmission repository for: ${schemeInfo.basicLogMessage}"
+        )
         ERSEnvelope(NoData())
-      case _ =>
-        logWarn(s"[PresubmissionService][removeJson] Deleting old presubmission data failed for: ${schemeInfo.basicLogMessage}")
+      case _                                                                =>
+        logWarn(
+          s"[PresubmissionService][removeJson] Deleting old presubmission data failed for: ${schemeInfo.basicLogMessage}"
+        )
         ERSEnvelope(false)
     }
 
-  def compareSheetsNumber(expectedSheets: Int, schemeInfo: SchemeInfo)(implicit hc: HeaderCarrier): ERSEnvelope[(Boolean, Long)] =
+  def compareSheetsNumber(expectedSheets: Int, schemeInfo: SchemeInfo)(implicit
+    hc: HeaderCarrier
+  ): ERSEnvelope[(Boolean, Long)] =
     presubmissionRepository.count(schemeInfo, Session.id(hc)).map { existingSheets =>
       (existingSheets.toInt == expectedSheets, existingSheets)
     }
+
 }

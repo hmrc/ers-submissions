@@ -22,11 +22,13 @@ import utils.LoggingAndExceptions.ErsLogger
 
 trait RepositoryHelper extends ErsLogger {
 
-  def mongoRecover[T](repository: String,
-                      method: String,
-                      message: String,
-                      sessionId: String,
-                      optSchemaRefs: Option[Seq[String]] = None): PartialFunction[Throwable, Either[MongoError, T]] = new PartialFunction[Throwable, Either[MongoError, T]] {
+  def mongoRecover[T](
+    repository: String,
+    method: String,
+    message: String,
+    sessionId: String,
+    optSchemaRefs: Option[Seq[String]] = None
+  ): PartialFunction[Throwable, Either[MongoError, T]] = new PartialFunction[Throwable, Either[MongoError, T]] {
 
     val genericMessage = s"[$repository][$method][SessionId: $sessionId] $message."
 
@@ -40,9 +42,10 @@ trait RepositoryHelper extends ErsLogger {
       case unavailable: MongoSocketWriteException =>
         logError(s"$logMessage MongoDB is unavailable.", unavailable)
         Left(MongoUnavailableError(unavailable.getMessage))
-      case other: Throwable =>
+      case other: Throwable                       =>
         logError(s"$logMessage Error: ${e.getMessage}.", other)
         Left(MongoGenericError(other.getMessage))
     }
   }
+
 }

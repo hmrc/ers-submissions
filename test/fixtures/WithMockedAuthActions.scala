@@ -32,9 +32,9 @@ trait WithMockedAuthActions {
 
   def mockJsValueAuthAction(implicit ec: ExecutionContext): OngoingStubbing[Action[JsValue]] =
     when(mockAuthAction.async(any[BodyParser[JsValue]])(any[Request[JsValue] => Future[Result]]()))
-      .thenAnswer((invocation: InvocationOnMock) => {
+      .thenAnswer { (invocation: InvocationOnMock) =>
         val passedInBodyParser = invocation.getArguments()(0).asInstanceOf[BodyParser[JsValue]]
-        val passedInBlock = invocation.getArguments()(1).asInstanceOf[Request[JsValue] => Future[Result]]
+        val passedInBlock      = invocation.getArguments()(1).asInstanceOf[Request[JsValue] => Future[Result]]
         new Action[JsValue] {
           override def parser: BodyParser[JsValue] = passedInBodyParser
 
@@ -42,5 +42,6 @@ trait WithMockedAuthActions {
 
           override def executionContext: ExecutionContext = ec
         }
-      })
+      }
+
 }

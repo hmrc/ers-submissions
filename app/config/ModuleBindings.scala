@@ -25,4 +25,5 @@ class ModuleBindings extends Module {
   override def bindings(environment: Environment, configuration: Configuration): Seq[Binding[_]] = Seq(
     bind[LockRepositoryProvider].to[DefaultLockRepositoryProvider]
   )
+
 }

@@ -19,11 +19,15 @@ package messages
 import play.api.libs.json.{Format, Json}
 
 case class Id(schemeType: String, transferStatus: Option[String])
-case class AggregatedLog(_id: Id, count: Int){
-  val logLine: String = s"schemaType: ${_id.schemeType}, transferStatus: ${_id.transferStatus.getOrElse("EmptyTransferStatus")}, count: $count"
+
+case class AggregatedLog(_id: Id, count: Int) {
+
+  val logLine: String =
+    s"schemaType: ${_id.schemeType}, transferStatus: ${_id.transferStatus.getOrElse("EmptyTransferStatus")}, count: $count"
+
 }
 
 object AggregatedLog {
-  implicit val idFormat: Format[Id] = Json.format[Id]
+  implicit val idFormat: Format[Id]              = Json.format[Id]
   implicit val dataFormat: Format[AggregatedLog] = Json.format[AggregatedLog]
 }

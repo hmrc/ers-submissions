@@ -24,6 +24,7 @@ import services.resubmission.ProcessFailedSubmissionsConfig
 import repositories.helpers.BsonDocumentHelper.BsonOps
 
 case class Selectors(processFailedSubmissionsConfig: ProcessFailedSubmissionsConfig) {
+
   val baseSelector: BsonDocument = BsonDocument(
     "transferStatus" -> BsonDocument(
       "$in" -> processFailedSubmissionsConfig.searchStatusList.map(Some(_))
@@ -31,19 +32,31 @@ case class Selectors(processFailedSubmissionsConfig: ProcessFailedSubmissionsCon
   )
 
   val preSubmissionSchemeRefSelector: BsonDocument = BsonDocument(
-    processFailedSubmissionsConfig.schemeRefList.map(schemeList => "schemeInfo.schemeRef" -> BsonDocument("$in" -> schemeList))
+    processFailedSubmissionsConfig.schemeRefList.map(schemeList =>
+      "schemeInfo.schemeRef" -> BsonDocument("$in" -> schemeList)
+    )
   )
 
   val metadataSchemeRefSelector: BsonDocument = BsonDocument(
-    processFailedSubmissionsConfig.schemeRefList.map(schemeList => "metaData.schemeInfo.schemeRef" -> BsonDocument("$in" -> schemeList))
+    processFailedSubmissionsConfig.schemeRefList.map(schemeList =>
+      "metaData.schemeInfo.schemeRef" -> BsonDocument("$in" -> schemeList)
+    )
   )
 
   val schemeSelector: BsonDocument = BsonDocument(
     processFailedSubmissionsConfig.resubmitScheme.map(scheme => "metaData.schemeInfo.schemeType" -> BsonString(scheme))
   )
 
-  val dateRangeSelector: BsonDocument = BsonDocument(processFailedSubmissionsConfig.dateTimeFilter.map(date =>
-    "metaData.schemeInfo.timestamp" -> BsonDocument("$gte" -> LocalDate.parse(date, DateTimeFormatter.ofPattern("dd/MM/yyyy")).atStartOfDay(ZoneId.of("UTC")).toInstant.toEpochMilli))
+  val dateRangeSelector: BsonDocument = BsonDocument(
+    processFailedSubmissionsConfig.dateTimeFilter.map(date =>
+      "metaData.schemeInfo.timestamp" -> BsonDocument(
+        "$gte" -> LocalDate
+          .parse(date, DateTimeFormatter.ofPattern("dd/MM/yyyy"))
+          .atStartOfDay(ZoneId.of("UTC"))
+          .toInstant
+          .toEpochMilli
+      )
+    )
   )
 
   val allMetadataSelectors: BsonDocument = Seq(
@@ -52,4 +65,5 @@ case class Selectors(processFailedSubmissionsConfig: ProcessFailedSubmissionsCon
     schemeSelector,
     dateRangeSelector
   ).foldLeft(BsonDocument())(_ +:+ _)
+
 }

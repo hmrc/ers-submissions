@@ -23,14 +23,14 @@ import play.api.inject.ApplicationLifecycle
 import scheduler.SchedulingActor.ResubmissionServiceClass
 import services.resubmission.ReSubmissionSchedulerService
 
-class ResubmissionServiceImpl @Inject()(
-                                              val config: Configuration,
-                                              val resubmissionService: ReSubmissionSchedulerService,
-                                              val applicationLifecycle: ApplicationLifecycle
-                                            ) extends ScheduledJob {
+class ResubmissionServiceImpl @Inject() (
+  val config: Configuration,
+  val resubmissionService: ReSubmissionSchedulerService,
+  val applicationLifecycle: ApplicationLifecycle
+) extends ScheduledJob {
 
-  override def jobName: String = "resubmission-service"
-  val actorSystem: ActorSystem = ActorSystem(jobName)
+  override def jobName: String                   = "resubmission-service"
+  val actorSystem: ActorSystem                   = ActorSystem(jobName)
   val scheduledMessage: ResubmissionServiceClass = ResubmissionServiceClass(resubmissionService)
 
   schedule

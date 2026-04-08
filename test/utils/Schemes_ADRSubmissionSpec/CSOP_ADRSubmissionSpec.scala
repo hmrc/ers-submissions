@@ -33,14 +33,13 @@ import utils.{ADRSubmission, ConfigUtils, SubmissionCommon}
 import scala.collection.mutable.ListBuffer
 import scala.concurrent.Future
 
-class CSOP_ADRSubmissionSpec
-  extends ERSTestHelper with BeforeAndAfterEach with EitherValues {
+class CSOP_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with EitherValues {
 
-  val mockSubmissionCommon: SubmissionCommon = app.injector.instanceOf[SubmissionCommon]
-  val mockConfigUtils: ConfigUtils = app.injector.instanceOf[ConfigUtils]
+  val mockSubmissionCommon: SubmissionCommon         = app.injector.instanceOf[SubmissionCommon]
+  val mockConfigUtils: ConfigUtils                   = app.injector.instanceOf[ConfigUtils]
   val mockPresubmissionService: PresubmissionService = mock[PresubmissionService]
 
-  implicit val hc: HeaderCarrier = new HeaderCarrier()
+  implicit val hc: HeaderCarrier              = new HeaderCarrier()
   implicit val request: FakeRequest[JsObject] = FakeRequest().withBody(Fixtures.metadataJson)
 
   val adrSubmission: ADRSubmission = new ADRSubmission(
@@ -65,8 +64,7 @@ class CSOP_ADRSubmissionSpec
       )
 
       val result = await(adrSubmission.generateSubmission(CSOP.metadataNilReturnWithoutAltAmmends)(request, hc).value)
-      result.value - "acknowledgementReference" shouldBe Json.parse(
-        """{
+      result.value - "acknowledgementReference" shouldBe Json.parse("""{
           |"regime":"ERS",
           |"schemeType":"CSOP",
           |"schemeReference":"XA1100000000000",
@@ -117,8 +115,7 @@ class CSOP_ADRSubmissionSpec
       )
 
       val result = await(adrSubmission.generateSubmission(CSOP.metadataNilReturnWithSomeAltAmmends)(request, hc).value)
-      result.value - "acknowledgementReference" shouldBe Json.parse(
-        """{
+      result.value - "acknowledgementReference" shouldBe Json.parse("""{
           |"regime":"ERS",
           |"schemeType":"CSOP",
           |"schemeReference":"XA1100000000000",
@@ -182,8 +179,7 @@ class CSOP_ADRSubmissionSpec
       )
 
       val result = await(adrSubmission.generateSubmission(CSOP.metadataNilReturnWithAllAltAmmends)(request, hc).value)
-      result.value - "acknowledgementReference" shouldBe Json.parse(
-        """{
+      result.value - "acknowledgementReference" shouldBe Json.parse("""{
           |"regime":"ERS",
           |"schemeType":"CSOP",
           |"schemeReference":"XA1100000000000",
@@ -253,8 +249,7 @@ class CSOP_ADRSubmissionSpec
       )
 
       val result = await(adrSubmission.generateSubmission(CSOP.metadata)(request, hc).value)
-      result.value - "acknowledgementReference" shouldBe Json.parse(
-        """{
+      result.value - "acknowledgementReference" shouldBe Json.parse("""{
           |"regime":"ERS",
           |"schemeType":"CSOP",
           |"schemeReference":"XA1100000000000",
@@ -324,14 +319,22 @@ class CSOP_ADRSubmissionSpec
       when(
         mockPresubmissionService.getJson(any[SchemeInfo]())(any())
       ).thenReturn(
-        ERSEnvelope(Future.successful(
-          List(SchemeData(CSOP.schemeInfo, "CSOP_OptionsGranted_V4", None, Some(ListBuffer(CSOP.buildGrantedV4("yes", "yes")))))
+        ERSEnvelope(
+          Future.successful(
+            List(
+              SchemeData(
+                CSOP.schemeInfo,
+                "CSOP_OptionsGranted_V4",
+                None,
+                Some(ListBuffer(CSOP.buildGrantedV4("yes", "yes")))
+              )
+            )
+          )
         )
-        ))
+      )
 
       val result = await(adrSubmission.generateSubmission(CSOP.metadata)(request, hc).value)
-      result.value - "acknowledgementReference" shouldBe Json.parse(
-        """{
+      result.value - "acknowledgementReference" shouldBe Json.parse("""{
           |"regime":"ERS",
           |"schemeType":"CSOP",
           |"schemeReference":"XA1100000000000",
@@ -414,17 +417,28 @@ class CSOP_ADRSubmissionSpec
       when(
         mockPresubmissionService.getJson(any[SchemeInfo]())(any())
       ).thenReturn(
-        ERSEnvelope(Future.successful(
-          List(
-            SchemeData(CSOP.schemeInfo, "CSOP_OptionsGranted_V4", None, Some(ListBuffer(CSOP.buildGrantedV4("yes", "yes")))),
-            SchemeData(CSOP.schemeInfo, "CSOP_OptionsGranted_V4", None, Some(ListBuffer(CSOP.buildGrantedV4("yes", "yes"))))
+        ERSEnvelope(
+          Future.successful(
+            List(
+              SchemeData(
+                CSOP.schemeInfo,
+                "CSOP_OptionsGranted_V4",
+                None,
+                Some(ListBuffer(CSOP.buildGrantedV4("yes", "yes")))
+              ),
+              SchemeData(
+                CSOP.schemeInfo,
+                "CSOP_OptionsGranted_V4",
+                None,
+                Some(ListBuffer(CSOP.buildGrantedV4("yes", "yes")))
+              )
+            )
           )
         )
-        ))
+      )
 
       val result = await(adrSubmission.generateSubmission(CSOP.metadata)(request, hc).value)
-      result.value - "acknowledgementReference" shouldBe Json.parse(
-        """{
+      result.value - "acknowledgementReference" shouldBe Json.parse("""{
           |"regime":"ERS",
           |"schemeType":"CSOP",
           |"schemeReference":"XA1100000000000",
@@ -516,14 +530,22 @@ class CSOP_ADRSubmissionSpec
       when(
         mockPresubmissionService.getJson(any[SchemeInfo]())(any())
       ).thenReturn(
-        ERSEnvelope(Future.successful(
-          List(SchemeData(CSOP.schemeInfo, "CSOP_OptionsRCL_V4", None, Some(ListBuffer(CSOP.buildOptionsRCL(withAllFields = true, "yes")))))
+        ERSEnvelope(
+          Future.successful(
+            List(
+              SchemeData(
+                CSOP.schemeInfo,
+                "CSOP_OptionsRCL_V4",
+                None,
+                Some(ListBuffer(CSOP.buildOptionsRCL(withAllFields = true, "yes")))
+              )
+            )
+          )
         )
-        ))
+      )
 
       val result = await(adrSubmission.generateSubmission(CSOP.metadata)(request, hc).value)
-      result.value - "acknowledgementReference" shouldBe Json.parse(
-        """{
+      result.value - "acknowledgementReference" shouldBe Json.parse("""{
           |"regime":"ERS",
           |"schemeType":"CSOP",
           |"schemeReference":"XA1100000000000",
@@ -610,17 +632,28 @@ class CSOP_ADRSubmissionSpec
       when(
         mockPresubmissionService.getJson(any[SchemeInfo]())(any())
       ).thenReturn(
-        ERSEnvelope(Future.successful(
-          List(
-            SchemeData(CSOP.schemeInfo, "CSOP_OptionsRCL_V4", None, Some(ListBuffer(CSOP.buildOptionsRCL(withAllFields = true, "yes")))),
-            SchemeData(CSOP.schemeInfo, "CSOP_OptionsRCL_V4", None, Some(ListBuffer(CSOP.buildOptionsRCL(withAllFields = false, "no"))))
+        ERSEnvelope(
+          Future.successful(
+            List(
+              SchemeData(
+                CSOP.schemeInfo,
+                "CSOP_OptionsRCL_V4",
+                None,
+                Some(ListBuffer(CSOP.buildOptionsRCL(withAllFields = true, "yes")))
+              ),
+              SchemeData(
+                CSOP.schemeInfo,
+                "CSOP_OptionsRCL_V4",
+                None,
+                Some(ListBuffer(CSOP.buildOptionsRCL(withAllFields = false, "no")))
+              )
+            )
           )
         )
-        ))
+      )
 
       val result = await(adrSubmission.generateSubmission(CSOP.metadata)(request, hc).value)
-      result.value - "acknowledgementReference" shouldBe Json.parse(
-        """{
+      result.value - "acknowledgementReference" shouldBe Json.parse("""{
           |"regime":"ERS",
           |"schemeType":"CSOP",
           |"schemeReference":"XA1100000000000",
@@ -717,14 +750,31 @@ class CSOP_ADRSubmissionSpec
       when(
         mockPresubmissionService.getJson(any[SchemeInfo]())(any())
       ).thenReturn(
-        ERSEnvelope(Future.successful(
-          List(SchemeData(CSOP.schemeInfo, "CSOP_OptionsExercised_V4", None, Some(ListBuffer(CSOP.buildOptionsExercised(withAllFields = true, sharesListedOnSE = "yes", marketValueAgreedHMRC = "yes", payeOperated = "yes")))))
+        ERSEnvelope(
+          Future.successful(
+            List(
+              SchemeData(
+                CSOP.schemeInfo,
+                "CSOP_OptionsExercised_V4",
+                None,
+                Some(
+                  ListBuffer(
+                    CSOP.buildOptionsExercised(
+                      withAllFields = true,
+                      sharesListedOnSE = "yes",
+                      marketValueAgreedHMRC = "yes",
+                      payeOperated = "yes"
+                    )
+                  )
+                )
+              )
+            )
+          )
         )
-        ))
+      )
 
       val result = await(adrSubmission.generateSubmission(CSOP.metadata)(request, hc).value)
-      result.value - "acknowledgementReference" shouldBe Json.parse(
-        """{
+      result.value - "acknowledgementReference" shouldBe Json.parse("""{
           |"regime":"ERS",
           |"schemeType":"CSOP",
           |"schemeReference":"XA1100000000000",
@@ -820,17 +870,46 @@ class CSOP_ADRSubmissionSpec
       when(
         mockPresubmissionService.getJson(any[SchemeInfo]())(any())
       ).thenReturn(
-        ERSEnvelope(Future.successful(
-          List(
-            SchemeData(CSOP.schemeInfo, "CSOP_OptionsExercised_V4", None, Some(ListBuffer(CSOP.buildOptionsExercised(withAllFields = true, sharesListedOnSE = "yes", marketValueAgreedHMRC = "yes", payeOperated = "yes")))),
-            SchemeData(CSOP.schemeInfo, "CSOP_OptionsExercised_V4", None, Some(ListBuffer(CSOP.buildOptionsExercised(withAllFields = true, sharesListedOnSE = "yes", marketValueAgreedHMRC = "yes", payeOperated = "yes"))))
+        ERSEnvelope(
+          Future.successful(
+            List(
+              SchemeData(
+                CSOP.schemeInfo,
+                "CSOP_OptionsExercised_V4",
+                None,
+                Some(
+                  ListBuffer(
+                    CSOP.buildOptionsExercised(
+                      withAllFields = true,
+                      sharesListedOnSE = "yes",
+                      marketValueAgreedHMRC = "yes",
+                      payeOperated = "yes"
+                    )
+                  )
+                )
+              ),
+              SchemeData(
+                CSOP.schemeInfo,
+                "CSOP_OptionsExercised_V4",
+                None,
+                Some(
+                  ListBuffer(
+                    CSOP.buildOptionsExercised(
+                      withAllFields = true,
+                      sharesListedOnSE = "yes",
+                      marketValueAgreedHMRC = "yes",
+                      payeOperated = "yes"
+                    )
+                  )
+                )
+              )
+            )
           )
         )
-        ))
+      )
 
       val result = await(adrSubmission.generateSubmission(CSOP.metadata)(request, hc).value)
-      result.value - "acknowledgementReference" shouldBe Json.parse(
-        """{
+      result.value - "acknowledgementReference" shouldBe Json.parse("""{
           |"regime":"ERS",
           |"schemeType":"CSOP",
           |"schemeReference":"XA1100000000000",
@@ -948,18 +1027,43 @@ class CSOP_ADRSubmissionSpec
       when(
         mockPresubmissionService.getJson(any[SchemeInfo]())(any())
       ).thenReturn(
-        ERSEnvelope(Future.successful(
-          List(
-            SchemeData(CSOP.schemeInfo, "CSOP_OptionsGranted_V4", None, Some(ListBuffer(CSOP.buildGrantedV4("yes", "yes")))),
-            SchemeData(CSOP.schemeInfo, "CSOP_OptionsRCL_V4", None, Some(ListBuffer(CSOP.buildOptionsRCL(withAllFields = true, "yes")))),
-            SchemeData(CSOP.schemeInfo, "CSOP_OptionsExercised_V4", None, Some(ListBuffer(CSOP.buildOptionsExercised(withAllFields = true, sharesListedOnSE = "yes", marketValueAgreedHMRC = "yes", payeOperated = "yes"))))
+        ERSEnvelope(
+          Future.successful(
+            List(
+              SchemeData(
+                CSOP.schemeInfo,
+                "CSOP_OptionsGranted_V4",
+                None,
+                Some(ListBuffer(CSOP.buildGrantedV4("yes", "yes")))
+              ),
+              SchemeData(
+                CSOP.schemeInfo,
+                "CSOP_OptionsRCL_V4",
+                None,
+                Some(ListBuffer(CSOP.buildOptionsRCL(withAllFields = true, "yes")))
+              ),
+              SchemeData(
+                CSOP.schemeInfo,
+                "CSOP_OptionsExercised_V4",
+                None,
+                Some(
+                  ListBuffer(
+                    CSOP.buildOptionsExercised(
+                      withAllFields = true,
+                      sharesListedOnSE = "yes",
+                      marketValueAgreedHMRC = "yes",
+                      payeOperated = "yes"
+                    )
+                  )
+                )
+              )
+            )
           )
         )
-        ))
+      )
 
       val result = await(adrSubmission.generateSubmission(CSOP.metadataWithAllAmmends)(request, hc).value)
-      result.value - "acknowledgementReference" shouldBe Json.parse(
-        """{
+      result.value - "acknowledgementReference" shouldBe Json.parse("""{
           |"regime":"ERS",
           |"schemeType":"CSOP",
           |"schemeReference":"XA1100000000000",
@@ -1104,21 +1208,70 @@ class CSOP_ADRSubmissionSpec
       when(
         mockPresubmissionService.getJson(any[SchemeInfo]())(any())
       ).thenReturn(
-        ERSEnvelope(Future.successful(
-          List(
-            SchemeData(CSOP.schemeInfo, "CSOP_OptionsGranted_V4", None, Some(ListBuffer(CSOP.buildGrantedV4("yes", "yes")))),
-            SchemeData(CSOP.schemeInfo, "CSOP_OptionsGranted_V4", None, Some(ListBuffer(CSOP.buildGrantedV4("no", "no")))),
-            SchemeData(CSOP.schemeInfo, "CSOP_OptionsRCL_V4", None, Some(ListBuffer(CSOP.buildOptionsRCL(withAllFields = true, "yes")))),
-            SchemeData(CSOP.schemeInfo, "CSOP_OptionsRCL_V4", None, Some(ListBuffer(CSOP.buildOptionsRCL(withAllFields = true, "no")))),
-            SchemeData(CSOP.schemeInfo, "CSOP_OptionsExercised_V4", None, Some(ListBuffer(CSOP.buildOptionsExercised(withAllFields = true, sharesListedOnSE = "yes", marketValueAgreedHMRC = "yes", payeOperated = "yes")))),
-            SchemeData(CSOP.schemeInfo, "CSOP_OptionsExercised_V4", None, Some(ListBuffer(CSOP.buildOptionsExercised(withAllFields = true, sharesListedOnSE = "no", marketValueAgreedHMRC = "yes", payeOperated = "yes"))))
+        ERSEnvelope(
+          Future.successful(
+            List(
+              SchemeData(
+                CSOP.schemeInfo,
+                "CSOP_OptionsGranted_V4",
+                None,
+                Some(ListBuffer(CSOP.buildGrantedV4("yes", "yes")))
+              ),
+              SchemeData(
+                CSOP.schemeInfo,
+                "CSOP_OptionsGranted_V4",
+                None,
+                Some(ListBuffer(CSOP.buildGrantedV4("no", "no")))
+              ),
+              SchemeData(
+                CSOP.schemeInfo,
+                "CSOP_OptionsRCL_V4",
+                None,
+                Some(ListBuffer(CSOP.buildOptionsRCL(withAllFields = true, "yes")))
+              ),
+              SchemeData(
+                CSOP.schemeInfo,
+                "CSOP_OptionsRCL_V4",
+                None,
+                Some(ListBuffer(CSOP.buildOptionsRCL(withAllFields = true, "no")))
+              ),
+              SchemeData(
+                CSOP.schemeInfo,
+                "CSOP_OptionsExercised_V4",
+                None,
+                Some(
+                  ListBuffer(
+                    CSOP.buildOptionsExercised(
+                      withAllFields = true,
+                      sharesListedOnSE = "yes",
+                      marketValueAgreedHMRC = "yes",
+                      payeOperated = "yes"
+                    )
+                  )
+                )
+              ),
+              SchemeData(
+                CSOP.schemeInfo,
+                "CSOP_OptionsExercised_V4",
+                None,
+                Some(
+                  ListBuffer(
+                    CSOP.buildOptionsExercised(
+                      withAllFields = true,
+                      sharesListedOnSE = "no",
+                      marketValueAgreedHMRC = "yes",
+                      payeOperated = "yes"
+                    )
+                  )
+                )
+              )
+            )
           )
         )
-        ))
+      )
 
       val result = await(adrSubmission.generateSubmission(CSOP.metadataWithAllAmmends)(request, hc).value)
-      result.value - "acknowledgementReference" shouldBe Json.parse(
-        """{
+      result.value - "acknowledgementReference" shouldBe Json.parse("""{
           |"regime":"ERS",
           |"schemeType":"CSOP",
           |"schemeReference":"XA1100000000000",
@@ -1321,8 +1474,7 @@ class CSOP_ADRSubmissionSpec
         )
       )
 
-      result shouldBe Json.parse(
-        """{
+      result shouldBe Json.parse("""{
           |"optionsGrantedInYear":true,
           |"grant":{
           |"grants":[
@@ -1361,8 +1513,7 @@ class CSOP_ADRSubmissionSpec
         )
       )
 
-      result shouldBe Json.parse(
-        """{
+      result shouldBe Json.parse("""{
           |"optionsGrantedInYear":true,
           |"grant":{
           |"grants":[
@@ -1408,8 +1559,7 @@ class CSOP_ADRSubmissionSpec
         )
       )
 
-      result shouldBe Json.parse(
-        """{
+      result shouldBe Json.parse("""{
           |"optionsGrantedInYear":true,
           |"grant":{
           |"grants":[
@@ -1448,8 +1598,7 @@ class CSOP_ADRSubmissionSpec
         )
       )
 
-      result shouldBe Json.parse(
-        """{
+      result shouldBe Json.parse("""{
           |"optionsGrantedInYear":true,
           |"grant":{
           |"grants":[
@@ -1495,8 +1644,7 @@ class CSOP_ADRSubmissionSpec
         )
       )
 
-      result shouldBe Json.parse(
-        """{
+      result shouldBe Json.parse("""{
           |"optionsReleasedExchangesCancelledLapsedInYear":true,
           |"released":{
           |"releasedEvents":[
@@ -1539,8 +1687,7 @@ class CSOP_ADRSubmissionSpec
         )
       )
 
-      result shouldBe Json.parse(
-        """{
+      result shouldBe Json.parse("""{
           |"optionsReleasedExchangesCancelledLapsedInYear":true,
           |"released":{
           |"releasedEvents":[
@@ -1590,8 +1737,7 @@ class CSOP_ADRSubmissionSpec
         )
       )
 
-      result shouldBe Json.parse(
-        """{
+      result shouldBe Json.parse("""{
           |"optionsReleasedExchangesCancelledLapsedInYear":true,
           |"released":{
           |"releasedEvents":[
@@ -1634,8 +1780,7 @@ class CSOP_ADRSubmissionSpec
         )
       )
 
-      result shouldBe Json.parse(
-        """{
+      result shouldBe Json.parse("""{
           |"optionsReleasedExchangesCancelledLapsedInYear":true,
           |"released":{
           |"releasedEvents":[
@@ -1680,13 +1825,22 @@ class CSOP_ADRSubmissionSpec
       val result = adrSubmission.buildJson(
         configData,
         ListBuffer(
-          CSOP.buildOptionsExercised(withAllFields = true, sharesListedOnSE = "yes", marketValueAgreedHMRC = "yes", payeOperated = "yes"),
-          CSOP.buildOptionsExercised(withAllFields = false, sharesListedOnSE = "yes", marketValueAgreedHMRC = "yes", payeOperated = "yes")
+          CSOP.buildOptionsExercised(
+            withAllFields = true,
+            sharesListedOnSE = "yes",
+            marketValueAgreedHMRC = "yes",
+            payeOperated = "yes"
+          ),
+          CSOP.buildOptionsExercised(
+            withAllFields = false,
+            sharesListedOnSE = "yes",
+            marketValueAgreedHMRC = "yes",
+            payeOperated = "yes"
+          )
         )
       )
 
-      result shouldBe Json.parse(
-        """{
+      result shouldBe Json.parse("""{
           |"optionsExercisedInYear":true,
           |"exercised":{
           |"exercisedEvents":[
@@ -1743,13 +1897,22 @@ class CSOP_ADRSubmissionSpec
       val result = adrSubmission.buildJson(
         configData,
         ListBuffer(
-          CSOP.buildOptionsExercised(withAllFields = true, sharesListedOnSE = "yes", marketValueAgreedHMRC = "yes", payeOperated = "yes"),
-          CSOP.buildOptionsExercised(withAllFields = true, sharesListedOnSE = "no", marketValueAgreedHMRC = "yes", payeOperated = "yes")
+          CSOP.buildOptionsExercised(
+            withAllFields = true,
+            sharesListedOnSE = "yes",
+            marketValueAgreedHMRC = "yes",
+            payeOperated = "yes"
+          ),
+          CSOP.buildOptionsExercised(
+            withAllFields = true,
+            sharesListedOnSE = "no",
+            marketValueAgreedHMRC = "yes",
+            payeOperated = "yes"
+          )
         )
       )
 
-      result shouldBe Json.parse(
-        """{
+      result shouldBe Json.parse("""{
           |"optionsExercisedInYear":true,
           |"exercised":{
           |"exercisedEvents":[
@@ -1810,13 +1973,22 @@ class CSOP_ADRSubmissionSpec
       val result = adrSubmission.buildJson(
         configData,
         ListBuffer(
-          CSOP.buildOptionsExercised(withAllFields = true, sharesListedOnSE = "no", marketValueAgreedHMRC = "yes", payeOperated = "yes"),
-          CSOP.buildOptionsExercised(withAllFields = true, sharesListedOnSE = "no", marketValueAgreedHMRC = "no", payeOperated = "yes")
+          CSOP.buildOptionsExercised(
+            withAllFields = true,
+            sharesListedOnSE = "no",
+            marketValueAgreedHMRC = "yes",
+            payeOperated = "yes"
+          ),
+          CSOP.buildOptionsExercised(
+            withAllFields = true,
+            sharesListedOnSE = "no",
+            marketValueAgreedHMRC = "no",
+            payeOperated = "yes"
+          )
         )
       )
 
-      result shouldBe Json.parse(
-        """{
+      result shouldBe Json.parse("""{
           |"optionsExercisedInYear":true,
           |"exercised":{
           |"exercisedEvents":[
@@ -1878,13 +2050,22 @@ class CSOP_ADRSubmissionSpec
       val result = adrSubmission.buildJson(
         configData,
         ListBuffer(
-          CSOP.buildOptionsExercised(withAllFields = true, sharesListedOnSE = "no", marketValueAgreedHMRC = "yes", payeOperated = "yes"),
-          CSOP.buildOptionsExercised(withAllFields = true, sharesListedOnSE = "no", marketValueAgreedHMRC = "yes", payeOperated = "no")
+          CSOP.buildOptionsExercised(
+            withAllFields = true,
+            sharesListedOnSE = "no",
+            marketValueAgreedHMRC = "yes",
+            payeOperated = "yes"
+          ),
+          CSOP.buildOptionsExercised(
+            withAllFields = true,
+            sharesListedOnSE = "no",
+            marketValueAgreedHMRC = "yes",
+            payeOperated = "no"
+          )
         )
       )
 
-      result shouldBe Json.parse(
-        """{
+      result shouldBe Json.parse("""{
           |"optionsExercisedInYear":true,
           |"exercised":{
           |"exercisedEvents":[
@@ -1951,8 +2132,7 @@ class CSOP_ADRSubmissionSpec
         )
       )
 
-      result shouldBe Json.parse(
-        """
+      result shouldBe Json.parse("""
           |{
           |  "optionsExercisedInYear": true,
           |  "exercised": {
@@ -1988,13 +2168,22 @@ class CSOP_ADRSubmissionSpec
       val result = adrSubmission.buildJson(
         configData,
         ListBuffer(
-          CSOP.buildOptionsExercised(withAllFields = true, sharesListedOnSE = "yes", marketValueAgreedHMRC = "yes", payeOperated = "yes"),
-          CSOP.buildOptionsExercised(withAllFields = false, sharesListedOnSE = "yes", marketValueAgreedHMRC = "yes", payeOperated = "yes")
+          CSOP.buildOptionsExercised(
+            withAllFields = true,
+            sharesListedOnSE = "yes",
+            marketValueAgreedHMRC = "yes",
+            payeOperated = "yes"
+          ),
+          CSOP.buildOptionsExercised(
+            withAllFields = false,
+            sharesListedOnSE = "yes",
+            marketValueAgreedHMRC = "yes",
+            payeOperated = "yes"
+          )
         )
       )
 
-      result shouldBe Json.parse(
-        """{
+      result shouldBe Json.parse("""{
           |"optionsExercisedInYear":true,
           |"exercised":{
           |"exercisedEvents":[
@@ -2051,13 +2240,22 @@ class CSOP_ADRSubmissionSpec
       val result = adrSubmission.buildJson(
         configData,
         ListBuffer(
-          CSOP.buildOptionsExercised(withAllFields = true, sharesListedOnSE = "yes", marketValueAgreedHMRC = "yes", payeOperated = "yes"),
-          CSOP.buildOptionsExercised(withAllFields = true, sharesListedOnSE = "no", marketValueAgreedHMRC = "yes", payeOperated = "yes")
+          CSOP.buildOptionsExercised(
+            withAllFields = true,
+            sharesListedOnSE = "yes",
+            marketValueAgreedHMRC = "yes",
+            payeOperated = "yes"
+          ),
+          CSOP.buildOptionsExercised(
+            withAllFields = true,
+            sharesListedOnSE = "no",
+            marketValueAgreedHMRC = "yes",
+            payeOperated = "yes"
+          )
         )
       )
 
-      result shouldBe Json.parse(
-        """{
+      result shouldBe Json.parse("""{
           |"optionsExercisedInYear":true,
           |"exercised":{
           |"exercisedEvents":[
@@ -2118,13 +2316,22 @@ class CSOP_ADRSubmissionSpec
       val result = adrSubmission.buildJson(
         configData,
         ListBuffer(
-          CSOP.buildOptionsExercised(withAllFields = true, sharesListedOnSE = "no", marketValueAgreedHMRC = "yes", payeOperated = "yes"),
-          CSOP.buildOptionsExercised(withAllFields = true, sharesListedOnSE = "no", marketValueAgreedHMRC = "no", payeOperated = "yes")
+          CSOP.buildOptionsExercised(
+            withAllFields = true,
+            sharesListedOnSE = "no",
+            marketValueAgreedHMRC = "yes",
+            payeOperated = "yes"
+          ),
+          CSOP.buildOptionsExercised(
+            withAllFields = true,
+            sharesListedOnSE = "no",
+            marketValueAgreedHMRC = "no",
+            payeOperated = "yes"
+          )
         )
       )
 
-      result shouldBe Json.parse(
-        """{
+      result shouldBe Json.parse("""{
           |"optionsExercisedInYear":true,
           |"exercised":{
           |"exercisedEvents":[
@@ -2186,13 +2393,22 @@ class CSOP_ADRSubmissionSpec
       val result = adrSubmission.buildJson(
         configData,
         ListBuffer(
-          CSOP.buildOptionsExercised(withAllFields = true, sharesListedOnSE = "no", marketValueAgreedHMRC = "yes", payeOperated = "yes"),
-          CSOP.buildOptionsExercised(withAllFields = true, sharesListedOnSE = "no", marketValueAgreedHMRC = "yes", payeOperated = "no")
+          CSOP.buildOptionsExercised(
+            withAllFields = true,
+            sharesListedOnSE = "no",
+            marketValueAgreedHMRC = "yes",
+            payeOperated = "yes"
+          ),
+          CSOP.buildOptionsExercised(
+            withAllFields = true,
+            sharesListedOnSE = "no",
+            marketValueAgreedHMRC = "yes",
+            payeOperated = "no"
+          )
         )
       )
 
-      result shouldBe Json.parse(
-        """{
+      result shouldBe Json.parse("""{
           |"optionsExercisedInYear":true,
           |"exercised":{
           |"exercisedEvents":[
@@ -2259,8 +2475,7 @@ class CSOP_ADRSubmissionSpec
         )
       )
 
-      result shouldBe Json.parse(
-        """
+      result shouldBe Json.parse("""
           |{
           |  "optionsExercisedInYear": true,
           |  "exercised": {
@@ -2285,4 +2500,5 @@ class CSOP_ADRSubmissionSpec
     }
 
   }
+
 }

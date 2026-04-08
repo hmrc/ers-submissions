@@ -28,9 +28,11 @@ import scala.util.Random
 object Fixtures {
   val invalidPayload: JsObject = Json.obj("invalid data" -> "test")
 
-  def schemeInfo(schemaType: String = "EMI",
-                 timestamp: Instant = Instant.now().truncatedTo(ChronoUnit.MILLIS),
-                 schemeRef: String = "XA1100000000000"): SchemeInfo = SchemeInfo(
+  def schemeInfo(
+    schemaType: String = "EMI",
+    timestamp: Instant = Instant.now().truncatedTo(ChronoUnit.MILLIS),
+    schemeRef: String = "XA1100000000000"
+  ): SchemeInfo = SchemeInfo(
     schemeRef = schemeRef,
     timestamp = timestamp,
     schemeId = "123PA12345678",
@@ -41,13 +43,15 @@ object Fixtures {
 
   def schemeInfoPayload(schemeInfo: SchemeInfo): JsValue = Json.toJson(schemeInfo)
 
-  val submissionsSchemeData: SubmissionsSchemeData = SubmissionsSchemeData(
+  val submissionsSchemeData: SubmissionsSchemeData                                      = SubmissionsSchemeData(
     schemeInfo(),
     "EMI40_Adjustments_V4",
     UpscanCallback("EMI40_Adjustments_V4", "http://localhost:19000/fakeDownload"),
     1
   )
-  def submissionsSchemeDataJson(submissionsSchemeData: SubmissionsSchemeData): JsObject = Json.toJson(submissionsSchemeData).as[JsObject]
+
+  def submissionsSchemeDataJson(submissionsSchemeData: SubmissionsSchemeData): JsObject =
+    Json.toJson(submissionsSchemeData).as[JsObject]
 
   def ersMetaData(schemaType: String, timestamp: Instant, schemeRef: String): ErsMetaData = ErsMetaData(
     schemeInfo = schemeInfo(schemaType, timestamp, schemeRef),
@@ -64,9 +68,54 @@ object Fixtures {
     None,
     Some(
       ListBuffer(
-        Seq("no", "no", "yes", "3", "2015-12-09", "John", "", "Doe", "AA123456A", "123/XZ55555555", "10.1234", "100.12", "10.1234", "10.1234"),
-        Seq("no", "no", "no", "", "2015-12-09", "John", "", "Doe", "AA123456A", "123/XZ55555555", "10.1234", "100.12", "10.1234", "10.1234"),
-        Seq("yes", "", "", "", "2015-12-09", "John", "Middle", "Doe", "AA123456A", "123/XZ55555555", "10.1234", "100.12", "10.1234", "10.1234")
+        Seq(
+          "no",
+          "no",
+          "yes",
+          "3",
+          "2015-12-09",
+          "John",
+          "",
+          "Doe",
+          "AA123456A",
+          "123/XZ55555555",
+          "10.1234",
+          "100.12",
+          "10.1234",
+          "10.1234"
+        ),
+        Seq(
+          "no",
+          "no",
+          "no",
+          "",
+          "2015-12-09",
+          "John",
+          "",
+          "Doe",
+          "AA123456A",
+          "123/XZ55555555",
+          "10.1234",
+          "100.12",
+          "10.1234",
+          "10.1234"
+        ),
+        Seq(
+          "yes",
+          "",
+          "",
+          "",
+          "2015-12-09",
+          "John",
+          "Middle",
+          "Doe",
+          "AA123456A",
+          "123/XZ55555555",
+          "10.1234",
+          "100.12",
+          "10.1234",
+          "10.1234"
+        )
       )
     )
   )
@@ -85,14 +134,16 @@ object Fixtures {
     Some("1234567890")
   )
 
-  def buildErsSummary(isNilReturn: Boolean = false,
-                      transferStatus: Option[String] = Some("saved"),
-                      schemaType: String = "EMI",
-                      bundleRef: String = "testbundle",
-                      timestamp: Instant = Instant.now().truncatedTo(ChronoUnit.MILLIS),
-                      schemeRef: String = "XA1100000000000"): ErsSummary = ErsSummary(
+  def buildErsSummary(
+    isNilReturn: Boolean = false,
+    transferStatus: Option[String] = Some("saved"),
+    schemaType: String = "EMI",
+    bundleRef: String = "testbundle",
+    timestamp: Instant = Instant.now().truncatedTo(ChronoUnit.MILLIS),
+    schemeRef: String = "XA1100000000000"
+  ): ErsSummary = ErsSummary(
     bundleRef = bundleRef,
-    isNilReturn = if(isNilReturn) "2" else "1",
+    isNilReturn = if (isNilReturn) "2" else "1",
     fileType = Some("ods"),
     confirmationDateTime = timestamp,
     metaData = ersMetaData(schemaType, timestamp, schemeRef),
@@ -118,12 +169,13 @@ object Fixtures {
   def buildErsSummaryPayload(ersSummary: ErsSummary): JsValue =
     Json.toJson(ersSummary)
 
-  def generateListOfErsSummaries(numberRecords: Int,
-                                 isNilReturn: Boolean = false,
-                                 transferStatus: Option[String] = Some("failed"),
-                                 schemaType: String = "CSOP",
-                                 bundleRef: String = "testbundle"
-                                ): Seq[ErsSummary] = {
+  def generateListOfErsSummaries(
+    numberRecords: Int,
+    isNilReturn: Boolean = false,
+    transferStatus: Option[String] = Some("failed"),
+    schemaType: String = "CSOP",
+    bundleRef: String = "testbundle"
+  ): Seq[ErsSummary] = {
     val random = new Random()
     Seq.fill(numberRecords)(
       Fixtures.buildErsSummary(
@@ -150,29 +202,73 @@ object Fixtures {
     failedJobs ++ passedJobs
   }
 
-  def generatePresubmissionRecordsForMetadata(ersSummaries: Seq[ErsSummary]): Seq[SchemeData] = {
+  def generatePresubmissionRecordsForMetadata(ersSummaries: Seq[ErsSummary]): Seq[SchemeData] =
     ersSummaries.map { summary =>
-      SchemeData(CSOP.schemeInfo.copy(timestamp = summary.metaData.schemeInfo.timestamp), "CSOP_OptionsRCL_V4", None, Some(ListBuffer(CSOP.buildOptionsRCL(withAllFields = true, "yes"))))
+      SchemeData(
+        CSOP.schemeInfo.copy(timestamp = summary.metaData.schemeInfo.timestamp),
+        "CSOP_OptionsRCL_V4",
+        None,
+        Some(ListBuffer(CSOP.buildOptionsRCL(withAllFields = true, "yes")))
+      )
     }
-  }
 
   val failedJobsWithDifferentBundleRef: Seq[ErsSummary] = generateListOfErsSummaries(numberRecords = 10)
 
-  val formatter: DateTimeFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy")
+  val formatter: DateTimeFormatter           = DateTimeFormatter.ofPattern("dd/MM/yyyy")
   def instantFromDate(date: String): Instant = LocalDate.parse(date, formatter).atStartOfDay(ZoneId.of("UTC")).toInstant
 
   val ersSummaries: Seq[JsObject] = Seq(
-    Fixtures.buildErsSummary(transferStatus = Some("passed"), schemaType = "CSOP", timestamp = instantFromDate("30/04/2022")),
-    Fixtures.buildErsSummary(transferStatus = Some("successResubmit"), schemaType = "CSOP", timestamp = instantFromDate("30/04/2021")),
-    Fixtures.buildErsSummary(transferStatus = Some("failed"), schemaType = "NOT_CSOP", timestamp = instantFromDate("30/04/2000")),
-    Fixtures.buildErsSummary(transferStatus = Some("failed"), schemaType = "CSOP", timestamp = instantFromDate("30/04/2023")),
-    Fixtures.buildErsSummary(transferStatus = Some("failed"), schemaType = "CSOP", timestamp = instantFromDate("10/05/2023")),
-    Fixtures.buildErsSummary(transferStatus = Some("failed"), schemaType = "CSOP", timestamp = instantFromDate("20/05/2023"))
+    Fixtures.buildErsSummary(
+      transferStatus = Some("passed"),
+      schemaType = "CSOP",
+      timestamp = instantFromDate("30/04/2022")
+    ),
+    Fixtures.buildErsSummary(
+      transferStatus = Some("successResubmit"),
+      schemaType = "CSOP",
+      timestamp = instantFromDate("30/04/2021")
+    ),
+    Fixtures.buildErsSummary(
+      transferStatus = Some("failed"),
+      schemaType = "NOT_CSOP",
+      timestamp = instantFromDate("30/04/2000")
+    ),
+    Fixtures.buildErsSummary(
+      transferStatus = Some("failed"),
+      schemaType = "CSOP",
+      timestamp = instantFromDate("30/04/2023")
+    ),
+    Fixtures.buildErsSummary(
+      transferStatus = Some("failed"),
+      schemaType = "CSOP",
+      timestamp = instantFromDate("10/05/2023")
+    ),
+    Fixtures.buildErsSummary(
+      transferStatus = Some("failed"),
+      schemaType = "CSOP",
+      timestamp = instantFromDate("20/05/2023")
+    )
   ).map(Json.toJsObject(_))
 
   val schemeData: Seq[JsObject] = Seq(
-    SchemeData(CSOP.schemeInfo.copy(timestamp = instantFromDate("30/04/2023")), "CSOP_OptionsRCL_V4", None, Some(ListBuffer(CSOP.buildOptionsRCL(withAllFields = true, "yes")))),
-    SchemeData(CSOP.schemeInfo.copy(timestamp = instantFromDate("10/05/2023")), "CSOP_OptionsRCL_V4", None, Some(ListBuffer(CSOP.buildOptionsRCL(withAllFields = true, "yes")))),
-    SchemeData(CSOP.schemeInfo.copy(timestamp = instantFromDate("20/05/2023")), "CSOP_OptionsRCL_V4", None, Some(ListBuffer(CSOP.buildOptionsRCL(withAllFields = true, "yes"))))
+    SchemeData(
+      CSOP.schemeInfo.copy(timestamp = instantFromDate("30/04/2023")),
+      "CSOP_OptionsRCL_V4",
+      None,
+      Some(ListBuffer(CSOP.buildOptionsRCL(withAllFields = true, "yes")))
+    ),
+    SchemeData(
+      CSOP.schemeInfo.copy(timestamp = instantFromDate("10/05/2023")),
+      "CSOP_OptionsRCL_V4",
+      None,
+      Some(ListBuffer(CSOP.buildOptionsRCL(withAllFields = true, "yes")))
+    ),
+    SchemeData(
+      CSOP.schemeInfo.copy(timestamp = instantFromDate("20/05/2023")),
+      "CSOP_OptionsRCL_V4",
+      None,
+      Some(ListBuffer(CSOP.buildOptionsRCL(withAllFields = true, "yes")))
+    )
   ).map(Json.toJsObject(_))
+
 }

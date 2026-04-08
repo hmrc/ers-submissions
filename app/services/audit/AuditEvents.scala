@@ -26,100 +26,120 @@ import utils.LoggingAndExceptions.ErsLogger
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
-class AuditEvents @Inject()(auditService: AuditService)(implicit ec: ExecutionContext) extends ErsLogger {
+class AuditEvents @Inject() (auditService: AuditService)(implicit ec: ExecutionContext) extends ErsLogger {
 
   def auditRunTimeError(exception: Throwable, contextInfo: String)(implicit hc: HeaderCarrier): Future[AuditResult] = {
     val transactionName = "ERSRunTimeError"
-    auditService.sendEvent(
-      transactionName,
-      Map(
-        "ErrorMessage" -> exception.getMessage,
-        "Context" -> contextInfo,
-        "StackTrace" -> ExceptionUtils.getStackTrace(exception)
+    auditService
+      .sendEvent(
+        transactionName,
+        Map(
+          "ErrorMessage" -> exception.getMessage,
+          "Context"      -> contextInfo,
+          "StackTrace"   -> ExceptionUtils.getStackTrace(exception)
+        )
       )
-    ).map(handleResponse(_, transactionName))
+      .map(handleResponse(_, transactionName))
   }
 
   def auditError(contextInfo: String, message: String)(implicit hc: HeaderCarrier): Future[AuditResult] = {
     val transactionName = "ERSRunTimeError"
-    auditService.sendEvent(
-      transactionName,
-      Map(
-        "ErrorMessage" -> message,
-        "Context" -> contextInfo
+    auditService
+      .sendEvent(
+        transactionName,
+        Map(
+          "ErrorMessage" -> message,
+          "Context"      -> contextInfo
+        )
       )
-    ).map(handleResponse(_, transactionName))
+      .map(handleResponse(_, transactionName))
   }
 
-  def auditADRTransferFailure(schemeInfo: SchemeInfo, data: Map[String, String])(implicit hc: HeaderCarrier): Future[AuditResult] = {
+  def auditADRTransferFailure(schemeInfo: SchemeInfo, data: Map[String, String])(implicit
+    hc: HeaderCarrier
+  ): Future[AuditResult] = {
     val transactionName = "ErsADRTransferFailure"
-    auditService.sendEvent(
-      transactionName,
-      eventMap(schemeInfo, data)
-    ).map(handleResponse(_, transactionName))
+    auditService
+      .sendEvent(
+        transactionName,
+        eventMap(schemeInfo, data)
+      )
+      .map(handleResponse(_, transactionName))
   }
 
-  def publicToProtectedEvent(schemeInfo: SchemeInfo, sheetName: String, numRows: String)(implicit hc: HeaderCarrier): Future[AuditResult] = {
-    val transactionName = "ErsFileTransfer"
+  def publicToProtectedEvent(schemeInfo: SchemeInfo, sheetName: String, numRows: String)(implicit
+    hc: HeaderCarrier
+  ): Future[AuditResult] = {
+    val transactionName                     = "ErsFileTransfer"
     val additionalData: Map[String, String] = Map(
-      "sheetName" -> sheetName,
+      "sheetName"    -> sheetName,
       "numberOfRows" -> numRows
     )
-    auditService.sendEvent(
-      "ErsFileTransfer",
-      eventMap(schemeInfo, additionalData)
-    ).map(handleResponse(_, transactionName))
+    auditService
+      .sendEvent(
+        "ErsFileTransfer",
+        eventMap(schemeInfo, additionalData)
+      )
+      .map(handleResponse(_, transactionName))
   }
 
-  def sendToAdrEvent(transactionName: String, ersSummaryData: ErsSummary, correlationId: Option[String] = None, source: Option[String] = None)
-                    (implicit hc: HeaderCarrier): Future[AuditResult] = {
+  def sendToAdrEvent(
+    transactionName: String,
+    ersSummaryData: ErsSummary,
+    correlationId: Option[String] = None,
+    source: Option[String] = None
+  )(implicit hc: HeaderCarrier): Future[AuditResult] = {
     val additionalData: Map[String, String] = Map(
-      "sapNumber" -> ersSummaryData.metaData.sapNumber.getOrElse(""),
-      "ipRef" -> ersSummaryData.metaData.ipRef,
-      "aoRef" -> ersSummaryData.metaData.aoRef.getOrElse(""),
-      "empRef" -> ersSummaryData.metaData.empRef,
-      "agentRef" -> ersSummaryData.metaData.agentRef.getOrElse(""),
-      "sapNumber" -> ersSummaryData.metaData.sapNumber.getOrElse(""),
+      "sapNumber"     -> ersSummaryData.metaData.sapNumber.getOrElse(""),
+      "ipRef"         -> ersSummaryData.metaData.ipRef,
+      "aoRef"         -> ersSummaryData.metaData.aoRef.getOrElse(""),
+      "empRef"        -> ersSummaryData.metaData.empRef,
+      "agentRef"      -> ersSummaryData.metaData.agentRef.getOrElse(""),
+      "sapNumber"     -> ersSummaryData.metaData.sapNumber.getOrElse(""),
       "correlationId" -> correlationId.getOrElse(""),
-      "nilReturn" -> ersSummaryData.isNilReturn,
-      "fileType" -> ersSummaryData.fileType.getOrElse(""),
-      "numberOfRows" -> ersSummaryData.nofOfRows.getOrElse(-1).toString,
-      "source" -> source.getOrElse("")
+      "nilReturn"     -> ersSummaryData.isNilReturn,
+      "fileType"      -> ersSummaryData.fileType.getOrElse(""),
+      "numberOfRows"  -> ersSummaryData.nofOfRows.getOrElse(-1).toString,
+      "source"        -> source.getOrElse("")
     )
-    auditService.sendEvent(
-      transactionName,
-      eventMap(ersSummaryData.metaData.schemeInfo, additionalData)
-    ).map(handleResponse(_, transactionName))
+    auditService
+      .sendEvent(
+        transactionName,
+        eventMap(ersSummaryData.metaData.schemeInfo, additionalData)
+      )
+      .map(handleResponse(_, transactionName))
   }
 
   def resubmissionResult(schemeInfo: SchemeInfo, res: Boolean)(implicit hc: HeaderCarrier): Future[AuditResult] = {
     val transactionName = "resubmissionResult"
-    auditService.sendEvent(
-      "resubmissionResult",
-      eventMap(schemeInfo,Map("result"-> res.toString))
-    ).map(handleResponse(_, transactionName))
+    auditService
+      .sendEvent(
+        "resubmissionResult",
+        eventMap(schemeInfo, Map("result" -> res.toString))
+      )
+      .map(handleResponse(_, transactionName))
   }
 
-  def eventMap(schemeInfo: SchemeInfo, additionalMap: Map[String, String] = Map.empty): Map[String,String] = {
+  def eventMap(schemeInfo: SchemeInfo, additionalMap: Map[String, String] = Map.empty): Map[String, String] =
     Map(
-      "schemeRef" -> schemeInfo.schemeRef,
-      "schemeId" -> schemeInfo.schemeId,
+      "schemeRef"  -> schemeInfo.schemeRef,
+      "schemeId"   -> schemeInfo.schemeId,
       "schemeType" -> schemeInfo.schemeType,
       "schemeName" -> schemeInfo.schemeName,
-      "timestamp" -> schemeInfo.timestamp.toString,
-      "taxYear" -> schemeInfo.taxYear
+      "timestamp"  -> schemeInfo.timestamp.toString,
+      "taxYear"    -> schemeInfo.taxYear
     ) ++ additionalMap
-  }
 
   private def handleResponse(result: AuditResult, transactionName: String): AuditResult = result match {
-    case Success =>
+    case Success         =>
       logger.debug(s"[AuditEvents][handleResponse] ers-submissions $transactionName audit successful")
       Success
     case Failure(err, _) =>
       logWarn(s"[AuditEvents][handleResponse] ers-submissions $transactionName audit error, message: $err")
       Failure(err)
-    case Disabled =>
+    case Disabled        =>
       logWarn(s"[AuditEvents][handleResponse] Auditing disabled")
       Disabled
   }
+
 }

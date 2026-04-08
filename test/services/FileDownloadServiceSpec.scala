@@ -32,8 +32,7 @@ import uk.gov.hmrc.http.UpstreamErrorResponse
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
 
-class FileDownloadServiceSpec extends TestKit(ActorSystem("FileDownloadServiceSpec"))
-  with ERSTestHelper {
+class FileDownloadServiceSpec extends TestKit(ActorSystem("FileDownloadServiceSpec")) with ERSTestHelper {
 
   val mockAppConfig: ApplicationConfig = mock[ApplicationConfig]
   when(mockAppConfig.uploadFileSizeLimit).thenReturn(10000)
@@ -41,7 +40,7 @@ class FileDownloadServiceSpec extends TestKit(ActorSystem("FileDownloadServiceSp
   "fileDownloadService" should {
     "extract entity data" when {
       "given a status 200 response" in {
-        val testService = new FileDownloadService(mockAppConfig)
+        val testService            = new FileDownloadService(mockAppConfig)
         val response: HttpResponse = HttpResponse(StatusCodes.OK, entity = HttpEntity.apply("gotABody"))
 
         val result = Await.result(
@@ -49,13 +48,13 @@ class FileDownloadServiceSpec extends TestKit(ActorSystem("FileDownloadServiceSp
           Duration.Inf
         )
 
-        result.length shouldBe 1
+        result.length          shouldBe 1
         result.head.utf8String shouldBe "gotABody"
 
       }
 
       "given an unhappy response" in {
-        val testService = new FileDownloadService(mockAppConfig)
+        val testService            = new FileDownloadService(mockAppConfig)
         val response: HttpResponse = HttpResponse(StatusCodes.NotFound, entity = HttpEntity.apply("gotABody"))
 
         val result = testService.extractEntityData(response).runWith(Sink.seq)
@@ -67,7 +66,7 @@ class FileDownloadServiceSpec extends TestKit(ActorSystem("FileDownloadServiceSp
     }
 
     "extract body of request" in {
-      val testService = new FileDownloadService(mockAppConfig) {
+      val testService            = new FileDownloadService(mockAppConfig) {
         override def extractEntityData(response: HttpResponse): Source[ByteString, _] =
           Source.fromIterator(() => Seq(ByteString("aSingleRow,withTwoEntries\n"), ByteString("anotherRow")).iterator)
       }
@@ -78,27 +77,23 @@ class FileDownloadServiceSpec extends TestKit(ActorSystem("FileDownloadServiceSp
         Duration.Inf
       )
 
-      result.length shouldBe 2
+      result.length                 shouldBe 2
       result.head.map(_.utf8String) shouldBe List("aSingleRow", "withTwoEntries")
       result.last.map(_.utf8String) shouldBe List("anotherRow")
     }
 
     "convert file to sequence of eithers" when {
-      val submissionsSchemeData: SubmissionsSchemeData = SubmissionsSchemeData(SIP.schemeInfo, "sip sheet name",
-        UpscanCallback("name", "/download/url"), 1)
+      val submissionsSchemeData: SubmissionsSchemeData =
+        SubmissionsSchemeData(SIP.schemeInfo, "sip sheet name", UpscanCallback("name", "/download/url"), 1)
 
       val testService: FileDownloadService = new FileDownloadService(mockAppConfig) {
-        override def extractBodyOfRequest: Source[HttpResponse, _] => Source[List[ByteString], _] = {
-          _ =>
-            Source.fromIterator(() => List(
-              List(
-                ByteString("one"),
-                ByteString("two")),
-              List(
-                ByteString("three"),
-                ByteString("four"),
-                ByteString("five"))
-            ).iterator)
+        override def extractBodyOfRequest: Source[HttpResponse, _] => Source[List[ByteString], _] = { _ =>
+          Source.fromIterator(() =>
+            List(
+              List(ByteString("one"), ByteString("two")),
+              List(ByteString("three"), ByteString("four"), ByteString("five"))
+            ).iterator
+          )
         }
 
         override def streamFile(downloadUrl: String): Source[HttpResponse, _] =
@@ -106,35 +101,35 @@ class FileDownloadServiceSpec extends TestKit(ActorSystem("FileDownloadServiceSp
       }
 
       "file has less than grouping-size rows" in {
-        val result = Await.result(testService
-          .schemeDataToChunksWithIndex(submissionsSchemeData, 10)
-          .runWith(Sink.seq),
+        val result = Await.result(
+          testService
+            .schemeDataToChunksWithIndex(submissionsSchemeData, 10)
+            .runWith(Sink.seq),
           Duration.Inf
         )
 
-
-        result.length shouldBe 1
-        result.head._2 shouldBe 0
-        result.head._1.length shouldBe 2
+        result.length                         shouldBe 1
+        result.head._2                        shouldBe 0
+        result.head._1.length                 shouldBe 2
         result.head._1.head.map(_.utf8String) shouldBe Seq("one", "two")
         result.head._1.last.map(_.utf8String) shouldBe Seq("three", "four", "five")
       }
 
       "file has more than grouping-size rows" in {
-        val result = Await.result(testService
-          .schemeDataToChunksWithIndex(submissionsSchemeData, 1)
-          .runWith(Sink.seq),
+        val result = Await.result(
+          testService
+            .schemeDataToChunksWithIndex(submissionsSchemeData, 1)
+            .runWith(Sink.seq),
           Duration.Inf
         )
 
-
-        result.length shouldBe 2
-        result.head._2 shouldBe 0
-        result.head._1.length shouldBe 1
+        result.length                         shouldBe 2
+        result.head._2                        shouldBe 0
+        result.head._1.length                 shouldBe 1
         result.head._1.head.map(_.utf8String) shouldBe Seq("one", "two")
 
-        result.last._2 shouldBe 1
-        result.last._1.length shouldBe 1
+        result.last._2                        shouldBe 1
+        result.last._1.length                 shouldBe 1
         result.last._1.last.map(_.utf8String) shouldBe Seq("three", "four", "five")
       }
     }
@@ -142,14 +137,16 @@ class FileDownloadServiceSpec extends TestKit(ActorSystem("FileDownloadServiceSp
     "streamFile" should {
       "process file" in {
         val testService = new FileDownloadService(mockAppConfig) {
-          override def makeRequest(request: HttpRequest): Future[HttpResponse] = Future.successful(HttpResponse(StatusCodes.OK))
+          override def makeRequest(request: HttpRequest): Future[HttpResponse] =
+            Future.successful(HttpResponse(StatusCodes.OK))
         }
 
         val result = await(testService.streamFile("http://thisIsNot.aRealPage").runWith(Sink.seq))
 
         result.length shouldBe 1
-        result.head shouldBe HttpResponse(StatusCodes.OK)
+        result.head   shouldBe HttpResponse(StatusCodes.OK)
       }
     }
   }
+
 }

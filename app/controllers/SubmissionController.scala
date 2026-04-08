@@ -31,37 +31,52 @@ import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import scala.concurrent.ExecutionContext
 
-class SubmissionController @Inject()(submissionCommonService: SubmissionService,
-                                     metadataService: MetadataService,
-                                     metrics: Metrics,
-                                     auditEvents: AuditEvents,
-                                     cc: ControllerComponents)
-                                    (implicit val ec: ExecutionContext) extends BackendController(cc) with CorrelationIdHelper with ErsLogger with ErrorHandlerHelper {
+class SubmissionController @Inject() (
+  submissionCommonService: SubmissionService,
+  metadataService: MetadataService,
+  metrics: Metrics,
+  auditEvents: AuditEvents,
+  cc: ControllerComponents
+)(implicit val ec: ExecutionContext)
+    extends BackendController(cc) with CorrelationIdHelper with ErsLogger with ErrorHandlerHelper {
 
   override val className: String = getClass.getSimpleName
 
-  def receiveMetadataJson(): Action[JsObject] = Action.async(parse.json[JsObject]) {
-    implicit request =>
-      implicit val hc: HeaderCarrier = getOrCreateCorrelationID(request)
+  def receiveMetadataJson(): Action[JsObject] = Action.async(parse.json[JsObject]) { implicit request =>
+    implicit val hc: HeaderCarrier = getOrCreateCorrelationID(request)
 
     metadataService.validateErsSummaryFromJson(request.body) match {
       case JsSuccess(ersSummary, _) =>
         (for {
-          result <- submissionCommonService.callProcessData(ersSummary, Statuses.Failed.toString, Statuses.Sent.toString)(request, hc)
+          result <-
+            submissionCommonService.callProcessData(ersSummary, Statuses.Failed.toString, Statuses.Sent.toString)(
+              request,
+              hc
+            )
         } yield result).value.map {
-          case Right(true) =>
-            logInfo(s"[SubmissionController][receiveMetadataJson] Submission is successfully completed for: ${ersSummary.metaData.schemeInfo.basicLogMessage}")
+          case Right(true)  =>
+            logInfo(
+              s"[SubmissionController][receiveMetadataJson] Submission is successfully completed for: ${ersSummary.metaData.schemeInfo.basicLogMessage}"
+            )
             Ok
           case Right(false) =>
             auditEvents.sendToAdrEvent("ErsTransferToAdrFailed", ersSummary)
-            logError(s"[SubmissionController][receiveMetadataJson] Processing data failed for: ${ersSummary.metaData.schemeInfo.basicLogMessage}")
+
+            logError(
+              s"[SubmissionController][receiveMetadataJson] Processing data failed for: ${ersSummary.metaData.schemeInfo.basicLogMessage}"
+            )
+
             InternalServerError("Processing data failed.")
-          case Left(error) =>
+          case Left(error)  =>
             auditEvents.sendToAdrEvent("ErsTransferToAdrFailed", ersSummary)
-            logError(s"[SubmissionController][receiveMetadataJson] Processing data failed for: ${ersSummary.metaData.schemeInfo.basicLogMessage} with error: [$error]")
+
+            logError(
+              s"[SubmissionController][receiveMetadataJson] Processing data failed for: ${ersSummary.metaData.schemeInfo.basicLogMessage} with error: [$error]"
+            )
+
             InternalServerError("Processing data failed.")
         }
-      case JsError(jsonErrors) => handleBadRequest(jsonErrors)
+      case JsError(jsonErrors)      => handleBadRequest(jsonErrors)
     }
   }
 
@@ -70,21 +85,31 @@ class SubmissionController @Inject()(submissionCommonService: SubmissionService,
       case JsSuccess(ersSummary, _) =>
         val startTime = System.currentTimeMillis()
         metadataService.storeErsSummary(ersSummary).value.map {
-          case Right(true) =>
+          case Right(true)  =>
             metrics.saveMetadata(System.currentTimeMillis() - startTime, TimeUnit.MILLISECONDS)
-            logInfo(s"[SubmissionController][saveMetadata] ErsSummary is successfully saved, bundleRef: ${ersSummary.bundleRef}")
+            logInfo(
+              s"[SubmissionController][saveMetadata] ErsSummary is successfully saved, bundleRef: ${ersSummary.bundleRef}"
+            )
+
             Ok("Metadata is successfully stored.")
           case Right(false) =>
-            logError(s"[SubmissionController][saveMetadata] Saving ErsSummary failed, bundleRef: ${ersSummary.bundleRef}, ${ersSummary.metaData.schemeInfo.basicLogMessage}")
+            logError(
+              s"[SubmissionController][saveMetadata] Saving ErsSummary failed, bundleRef: ${ersSummary.bundleRef}, ${ersSummary.metaData.schemeInfo.basicLogMessage}"
+            )
+
             auditEvents.auditADRTransferFailure(ersSummary.metaData.schemeInfo, Map.empty)
             InternalServerError("Storing metadata failed.")
-          case Left(error) =>
-            logError(s"[SubmissionController][saveMetadata] Saving ErsSummary failed, bundleRef: ${ersSummary.bundleRef}, " +
-              s"${ersSummary.metaData.schemeInfo.basicLogMessage} with error: [$error]")
+          case Left(error)  =>
+            logError(
+              s"[SubmissionController][saveMetadata] Saving ErsSummary failed, bundleRef: ${ersSummary.bundleRef}, " +
+                s"${ersSummary.metaData.schemeInfo.basicLogMessage} with error: [$error]"
+            )
+
             auditEvents.auditADRTransferFailure(ersSummary.metaData.schemeInfo, Map.empty)
             InternalServerError("Storing metadata failed.")
         }
-      case JsError(jsonErrors) => handleBadRequest(jsonErrors)
+      case JsError(jsonErrors)      => handleBadRequest(jsonErrors)
     }
   }
+
 }

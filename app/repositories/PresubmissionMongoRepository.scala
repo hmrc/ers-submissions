@@ -37,20 +37,24 @@ import javax.inject.{Inject, Singleton}
 import scala.concurrent.ExecutionContext
 
 @Singleton
-class PresubmissionMongoRepository @Inject()(applicationConfig: ApplicationConfig, mc: MongoComponent)
-                                            (implicit ec: ExecutionContext)
-  extends PlayMongoRepository[JsObject](
-    mongoComponent = mc,
-    collectionName = applicationConfig.presubmissionCollection,
-    domainFormat = implicitly[Format[JsObject]],
-    indexes = scala.Seq(
-      IndexModel(ascending("schemeInfo.schemeRef"), IndexOptions().name("schemeRef")),
-      IndexModel(ascending("createdAt"), indexOptions = IndexOptions().name("schemeInfoTimeToLive")
-          .expireAfter(applicationConfig.presubmissionCollectionTTL, TimeUnit.DAYS)
-      )
-    ),
-    replaceIndexes = applicationConfig.presubmissionCollectionIndexReplace
-  ) with RepositoryHelper {
+class PresubmissionMongoRepository @Inject() (applicationConfig: ApplicationConfig, mc: MongoComponent)(implicit
+  ec: ExecutionContext
+) extends PlayMongoRepository[JsObject](
+      mongoComponent = mc,
+      collectionName = applicationConfig.presubmissionCollection,
+      domainFormat = implicitly[Format[JsObject]],
+      indexes = scala.Seq(
+        IndexModel(ascending("schemeInfo.schemeRef"), IndexOptions().name("schemeRef")),
+        IndexModel(
+          ascending("createdAt"),
+          indexOptions = IndexOptions()
+            .name("schemeInfoTimeToLive")
+            .expireAfter(applicationConfig.presubmissionCollectionTTL, TimeUnit.DAYS)
+        )
+      ),
+      replaceIndexes = applicationConfig.presubmissionCollectionIndexReplace
+    )
+    with RepositoryHelper {
 
   private val className = getClass.getSimpleName
 
@@ -111,7 +115,8 @@ class PresubmissionMongoRepository @Inject()(applicationConfig: ApplicationConfi
   }
 
   def removeJson(schemeInfo: SchemeInfo, sessionId: String): ERSEnvelope[DeleteResult] = EitherT {
-    collection.deleteMany(buildSelector(schemeInfo))
+    collection
+      .deleteMany(buildSelector(schemeInfo))
       .toFuture()
       .map(_.asRight)
       .recover {
@@ -129,7 +134,7 @@ class PresubmissionMongoRepository @Inject()(applicationConfig: ApplicationConfi
     Json.toJsObject(schemeData) ++
       Json.obj("createdAt" -> MongoJavatimeFormats.instantWrites.writes(schemeData.schemeInfo.timestamp))
 
-  def  getStatusForSelectedSchemes(sessionId: String, selectors: Selectors): ERSEnvelope[Seq[JsObject]] = EitherT {
+  def getStatusForSelectedSchemes(sessionId: String, selectors: Selectors): ERSEnvelope[Seq[JsObject]] = EitherT {
     collection
       .find(filter = selectors.preSubmissionSchemeRefSelector)
       .toFuture()

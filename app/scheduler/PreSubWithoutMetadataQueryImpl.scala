@@ -23,15 +23,18 @@ import play.api.inject.ApplicationLifecycle
 import scheduler.SchedulingActor.PreSubWithoutMetadataQueryClass
 import services.PresSubWithoutMetadataQueryService
 
-class PreSubWithoutMetadataQueryImpl @Inject()(
-                                                val config: Configuration,
-                                                val presSubWithoutMetadataQueryService: PresSubWithoutMetadataQueryService,
-                                                val applicationLifecycle: ApplicationLifecycle
-                                             ) extends ScheduledJob {
+class PreSubWithoutMetadataQueryImpl @Inject() (
+  val config: Configuration,
+  val presSubWithoutMetadataQueryService: PresSubWithoutMetadataQueryService,
+  val applicationLifecycle: ApplicationLifecycle
+) extends ScheduledJob {
 
-  override def jobName: String = "generate-pre-sub-without-metadata-query"
-  val actorSystem: ActorSystem = ActorSystem(jobName)
-  val scheduledMessage: PreSubWithoutMetadataQueryClass = PreSubWithoutMetadataQueryClass(presSubWithoutMetadataQueryService)
+  override def jobName: String                          = "generate-pre-sub-without-metadata-query"
+  val actorSystem: ActorSystem                          = ActorSystem(jobName)
+
+  val scheduledMessage: PreSubWithoutMetadataQueryClass = PreSubWithoutMetadataQueryClass(
+    presSubWithoutMetadataQueryService
+  )
 
   schedule
 }

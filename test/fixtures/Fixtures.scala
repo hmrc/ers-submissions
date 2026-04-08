@@ -30,10 +30,12 @@ object Fixtures extends MockitoSugar {
 
   lazy val nino: String = new Generator().nextNino.nino
 
-  val timestamp: Instant = ZonedDateTime.of(2015,12,5,12,50,55,0, ZoneId.of("UTC")).toInstant.truncatedTo(ChronoUnit.MILLIS)
-  val schemeType = "EMI"
+  val timestamp: Instant =
+    ZonedDateTime.of(2015, 12, 5, 12, 50, 55, 0, ZoneId.of("UTC")).toInstant.truncatedTo(ChronoUnit.MILLIS)
 
-  val schemeInfo: SchemeInfo = SchemeInfo (
+  val schemeType         = "EMI"
+
+  val schemeInfo: SchemeInfo = SchemeInfo(
     schemeRef = "XA1100000000000",
     timestamp = timestamp,
     schemeId = "123PA12345678",
@@ -67,7 +69,7 @@ object Fixtures extends MockitoSugar {
     transferStatus = Some("saved")
   )
 
-  val EMISchemeInfo: SchemeInfo = SchemeInfo (
+  val EMISchemeInfo: SchemeInfo = SchemeInfo(
     schemeRef = "XA1100000000000",
     timestamp = timestamp,
     schemeId = "123PA12345678",
@@ -101,12 +103,58 @@ object Fixtures extends MockitoSugar {
     transferStatus = Some("saved")
   )
 
-  val sheetName: String = "EMI40_Adjustments_V4"
+  val sheetName: String                     = "EMI40_Adjustments_V4"
+
   val data: Option[ListBuffer[Seq[String]]] = Some(
     ListBuffer(
-      Seq("no", "no", "yes", "3", "2015-12-09", "First", "", "Last", nino, "123/123456", "10.1234", "100.12", "10.1234", "10.1234"),
-      Seq("no", "no", "no", "", "2015-12-09", "First", "", "Last", nino, "123/123456", "10.1234", "100.12", "10.1234", "10.1234"),
-      Seq("yes", "", "", "", "2015-12-09", "First", "Second", "Last", nino, "123/XZ55555555", "10.1234", "100.12", "10.1234", "10.1234")
+      Seq(
+        "no",
+        "no",
+        "yes",
+        "3",
+        "2015-12-09",
+        "First",
+        "",
+        "Last",
+        nino,
+        "123/123456",
+        "10.1234",
+        "100.12",
+        "10.1234",
+        "10.1234"
+      ),
+      Seq(
+        "no",
+        "no",
+        "no",
+        "",
+        "2015-12-09",
+        "First",
+        "",
+        "Last",
+        nino,
+        "123/123456",
+        "10.1234",
+        "100.12",
+        "10.1234",
+        "10.1234"
+      ),
+      Seq(
+        "yes",
+        "",
+        "",
+        "",
+        "2015-12-09",
+        "First",
+        "Second",
+        "Last",
+        nino,
+        "123/XZ55555555",
+        "10.1234",
+        "100.12",
+        "10.1234",
+        "10.1234"
+      )
     )
   )
 
@@ -223,7 +271,7 @@ object Fixtures extends MockitoSugar {
     fileType = None,
     confirmationDateTime = testConfirmationDateTime,
     metaData = ErsMetaData(
-      schemeInfo = SchemeInfo (
+      schemeInfo = SchemeInfo(
         schemeRef = "",
         timestamp = timestamp,
         schemeId = "123PA12345678",
@@ -253,7 +301,7 @@ object Fixtures extends MockitoSugar {
     fileType = None,
     confirmationDateTime = testConfirmationDateTime,
     metaData = ErsMetaData(
-      schemeInfo = SchemeInfo (
+      schemeInfo = SchemeInfo(
         schemeRef = "XA1100000000000",
         timestamp = timestamp,
         schemeId = "123PA12345678",
@@ -276,4 +324,5 @@ object Fixtures extends MockitoSugar {
     nofOfRows = None,
     transferStatus = Some("saved")
   )
+
 }

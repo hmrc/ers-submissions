@@ -27,14 +27,18 @@ import utils.LoggingAndExceptions.ErsLogger
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Try
 
-case class AuthorisedAction(slashSeperatedRef: String, authConnector: AuthConnector, bodyParser: PlayBodyParsers)
-                           (implicit val executionContext: ExecutionContext)
-  extends AuthAction {
+case class AuthorisedAction(slashSeperatedRef: String, authConnector: AuthConnector, bodyParser: PlayBodyParsers)(
+  implicit val executionContext: ExecutionContext
+) extends AuthAction {
   override val optionalEmpRef: Option[EmpRef] = Try(EmpRef.fromIdentifiers(slashSeperatedRef)).toOption
-  val parser: BodyParser[AnyContent] = bodyParser.default
+  val parser: BodyParser[AnyContent]          = bodyParser.default
 }
 
-trait AuthAction extends AuthorisedFunctions with ActionBuilder[Request, AnyContent] with ActionFunction[Request, Request] with ErsLogger {
+trait AuthAction
+    extends AuthorisedFunctions
+    with ActionBuilder[Request, AnyContent]
+    with ActionFunction[Request, Request]
+    with ErsLogger {
 
   val optionalEmpRef: Option[EmpRef]
   implicit val executionContext: ExecutionContext
@@ -42,22 +46,24 @@ trait AuthAction extends AuthorisedFunctions with ActionBuilder[Request, AnyCont
   override def invokeBlock[A](request: Request[A], block: Request[A] => Future[Result]): Future[Result] = {
     implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
 
-    optionalEmpRef.map(empRef =>
-      authorised(
-        ConfidenceLevel.L50 and Enrolment("IR-PAYE")
-          .withIdentifier("TaxOfficeNumber", empRef.taxOfficeNumber)
-          .withIdentifier("TaxOfficeReference", empRef.taxOfficeReference)
-          .withDelegatedAuthRule("ers-auth")
-      ) {
-        block(request)
-      } recover {
-        case ex: AuthorisationException =>
+    optionalEmpRef
+      .map(empRef =>
+        authorised(
+          ConfidenceLevel.L50 and Enrolment("IR-PAYE")
+            .withIdentifier("TaxOfficeNumber", empRef.taxOfficeNumber)
+            .withIdentifier("TaxOfficeReference", empRef.taxOfficeReference)
+            .withDelegatedAuthRule("ers-auth")
+        ) {
+          block(request)
+        } recover { case ex: AuthorisationException =>
           logWarn(s"[AuthAction][invokeBlock] user is unauthorised for ${request.uri} with exception  ${ex.reason}", ex)
           Unauthorized
+        }
+      )
+      .getOrElse {
+        logWarn(s"[AuthAction][invokeBlock] empRef is invalid ${request.uri}")
+        Future.successful(Unauthorized)
       }
-    ).getOrElse {
-      logWarn(s"[AuthAction][invokeBlock] empRef is invalid ${request.uri}")
-      Future.successful(Unauthorized)
-    }
   }
+
 }

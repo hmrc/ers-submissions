@@ -22,9 +22,12 @@ import uk.gov.hmrc.mongo.MongoComponent
 import javax.inject.Inject
 import scala.concurrent.ExecutionContext
 
-class Repositories @Inject()(applicationConfig: ApplicationConfig, mongoComponent: MongoComponent)
-                            (implicit ec: ExecutionContext) {
+class Repositories @Inject() (applicationConfig: ApplicationConfig, mongoComponent: MongoComponent)(implicit
+  ec: ExecutionContext
+) {
 
-  lazy val presubmissionRepository: PresubmissionMongoRepository = new PresubmissionMongoRepository(applicationConfig, mongoComponent)
-  lazy val metadataRepository: MetadataMongoRepository = new MetadataMongoRepository(applicationConfig, mongoComponent)
+  lazy val presubmissionRepository: PresubmissionMongoRepository =
+    new PresubmissionMongoRepository(applicationConfig, mongoComponent)
+
+  lazy val metadataRepository: MetadataMongoRepository           = new MetadataMongoRepository(applicationConfig, mongoComponent)
 }

@@ -22,8 +22,10 @@ import repositories.helpers.BsonDocumentHelper.BsonOps
 
 class BsonDocumentHelperSpec extends ERSTestHelper {
 
-  val emptyBson: BsonDocument = BsonDocument()
-  val nonEmptyBson: BsonDocument = BsonDocument("nonEmpty" -> "stuff", "another" -> "also stuff", "this one" -> "also works")
+  val emptyBson: BsonDocument    = BsonDocument()
+
+  val nonEmptyBson: BsonDocument =
+    BsonDocument("nonEmpty" -> "stuff", "another" -> "also stuff", "this one" -> "also works")
 
   "bsonToSeqOfTuples" should {
     "convert an empty Bson document into an empty sequence" in {
@@ -31,7 +33,11 @@ class BsonDocumentHelperSpec extends ERSTestHelper {
     }
 
     "convert non-empty Bson into a valid sequence" in {
-      BsonDocumentHelper.bsonToSeqOfTuples(nonEmptyBson) shouldBe Seq("nonEmpty" -> BsonString("stuff"), "another" -> BsonString("also stuff"), "this one" -> BsonString("also works"))
+      BsonDocumentHelper.bsonToSeqOfTuples(nonEmptyBson) shouldBe Seq(
+        "nonEmpty" -> BsonString("stuff"),
+        "another"  -> BsonString("also stuff"),
+        "this one" -> BsonString("also works")
+      )
     }
   }
 
@@ -46,7 +52,13 @@ class BsonDocumentHelperSpec extends ERSTestHelper {
       emptyBson +:+ nonEmptyBson shouldBe nonEmptyBson
     }
     "add two non-empty documents" in {
-      nonEmptyBson +:+ BsonDocument("another" -> "one") shouldBe BsonDocument("nonEmpty" -> "stuff", "another" -> "also stuff", "this one" -> "also works", "another" -> "one")
+      nonEmptyBson +:+ BsonDocument("another" -> "one") shouldBe BsonDocument(
+        "nonEmpty" -> "stuff",
+        "another"  -> "also stuff",
+        "this one" -> "also works",
+        "another"  -> "one"
+      )
     }
   }
+
 }

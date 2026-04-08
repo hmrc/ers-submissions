@@ -31,18 +31,17 @@ import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
 
 class PreSubWithoutMetadataQueryServiceSpec
-  extends AnyWordSpec
-    with Matchers
-    with MockitoSugar
-    with BeforeAndAfterEach {
+    extends AnyWordSpec with Matchers with MockitoSugar with BeforeAndAfterEach {
 
-  val mockApplicationConfig: ApplicationConfig = mock[ApplicationConfig]
+  val mockApplicationConfig: ApplicationConfig    = mock[ApplicationConfig]
   val mockPreSubQuery: PreSubWithoutMetadataQuery = mock[PreSubWithoutMetadataQuery]
 
-  private val service = spy(new PresSubWithoutMetadataQueryService(
-    mockApplicationConfig,
-    mockPreSubQuery
-  ))
+  private val service = spy(
+    new PresSubWithoutMetadataQueryService(
+      mockApplicationConfig,
+      mockPreSubQuery
+    )
+  )
 
   implicit val hc: HeaderCarrier = HeaderCarrier()
 
@@ -58,7 +57,7 @@ class PreSubWithoutMetadataQueryServiceSpec
 
   "PresSubWithoutMetadataQueryService" should {
 
-    val maxRecords = 100
+    val maxRecords  = 100
     val testRecords = List(
       PreSubWithoutMetadata("scheme1", "2023/24", 1672531200000L),
       PreSubWithoutMetadata("scheme2", "2023/24", 1672617600000L)
@@ -133,4 +132,5 @@ class PreSubWithoutMetadataQueryServiceSpec
     }
 
   }
+
 }

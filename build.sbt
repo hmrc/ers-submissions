@@ -12,7 +12,7 @@ lazy val testSettings = Seq(
 
 lazy val microservice = Project("ers-submissions", file("."))
   .enablePlugins(play.sbt.PlayScala, SbtDistributablesPlugin)
-  .disablePlugins(JUnitXmlReportPlugin) //Required to prevent https://github.com/scalatest/scalatest/issues/1427
+  .disablePlugins(JUnitXmlReportPlugin) // Required to prevent https://github.com/scalatest/scalatest/issues/1427
   .settings(CodeCoverageSettings())
   .settings(libraryDependencies ++= AppDependencies())
   .settings(inConfig(Test)(testSettings))
@@ -24,6 +24,8 @@ scalacOptions ++= Seq(
 
 lazy val it = project
   .enablePlugins(PlayScala)
-  .disablePlugins(JUnitXmlReportPlugin) //Required to prevent https://github.com/scalatest/scalatest/issues/1427
+  .disablePlugins(JUnitXmlReportPlugin) // Required to prevent https://github.com/scalatest/scalatest/issues/1427
   .dependsOn(microservice % "test->test")
   .settings(testSettings)
+
+addCommandAlias("scalafmtAll", "all scalafmtSbt scalafmt Test/scalafmt it/Test/scalafmt")

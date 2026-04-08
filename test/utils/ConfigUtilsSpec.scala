@@ -27,18 +27,18 @@ import utils.LoggingAndExceptions.ADRExceptionEmitter
 class ConfigUtilsSpec extends ERSTestHelper {
 
   val mockADRExceptionEmitter: ADRExceptionEmitter = app.injector.instanceOf[ADRExceptionEmitter]
-  val testConfigUtils = new ConfigUtils(mockADRExceptionEmitter)
-  implicit val request: FakeRequest[AnyContent] = FakeRequest()
-  implicit val hc: HeaderCarrier = HeaderCarrier()
-  val ersSummary: ErsSummary = Fixtures.EMISummaryDate
+  val testConfigUtils                              = new ConfigUtils(mockADRExceptionEmitter)
+  implicit val request: FakeRequest[AnyContent]    = FakeRequest()
+  implicit val hc: HeaderCarrier                   = HeaderCarrier()
+  val ersSummary: ErsSummary                       = Fixtures.EMISummaryDate
 
   "calling getConfigData" should {
 
     "return config object" in {
-      val result = testConfigUtils.getConfigData("common/Root", "Root", ersSummary)
+      val result     = testConfigUtils.getConfigData("common/Root", "Root", ersSummary)
       val firstField = result.getConfigList("fields").get(0)
-      firstField.getString("name") shouldBe "regime"
-      firstField.getString("type") shouldBe "string"
+      firstField.getString("name")  shouldBe "regime"
+      firstField.getString("type")  shouldBe "string"
       firstField.getString("value") shouldBe "ERS"
     }
 
@@ -68,4 +68,5 @@ class ConfigUtilsSpec extends ERSTestHelper {
       result shouldBe "data"
     }
   }
+
 }

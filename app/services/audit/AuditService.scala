@@ -25,13 +25,15 @@ import java.time.temporal.ChronoUnit
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
-class AuditService @Inject()(auditConnector: AuditConnector)(implicit ec: ExecutionContext) {
+class AuditService @Inject() (auditConnector: AuditConnector)(implicit ec: ExecutionContext) {
   val auditSource = "ers-submissions"
 
-  def sendEvent(transactionName : String, details: Map[String, String])(implicit hc: HeaderCarrier): Future[AuditResult] =
+  def sendEvent(transactionName: String, details: Map[String, String])(implicit
+    hc: HeaderCarrier
+  ): Future[AuditResult] =
     auditConnector.sendEvent(buildEvent(transactionName, details))
 
-  def buildEvent(transactionName: String,  details: Map[String, String])(implicit hc: HeaderCarrier): DataEvent =
+  def buildEvent(transactionName: String, details: Map[String, String])(implicit hc: HeaderCarrier): DataEvent =
     DataEvent(
       auditSource = auditSource,
       auditType = transactionName,
@@ -41,5 +43,6 @@ class AuditService @Inject()(auditConnector: AuditConnector)(implicit ec: Execut
 
   def generateTags(hc: HeaderCarrier): Map[String, String] =
     hc.headers(HeaderNames.explicitlyIncludedHeaders).toMap ++
-      Map("dateTime" ->  Instant.now().truncatedTo(ChronoUnit.MILLIS).toString)
+      Map("dateTime" -> Instant.now().truncatedTo(ChronoUnit.MILLIS).toString)
+
 }

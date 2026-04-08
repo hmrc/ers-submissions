@@ -35,15 +35,17 @@ import java.time.{Instant, LocalDateTime, ZoneId}
 import javax.inject.Inject
 import scala.concurrent.ExecutionContext
 
-class ResubPresubmissionService @Inject()(metadataRepository: MetadataMongoRepository,
-                                          presubmissionRepository: PresubmissionMongoRepository,
-                                          submissionCommonService: SubmissionService,
-                                          auditEvents: AuditEvents)
-                                         (implicit ec: ExecutionContext) extends ErsLogger {
+class ResubPresubmissionService @Inject() (
+  metadataRepository: MetadataMongoRepository,
+  presubmissionRepository: PresubmissionMongoRepository,
+  submissionCommonService: SubmissionService,
+  auditEvents: AuditEvents
+)(implicit ec: ExecutionContext)
+    extends ErsLogger {
 
   def validateJson[T](record: JsObject)(implicit reads: Reads[T]): Option[T] =
     record.validate[T] match {
-      case JsSuccess(obj, _) =>
+      case JsSuccess(obj, _)                                                              =>
         Some(obj)
       case JsError(errors: collection.Seq[(JsPath, collection.Seq[JsonValidationError])]) =>
         val jsErrors = errors
@@ -53,25 +55,25 @@ class ResubPresubmissionService @Inject()(metadataRepository: MetadataMongoRepos
         None
     }
 
-  def logAggregateMetadataMetrics()(implicit hc: HeaderCarrier): ERSEnvelope[String] = {
+  def logAggregateMetadataMetrics()(implicit hc: HeaderCarrier): ERSEnvelope[String] =
     for {
       aggregatedRecords <- metadataRepository
-        .getAggregateCountOfSubmissions(Session.id(hc))
-      aggregatedLogs = AggregatedLogs(
-        aggregatedRecords.flatMap(validateJson[AggregatedLog])
-      )
+                             .getAggregateCountOfSubmissions(Session.id(hc))
+      aggregatedLogs     = AggregatedLogs(
+                             aggregatedRecords.flatMap(validateJson[AggregatedLog])
+                           )
     } yield aggregatedLogs.message
-  }
 
-  def logFailedSubmissionCount(processFailedSubmissionsConfig: ProcessFailedSubmissionsConfig)
-                              (implicit hc: HeaderCarrier): ERSEnvelope[String] = {
+  def logFailedSubmissionCount(
+    processFailedSubmissionsConfig: ProcessFailedSubmissionsConfig
+  )(implicit hc: HeaderCarrier): ERSEnvelope[String] = {
     val failedJobSelector: BsonDocument = metadataRepository.createFailedJobSelector(processFailedSubmissionsConfig)
     for {
       numberOfRecords <- metadataRepository
-        .getNumberOfFailedJobs(failedJobSelector, Session.id(hc))
-      countToLog = TotalNumberSubmissionsToProcessMessage(
-        numberOfFailedJobs = numberOfRecords
-      ).message
+                           .getNumberOfFailedJobs(failedJobSelector, Session.id(hc))
+      countToLog       = TotalNumberSubmissionsToProcessMessage(
+                           numberOfFailedJobs = numberOfRecords
+                         ).message
     } yield countToLog
   }
 
@@ -81,69 +83,82 @@ class ResubPresubmissionService @Inject()(metadataRepository: MetadataMongoRepos
       .map(l => LocalDateTime.ofInstant(Instant.ofEpochMilli(l.toLong), ZoneId.systemDefault()))
     (validateJson[SchemeData](json), maybeCreatedAt) match {
       case (Some(schemeData), Some(createdAt)) => Some((schemeData, createdAt))
-      case (_, _) => None
+      case (_, _)                              => None
     }
   }
 
-  def getPreSubSelectedSchemeRefDetailsMessage(processFailedSubmissionsConfig: ProcessFailedSubmissionsConfig)
-                                              (implicit hc: HeaderCarrier): ERSEnvelope[String] =
+  def getPreSubSelectedSchemeRefDetailsMessage(
+    processFailedSubmissionsConfig: ProcessFailedSubmissionsConfig
+  )(implicit hc: HeaderCarrier): ERSEnvelope[String] =
     for {
-      preSubmissionStatuses <- presubmissionRepository
-        .getStatusForSelectedSchemes(Session.id(hc), Selectors(processFailedSubmissionsConfig))
+      preSubmissionStatuses                                    <- presubmissionRepository
+                                                                    .getStatusForSelectedSchemes(Session.id(hc), Selectors(processFailedSubmissionsConfig))
       preSubmissionSchemeData: Seq[(SchemeData, LocalDateTime)] = preSubmissionStatuses
-        .flatMap(extractSchemeDataAndCreatedAt)
-      selectedSchemeRefLogs = PreSubSelectedSchemeRefLogs(preSubmissionSchemeData)
+                                                                    .flatMap(extractSchemeDataAndCreatedAt)
+      selectedSchemeRefLogs                                     = PreSubSelectedSchemeRefLogs(preSubmissionSchemeData)
     } yield selectedSchemeRefLogs.message
 
-  def getMetadataSelectedSchemeRefDetailsMessage(processFailedSubmissionsConfig: ProcessFailedSubmissionsConfig)
-                                                (implicit hc: HeaderCarrier): ERSEnvelope[String] =
+  def getMetadataSelectedSchemeRefDetailsMessage(
+    processFailedSubmissionsConfig: ProcessFailedSubmissionsConfig
+  )(implicit hc: HeaderCarrier): ERSEnvelope[String] =
     for {
-      metadataStatuses <- metadataRepository
-        .getStatusForSelectedSchemes(Session.id(hc), Selectors(processFailedSubmissionsConfig))
+      metadataStatuses                     <- metadataRepository
+                                                .getStatusForSelectedSchemes(Session.id(hc), Selectors(processFailedSubmissionsConfig))
       metadataErsSummaries: Seq[ErsSummary] = metadataStatuses
-        .flatMap(validateJson[ErsSummary])
-      selectedSchemeRefLogs = MetaDataSelectedSchemeRefLogs(metadataErsSummaries)
+                                                .flatMap(validateJson[ErsSummary])
+      selectedSchemeRefLogs                 = MetaDataSelectedSchemeRefLogs(metadataErsSummaries)
     } yield selectedSchemeRefLogs.message
 
-  def processFailedSubmissions(processFailedSubmissionsConfig: ProcessFailedSubmissionsConfig)
-                              (implicit request: Request[_], hc: HeaderCarrier): ERSEnvelope[Boolean] = {
+  def processFailedSubmissions(
+    processFailedSubmissionsConfig: ProcessFailedSubmissionsConfig
+  )(implicit request: Request[_], hc: HeaderCarrier): ERSEnvelope[Boolean] = {
 
     val failedJobSelector: BsonDocument = metadataRepository.createFailedJobSelector(processFailedSubmissionsConfig)
     for {
-      failedJobIds <- metadataRepository.getFailedJobs(failedJobSelector, processFailedSubmissionsConfig)
-      _ = logInfo(NumberOfFailedToBeProcessedMessage(failedJobIds.length).message)
-      updateResult <- metadataRepository.findAndUpdateByStatus(failedJobIds, Session.id(hc))
-      ersSummaries <- metadataRepository.findErsSummaries(failedJobIds, Session.id(hc))
+      failedJobIds        <- metadataRepository.getFailedJobs(failedJobSelector, processFailedSubmissionsConfig)
+      _                    = logInfo(NumberOfFailedToBeProcessedMessage(failedJobIds.length).message)
+      updateResult        <- metadataRepository.findAndUpdateByStatus(failedJobIds, Session.id(hc))
+      ersSummaries        <- metadataRepository.findErsSummaries(failedJobIds, Session.id(hc))
       resubmissionResults <- if (updateResult.wasAcknowledged()) {
-        ersSummaries.map { ersSummary =>
-          startResubmission(ersSummary, processFailedSubmissionsConfig).map { result =>
-            auditEvents.resubmissionResult(ersSummary.metaData.schemeInfo, result)
-            result
-          }
-        }.sequence
-      } else {
-        logWarn(NoDataToResubmitMessage.message)
-        ERSEnvelope(scala.Seq[Boolean]())
-      }
+                               ersSummaries.map { ersSummary =>
+                                 startResubmission(ersSummary, processFailedSubmissionsConfig).map { result =>
+                                   auditEvents.resubmissionResult(ersSummary.metaData.schemeInfo, result)
+                                   result
+                                 }
+                               }.sequence
+                             } else {
+                               logWarn(NoDataToResubmitMessage.message)
+                               ERSEnvelope(scala.Seq[Boolean]())
+                             }
     } yield resubmissionResults.forall(identity)
   }
 
-  def startResubmission(ersSummary: ErsSummary, processFailedSubmissionsConfig: ProcessFailedSubmissionsConfig)
-                       (implicit request: Request[_], hc: HeaderCarrier): ERSEnvelope[Boolean] = {
+  def startResubmission(ersSummary: ErsSummary, processFailedSubmissionsConfig: ProcessFailedSubmissionsConfig)(implicit
+    request: Request[_],
+    hc: HeaderCarrier
+  ): ERSEnvelope[Boolean] = {
     logInfo(ProcessingResubmitMessage.message + ersSummary.metaData.schemeInfo.basicLogMessage)
-    submissionCommonService.callProcessData(ersSummary,
-      processFailedSubmissionsConfig.failedStatus,
-      processFailedSubmissionsConfig.resubmitSuccessStatus).map { result =>
-      if(result) {
-        logInfo(s"[ResubPresubmissionService][startResubmission] Resubmission completed successfully for schemeRef: ${ersSummary.metaData.schemeInfo.schemeRef}")
-      } else {
-        // RESUBMISSION_FAILED IS NEEDED TO TRIGGER ALERT FOR RESUBMISSION FAILURE
-        logError(s"RESUBMISSION_FAILED [startResubmission] Resubmission failed for:" +
-          s" ${ersSummary.metaData.schemeInfo.basicLogMessage}")
-        auditEvents.sendToAdrEvent("ErsTransferToAdrFailed", ersSummary, source = Some("scheduler"))
+    submissionCommonService
+      .callProcessData(
+        ersSummary,
+        processFailedSubmissionsConfig.failedStatus,
+        processFailedSubmissionsConfig.resubmitSuccessStatus
+      )
+      .map { result =>
+        if (result) {
+          logInfo(
+            s"[ResubPresubmissionService][startResubmission] Resubmission completed successfully for schemeRef: ${ersSummary.metaData.schemeInfo.schemeRef}"
+          )
+        } else {
+          // RESUBMISSION_FAILED IS NEEDED TO TRIGGER ALERT FOR RESUBMISSION FAILURE
+          logError(
+            s"RESUBMISSION_FAILED [startResubmission] Resubmission failed for:" +
+              s" ${ersSummary.metaData.schemeInfo.basicLogMessage}"
+          )
+          auditEvents.sendToAdrEvent("ErsTransferToAdrFailed", ersSummary, source = Some("scheduler"))
+        }
+        result
       }
-      result
-    }
   }
-}
 
+}

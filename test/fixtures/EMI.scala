@@ -22,9 +22,9 @@ import models._
 object EMI {
 
   val schemeType: String = "EMI"
-  val schemeRef: String = "XA1100000000000"
+  val schemeRef: String  = "XA1100000000000"
 
-  val schemeInfo: SchemeInfo = SchemeInfo (
+  val schemeInfo: SchemeInfo = SchemeInfo(
     schemeRef = schemeRef,
     schemeId = "123PA12345678",
     taxYear = "2015/16",
@@ -37,18 +37,14 @@ object EMI {
     "yes",
     "yes",
     disqualifyingEvent,
-    if(disqualifyingEvent == "yes") "4" else "",
+    if (disqualifyingEvent == "yes") "4" else "",
     "2011-10-13",
     "First",
-    {
-      if(withAllFields) "Second"
-      else ""
-    },
+    if (withAllFields) "Second"
+    else "",
     "Last",
-    {
-      if(withAllFields) "NINO"
-      else ""
-    },
+    if (withAllFields) "NINO"
+    else "",
     "123/XZ55555555",
     "10.1234",
     "10.14",
@@ -61,31 +57,21 @@ object EMI {
     "2014-12-10",
     "2014-12-10",
     "First",
-    {
-      if(withAllFields) "Second"
-      else ""
-    },
+    if (withAllFields) "Second"
+    else "",
     "Last",
-    {
-      if(withAllFields) "NINO"
-      else ""
-    },
+    if (withAllFields) "NINO"
+    else "",
     "123/XZ55555555",
-     "10.1234",
+    "10.1234",
     "company",
     "1 Beth Street",
-    {
-      if(withAllFields) "Bucknall"
-      else ""
-    },
-    {
-      if(withAllFields) "Stoke"
-      else ""
-    },
-    {
-      if(withAllFields) "Staffordshire"
-      else ""
-    },
+    if (withAllFields) "Bucknall"
+    else "",
+    if (withAllFields) "Stoke"
+    else "",
+    if (withAllFields) "Staffordshire"
+    else "",
     "UK",
     "SE1 2AB",
     "XT123456",
@@ -93,67 +79,65 @@ object EMI {
   )
 
   // EMI40_RLC_V4
-  def buildRLCV4(withAllFields: Boolean = true, disqualifyingEvent: String, moneyValueReceived: String): Seq[String] = Seq(
-    "2014-12-10",
-    disqualifyingEvent,
-    if(disqualifyingEvent == "yes") "1" else "",
-    "First",
-    {
-      if(withAllFields) "Second"
-      else ""
-    },
-    "Last",
-    {
-      if(withAllFields) "NINO"
-      else ""
-    },
-    "123/XZ55555555",
-    "10.12",
-    moneyValueReceived,
-    if(moneyValueReceived == "yes") "123.1234" else "",
-    if(moneyValueReceived == "yes") "yes" else ""
-  )
+  def buildRLCV4(withAllFields: Boolean = true, disqualifyingEvent: String, moneyValueReceived: String): Seq[String] =
+    Seq(
+      "2014-12-10",
+      disqualifyingEvent,
+      if (disqualifyingEvent == "yes") "1" else "",
+      "First",
+      if (withAllFields) "Second"
+      else "",
+      "Last",
+      if (withAllFields) "NINO"
+      else "",
+      "123/XZ55555555",
+      "10.12",
+      moneyValueReceived,
+      if (moneyValueReceived == "yes") "123.1234" else "",
+      if (moneyValueReceived == "yes") "yes" else ""
+    )
 
   // EMI40_NonTaxable_V4
-  def buildNonTaxableV4(withAllFields: Boolean = true, sharesListedOnSE: String, marketValueAgreedHMRC: String): Seq[String] = Seq(
+  def buildNonTaxableV4(
+    withAllFields: Boolean = true,
+    sharesListedOnSE: String,
+    marketValueAgreedHMRC: String
+  ): Seq[String] = Seq(
     "2015-03-03",
     "First",
-    {
-      if(withAllFields) "Second"
-      else ""
-    },
+    if (withAllFields) "Second"
+    else "",
     "Last",
-    {
-      if(withAllFields) "NINO"
-      else ""
-    },
+    if (withAllFields) "NINO"
+    else "",
     "123/XZ55555555",
     "100",
     "10.1234",
     "10.1234",
     "10.1234",
     sharesListedOnSE,
-    if(sharesListedOnSE == "no") marketValueAgreedHMRC else "",
-    if(sharesListedOnSE == "no" && marketValueAgreedHMRC == "yes") "aa12345678" else "",
+    if (sharesListedOnSE == "no") marketValueAgreedHMRC else "",
+    if (sharesListedOnSE == "no" && marketValueAgreedHMRC == "yes") "aa12345678" else "",
     "10.1234",
     "yes"
   )
 
   // EMI40_Taxable_V4
-  def buildTaxableV4(withAllFields: Boolean = true, disqualifyingEvent: String, sharesListedOnSE: String, marketValueAgreedHMRC: String): Seq[String] = Seq(
+  def buildTaxableV4(
+    withAllFields: Boolean = true,
+    disqualifyingEvent: String,
+    sharesListedOnSE: String,
+    marketValueAgreedHMRC: String
+  ): Seq[String] = Seq(
     "2015-06-04",
     disqualifyingEvent,
-    if(disqualifyingEvent == "yes") "3" else "",
+    if (disqualifyingEvent == "yes") "3" else "",
     "First",
-    {
-      if(withAllFields) "Second"
-      else ""
-    },
+    if (withAllFields) "Second"
+    else "",
     "Last",
-    {
-      if(withAllFields) "NINO"
-      else ""
-    },
+    if (withAllFields) "NINO"
+    else "",
     "123/XZ55555555",
     "100.00",
     "10.1234",
@@ -162,8 +146,8 @@ object EMI {
     "10.1234",
     "10.1234",
     sharesListedOnSE,
-    if(sharesListedOnSE == "no") marketValueAgreedHMRC else "",
-    if(sharesListedOnSE == "no" && marketValueAgreedHMRC == "yes") "aa12345678" else "",
+    if (sharesListedOnSE == "no") marketValueAgreedHMRC else "",
+    if (sharesListedOnSE == "no" && marketValueAgreedHMRC == "yes") "aa12345678" else "",
     "yes",
     "yes",
     "10.1234"
@@ -250,4 +234,5 @@ object EMI {
     nofOfRows = None,
     transferStatus = Some("saved")
   )
+
 }

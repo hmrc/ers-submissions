@@ -23,5 +23,5 @@ import scala.concurrent.ExecutionContext
 trait ScheduledService[R] {
   val jobName: String
 
-  def invoke(implicit ec : ExecutionContext) : ERSEnvelope[R]
+  def invoke(implicit ec: ExecutionContext): ERSEnvelope[R]
 }

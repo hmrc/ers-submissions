@@ -20,31 +20,29 @@ import play.api.Logging
 
 trait ErsLogger extends ErsDataMessages with ErsExceptionMessages with Logging {
 
-  def buildMessage(message: String, data: Option[Object]): String = {
+  def buildMessage(message: String, data: Option[Object]): String =
     data match {
       case Some(data) => message + " for " + buildDataMessage(data)
-      case None => message
+      case None       => message
     }
-  }
 
   def logException(data: Object, ex: Exception, context: Option[String] = None): Unit = {
     val errorMessage: Seq[String] = Seq(buildExceptionMesssage(ex), buildDataMessage(data))
 
     val finalErrorMessage: String =
       (if (context.isDefined) {
-        errorMessage :+ s"Context: $context"
-      } else {
-        errorMessage
-      }).mkString("\n")
+         errorMessage :+ s"Context: $context"
+       } else {
+         errorMessage
+       }).mkString("\n")
 
     logError(finalErrorMessage)
   }
 
-  def logIfEnabled(logEnabled: Boolean)(block: => Unit): Unit = {
+  def logIfEnabled(logEnabled: Boolean)(block: => Unit): Unit =
     Option(logEnabled)
       .filter(identity)
       .foreach(_ => block)
-  }
 
   // methods to help with testing
   def logInfo(message: String): Unit = logger.info(message)

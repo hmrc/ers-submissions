@@ -35,12 +35,12 @@ import scala.concurrent.Future
 
 class EMI_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with EitherValues {
 
-  implicit val hc: HeaderCarrier = new HeaderCarrier()
+  implicit val hc: HeaderCarrier              = new HeaderCarrier()
   implicit val request: FakeRequest[JsObject] = FakeRequest().withBody(Fixtures.metadataJson)
 
-  val mockSubmissionCommon: SubmissionCommon = app.injector.instanceOf[SubmissionCommon]
+  val mockSubmissionCommon: SubmissionCommon         = app.injector.instanceOf[SubmissionCommon]
   val mockPresubmissionService: PresubmissionService = mock[PresubmissionService]
-  val mockConfigUtils: ConfigUtils = app.injector.instanceOf[ConfigUtils]
+  val mockConfigUtils: ConfigUtils                   = app.injector.instanceOf[ConfigUtils]
 
   val mockAdrSubmission: ADRSubmission = new ADRSubmission(
     mockSubmissionCommon,
@@ -48,7 +48,7 @@ class EMI_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with E
     mockConfigUtils
   )
 
-  override def beforeEach(): Unit  = {
+  override def beforeEach(): Unit = {
     super.beforeEach()
     reset(mockPresubmissionService)
   }
@@ -170,16 +170,38 @@ class EMI_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with E
       when(
         mockPresubmissionService.getJson(any[SchemeInfo]())(any())
       ).thenReturn(
-        ERSEnvelope(Future.successful(
-          List(
-            SchemeData(EMI.schemeInfo, "EMI40_Adjustments_V4", None, Some(ListBuffer(EMI.buildAdjustmentsV4(withAllFields = true, "yes")))),
-            SchemeData(EMI.schemeInfo, "EMI40_Replaced_V4", None, Some(ListBuffer(EMI.buildReplacedV4(true)))),
-            SchemeData(EMI.schemeInfo, "EMI40_RLC_V4", None, Some(ListBuffer(EMI.buildRLCV4(withAllFields = true, "yes", "yes")))),
-            SchemeData(EMI.schemeInfo, "EMI40_NonTaxable_V4", None, Some(ListBuffer(EMI.buildNonTaxableV4(withAllFields = true, "yes", "yes")))),
-            SchemeData(EMI.schemeInfo, "EMI40_Taxable_V4", None, Some(ListBuffer(EMI.buildTaxableV4(withAllFields = true, "yes", "yes", "yes"))))
+        ERSEnvelope(
+          Future.successful(
+            List(
+              SchemeData(
+                EMI.schemeInfo,
+                "EMI40_Adjustments_V4",
+                None,
+                Some(ListBuffer(EMI.buildAdjustmentsV4(withAllFields = true, "yes")))
+              ),
+              SchemeData(EMI.schemeInfo, "EMI40_Replaced_V4", None, Some(ListBuffer(EMI.buildReplacedV4(true)))),
+              SchemeData(
+                EMI.schemeInfo,
+                "EMI40_RLC_V4",
+                None,
+                Some(ListBuffer(EMI.buildRLCV4(withAllFields = true, "yes", "yes")))
+              ),
+              SchemeData(
+                EMI.schemeInfo,
+                "EMI40_NonTaxable_V4",
+                None,
+                Some(ListBuffer(EMI.buildNonTaxableV4(withAllFields = true, "yes", "yes")))
+              ),
+              SchemeData(
+                EMI.schemeInfo,
+                "EMI40_Taxable_V4",
+                None,
+                Some(ListBuffer(EMI.buildTaxableV4(withAllFields = true, "yes", "yes", "yes")))
+              )
+            )
           )
         )
-      ))
+      )
 
       val result = await(mockAdrSubmission.generateSubmission(EMI.metadata)(request, hc).value)
       result.value - "acknowledgementReference" shouldBe Json.parse("""{
@@ -363,21 +385,63 @@ class EMI_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with E
       when(
         mockPresubmissionService.getJson(any[SchemeInfo]())(any())
       ).thenReturn(
-        ERSEnvelope(Future.successful(
-          List(
-            SchemeData(EMI.schemeInfo, "EMI40_Adjustments_V4", None, Some(ListBuffer(EMI.buildAdjustmentsV4(withAllFields = true, "yes")))),
-            SchemeData(EMI.schemeInfo, "EMI40_Adjustments_V4", None, Some(ListBuffer(EMI.buildAdjustmentsV4(withAllFields = true, "yes")))),
-            SchemeData(EMI.schemeInfo, "EMI40_Replaced_V4", None, Some(ListBuffer(EMI.buildReplacedV4(true)))),
-            SchemeData(EMI.schemeInfo, "EMI40_Replaced_V4", None, Some(ListBuffer(EMI.buildReplacedV4(true)))),
-            SchemeData(EMI.schemeInfo, "EMI40_RLC_V4", None, Some(ListBuffer(EMI.buildRLCV4(withAllFields = true, "yes", "yes")))),
-            SchemeData(EMI.schemeInfo, "EMI40_RLC_V4", None, Some(ListBuffer(EMI.buildRLCV4(withAllFields = true, "yes", "yes")))),
-            SchemeData(EMI.schemeInfo, "EMI40_NonTaxable_V4", None, Some(ListBuffer(EMI.buildNonTaxableV4(withAllFields = true, "yes", "yes")))),
-            SchemeData(EMI.schemeInfo, "EMI40_NonTaxable_V4", None, Some(ListBuffer(EMI.buildNonTaxableV4(withAllFields = true, "yes", "yes")))),
-            SchemeData(EMI.schemeInfo, "EMI40_Taxable_V4", None, Some(ListBuffer(EMI.buildTaxableV4(withAllFields = true, "yes", "yes", "yes")))),
-            SchemeData(EMI.schemeInfo, "EMI40_Taxable_V4", None, Some(ListBuffer(EMI.buildTaxableV4(withAllFields = true, "yes", "yes", "yes"))))
+        ERSEnvelope(
+          Future.successful(
+            List(
+              SchemeData(
+                EMI.schemeInfo,
+                "EMI40_Adjustments_V4",
+                None,
+                Some(ListBuffer(EMI.buildAdjustmentsV4(withAllFields = true, "yes")))
+              ),
+              SchemeData(
+                EMI.schemeInfo,
+                "EMI40_Adjustments_V4",
+                None,
+                Some(ListBuffer(EMI.buildAdjustmentsV4(withAllFields = true, "yes")))
+              ),
+              SchemeData(EMI.schemeInfo, "EMI40_Replaced_V4", None, Some(ListBuffer(EMI.buildReplacedV4(true)))),
+              SchemeData(EMI.schemeInfo, "EMI40_Replaced_V4", None, Some(ListBuffer(EMI.buildReplacedV4(true)))),
+              SchemeData(
+                EMI.schemeInfo,
+                "EMI40_RLC_V4",
+                None,
+                Some(ListBuffer(EMI.buildRLCV4(withAllFields = true, "yes", "yes")))
+              ),
+              SchemeData(
+                EMI.schemeInfo,
+                "EMI40_RLC_V4",
+                None,
+                Some(ListBuffer(EMI.buildRLCV4(withAllFields = true, "yes", "yes")))
+              ),
+              SchemeData(
+                EMI.schemeInfo,
+                "EMI40_NonTaxable_V4",
+                None,
+                Some(ListBuffer(EMI.buildNonTaxableV4(withAllFields = true, "yes", "yes")))
+              ),
+              SchemeData(
+                EMI.schemeInfo,
+                "EMI40_NonTaxable_V4",
+                None,
+                Some(ListBuffer(EMI.buildNonTaxableV4(withAllFields = true, "yes", "yes")))
+              ),
+              SchemeData(
+                EMI.schemeInfo,
+                "EMI40_Taxable_V4",
+                None,
+                Some(ListBuffer(EMI.buildTaxableV4(withAllFields = true, "yes", "yes", "yes")))
+              ),
+              SchemeData(
+                EMI.schemeInfo,
+                "EMI40_Taxable_V4",
+                None,
+                Some(ListBuffer(EMI.buildTaxableV4(withAllFields = true, "yes", "yes", "yes")))
+              )
+            )
           )
         )
-      ))
+      )
 
       val result = await(mockAdrSubmission.generateSubmission(EMI.metadata)(request, hc).value)
       result.value - "acknowledgementReference" shouldBe Json.parse("""{
@@ -655,12 +719,19 @@ class EMI_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with E
       when(
         mockPresubmissionService.getJson(any[SchemeInfo]())(any())
       ).thenReturn(
-        ERSEnvelope(Future.successful(
-          List(
-            SchemeData(EMI.schemeInfo, "EMI40_Adjustments_V4", None, Some(ListBuffer(EMI.buildAdjustmentsV4(withAllFields = true, "yes"))))
+        ERSEnvelope(
+          Future.successful(
+            List(
+              SchemeData(
+                EMI.schemeInfo,
+                "EMI40_Adjustments_V4",
+                None,
+                Some(ListBuffer(EMI.buildAdjustmentsV4(withAllFields = true, "yes")))
+              )
+            )
           )
         )
-      ))
+      )
 
       val result = await(mockAdrSubmission.generateSubmission(EMI.metadata)(request, hc).value)
       result.value - "acknowledgementReference" shouldBe Json.parse("""{
@@ -748,13 +819,25 @@ class EMI_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with E
       when(
         mockPresubmissionService.getJson(any[SchemeInfo]())(any())
       ).thenReturn(
-        ERSEnvelope(Future.successful(
-          List(
-            SchemeData(EMI.schemeInfo, "EMI40_Adjustments_V4", None, Some(ListBuffer(EMI.buildAdjustmentsV4(withAllFields = true, "yes")))),
-            SchemeData(EMI.schemeInfo, "EMI40_Adjustments_V4", None, Some(ListBuffer(EMI.buildAdjustmentsV4(withAllFields = true, "yes"))))
+        ERSEnvelope(
+          Future.successful(
+            List(
+              SchemeData(
+                EMI.schemeInfo,
+                "EMI40_Adjustments_V4",
+                None,
+                Some(ListBuffer(EMI.buildAdjustmentsV4(withAllFields = true, "yes")))
+              ),
+              SchemeData(
+                EMI.schemeInfo,
+                "EMI40_Adjustments_V4",
+                None,
+                Some(ListBuffer(EMI.buildAdjustmentsV4(withAllFields = true, "yes")))
+              )
+            )
           )
         )
-      ))
+      )
 
       val result = await(mockAdrSubmission.generateSubmission(EMI.metadata)(request, hc).value)
       result.value - "acknowledgementReference" shouldBe Json.parse("""{
@@ -856,12 +939,19 @@ class EMI_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with E
       when(
         mockPresubmissionService.getJson(any[SchemeInfo]())(any())
       ).thenReturn(
-        ERSEnvelope(Future.successful(
-          List(
-            SchemeData(EMI.schemeInfo, "EMI40_RLC_V4", None, Some(ListBuffer(EMI.buildRLCV4(withAllFields = true, "yes", "yes"))))
+        ERSEnvelope(
+          Future.successful(
+            List(
+              SchemeData(
+                EMI.schemeInfo,
+                "EMI40_RLC_V4",
+                None,
+                Some(ListBuffer(EMI.buildRLCV4(withAllFields = true, "yes", "yes")))
+              )
+            )
           )
         )
-      ))
+      )
 
       val result = await(mockAdrSubmission.generateSubmission(EMI.metadata)(request, hc).value)
       result.value - "acknowledgementReference" shouldBe Json.parse("""{
@@ -948,13 +1038,25 @@ class EMI_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with E
       when(
         mockPresubmissionService.getJson(any[SchemeInfo]())(any())
       ).thenReturn(
-        ERSEnvelope(Future.successful(
-          List(
-            SchemeData(EMI.schemeInfo, "EMI40_RLC_V4", None, Some(ListBuffer(EMI.buildRLCV4(withAllFields = true, "yes", "yes")))),
-            SchemeData(EMI.schemeInfo, "EMI40_RLC_V4", None, Some(ListBuffer(EMI.buildRLCV4(withAllFields = true, "yes", "yes"))))
+        ERSEnvelope(
+          Future.successful(
+            List(
+              SchemeData(
+                EMI.schemeInfo,
+                "EMI40_RLC_V4",
+                None,
+                Some(ListBuffer(EMI.buildRLCV4(withAllFields = true, "yes", "yes")))
+              ),
+              SchemeData(
+                EMI.schemeInfo,
+                "EMI40_RLC_V4",
+                None,
+                Some(ListBuffer(EMI.buildRLCV4(withAllFields = true, "yes", "yes")))
+              )
+            )
           )
         )
-      ))
+      )
 
       val result = await(mockAdrSubmission.generateSubmission(EMI.metadata)(request, hc).value)
       result.value - "acknowledgementReference" shouldBe Json.parse("""{
@@ -1057,12 +1159,19 @@ class EMI_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with E
       when(
         mockPresubmissionService.getJson(any[SchemeInfo]())(any())
       ).thenReturn(
-        ERSEnvelope(Future.successful(
-          List(
-            SchemeData(EMI.schemeInfo, "EMI40_RLC_V4", None, Some(ListBuffer(EMI.buildRLCV4(withAllFields = true, "yes", "yes"))))
+        ERSEnvelope(
+          Future.successful(
+            List(
+              SchemeData(
+                EMI.schemeInfo,
+                "EMI40_RLC_V4",
+                None,
+                Some(ListBuffer(EMI.buildRLCV4(withAllFields = true, "yes", "yes")))
+              )
+            )
           )
         )
-      ))
+      )
 
       val result = await(mockAdrSubmission.generateSubmission(EMI.metadata)(request, hc).value)
       result.value - "acknowledgementReference" shouldBe Json.parse("""{
@@ -1149,13 +1258,25 @@ class EMI_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with E
       when(
         mockPresubmissionService.getJson(any[SchemeInfo]())(any())
       ).thenReturn(
-        ERSEnvelope(Future.successful(
-          List(
-            SchemeData(EMI.schemeInfo, "EMI40_RLC_V4", None, Some(ListBuffer(EMI.buildRLCV4(withAllFields = true, "yes", "yes")))),
-            SchemeData(EMI.schemeInfo, "EMI40_RLC_V4", None, Some(ListBuffer(EMI.buildRLCV4(withAllFields = true, "yes", "yes"))))
+        ERSEnvelope(
+          Future.successful(
+            List(
+              SchemeData(
+                EMI.schemeInfo,
+                "EMI40_RLC_V4",
+                None,
+                Some(ListBuffer(EMI.buildRLCV4(withAllFields = true, "yes", "yes")))
+              ),
+              SchemeData(
+                EMI.schemeInfo,
+                "EMI40_RLC_V4",
+                None,
+                Some(ListBuffer(EMI.buildRLCV4(withAllFields = true, "yes", "yes")))
+              )
+            )
           )
         )
-      ))
+      )
 
       val result = await(mockAdrSubmission.generateSubmission(EMI.metadata)(request, hc).value)
       result.value - "acknowledgementReference" shouldBe Json.parse("""{
@@ -1258,12 +1379,19 @@ class EMI_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with E
       when(
         mockPresubmissionService.getJson(any[SchemeInfo]())(any())
       ).thenReturn(
-        ERSEnvelope(Future.successful(
-          List(
-            SchemeData(EMI.schemeInfo, "EMI40_NonTaxable_V4", None, Some(ListBuffer(EMI.buildNonTaxableV4(withAllFields = true, "yes", "yes"))))
+        ERSEnvelope(
+          Future.successful(
+            List(
+              SchemeData(
+                EMI.schemeInfo,
+                "EMI40_NonTaxable_V4",
+                None,
+                Some(ListBuffer(EMI.buildNonTaxableV4(withAllFields = true, "yes", "yes")))
+              )
+            )
           )
         )
-      ))
+      )
 
       val result = await(mockAdrSubmission.generateSubmission(EMI.metadata)(request, hc).value)
       result.value - "acknowledgementReference" shouldBe Json.parse("""{
@@ -1351,13 +1479,25 @@ class EMI_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with E
       when(
         mockPresubmissionService.getJson(any[SchemeInfo]())(any())
       ).thenReturn(
-        ERSEnvelope(Future.successful(
-          List(
-            SchemeData(EMI.schemeInfo, "EMI40_NonTaxable_V4", None, Some(ListBuffer(EMI.buildNonTaxableV4(withAllFields = true, "yes", "yes")))),
-            SchemeData(EMI.schemeInfo, "EMI40_NonTaxable_V4", None, Some(ListBuffer(EMI.buildNonTaxableV4(withAllFields = true, "yes", "yes"))))
+        ERSEnvelope(
+          Future.successful(
+            List(
+              SchemeData(
+                EMI.schemeInfo,
+                "EMI40_NonTaxable_V4",
+                None,
+                Some(ListBuffer(EMI.buildNonTaxableV4(withAllFields = true, "yes", "yes")))
+              ),
+              SchemeData(
+                EMI.schemeInfo,
+                "EMI40_NonTaxable_V4",
+                None,
+                Some(ListBuffer(EMI.buildNonTaxableV4(withAllFields = true, "yes", "yes")))
+              )
+            )
           )
         )
-      ))
+      )
 
       val result = await(mockAdrSubmission.generateSubmission(EMI.metadata)(request, hc).value)
       result.value - "acknowledgementReference" shouldBe Json.parse("""{
@@ -1462,12 +1602,19 @@ class EMI_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with E
       when(
         mockPresubmissionService.getJson(any[SchemeInfo]())(any())
       ).thenReturn(
-        ERSEnvelope(Future.successful(
-          List(
-            SchemeData(EMI.schemeInfo, "EMI40_Taxable_V4", None, Some(ListBuffer(EMI.buildTaxableV4(withAllFields = true, "yes", "yes", "yes"))))
+        ERSEnvelope(
+          Future.successful(
+            List(
+              SchemeData(
+                EMI.schemeInfo,
+                "EMI40_Taxable_V4",
+                None,
+                Some(ListBuffer(EMI.buildTaxableV4(withAllFields = true, "yes", "yes", "yes")))
+              )
+            )
           )
         )
-      ))
+      )
 
       val result = await(mockAdrSubmission.generateSubmission(EMI.metadata)(request, hc).value)
       result.value - "acknowledgementReference" shouldBe Json.parse("""{
@@ -1560,13 +1707,25 @@ class EMI_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with E
       when(
         mockPresubmissionService.getJson(any[SchemeInfo]())(any())
       ).thenReturn(
-        ERSEnvelope(Future.successful(
-          List(
-            SchemeData(EMI.schemeInfo, "EMI40_Taxable_V4", None, Some(ListBuffer(EMI.buildTaxableV4(withAllFields = true, "yes", "yes", "yes")))),
-            SchemeData(EMI.schemeInfo, "EMI40_Taxable_V4", None, Some(ListBuffer(EMI.buildTaxableV4(withAllFields = true, "yes", "yes", "yes"))))
+        ERSEnvelope(
+          Future.successful(
+            List(
+              SchemeData(
+                EMI.schemeInfo,
+                "EMI40_Taxable_V4",
+                None,
+                Some(ListBuffer(EMI.buildTaxableV4(withAllFields = true, "yes", "yes", "yes")))
+              ),
+              SchemeData(
+                EMI.schemeInfo,
+                "EMI40_Taxable_V4",
+                None,
+                Some(ListBuffer(EMI.buildTaxableV4(withAllFields = true, "yes", "yes", "yes")))
+              )
+            )
           )
         )
-      ))
+      )
 
       val result = await(mockAdrSubmission.generateSubmission(EMI.metadata)(request, hc).value)
       result.value - "acknowledgementReference" shouldBe Json.parse("""{
@@ -2174,8 +2333,18 @@ class EMI_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with E
       val result = mockAdrSubmission.buildJson(
         configData,
         ListBuffer(
-          EMI.buildTaxableV4(withAllFields = true, disqualifyingEvent = "yes", sharesListedOnSE = "yes", marketValueAgreedHMRC = "yes"),
-          EMI.buildTaxableV4(withAllFields = false, disqualifyingEvent = "yes", sharesListedOnSE = "yes", marketValueAgreedHMRC = "yes")
+          EMI.buildTaxableV4(
+            withAllFields = true,
+            disqualifyingEvent = "yes",
+            sharesListedOnSE = "yes",
+            marketValueAgreedHMRC = "yes"
+          ),
+          EMI.buildTaxableV4(
+            withAllFields = false,
+            disqualifyingEvent = "yes",
+            sharesListedOnSE = "yes",
+            marketValueAgreedHMRC = "yes"
+          )
         )
       )
 
@@ -2234,8 +2403,18 @@ class EMI_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with E
       val result = mockAdrSubmission.buildJson(
         configData,
         ListBuffer(
-          EMI.buildTaxableV4(withAllFields = true, disqualifyingEvent = "yes", sharesListedOnSE = "yes", marketValueAgreedHMRC = "yes"),
-          EMI.buildTaxableV4(withAllFields = true, disqualifyingEvent = "no", sharesListedOnSE = "yes", marketValueAgreedHMRC = "yes")
+          EMI.buildTaxableV4(
+            withAllFields = true,
+            disqualifyingEvent = "yes",
+            sharesListedOnSE = "yes",
+            marketValueAgreedHMRC = "yes"
+          ),
+          EMI.buildTaxableV4(
+            withAllFields = true,
+            disqualifyingEvent = "no",
+            sharesListedOnSE = "yes",
+            marketValueAgreedHMRC = "yes"
+          )
         )
       )
 
@@ -2295,8 +2474,18 @@ class EMI_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with E
       val result = mockAdrSubmission.buildJson(
         configData,
         ListBuffer(
-          EMI.buildTaxableV4(withAllFields = true, disqualifyingEvent = "yes", sharesListedOnSE = "yes", marketValueAgreedHMRC = "yes"),
-          EMI.buildTaxableV4(withAllFields = true, disqualifyingEvent = "yes", sharesListedOnSE = "no", marketValueAgreedHMRC = "yes")
+          EMI.buildTaxableV4(
+            withAllFields = true,
+            disqualifyingEvent = "yes",
+            sharesListedOnSE = "yes",
+            marketValueAgreedHMRC = "yes"
+          ),
+          EMI.buildTaxableV4(
+            withAllFields = true,
+            disqualifyingEvent = "yes",
+            sharesListedOnSE = "no",
+            marketValueAgreedHMRC = "yes"
+          )
         )
       )
 
@@ -2359,8 +2548,18 @@ class EMI_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with E
       val result = mockAdrSubmission.buildJson(
         configData,
         ListBuffer(
-          EMI.buildTaxableV4(withAllFields = true, disqualifyingEvent = "yes", sharesListedOnSE = "no", marketValueAgreedHMRC = "yes"),
-          EMI.buildTaxableV4(withAllFields = true, disqualifyingEvent = "yes", sharesListedOnSE = "no", marketValueAgreedHMRC = "no")
+          EMI.buildTaxableV4(
+            withAllFields = true,
+            disqualifyingEvent = "yes",
+            sharesListedOnSE = "no",
+            marketValueAgreedHMRC = "yes"
+          ),
+          EMI.buildTaxableV4(
+            withAllFields = true,
+            disqualifyingEvent = "yes",
+            sharesListedOnSE = "no",
+            marketValueAgreedHMRC = "no"
+          )
         )
       )
 

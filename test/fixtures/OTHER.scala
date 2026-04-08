@@ -24,9 +24,9 @@ import scala.collection.mutable.ListBuffer
 object OTHER {
 
   val otherSchemeType: String = "OTHER"
-  val schemeRef: String = "XA1100000000000"
+  val schemeRef: String       = "XA1100000000000"
 
-  val schemeInfo: SchemeInfo = SchemeInfo (
+  val schemeInfo: SchemeInfo = SchemeInfo(
     schemeRef = "XA1100000000000",
     schemeId = "123PA12345678",
     taxYear = "2014/15",
@@ -49,15 +49,15 @@ object OTHER {
   )
 
   def buildOptionV4(
-                      taxAvoidance: String = "yes",
-                      optionsExercised: String = "yes",
-                      sharesListedOnSE: String = "yes",
-                      agreedHMRC: String = "yes",
-                      valueReceivedOnRACL: String = "yes"
-                        ) : Seq[String] = Seq(
+    taxAvoidance: String = "yes",
+    optionsExercised: String = "yes",
+    sharesListedOnSE: String = "yes",
+    agreedHMRC: String = "yes",
+    valueReceivedOnRACL: String = "yes"
+  ): Seq[String] = Seq(
     "2014-08-09",
     taxAvoidance,
-    if(taxAvoidance == "yes") "12345678" else "",
+    if (taxAvoidance == "yes") "12345678" else "",
     "First",
     "Second",
     "Last",
@@ -85,32 +85,32 @@ object OTHER {
     "1234567800",
     "123/XZ55555555",
     optionsExercised,
-    if(optionsExercised == "yes") "100.00" else "",
-    if(optionsExercised == "yes") "10.1234" else "",
-    if(optionsExercised == "yes") "10.1234" else "",
-    if(optionsExercised == "yes") sharesListedOnSE else "",
-    if(optionsExercised == "yes" && sharesListedOnSE == "no") agreedHMRC else "",
-    if(optionsExercised == "yes" && sharesListedOnSE == "no" && agreedHMRC == "yes") "aa12345678" else "",
-    if(optionsExercised == "yes") "10.1234" else "",
-    if(optionsExercised == "no") valueReceivedOnRACL else "",
-    if(optionsExercised == "no" && valueReceivedOnRACL == "yes") "10.1234" else "",
+    if (optionsExercised == "yes") "100.00" else "",
+    if (optionsExercised == "yes") "10.1234" else "",
+    if (optionsExercised == "yes") "10.1234" else "",
+    if (optionsExercised == "yes") sharesListedOnSE else "",
+    if (optionsExercised == "yes" && sharesListedOnSE == "no") agreedHMRC else "",
+    if (optionsExercised == "yes" && sharesListedOnSE == "no" && agreedHMRC == "yes") "aa12345678" else "",
+    if (optionsExercised == "yes") "10.1234" else "",
+    if (optionsExercised == "no") valueReceivedOnRACL else "",
+    if (optionsExercised == "no" && valueReceivedOnRACL == "yes") "10.1234" else "",
     "no",
     "yes",
     "no"
   )
 
   def buildAquisitionV4(
-                         taxAvoidance: String = "yes",
-                         sharesPartOfLargestClass: String = "yes",
-                         sharesListedOnSE: String = "yes",
-                         marketValueAgreedHMRC: String = "yes",
-                         hasAnElectionBeenMadeToDisregardRestrictions: String = "yes",
-                         artificialReductionInValueOnAcquisition: String = "yes",
-                         sharesIssuedUnderAnEmployeeShareholderArrangement: String = "yes"
-                         ): Seq[String] = Seq(
+    taxAvoidance: String = "yes",
+    sharesPartOfLargestClass: String = "yes",
+    sharesListedOnSE: String = "yes",
+    marketValueAgreedHMRC: String = "yes",
+    hasAnElectionBeenMadeToDisregardRestrictions: String = "yes",
+    artificialReductionInValueOnAcquisition: String = "yes",
+    sharesIssuedUnderAnEmployeeShareholderArrangement: String = "yes"
+  ): Seq[String] = Seq(
     "2014-08-30",
     taxAvoidance,
-    if(taxAvoidance == "yes") "12345678" else "",
+    if (taxAvoidance == "yes") "12345678" else "",
     "First",
     "Second",
     "Last",
@@ -128,9 +128,10 @@ object OTHER {
     "123/XZ55555555",
     "1",
     sharesPartOfLargestClass,
-    if(sharesPartOfLargestClass == "yes") sharesListedOnSE else "",
-    if(sharesPartOfLargestClass == "yes" && sharesListedOnSE == "no") marketValueAgreedHMRC else "",
-    if(sharesPartOfLargestClass == "yes" && sharesListedOnSE == "no" && marketValueAgreedHMRC == "yes") "aa12345678" else "",
+    if (sharesPartOfLargestClass == "yes") sharesListedOnSE else "",
+    if (sharesPartOfLargestClass == "yes" && sharesListedOnSE == "no") marketValueAgreedHMRC else "",
+    if (sharesPartOfLargestClass == "yes" && sharesListedOnSE == "no" && marketValueAgreedHMRC == "yes") "aa12345678"
+    else "",
     "100.0",
     "2",
     "3",
@@ -138,26 +139,26 @@ object OTHER {
     "10.1234",
     "10.1234",
     hasAnElectionBeenMadeToDisregardRestrictions,
-    if(hasAnElectionBeenMadeToDisregardRestrictions == "yes") "all" else "",
+    if (hasAnElectionBeenMadeToDisregardRestrictions == "yes") "all" else "",
     "10.1234",
     "10.1234",
     "yes",
     artificialReductionInValueOnAcquisition,
-    if(artificialReductionInValueOnAcquisition == "yes") "1" else "",
+    if (artificialReductionInValueOnAcquisition == "yes") "1" else "",
     sharesIssuedUnderAnEmployeeShareholderArrangement,
-    if(sharesIssuedUnderAnEmployeeShareholderArrangement == "yes") "yes" else "",
+    if (sharesIssuedUnderAnEmployeeShareholderArrangement == "yes") "yes" else "",
     "no",
     "yes"
   )
 
   def buildRestrictedSecuritiesV4(
-                                 taxAvoidance: String = "yes",
-                                 sharesListedOnSE: String = "yes",
-                                 agreedHMRC: String = "yes"
-                                   ): Seq[String] = Seq(
+    taxAvoidance: String = "yes",
+    sharesListedOnSE: String = "yes",
+    agreedHMRC: String = "yes"
+  ): Seq[String] = Seq(
     "2015-08-19",
     taxAvoidance,
-    if(taxAvoidance == "yes") "12345678" else "",
+    if (taxAvoidance == "yes") "12345678" else "",
     "First",
     "Second",
     "Last",
@@ -167,8 +168,8 @@ object OTHER {
     "100.00",
     "10.1234",
     sharesListedOnSE,
-    if(sharesListedOnSE == "no") agreedHMRC else "",
-    if(sharesListedOnSE == "no" && agreedHMRC == "yes") "aa12345678" else "",
+    if (sharesListedOnSE == "no") agreedHMRC else "",
+    if (sharesListedOnSE == "no" && agreedHMRC == "yes") "aa12345678" else "",
     "2018-09-12",
     "10.1234",
     "10.1234",
@@ -180,7 +181,7 @@ object OTHER {
   def buildBenefitsV4(taxAvoidance: String = "yes"): Seq[String] = Seq(
     "2015-08-19",
     taxAvoidance,
-    if(taxAvoidance == "yes") "12345678" else "",
+    if (taxAvoidance == "yes") "12345678" else "",
     "First",
     "Second",
     "Last",
@@ -196,7 +197,7 @@ object OTHER {
   def buildConvertableV4(taxAvoidance: String = "yes"): Seq[String] = Seq(
     "2015-08-19",
     taxAvoidance,
-    if(taxAvoidance == "yes") "12345678" else "",
+    if (taxAvoidance == "yes") "12345678" else "",
     "First",
     "Second",
     "Last",
@@ -214,7 +215,7 @@ object OTHER {
   def buildNotionalV4(taxAvoidance: String = "yes"): Seq[String] = Seq(
     "2015-08-19",
     taxAvoidance,
-    if(taxAvoidance == "yes") "12345678" else "",
+    if (taxAvoidance == "yes") "12345678" else "",
     "First",
     "Second",
     "Last",
@@ -230,7 +231,7 @@ object OTHER {
   def buildEnchancementV4(taxAvoidance: String = "yes"): Seq[String] = Seq(
     "2015-08-19",
     taxAvoidance,
-    if(taxAvoidance == "yes") "12345678" else "",
+    if (taxAvoidance == "yes") "12345678" else "",
     "First",
     "Second",
     "Last",
@@ -247,7 +248,7 @@ object OTHER {
   def buildSoldV4(taxAvoidance: String = "yes"): Seq[String] = Seq(
     "2015-08-19",
     taxAvoidance,
-    if(taxAvoidance == "yes") "12345678" else "",
+    if (taxAvoidance == "yes") "12345678" else "",
     "First",
     "Second",
     "Last",
@@ -351,4 +352,5 @@ object OTHER {
     nofOfRows = None,
     transferStatus = Some("saved")
   )
+
 }

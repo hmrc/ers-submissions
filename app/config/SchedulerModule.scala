@@ -20,8 +20,11 @@ import com.google.inject.AbstractModule
 import scheduler.{PreSubWithoutMetadataQueryImpl, ResubmissionServiceImpl}
 
 class SchedulerModule extends AbstractModule {
+
   override def configure(): Unit = {
     bind(classOf[ResubmissionServiceImpl]).asEagerSingleton() // THIS IS NEEDED TO RUN THE RESUBMISSION SERVICE
-    bind(classOf[PreSubWithoutMetadataQueryImpl]).asEagerSingleton() // THIS IS NEEDED TO RUN THE QUERY TO FIND PRESUBMISSION RECORDS WITHOUT METADATA
+    bind(classOf[PreSubWithoutMetadataQueryImpl])
+      .asEagerSingleton() // THIS IS NEEDED TO RUN THE QUERY TO FIND PRESUBMISSION RECORDS WITHOUT METADATA
   }
+
 }

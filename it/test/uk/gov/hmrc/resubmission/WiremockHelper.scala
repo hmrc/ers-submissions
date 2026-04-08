@@ -24,10 +24,10 @@ import com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig
 trait WiremockHelper {
   val wiremockPort = 11111
   val wiremockHost = "localhost"
-  val url = s"http://$wiremockHost:$wiremockPort"
+  val url          = s"http://$wiremockHost:$wiremockPort"
 
   lazy val wmConfig: WireMockConfiguration = wireMockConfig().port(wiremockPort)
-  lazy val wireMockServer = new WireMockServer(wmConfig)
+  lazy val wireMockServer                  = new WireMockServer(wmConfig)
 
   def startWiremock(): Unit = {
     wireMockServer.start()

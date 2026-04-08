@@ -34,20 +34,20 @@ class ERSRequestSpec extends AnyWordSpecLike with Matchers {
       }
 
       "have correct connection properties" in {
-        val request = ERSRequest.createERSRequest()
+        val request    = ERSRequest.createERSRequest()
         val connection = request.connection
 
-        connection.secure shouldBe false
+        connection.secure                 shouldBe false
         connection.clientCertificateChain shouldBe None
       }
 
       "have correct target properties" in {
         val request = ERSRequest.createERSRequest()
-        val target = request.target
+        val target  = request.target
 
         target.uriString shouldBe "ers-submissions"
-        target.path shouldBe "ers-submissions"
-        target.queryMap shouldBe Map.empty[String, Seq[String]]
+        target.path      shouldBe "ers-submissions"
+        target.queryMap  shouldBe Map.empty[String, Seq[String]]
       }
 
       "have uri set to ers-submissions" in {
@@ -90,8 +90,8 @@ class ERSRequestSpec extends AnyWordSpecLike with Matchers {
         val request1 = ERSRequest.createERSRequest()
         val request2 = ERSRequest.createERSRequest()
 
-        request1 should not be theSameInstanceAs(request2)
-        request1.method shouldBe request2.method
+        request1               should not be theSameInstanceAs(request2)
+        request1.method      shouldBe request2.method
         request1.target.path shouldBe request2.target.path
       }
 
@@ -110,7 +110,7 @@ class ERSRequestSpec extends AnyWordSpecLike with Matchers {
       "have valid target URI structure" in {
         val request = ERSRequest.createERSRequest()
 
-        request.target.uri should not be null
+        request.target.uri          should not be null
         request.target.uri.toString should not be empty
       }
 
@@ -131,15 +131,15 @@ class ERSRequestSpec extends AnyWordSpecLike with Matchers {
 
         // Should be able to call standard Request methods
         request.method shouldBe a[String]
-        request.body shouldBe a[JsObject]
-        request.headers should not be null
-        request.attrs should not be null
+        request.body   shouldBe a[JsObject]
+        request.headers  should not be null
+        request.attrs    should not be null
       }
 
       "have correct content type expectations for JsObject body" in {
         val request = ERSRequest.createERSRequest()
 
-        request.body shouldBe a[JsObject]
+        request.body            shouldBe a[JsObject]
         Json.toJson(request.body) should not be null
       }
 
@@ -147,8 +147,8 @@ class ERSRequestSpec extends AnyWordSpecLike with Matchers {
         val request = ERSRequest.createERSRequest()
 
         // Verify it's suitable for resubmission use case
-        request.method shouldBe "POST"
-        request.body shouldBe Json.obj()
+        request.method    shouldBe "POST"
+        request.body      shouldBe Json.obj()
         request.target.path should include("ers-submissions")
       }
     }
@@ -172,10 +172,10 @@ class ERSRequestSpec extends AnyWordSpecLike with Matchers {
 
       "provide consistent URI representations" in {
         val request = ERSRequest.createERSRequest()
-        val target = request.target
+        val target  = request.target
 
         target.uri.toString shouldBe target.uriString
-        target.path shouldBe target.uriString
+        target.path         shouldBe target.uriString
       }
 
       "provide empty query map" in {
@@ -215,5 +215,5 @@ class ERSRequestSpec extends AnyWordSpecLike with Matchers {
       }
     }
   }
-}
 
+}
