@@ -22,7 +22,7 @@ import repositories.helpers.BsonDocumentHelper.BsonOps
 
 class BsonDocumentHelperSpec extends ERSTestHelper {
 
-  val emptyBson: BsonDocument    = BsonDocument()
+  val emptyBson: BsonDocument = BsonDocument()
 
   val nonEmptyBson: BsonDocument =
     BsonDocument("nonEmpty" -> "stuff", "another" -> "also stuff", "this one" -> "also works")

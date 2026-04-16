@@ -14,20 +14,23 @@
  * limitations under the License.
  */
 
-package repositories
+package utils
 
-import config.ApplicationConfig
-import uk.gov.hmrc.mongo.MongoComponent
+import helpers.ERSTestHelper
+import uk.gov.hmrc.http.{HeaderCarrier, SessionId}
 
-import javax.inject.Inject
-import scala.concurrent.ExecutionContext
+class SessionSpec extends ERSTestHelper {
 
-class Repositories @Inject() (applicationConfig: ApplicationConfig, mongoComponent: MongoComponent)(implicit
-  ec: ExecutionContext
-) {
+  "Session.id" should {
+    "return the session ID value when a session ID is present" in {
+      val hc = HeaderCarrier(sessionId = Some(SessionId("test-session-id")))
+      Session.id(hc) shouldBe "test-session-id"
+    }
 
-  lazy val presubmissionRepository: PresubmissionMongoRepository =
-    new PresubmissionMongoRepository(applicationConfig, mongoComponent)
+    "return 'No Session ID available' when no session ID is present" in {
+      val hc = HeaderCarrier()
+      Session.id(hc) shouldBe "No Session ID available"
+    }
+  }
 
-  lazy val metadataRepository: MetadataMongoRepository = new MetadataMongoRepository(applicationConfig, mongoComponent)
 }

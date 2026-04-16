@@ -2,7 +2,7 @@ import sbt.*
 import uk.gov.hmrc.sbtdistributables.SbtDistributablesPlugin
 
 ThisBuild / majorVersion := 1
-ThisBuild / scalaVersion := "2.13.16"
+ThisBuild / scalaVersion := "2.13.18"
 
 lazy val testSettings = Seq(
   javaOptions ++= Seq(
@@ -17,10 +17,12 @@ lazy val microservice = Project("ers-submissions", file("."))
   .settings(libraryDependencies ++= AppDependencies())
   .settings(inConfig(Test)(testSettings))
   .settings(PlayKeys.playDefaultPort := 9292)
-
-scalacOptions ++= Seq(
-  "-Wconf:src=routes/.*:s"
-)
+  .settings(
+    scalacOptions ++= Seq(
+      "-feature",
+      "-Wconf:src=routes/.*:s"
+    )
+  )
 
 lazy val it = project
   .enablePlugins(PlayScala)

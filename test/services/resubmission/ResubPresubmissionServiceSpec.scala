@@ -176,6 +176,18 @@ class ResubPresubmissionServiceSpec extends ERSTestHelper with BeforeAndAfterEac
       result.swap.value shouldBe MongoGenericError("Something went wrong")
     }
 
+    "return true when findAndUpdateByStatus is not acknowledged (no data to resubmit)" in {
+      when(mockMetadataMongoRepository.getFailedJobs(any(), any(), any()))
+        .thenReturn(ERSEnvelope(Seq(new ObjectId())))
+      when(mockMetadataMongoRepository.findAndUpdateByStatus(any[List[ObjectId]](), any()))
+        .thenReturn(ERSEnvelope(failedUpdateResult))
+      when(mockMetadataMongoRepository.findErsSummaries(any(), any()))
+        .thenReturn(ERSEnvelope(scala.Seq(ersSummary)))
+
+      val result = await(resubPresubmissionService.processFailedSubmissions(processFailedSubmissionsConfig).value)
+      result.value shouldBe true
+    }
+
     Seq(
       (true, true, true),
       (false, true, false),
@@ -246,6 +258,18 @@ class ResubPresubmissionServiceSpec extends ERSTestHelper with BeforeAndAfterEac
         await(resubPresubmissionService.startResubmission(Fixtures.metadata, processFailedSubmissionsConfig).value)
 
       result.swap.value shouldBe ADRTransferError()
+    }
+
+    "log error and send ADR audit event if callProcessData returns false" in {
+      when(mockSubmissionService.callProcessData(any[ErsSummary](), anyString(), anyString())(any(), any()))
+        .thenReturn(ERSEnvelope(false))
+
+      val result =
+        await(resubPresubmissionService.startResubmission(Fixtures.metadata, processFailedSubmissionsConfig).value)
+
+      result.value shouldBe false
+      verify(mockAuditEvents)
+        .sendToAdrEvent(mockEq("ErsTransferToAdrFailed"), any[ErsSummary](), any(), mockEq(Some("scheduler")))(any())
     }
   }
 
@@ -467,6 +491,26 @@ class ResubPresubmissionServiceSpec extends ERSTestHelper with BeforeAndAfterEac
       ).value
 
       result shouldEqual expectedOutput
+    }
+  }
+
+  "logFailedSubmissionCount" should {
+
+    val resubPresubmissionService: ResubPresubmissionService = new ResubPresubmissionService(
+      mockMetadataMongoRepository,
+      mockPresubmissionMongoRepository,
+      mockSubmissionService,
+      mockAuditEvents
+    )
+
+    "return a message with the number of failed jobs" in {
+      when(mockMetadataMongoRepository.createFailedJobSelector(any()))
+        .thenReturn(new org.bson.BsonDocument())
+      when(mockMetadataMongoRepository.getNumberOfFailedJobs(any(), anyString()))
+        .thenReturn(ERSEnvelope(5L))
+
+      val result = await(resubPresubmissionService.logFailedSubmissionCount(processFailedSubmissionsConfig).value)
+      result.value shouldBe "[ResubmissionService] There are 5 submissions for the resubmission service to process"
     }
   }
 

@@ -166,6 +166,12 @@ class ERSRequestSpec extends AnyWordSpecLike with Matchers {
 
         request.connection.clientCertificateChain shouldBe None
       }
+
+      "throw NotImplementedError for remoteAddress" in {
+        val request = ERSRequest.createERSRequest()
+
+        an[NotImplementedError] should be thrownBy request.connection.remoteAddress
+      }
     }
 
     "RequestTarget" should {

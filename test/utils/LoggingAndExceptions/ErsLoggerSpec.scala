@@ -17,7 +17,6 @@
 package utils.LoggingAndExceptions
 
 import helpers.ERSTestHelper
-import utils.LoggingAndExceptions.ErsLogger
 
 class ErsLoggerSpec extends ERSTestHelper {
 
@@ -45,15 +44,39 @@ class ErsLoggerSpec extends ERSTestHelper {
   "calling logException" should {
 
     "log error without context if it's not given" in {
-      val result = TestErsLogger.logException("data", new Exception("exception message"))
-      result shouldBe ()
+      TestErsLogger.logException("data", new Exception("exception message")) shouldBe ()
     }
 
     "log error with context if it's given" in {
-      val result = TestErsLogger.logException("data", new Exception("exception message"), Some("context"))
-      result shouldBe ()
+      TestErsLogger.logException("data", new Exception("exception message"), Some("context")) shouldBe ()
     }
 
+  }
+
+  "calling logIfEnabled" should {
+    "execute the block when logEnabled is true" in {
+      var executed = false
+      TestErsLogger.logIfEnabled(logEnabled = true) { executed = true }
+      executed shouldBe true
+    }
+
+    "not execute the block when logEnabled is false" in {
+      var executed = false
+      TestErsLogger.logIfEnabled(logEnabled = false) { executed = true }
+      executed shouldBe false
+    }
+  }
+
+  "calling logError with throwable" should {
+    "log the error message and exception" in {
+      TestErsLogger.logError("error message", new Exception("test exception")) shouldBe ()
+    }
+  }
+
+  "calling logWarn with throwable" should {
+    "log the warning message and exception" in {
+      TestErsLogger.logWarn("warn message", new Exception("test exception")) shouldBe ()
+    }
   }
 
 }

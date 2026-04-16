@@ -39,7 +39,7 @@ class AuditEventsTest extends ERSTestHelper with BeforeAndAfterEach {
   implicit val request: FakeRequest[AnyContent] = FakeRequest()
   implicit var hc: HeaderCarrier                = new HeaderCarrier()
 
-  val rsc: ErsMetaData                          = ErsMetaData(
+  val rsc: ErsMetaData = ErsMetaData(
     SchemeInfo(schemeRef = "", schemeId = "", taxYear = "", schemeName = "", schemeType = ""),
     "",
     Some(""),
@@ -48,9 +48,9 @@ class AuditEventsTest extends ERSTestHelper with BeforeAndAfterEach {
     Some("")
   )
 
-  val mockAuditConnector: AuditConnector        = mock[AuditConnector]
-  val mockAuditService: AuditService            = mock[AuditService]
-  val testAuditEvents                           = new AuditEvents(mockAuditService)
+  val mockAuditConnector: AuditConnector = mock[AuditConnector]
+  val mockAuditService: AuditService     = mock[AuditService]
+  val testAuditEvents                    = new AuditEvents(mockAuditService)
 
   override protected def beforeEach(): Unit = {
     reset(mockAuditService)

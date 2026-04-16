@@ -20,7 +20,7 @@ import com.typesafe.config.{Config, ConfigFactory, ConfigValueFactory}
 import fixtures.Common
 import helpers.ERSTestHelper
 import play.api.Configuration
-import play.api.libs.json.{JsObject, Json}
+import play.api.libs.json.{JsNull, JsObject, Json}
 import uk.gov.hmrc.http.HttpResponse
 
 import java.time.LocalDateTime
@@ -110,6 +110,22 @@ class SubmissionCommonSpec extends ERSTestHelper {
     "return empty array if field is not found" in {
       val result = testSubmissionCommon.getArrayFromJson("field4", json)
       result shouldBe Json.arr()
+    }
+  }
+
+  "getFileDataValue" should {
+    "throw IllegalArgumentException when type is unsupported and value path is present" in {
+      val configElem = Configuration.from(Map("name" -> "field", "type" -> "unsupported", "value" -> "x")).underlying
+      an[IllegalArgumentException] should be thrownBy
+        testSubmissionCommon.getFileDataValue(configElem, ListBuffer.empty, None)
+    }
+  }
+
+  "getMetadataValue" should {
+    "return a JsNull field when type is not boolean or string and extractField returns a value" in {
+      val configElem = Configuration.from(Map("name" -> "someField", "type" -> "int")).underlying
+      val result     = testSubmissionCommon.getMetadataValue(configElem, "someValue")
+      result shouldBe Json.obj("someField" -> JsNull)
     }
   }
 

@@ -43,7 +43,7 @@ object Fixtures {
 
   def schemeInfoPayload(schemeInfo: SchemeInfo): JsValue = Json.toJson(schemeInfo)
 
-  val submissionsSchemeData: SubmissionsSchemeData                                      = SubmissionsSchemeData(
+  val submissionsSchemeData: SubmissionsSchemeData = SubmissionsSchemeData(
     schemeInfo(),
     "EMI40_Adjustments_V4",
     UpscanCallback("EMI40_Adjustments_V4", "http://localhost:19000/fakeDownload"),

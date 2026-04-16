@@ -29,8 +29,8 @@ class PreSubWithoutMetadataQueryImpl @Inject() (
   val applicationLifecycle: ApplicationLifecycle
 ) extends ScheduledJob {
 
-  override def jobName: String                          = "generate-pre-sub-without-metadata-query"
-  val actorSystem: ActorSystem                          = ActorSystem(jobName)
+  override def jobName: String = "generate-pre-sub-without-metadata-query"
+  val actorSystem: ActorSystem = ActorSystem(jobName)
 
   val scheduledMessage: PreSubWithoutMetadataQueryClass = PreSubWithoutMetadataQueryClass(
     presSubWithoutMetadataQueryService

@@ -22,7 +22,7 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.http.HeaderCarrierConverter
 
 trait CorrelationIdHelper {
-  protected val HEADER_X_CORRELATION_ID: String                              = "X-Correlation-Id"
+  protected val HEADER_X_CORRELATION_ID: String = "X-Correlation-Id"
 
   protected def getOrCreateCorrelationID(request: Request[_]): HeaderCarrier = {
     val hcFromRequest: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)

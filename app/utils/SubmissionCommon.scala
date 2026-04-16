@@ -90,9 +90,9 @@ class SubmissionCommon @Inject() (configUtils: ConfigUtils) extends ErsLogger {
     elemColumn: Int
   ): JsObject = {
     val valueFromConfig: Option[JsObject] = for {
-      row: Seq[String]        <- fileData.lift(elemRow)
-      valueFromColumn: String <- row.lift(elemColumn)
-      finalValue: JsObject    <- createValueJson(configElem, valueFromColumn)
+      row             <- fileData.lift(elemRow)
+      valueFromColumn <- row.lift(elemColumn)
+      finalValue      <- createValueJson(configElem, valueFromColumn)
     } yield finalValue
 
     valueFromConfig.getOrElse(EmptyJson)

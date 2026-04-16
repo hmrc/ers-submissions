@@ -33,7 +33,7 @@ object Fixtures extends MockitoSugar {
   val timestamp: Instant =
     ZonedDateTime.of(2015, 12, 5, 12, 50, 55, 0, ZoneId.of("UTC")).toInstant.truncatedTo(ChronoUnit.MILLIS)
 
-  val schemeType         = "EMI"
+  val schemeType = "EMI"
 
   val schemeInfo: SchemeInfo = SchemeInfo(
     schemeRef = "XA1100000000000",
@@ -103,7 +103,7 @@ object Fixtures extends MockitoSugar {
     transferStatus = Some("saved")
   )
 
-  val sheetName: String                     = "EMI40_Adjustments_V4"
+  val sheetName: String = "EMI40_Adjustments_V4"
 
   val data: Option[ListBuffer[Seq[String]]] = Some(
     ListBuffer(

@@ -40,11 +40,11 @@ class ReSubmissionSchedulerService @Inject() (
 )(implicit ec: ExecutionContext)
     extends ScheduledService[Boolean] with ErsLogger with SchedulerConfig with CorrelationIdHelper {
 
-  override val jobName: String                                                = "resubmission-service"
-  private val resubmissionLimit                                               = getResubmissionLimit(jobName)
-  private val lockoutTimeout                                                  = getLockoutTimeout(jobName)
+  override val jobName: String  = "resubmission-service"
+  private val resubmissionLimit = getResubmissionLimit(jobName)
+  private val lockoutTimeout    = getLockoutTimeout(jobName)
 
-  private val lockService: LockService                                        = LockService(
+  private val lockService: LockService = LockService(
     lockRepositoryProvider.repo,
     lockId = "resubmission-service-job-lock",
     ttl = Duration.create(lockoutTimeout, SECONDS)

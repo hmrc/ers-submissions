@@ -34,7 +34,7 @@ class AuditServiceTest extends ERSTestHelper {
 
   val mockAuditConnector: AuditConnector = mock[AuditConnector]
 
-  val auditTest: AuditService            = new AuditService(mockAuditConnector) {
+  val auditTest: AuditService = new AuditService(mockAuditConnector) {
     override def generateTags(hc: HeaderCarrier): Map[String, String] = Map("tags" -> "someTags")
   }
 
