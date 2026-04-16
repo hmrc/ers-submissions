@@ -2,8 +2,8 @@ import sbt.*
 
 object AppDependencies {
 
-  private val bootstrapVersion = "10.5.0"
-  private val mongoVersion     = "2.11.0"
+  private val bootstrapVersion = "10.7.0"
+  private val mongoVersion     = "2.12.0"
 
   private val compile: Seq[ModuleID] = Seq(
     "uk.gov.hmrc"            %% "bootstrap-backend-play-30" % bootstrapVersion,
@@ -15,10 +15,9 @@ object AppDependencies {
   )
 
   private val test: Seq[ModuleID] = Seq(
-    "uk.gov.hmrc"                  %% "bootstrap-test-play-30"  % bootstrapVersion,
-    "uk.gov.hmrc.mongo"            %% "hmrc-mongo-test-play-30" % mongoVersion,
-    "org.apache.pekko"             %% "pekko-testkit"           % "1.0.3",
-    "com.fasterxml.jackson.module" %% "jackson-module-scala"    % "2.20.1"
+    "uk.gov.hmrc"       %% "bootstrap-test-play-30"  % bootstrapVersion,
+    "uk.gov.hmrc.mongo" %% "hmrc-mongo-test-play-30" % mongoVersion,
+    "org.apache.pekko"  %% "pekko-testkit"           % "1.0.3"
   ).map(_ % Test)
 
   def apply(): Seq[ModuleID] = compile ++ test

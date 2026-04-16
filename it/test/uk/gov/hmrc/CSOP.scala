@@ -98,7 +98,7 @@ object CSOP {
     "yes"
   )
 
-  val companyDetails: CompanyDetails    = CompanyDetails(
+  val companyDetails: CompanyDetails = CompanyDetails(
     "testCompany",
     "testAddress1",
     Some("testAddress2"),

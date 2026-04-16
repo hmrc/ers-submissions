@@ -82,7 +82,7 @@ case class MetaDataSelectedSchemeRefLogs(selectedErsSummary: Seq[ErsSummary]) ex
 
   private val numberSelectedErsRecords: Int = selectedErsSummary.length
 
-  val message: String                       =
+  val message: String =
     if (selectedErsSummary.isEmpty) {
       s"$prefix MetaDataSelectedSchemeRefLogs - Could not find any records for the selected scheme reference"
     } else if (numberSelectedErsRecords > 50) {
@@ -105,7 +105,7 @@ case class PreSubSelectedSchemeRefLogs(selectedErsSummary: Seq[(SchemeData, Loca
 
   private val numberSelectedErsRecords: Int = selectedErsSummary.length
 
-  val message: String                       =
+  val message: String =
     if (selectedErsSummary.isEmpty) {
       s"$prefix PreSubSelectedSchemeRefLogs - Could not find any records for the selected scheme reference"
     } else if (numberSelectedErsRecords > 50) {

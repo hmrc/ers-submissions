@@ -27,7 +27,7 @@ import uk.gov.hmrc.http.HeaderCarrier
 import utils.LoggingAndExceptions.ErsLogger
 
 import javax.inject.Inject
-import scala.collection.mutable.{ArrayBuffer, ListBuffer}
+import scala.collection.mutable.ListBuffer
 import scala.concurrent.ExecutionContext
 
 class ADRSubmission @Inject() (
@@ -122,7 +122,7 @@ class ADRSubmission @Inject() (
               buildRootTail(tail, updatedJson)
             case "array"     =>
               if (elem.hasPath("values")) {
-                val elVal = for (el <- elem.getConfigList("values").asScala) yield {
+                val elVal    = for (el <- elem.getConfigList("values").asScala) yield {
                   val ev          = configUtils.extractField(el, metadata)
                   val valid_value = el.getString("valid_value")
                   if (ev.toString == valid_value) {
@@ -132,15 +132,11 @@ class ADRSubmission @Inject() (
                     EmptyJson
                   }
                 }
-                if (elVal.isInstanceOf[ArrayBuffer[JsObject]]) {
-                  val filtered = elVal.filterNot(c => c.equals(EmptyJson))
-                  if (filtered.count(_ != EmptyJson) > 0) {
-                    val elemName    = elem.getString("name")
-                    val updatedJson = json ++ Json.obj(elemName -> filtered)
-                    buildRootTail(tail, updatedJson)
-                  } else {
-                    buildRootTail(tail, json)
-                  }
+                val filtered = elVal.filterNot(c => c.equals(EmptyJson))
+                if (filtered.count(_ != EmptyJson) > 0) {
+                  val elemName    = elem.getString("name")
+                  val updatedJson = json ++ Json.obj(elemName -> filtered)
+                  buildRootTail(tail, updatedJson)
                 } else {
                   buildRootTail(tail, json)
                 }

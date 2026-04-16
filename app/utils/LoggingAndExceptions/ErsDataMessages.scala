@@ -26,7 +26,7 @@ trait ErsDataMessages {
     buildWildcardDataMessage
   )
 
-  val buildDataMessage: PartialFunction[Object, String]           = dataMessagePF.reduce(_ orElse _)
+  val buildDataMessage: PartialFunction[Object, String] = dataMessagePF.reduce(_ orElse _)
 
   def buildEmiterMessage: PartialFunction[Object, String] = { case data: Map[String @unchecked, String @unchecked] =>
     s"${data.getOrElse("message", "Undefined message")} in ${data.getOrElse("context", "Undefined context")}"

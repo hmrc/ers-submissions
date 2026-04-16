@@ -34,13 +34,13 @@ class MissingMetadataQuerySetup(applicationConfig: ApplicationConfig)(implicit e
 
   override def initTimeout: FiniteDuration = 30.seconds
 
-  val metadataMongoRepository: MetadataMongoRepository           = new MetadataMongoRepository(applicationConfig, mongoComponent)
-  val metadataCollection: MongoCollection[JsObject]              = metadataMongoRepository.collection
+  val metadataMongoRepository: MetadataMongoRepository = new MetadataMongoRepository(applicationConfig, mongoComponent)
+  val metadataCollection: MongoCollection[JsObject]    = metadataMongoRepository.collection
 
   val presubmissionMongoRepository: PresubmissionMongoRepository =
     new PresubmissionMongoRepository(applicationConfig, mongoComponent)
 
-  val presubmissionCollection: MongoCollection[JsObject]         = presubmissionMongoRepository.collection
+  val presubmissionCollection: MongoCollection[JsObject] = presubmissionMongoRepository.collection
 
   val preSubWithoutMetadataQuery: PreSubWithoutMetadataQuery =
     new PreSubWithoutMetadataQuery(presubmissionMongoRepository, applicationConfig)

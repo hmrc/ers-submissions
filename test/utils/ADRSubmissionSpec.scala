@@ -16,7 +16,7 @@
 
 package utils
 
-import com.typesafe.config.Config
+import com.typesafe.config.{Config, ConfigFactory}
 import common.ERSEnvelope
 import common.ERSEnvelope.ERSEnvelope
 import fixtures.Fixtures
@@ -81,6 +81,16 @@ class ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with Eithe
       )
     )
   )
+
+  "buildJson" should {
+    val adrSubmission = new ADRSubmission(mockSubmissionCommon, mockPresubmissionService, mockConfigUtils)
+
+    "return unchanged json when fileData is empty and type is array" in {
+      val config = ConfigFactory.parseString("fields = [{ type = array }]")
+      val result = adrSubmission.buildJson(config, ListBuffer.empty, None, None, None)(request, hc)
+      result shouldBe Json.obj()
+    }
+  }
 
   "calling generateSubmission" should {
 
