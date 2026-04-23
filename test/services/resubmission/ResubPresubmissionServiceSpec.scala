@@ -22,7 +22,7 @@ import fixtures.Fixtures
 import helpers.ERSTestHelper
 import models._
 import org.bson.BsonValue
-import org.mockito.ArgumentMatchers.{any, anyString, contains, eq => mockEq}
+import org.mockito.ArgumentMatchers.{any, anyString, eq => mockEq}
 import org.mockito.Mockito._
 import org.mongodb.scala.bson.{BsonString, ObjectId}
 import org.scalatest.{BeforeAndAfterEach, EitherValues}
