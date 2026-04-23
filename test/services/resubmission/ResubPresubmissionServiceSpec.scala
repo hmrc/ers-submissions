@@ -22,7 +22,7 @@ import fixtures.Fixtures
 import helpers.ERSTestHelper
 import models._
 import org.bson.BsonValue
-import org.mockito.ArgumentMatchers.{any, anyString, eq => mockEq}
+import org.mockito.ArgumentMatchers.{any, anyString, contains, eq => mockEq}
 import org.mockito.Mockito._
 import org.mongodb.scala.bson.{BsonString, ObjectId}
 import org.scalatest.{BeforeAndAfterEach, EitherValues}
@@ -111,13 +111,14 @@ class ResubPresubmissionServiceSpec extends ERSTestHelper with BeforeAndAfterEac
   )
 
   "processFailedSubmissions" should {
-    val resubPresubmissionService: ResubPresubmissionService = new ResubPresubmissionService(
-      mockMetadataMongoRepository,
-      mockPresubmissionMongoRepository,
-      mockSubmissionService,
-      mockAuditEvents
+    val resubPresubmissionService: ResubPresubmissionService = spy(
+      new ResubPresubmissionService(
+        mockMetadataMongoRepository,
+        mockPresubmissionMongoRepository,
+        mockSubmissionService,
+        mockAuditEvents
+      )
     )
-
     "return true if findAndUpdateByStatus is successful and returns a record" in {
       when(mockMetadataMongoRepository.getFailedJobs(any(), any(), any()))
         .thenReturn(ERSEnvelope(Seq(new ObjectId())))
@@ -223,11 +224,13 @@ class ResubPresubmissionServiceSpec extends ERSTestHelper with BeforeAndAfterEac
   }
 
   "startResubmission" should {
-    val resubPresubmissionService: ResubPresubmissionService = new ResubPresubmissionService(
-      mockMetadataMongoRepository,
-      mockPresubmissionMongoRepository,
-      mockSubmissionService,
-      mockAuditEvents
+    val resubPresubmissionService: ResubPresubmissionService = spy(
+      new ResubPresubmissionService(
+        mockMetadataMongoRepository,
+        mockPresubmissionMongoRepository,
+        mockSubmissionService,
+        mockAuditEvents
+      )
     )
 
     "return the result of callProcessData if ErsSubmissions is successfully extracted" in {
@@ -264,12 +267,18 @@ class ResubPresubmissionServiceSpec extends ERSTestHelper with BeforeAndAfterEac
       when(mockSubmissionService.callProcessData(any[ErsSummary](), anyString(), anyString())(any(), any()))
         .thenReturn(ERSEnvelope(false))
 
+      val logMessage = Fixtures.metadata.metaData.schemeInfo.basicLogMessage
+
+      val expectedErrorLog = s"RESUBMISSION_FAILED [startResubmission] Resubmission failed for: $logMessage"
+
       val result =
         await(resubPresubmissionService.startResubmission(Fixtures.metadata, processFailedSubmissionsConfig).value)
 
       result.value shouldBe false
       verify(mockAuditEvents)
         .sendToAdrEvent(mockEq("ErsTransferToAdrFailed"), any[ErsSummary](), any(), mockEq(Some("scheduler")))(any())
+
+      verify(resubPresubmissionService).logError(expectedErrorLog)
     }
   }
 
