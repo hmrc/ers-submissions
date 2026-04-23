@@ -47,6 +47,15 @@ class ResubPresubmissionServiceSpec extends ERSTestHelper with BeforeAndAfterEac
   val mockSubmissionService: SubmissionService = mock[SubmissionService]
   val mockAuditEvents: AuditEvents             = mock[AuditEvents]
 
+  val resubPresubmissionService: ResubPresubmissionService = spy(
+    new ResubPresubmissionService(
+      mockMetadataMongoRepository,
+      mockPresubmissionMongoRepository,
+      mockSubmissionService,
+      mockAuditEvents
+    )
+  )
+
   override def beforeEach(): Unit = {
     super.beforeEach()
     reset(mockMetadataMongoRepository)
@@ -111,14 +120,7 @@ class ResubPresubmissionServiceSpec extends ERSTestHelper with BeforeAndAfterEac
   )
 
   "processFailedSubmissions" should {
-    val resubPresubmissionService: ResubPresubmissionService = spy(
-      new ResubPresubmissionService(
-        mockMetadataMongoRepository,
-        mockPresubmissionMongoRepository,
-        mockSubmissionService,
-        mockAuditEvents
-      )
-    )
+
     "return true if findAndUpdateByStatus is successful and returns a record" in {
       when(mockMetadataMongoRepository.getFailedJobs(any(), any(), any()))
         .thenReturn(ERSEnvelope(Seq(new ObjectId())))
@@ -224,14 +226,6 @@ class ResubPresubmissionServiceSpec extends ERSTestHelper with BeforeAndAfterEac
   }
 
   "startResubmission" should {
-    val resubPresubmissionService: ResubPresubmissionService = spy(
-      new ResubPresubmissionService(
-        mockMetadataMongoRepository,
-        mockPresubmissionMongoRepository,
-        mockSubmissionService,
-        mockAuditEvents
-      )
-    )
 
     "return the result of callProcessData if ErsSubmissions is successfully extracted" in {
       when(mockSubmissionService.callProcessData(any[ErsSummary](), anyString(), anyString())(any(), any()))
