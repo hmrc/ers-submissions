@@ -28,9 +28,9 @@ class SchedulerModuleSpec extends AnyWordSpec with Matchers {
 
   "SchedulerModule" should {
 
-    val elements = Elements.getElements(new SchedulerModule).asScala.toList
-    val boundClasses = elements.collect {
-      case b: Binding[_] => b.getKey.getTypeLiteral.getRawType
+    val elements     = Elements.getElements(new SchedulerModule).asScala.toList
+    val boundClasses = elements.collect { case b: Binding[_] =>
+      b.getKey.getTypeLiteral.getRawType
     }
 
     "bind ResubmissionServiceImpl required to run the resubmission service" in {
@@ -41,4 +41,5 @@ class SchedulerModuleSpec extends AnyWordSpec with Matchers {
       boundClasses should contain(classOf[PreSubWithoutMetadataQueryImpl])
     }
   }
+
 }

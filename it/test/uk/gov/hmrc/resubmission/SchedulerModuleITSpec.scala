@@ -23,14 +23,13 @@ import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
 import scheduler.{PreSubWithoutMetadataQueryImpl, ResubmissionServiceImpl}
 
-class SchedulerModuleITSpec
-  extends AnyWordSpec with Matchers with GuiceOneAppPerSuite {
+class SchedulerModuleITSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite {
 
   override lazy val app: Application = new GuiceApplicationBuilder()
     .configure(
-      "schedules.resubmission-service.enabled" -> false,
+      "schedules.resubmission-service.enabled"                    -> false,
       "schedules.generate-pre-sub-without-metadata-query.enabled" -> false,
-      "auditing.enabled" -> false
+      "auditing.enabled"                                          -> false
     )
     .build()
 
@@ -45,4 +44,5 @@ class SchedulerModuleITSpec
         "generate-pre-sub-without-metadata-query"
     }
   }
+
 }
