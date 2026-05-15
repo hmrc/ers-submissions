@@ -13,7 +13,8 @@ object AppDependencies {
     "org.typelevel"           %% "cats-core"                 % "2.13.0",
     ("io.github.samueleresca" %% "pekko-quartz-scheduler"    % "1.2.2-pekko-1.0.x")
       .exclude("com.mchange", "c3p0")
-      .exclude("com.mchange", "mchange-commons-java")
+      .exclude("com.mchange", "mchange-commons-java")     // CVE-2026-27830: pekko-quartz-scheduler -> quartz -> c3p0 pulls in com.mchange:c3p0. This should be removed when:
+                                                          // playframework=3.1.x ; pekko deps >= 1.2.x/1.3.x
   )
 
   private val test: Seq[ModuleID] = Seq(
