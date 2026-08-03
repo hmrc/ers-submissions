@@ -25,9 +25,10 @@ import uk.gov.hmrc.http.HeaderCarrier
 import utils.LoggingAndExceptions.ErsLogger
 import utils.Session
 
-import javax.inject.Inject
+import javax.inject.{Inject, Singleton}
 import scala.concurrent.ExecutionContext
 
+@Singleton
 class MetadataService @Inject() (metadataRepository: MetadataMongoRepository, auditEvents: AuditEvents)(implicit
   ec: ExecutionContext
 ) extends ErsLogger {
