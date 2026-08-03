@@ -31,7 +31,7 @@ import play.api.http.Status.INTERNAL_SERVER_ERROR
 import play.api.libs.json.{JsObject, Json}
 import play.api.mvc.Request
 import play.api.test.FakeRequest
-import repositories.{MetadataMongoRepository, Repositories}
+import repositories.MetadataMongoRepository
 import services.audit.AuditEvents
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 import utils.LoggingAndExceptions.ADRExceptionEmitter
@@ -47,7 +47,6 @@ class SubmissionCommonServiceSpec extends ERSTestHelper with BeforeAndAfterEach 
 
   val auditEvents: AuditEvents                        = mock[AuditEvents]
   val mockMetadataRepository: MetadataMongoRepository = mock[MetadataMongoRepository]
-  val repositories: Repositories                      = mock[Repositories]
   val adrExceptionEmmiter: ADRExceptionEmitter        = app.injector.instanceOf[ADRExceptionEmitter]
   val adrConnector: ADRConnector                      = mock[ADRConnector]
   val adrSubmission: ADRSubmission                    = mock[ADRSubmission]
@@ -59,14 +58,21 @@ class SubmissionCommonServiceSpec extends ERSTestHelper with BeforeAndAfterEach 
     reset(metrics)
     reset(adrSubmission)
     reset(adrConnector)
+    reset(mockMetadataRepository)
   }
 
   "callProcessData" should {
     "return the result of processData if there are no errors" in {
       val submissionCommonService: SubmissionService =
-        new SubmissionService(repositories, adrConnector, adrSubmission, submissionCommon, auditEvents, metrics) {
+        new SubmissionService(
+          mockMetadataRepository,
+          adrConnector,
+          adrSubmission,
+          submissionCommon,
+          auditEvents,
+          metrics
+        ) {
 
-          override lazy val metadataRepository: MetadataMongoRepository = mockMetadataRepository
           override def processData(ersSummary: ErsSummary, failedStatus: String, successStatus: String)(implicit
             request: Request[_],
             hc: HeaderCarrier
@@ -80,9 +86,15 @@ class SubmissionCommonServiceSpec extends ERSTestHelper with BeforeAndAfterEach 
 
     "recover and return false for ADRTransferError" in {
       val submissionCommonService: SubmissionService =
-        new SubmissionService(repositories, adrConnector, adrSubmission, submissionCommon, auditEvents, metrics) {
+        new SubmissionService(
+          mockMetadataRepository,
+          adrConnector,
+          adrSubmission,
+          submissionCommon,
+          auditEvents,
+          metrics
+        ) {
 
-          override lazy val metadataRepository: MetadataMongoRepository = mockMetadataRepository
           when(mockMetadataRepository.updateStatus(any[SchemeInfo](), anyString(), any()))
             .thenReturn(ERSEnvelope(true))
 
@@ -100,9 +112,15 @@ class SubmissionCommonServiceSpec extends ERSTestHelper with BeforeAndAfterEach 
 
     "recover and return false for MongoGenericError" in {
       val submissionCommonService: SubmissionService =
-        new SubmissionService(repositories, adrConnector, adrSubmission, submissionCommon, auditEvents, metrics) {
+        new SubmissionService(
+          mockMetadataRepository,
+          adrConnector,
+          adrSubmission,
+          submissionCommon,
+          auditEvents,
+          metrics
+        ) {
 
-          override lazy val metadataRepository: MetadataMongoRepository = mockMetadataRepository
           when(mockMetadataRepository.updateStatus(any[SchemeInfo](), anyString(), any()))
             .thenReturn(ERSEnvelope(true))
 
@@ -121,7 +139,14 @@ class SubmissionCommonServiceSpec extends ERSTestHelper with BeforeAndAfterEach 
 
   "processData" should {
     val submissionCommonService: SubmissionService =
-      new SubmissionService(repositories, adrConnector, adrSubmission, submissionCommon, auditEvents, metrics) {
+      new SubmissionService(
+        mockMetadataRepository,
+        adrConnector,
+        adrSubmission,
+        submissionCommon,
+        auditEvents,
+        metrics
+      ) {
 
         override def transformData(ersSummary: ErsSummary)(implicit
           request: Request[_],
@@ -145,7 +170,14 @@ class SubmissionCommonServiceSpec extends ERSTestHelper with BeforeAndAfterEach 
 
   "transformData" should {
     val submissionCommonService: SubmissionService =
-      new SubmissionService(repositories, adrConnector, adrSubmission, submissionCommon, auditEvents, metrics) {}
+      new SubmissionService(
+        mockMetadataRepository,
+        adrConnector,
+        adrSubmission,
+        submissionCommon,
+        auditEvents,
+        metrics
+      ) {}
 
     "return created json" in {
       when(adrSubmission.generateSubmission(any[ErsSummary]())(any[Request[_]](), any[HeaderCarrier]))
@@ -185,7 +217,14 @@ class SubmissionCommonServiceSpec extends ERSTestHelper with BeforeAndAfterEach 
 
   "sendToADRUpdatePostData" should {
     val submissionCommonService: SubmissionService =
-      new SubmissionService(repositories, adrConnector, adrSubmission, submissionCommon, auditEvents, metrics) {
+      new SubmissionService(
+        mockMetadataRepository,
+        adrConnector,
+        adrSubmission,
+        submissionCommon,
+        auditEvents,
+        metrics
+      ) {
 
         override def updatePostsubmission(adrSubmissionStatus: Int, status: String, ersSummary: SchemeInfo)(implicit
           hc: HeaderCarrier
@@ -257,9 +296,14 @@ class SubmissionCommonServiceSpec extends ERSTestHelper with BeforeAndAfterEach 
 
   "updatePostsubmission" should {
     val submissionCommonService: SubmissionService =
-      new SubmissionService(repositories, adrConnector, adrSubmission, submissionCommon, auditEvents, metrics) {
-        override lazy val metadataRepository: MetadataMongoRepository = mockMetadataRepository
-      }
+      new SubmissionService(
+        mockMetadataRepository,
+        adrConnector,
+        adrSubmission,
+        submissionCommon,
+        auditEvents,
+        metrics
+      ) {}
 
     "true if update is successful and sending to ADR returned 202" in {
       when(mockMetadataRepository.updateStatus(any[SchemeInfo](), anyString(), any()))

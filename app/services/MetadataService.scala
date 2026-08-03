@@ -28,11 +28,9 @@ import utils.Session
 import javax.inject.Inject
 import scala.concurrent.ExecutionContext
 
-class MetadataService @Inject() (metadataMongoRepository: MetadataMongoRepository, auditEvents: AuditEvents)(implicit
+class MetadataService @Inject() (metadataRepository: MetadataMongoRepository, auditEvents: AuditEvents)(implicit
   ec: ExecutionContext
 ) extends ErsLogger {
-
-  lazy val metadataRepository: MetadataMongoRepository = metadataMongoRepository
 
   def storeErsSummary(ersSummary: ErsSummary)(implicit hc: HeaderCarrier): ERSEnvelope[Boolean] =
     metadataRepository.storeErsSummary(ersSummary, Session.id(hc)).recover { case error =>

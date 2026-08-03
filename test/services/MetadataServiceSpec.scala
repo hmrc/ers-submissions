@@ -24,7 +24,7 @@ import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
 import org.mockito.internal.verification.VerificationModeFactory
 import org.scalatest.{BeforeAndAfterEach, EitherValues}
-import repositories.{MetadataMongoRepository, Repositories}
+import repositories.MetadataMongoRepository
 import services.audit.AuditEvents
 import uk.gov.hmrc.http.HeaderCarrier
 
@@ -32,7 +32,6 @@ class MetadataServiceSpec extends ERSTestHelper with BeforeAndAfterEach with Eit
 
   implicit val hc: HeaderCarrier = new HeaderCarrier()
 
-  val mockRepositories: Repositories                  = mock[Repositories]
   val mockAuditEvents: AuditEvents                    = mock[AuditEvents]
   val mockMetadataRepository: MetadataMongoRepository = mock[MetadataMongoRepository]
 
@@ -43,9 +42,7 @@ class MetadataServiceSpec extends ERSTestHelper with BeforeAndAfterEach with Eit
 
   "calling storeErsSummary" should {
 
-    val metadataService: MetadataService = new MetadataService(mockMetadataRepository, mockAuditEvents) {
-      override lazy val metadataRepository: MetadataMongoRepository = mockMetadataRepository
-    }
+    val metadataService: MetadataService = new MetadataService(mockMetadataRepository, mockAuditEvents)
 
     "return the result of storeErsSummary" in {
       when(mockMetadataRepository.storeErsSummary(any[ErsSummary](), any()))
