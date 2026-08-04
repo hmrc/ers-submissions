@@ -26,7 +26,7 @@ import org.mockito.Mockito._
 import org.scalatest.EitherValues
 import play.api.libs.json.{JsObject, Json}
 import play.api.test.FakeRequest
-import repositories.{PresubmissionMongoRepository, Repositories}
+import repositories.PresubmissionMongoRepository
 import uk.gov.hmrc.http.HeaderCarrier
 
 import scala.concurrent.ExecutionContext
@@ -35,7 +35,6 @@ class PresubmissionServiceSpec extends ERSTestHelper with EitherValues {
 
   implicit val hc: HeaderCarrier                                = HeaderCarrier()
   implicit val request: FakeRequest[JsObject]                   = FakeRequest().withBody(Fixtures.metadataJson)
-  val mockRepositories: Repositories                            = mock[Repositories]
   val mockPresubmissionRepository: PresubmissionMongoRepository = mock[PresubmissionMongoRepository]
   val validGetJsonResult: Seq[JsObject]                         = Seq(Json.toJsObject(Fixtures.schemeData))
   val invalidGetJsonResult: Seq[JsObject]                       = Seq(Json.toJsObject(Fixtures.schemeData) - "sheetName")
@@ -47,17 +46,15 @@ class PresubmissionServiceSpec extends ERSTestHelper with EitherValues {
     storeJsonResult: Option[Boolean] = Some(true),
     getJsonResult: Seq[JsObject] = validGetJsonResult,
     removeJsonResult: Option[DeleteResult] = Some(deleteResultAcknowledged1)
-  )(implicit ec: ExecutionContext): PresubmissionService =
-    new PresubmissionService(mockRepositories) {
-
-      override lazy val presubmissionRepository: PresubmissionMongoRepository = mockPresubmissionRepository
-      when(mockPresubmissionRepository.storeJson(any[SchemeData], any()))
-        .thenReturn(ERSEnvelope(storeJsonResult.toRight(MongoGenericError("Mongo operation failed"))))
-      when(mockPresubmissionRepository.getJson(any[SchemeInfo], any()))
-        .thenReturn(ERSEnvelope(getJsonResult))
-      when(mockPresubmissionRepository.removeJson(any[SchemeInfo], any()))
-        .thenReturn(ERSEnvelope(removeJsonResult.toRight(MongoGenericError("Mongo operation failed"))))
-    }
+  )(implicit ec: ExecutionContext): PresubmissionService = {
+    when(mockPresubmissionRepository.storeJson(any[SchemeData], any()))
+      .thenReturn(ERSEnvelope(storeJsonResult.toRight(MongoGenericError("Mongo operation failed"))))
+    when(mockPresubmissionRepository.getJson(any[SchemeInfo], any()))
+      .thenReturn(ERSEnvelope(getJsonResult))
+    when(mockPresubmissionRepository.removeJson(any[SchemeInfo], any()))
+      .thenReturn(ERSEnvelope(removeJsonResult.toRight(MongoGenericError("Mongo operation failed"))))
+    new PresubmissionService(mockPresubmissionRepository)
+  }
 
   "calling storeJson" should {
     "return true if storage is successful" in {
@@ -130,12 +127,11 @@ class PresubmissionServiceSpec extends ERSTestHelper with EitherValues {
   }
 
   "calling compareSheetsNumber" should {
-    def buildPresubmissionService(foundSheets: Option[Int]): PresubmissionService =
-      new PresubmissionService(mockRepositories) {
-        override lazy val presubmissionRepository: PresubmissionMongoRepository = mockPresubmissionRepository
-        when(mockPresubmissionRepository.count(any[SchemeInfo](), any()))
-          .thenReturn(ERSEnvelope(foundSheets.map(_.toLong).toRight(MongoGenericError("Mongo operation failed"))))
-      }
+    def buildPresubmissionService(foundSheets: Option[Int]): PresubmissionService = {
+      when(mockPresubmissionRepository.count(any[SchemeInfo](), any()))
+        .thenReturn(ERSEnvelope(foundSheets.map(_.toLong).toRight(MongoGenericError("Mongo operation failed"))))
+      new PresubmissionService(mockPresubmissionRepository)
+    }
 
     "return true and number of found records if expected number of sheets is equal to found ones" in {
       val presubmissionService = buildPresubmissionService(Some(1))

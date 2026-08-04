@@ -20,18 +20,19 @@ import cats.implicits.catsStdInstancesForFuture
 import common.ERSEnvelope
 import common.ERSEnvelope.ERSEnvelope
 import models.{NoData, SchemeData, SchemeDataMappingError, SchemeInfo}
-import repositories.{PresubmissionMongoRepository, Repositories}
+import repositories.PresubmissionMongoRepository
 import uk.gov.hmrc.http.HeaderCarrier
 import utils.LoggingAndExceptions.ErsLogger
 import utils.Session
 
-import javax.inject.Inject
+import javax.inject.{Inject, Singleton}
 import scala.concurrent.ExecutionContext
 import scala.util.Try
 
-class PresubmissionService @Inject() (repositories: Repositories)(implicit ec: ExecutionContext) extends ErsLogger {
-
-  lazy val presubmissionRepository: PresubmissionMongoRepository = repositories.presubmissionRepository
+@Singleton
+class PresubmissionService @Inject() (presubmissionRepository: PresubmissionMongoRepository)(implicit
+  ec: ExecutionContext
+) extends ErsLogger {
 
   def storeJson(schemeData: SchemeData)(implicit hc: HeaderCarrier): ERSEnvelope[Boolean] =
     presubmissionRepository.storeJson(schemeData, Session.id(hc))

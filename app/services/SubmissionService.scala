@@ -24,18 +24,19 @@ import models.{ErsSummary, SchemeInfo, SubmissionStatusUpdateError}
 import play.api.http.Status.ACCEPTED
 import play.api.libs.json.{JsError, JsObject, JsPath, JsString, JsSuccess, __}
 import play.api.mvc.Request
-import repositories.{MetadataMongoRepository, Repositories}
+import repositories.MetadataMongoRepository
 import services.audit.AuditEvents
 import uk.gov.hmrc.http.HeaderCarrier
 import utils.LoggingAndExceptions.ErsLogger
 import utils.{ADRSubmission, Session, SubmissionCommon}
 
 import java.util.concurrent.TimeUnit
-import javax.inject.Inject
+import javax.inject.{Inject, Singleton}
 import scala.concurrent.ExecutionContext
 
+@Singleton
 class SubmissionService @Inject() (
-  repositories: Repositories,
+  metadataRepository: MetadataMongoRepository,
   adrConnector: ADRConnector,
   adrSubmission: ADRSubmission,
   submissionCommon: SubmissionCommon,
@@ -43,8 +44,6 @@ class SubmissionService @Inject() (
   metrics: Metrics
 )(implicit ec: ExecutionContext)
     extends ErsLogger {
-
-  lazy val metadataRepository: MetadataMongoRepository = repositories.metadataRepository
 
   def callProcessData(ersSummary: ErsSummary, failedStatus: String, successStatus: String)(implicit
     request: Request[_],

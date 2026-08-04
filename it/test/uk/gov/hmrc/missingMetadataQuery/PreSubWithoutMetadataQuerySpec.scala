@@ -24,7 +24,6 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.time.{Seconds, Span}
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.mockito.MockitoSugar
-import repositories.Repositories
 
 import java.time.{Instant, LocalDateTime, ZoneOffset}
 import scala.concurrent.ExecutionContext
@@ -32,7 +31,6 @@ import scala.concurrent.ExecutionContext
 class PreSubWithoutMetadataQuerySpec extends AnyWordSpec with Matchers with MockitoSugar {
 
   val mockApplicationConfig: ApplicationConfig = mock[ApplicationConfig]
-  val mockRepositories: Repositories           = mock[Repositories]
 
   when(mockApplicationConfig.dateTimeFilterForQuery).thenReturn("02/05/2023")
 

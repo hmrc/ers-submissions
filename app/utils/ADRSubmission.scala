@@ -26,10 +26,11 @@ import services.PresubmissionService
 import uk.gov.hmrc.http.HeaderCarrier
 import utils.LoggingAndExceptions.ErsLogger
 
-import javax.inject.Inject
+import javax.inject.{Inject, Singleton}
 import scala.collection.mutable.ListBuffer
 import scala.concurrent.ExecutionContext
 
+@Singleton
 class ADRSubmission @Inject() (
   submissionCommon: SubmissionCommon,
   presubmissionService: PresubmissionService,
