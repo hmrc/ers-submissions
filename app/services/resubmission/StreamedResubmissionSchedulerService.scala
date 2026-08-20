@@ -72,12 +72,6 @@ class StreamedResubmissionSchedulerService @Inject() (
     val request: Request[JsObject] = ERSRequest.createERSRequest()
     implicit val hc: HeaderCarrier = getOrCreateCorrelationID(request)
 
-    logIfEnabled(applicationConfig.schedulerEnableAdditionalLogs(jobName)) {
-      resubPresubmissionService
-        .logFailedSubmissionCount(processFailedSubmissionsConfig)
-        .map(message => logInfo(message))
-      logInfo(LockMessage(lockService).message)
-    }
     logIfEnabled(applicationConfig.schedulerSchemeRefListEnabled(jobName)) {
       resubPresubmissionService
         .getMetadataSelectedSchemeRefDetailsMessage(processFailedSubmissionsConfig)
