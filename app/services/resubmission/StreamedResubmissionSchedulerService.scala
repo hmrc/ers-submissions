@@ -33,17 +33,18 @@ import javax.inject.Inject
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
 
-class ReSubmissionSchedulerService @Inject() (
-  val applicationConfig: ApplicationConfig,
-  lockRepositoryProvider: LockRepositoryProvider,
-  resubPresubmissionService: ResubPresubmissionService
-)(implicit ec: ExecutionContext)
-    extends ScheduledService[Boolean] with ErsLogger with SchedulerConfig with CorrelationIdHelper {
+class StreamedResubmissionSchedulerService @Inject() (
+                                                       val applicationConfig: ApplicationConfig,
+                                                       lockRepositoryProvider: LockRepositoryProvider,
+                                                       resubPresubmissionService: ResubPresubmissionService
+                                                     )(implicit ec: ExecutionContext)
+  extends ScheduledService[Boolean] with ErsLogger with SchedulerConfig with CorrelationIdHelper {
 
-  override val jobName: String  = "resubmission-service"
+  override val jobName: String  = "resubmission-streamed-service"
   private val resubmissionLimit = getResubmissionLimit(jobName)
   private val lockoutTimeout    = getLockoutTimeout(jobName)
 
+  // same lock id as the non-streamed job so the two can't run concurrently
   private val lockService: LockService = LockService(
     lockRepositoryProvider.repo,
     lockId = "resubmission-service-job-lock",
@@ -51,11 +52,12 @@ class ReSubmissionSchedulerService @Inject() (
   )
 
   implicit val processFailedSubmissionsConfig: ProcessFailedSubmissionsConfig = getProcessFailedSubmissionsConfig(
-    resubmissionLimit
+    resubmissionLimit,
+    streamed = true
   )
 
   def resubmit()(implicit request: Request[_], hc: HeaderCarrier): ERSEnvelope[Boolean] = {
-    logInfo(ResubmissionLimitMessage(resubmissionLimit).message)
+    logInfo(s"[StreamedResubmissionSchedulerService][resubmit] " + ResubmissionLimitMessage(resubmissionLimit).message)
     resubPresubmissionService.processFailedSubmissions(processFailedSubmissionsConfig).map { result =>
       if (result) {
         logInfo(ResubmissionSuccessMessage.message)
@@ -71,9 +73,6 @@ class ReSubmissionSchedulerService @Inject() (
     implicit val hc: HeaderCarrier = getOrCreateCorrelationID(request)
 
     logIfEnabled(applicationConfig.schedulerEnableAdditionalLogs(jobName)) {
-      resubPresubmissionService
-        .logAggregateMetadataMetrics()
-        .map(message => logInfo(message))
       resubPresubmissionService
         .logFailedSubmissionCount(processFailedSubmissionsConfig)
         .map(message => logInfo(message))
@@ -96,5 +95,4 @@ class ReSubmissionSchedulerService @Inject() (
         false
     })
   }
-
 }

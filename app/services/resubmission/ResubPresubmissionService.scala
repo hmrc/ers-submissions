@@ -142,7 +142,8 @@ class ResubPresubmissionService @Inject() (
       .callProcessData(
         ersSummary,
         processFailedSubmissionsConfig.failedStatus,
-        processFailedSubmissionsConfig.resubmitSuccessStatus
+        processFailedSubmissionsConfig.resubmitSuccessStatus,
+        processFailedSubmissionsConfig.streamed
       )
       .map { result =>
         if (result) {

@@ -73,7 +73,12 @@ class SubmissionCommonServiceSpec extends ERSTestHelper with BeforeAndAfterEach 
           metrics
         ) {
 
-          override def processData(ersSummary: ErsSummary, failedStatus: String, successStatus: String)(implicit
+          override def processData(
+            ersSummary: ErsSummary,
+            failedStatus: String,
+            successStatus: String,
+            streamed: Boolean
+          )(implicit
             request: Request[_],
             hc: HeaderCarrier
           ): ERSEnvelope[Boolean] =
@@ -98,7 +103,12 @@ class SubmissionCommonServiceSpec extends ERSTestHelper with BeforeAndAfterEach 
           when(mockMetadataRepository.updateStatus(any[SchemeInfo](), anyString(), any()))
             .thenReturn(ERSEnvelope(true))
 
-          override def processData(ersSummary: ErsSummary, failedStatus: String, successStatus: String)(implicit
+          override def processData(
+            ersSummary: ErsSummary,
+            failedStatus: String,
+            successStatus: String,
+            streamed: Boolean
+          )(implicit
             request: Request[_],
             hc: HeaderCarrier
           ): ERSEnvelope[Boolean] =
@@ -124,7 +134,12 @@ class SubmissionCommonServiceSpec extends ERSTestHelper with BeforeAndAfterEach 
           when(mockMetadataRepository.updateStatus(any[SchemeInfo](), anyString(), any()))
             .thenReturn(ERSEnvelope(true))
 
-          override def processData(ersSummary: ErsSummary, failedStatus: String, successStatus: String)(implicit
+          override def processData(
+            ersSummary: ErsSummary,
+            failedStatus: String,
+            successStatus: String,
+            streamed: Boolean
+          )(implicit
             request: Request[_],
             hc: HeaderCarrier
           ): ERSEnvelope[Boolean] =
@@ -158,7 +173,8 @@ class SubmissionCommonServiceSpec extends ERSTestHelper with BeforeAndAfterEach 
           ersSummary: ErsSummary,
           adrData: JsObject,
           failedStatus: String,
-          successStatus: String
+          successStatus: String,
+          streamed: Boolean
         )(implicit hc: HeaderCarrier): ERSEnvelope[Boolean] = ERSEnvelope(true)
       }
 
@@ -291,6 +307,29 @@ class SubmissionCommonServiceSpec extends ERSTestHelper with BeforeAndAfterEach 
       verify(metrics, VerificationModeFactory.times(0)).sendToADR(any[Long](), any[TimeUnit]())
       verify(metrics, VerificationModeFactory.times(0)).successfulSendToADR()
       verify(metrics, VerificationModeFactory.times(0)).failedSendToADR()
+    }
+
+    "use the streamed method when streamed is true" in {
+      when(adrConnector.sendDataStreamed(any[JsObject](), anyString())(any[ExecutionContext](), any[HeaderCarrier]()))
+        .thenReturn(ERSEnvelope(Future.successful(HttpResponse(202, ""))))
+
+      val result = await(
+        submissionCommonService
+          .sendToADRUpdatePostData(
+            Fixtures.metadata,
+            Fixtures.metadataJson,
+            Statuses.Failed.toString,
+            Statuses.Sent.toString,
+            streamed = true
+          )
+          .value
+      ).value
+      result shouldBe true
+      verify(adrConnector, VerificationModeFactory.times(1))
+        .sendDataStreamed(any[JsObject](), anyString())(any[ExecutionContext](), any[HeaderCarrier]())
+      verify(adrConnector, VerificationModeFactory.times(0))
+        .sendData(any[JsObject](), anyString())(any[ExecutionContext](), any[HeaderCarrier]())
+      verify(metrics, VerificationModeFactory.times(1)).successfulSendToADR()
     }
   }
 

@@ -47,39 +47,39 @@ class ApplicationConfig @Inject() (serviceConfig: ServicesConfig) {
   lazy val UrlHeaderAuthorization: String =
     s"Bearer ${serviceConfig.getString("microservice.services.ers-stub.authorization-token")}"
 
-  lazy val schedulerSchemeRefListEnabled: Boolean =
-    serviceConfig.getBoolean("schedules.resubmission-service.schemaRefsFilter.enabled")
+  def schedulerSchemeRefListEnabled(jobName: String): Boolean =
+    serviceConfig.getBoolean(s"schedules.$jobName.schemaRefsFilter.enabled")
 
-  lazy val schedulerSchemeRefList: List[String] =
-    Try(serviceConfig.getString("schedules.resubmission-service.schemaRefsFilter.filter").split(",").toList)
+  def schedulerSchemeRefList(jobName: String): List[String] =
+    Try(serviceConfig.getString(s"schedules.$jobName.schemaRefsFilter.filter").split(",").toList)
       .getOrElse(List())
 
-  lazy val schedulerSchemeRefStatusList: List[String] =
-    Try(serviceConfig.getString("schedules.resubmission-service.resubmit-list-statuses").split(",").toList)
+  def schedulerSchemeRefStatusList(jobName: String): List[String] =
+    Try(serviceConfig.getString(s"schedules.$jobName.resubmit-list-statuses").split(",").toList)
       .getOrElse(List())
 
-  lazy val schedulerSchemeRefFailStatus: String =
-    serviceConfig.getString("schedules.resubmission-service.resubmit-fail-status")
+  def schedulerSchemeRefFailStatus(jobName: String): String =
+    serviceConfig.getString(s"schedules.$jobName.resubmit-fail-status")
 
-  lazy val schedulerEnableResubmitByScheme: Boolean =
-    serviceConfig.getBoolean("schedules.resubmission-service.schemaFilter.enabled")
+  def schedulerEnableResubmitByScheme(jobName: String): Boolean =
+    serviceConfig.getBoolean(s"schedules.$jobName.schemaFilter.enabled")
 
-  lazy val schedulerResubmitScheme: String =
-    serviceConfig.getString("schedules.resubmission-service.schemaFilter.filter")
+  def schedulerResubmitScheme(jobName: String): String =
+    serviceConfig.getString(s"schedules.$jobName.schemaFilter.filter")
 
-  lazy val schedulerSuccessStatus: String =
-    serviceConfig.getString("schedules.resubmission-service.resubmit-successful-status")
+  def schedulerSuccessStatus(jobName: String): String =
+    serviceConfig.getString(s"schedules.$jobName.resubmit-successful-status")
 
-  lazy val schedulerEnableAdditionalLogs: Boolean =
-    serviceConfig.getBoolean("schedules.resubmission-service.additional-logs.enabled")
+  def schedulerEnableAdditionalLogs(jobName: String): Boolean =
+    serviceConfig.getBoolean(s"schedules.$jobName.additional-logs.enabled")
 
   //  Date filter parameters
-  lazy val dateTimeFilterEnabled: Boolean =
-    serviceConfig.getBoolean(s"schedules.resubmission-service.dateTimeFilter.enabled")
+  def dateTimeFilterEnabled(jobName: String): Boolean =
+    serviceConfig.getBoolean(s"schedules.$jobName.dateTimeFilter.enabled")
 
-  lazy val dateFilter: Option[String] =
-    if (dateTimeFilterEnabled) {
-      Some(serviceConfig.getString(s"schedules.resubmission-service.dateTimeFilter.filter"))
+  def dateFilter(jobName: String): Option[String] =
+    if (dateTimeFilterEnabled(jobName)) {
+      Some(serviceConfig.getString(s"schedules.$jobName.dateTimeFilter.filter"))
     } else {
       None
     }
