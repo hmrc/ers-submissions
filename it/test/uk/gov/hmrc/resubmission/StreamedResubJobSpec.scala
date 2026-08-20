@@ -1,0 +1,122 @@
+/*
+ * Copyright 2026 HM Revenue & Customs
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package uk.gov.hmrc.resubmission
+
+import _root_.play.api.Application
+import _root_.play.api.inject.guice.GuiceApplicationBuilder
+import _root_.play.api.libs.json._
+import _root_.play.api.test.Helpers._
+import models.{ERSError, ErsSummary, SchemeData}
+import org.mongodb.scala.model.Filters
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpecLike
+import org.scalatestplus.play.guice.GuiceOneServerPerSuite
+import uk.gov.hmrc.{CSOP, FakeErsStubService, Fixtures}
+
+import java.time.format.DateTimeFormatter
+import java.time.{Instant, LocalDate, ZoneId}
+import scala.collection.mutable.ListBuffer
+
+class StreamedResubJobSpec
+    extends AnyWordSpecLike with Matchers with GuiceOneServerPerSuite with FakeErsStubService {
+
+  val applicationConfig: Map[String, Any] = Map(
+    "microservice.services.ers-stub.port"                              -> "19339",
+    "schedules.resubmission-service.enabled"                           -> false,
+    "schedules.resubmission-streamed-service.enabled"                  -> true,
+    "schedules.resubmission-streamed-service.dateTimeFilter.enabled"   -> false,
+    "schedules.resubmission-streamed-service.schemaRefsFilter.enabled" -> true,
+    "schedules.resubmission-streamed-service.schemaFilter.enabled"     -> false,
+    "schedules.resubmission-streamed-service.schemaRefsFilter.filter"  -> "123,789,101",
+    "schedules.resubmission-streamed-service.resubmissionLimit"        -> 2,
+    "schedules.resubmission-streamed-service.resubmit-list-statuses"   -> "failed",
+    "schedules.resubmission-streamed-service.resubmit-fail-status"     -> "failedResubmission",
+    "schedules.resubmission-streamed-service.resubmit-successful-status" -> "successResubmit",
+    "auditing.enabled"                                                 -> false
+  )
+
+  val formatter: DateTimeFormatter           = DateTimeFormatter.ofPattern("dd/MM/yyyy")
+  def instantFromDate(date: String): Instant = LocalDate.parse(date, formatter).atStartOfDay(ZoneId.of("UTC")).toInstant
+
+  val submissionDatesAndSchemeRefs: Seq[(Instant, String)] = Seq(
+    (instantFromDate("11/04/2023"), "123"),
+    (instantFromDate("30/04/2023"), "456"),
+    (instantFromDate("10/05/2023"), "789"),
+    (instantFromDate("20/05/2023"), "101"),
+    (instantFromDate("16/05/2023"), "121")
+  )
+
+  val ersSummaries: Seq[ErsSummary] = submissionDatesAndSchemeRefs.map {
+    case (submissionDate: Instant, schemeRef: String) =>
+      Fixtures.buildErsSummary(
+        transferStatus = Some("failed"),
+        schemaType = "CSOP",
+        timestamp = submissionDate,
+        schemeRef = schemeRef
+      )
+  } ++ Seq(
+    Fixtures.buildErsSummary(transferStatus = Some("passed"), schemaType = "CSOP"),
+    Fixtures.buildErsSummary(transferStatus = Some("successResubmit"), schemaType = "CSOP")
+  )
+
+  val presubmissionsData: Seq[SchemeData] = submissionDatesAndSchemeRefs.map {
+    case (submissionDate: Instant, schemeRef: String) =>
+      SchemeData(
+        CSOP.schemeInfo.copy(timestamp = submissionDate, schemeRef = schemeRef),
+        "CSOP_OptionsRCL_V4",
+        None,
+        Some(ListBuffer(CSOP.buildOptionsRCL(withAllFields = true, "yes")))
+      )
+  }
+
+  override lazy val app: Application = new GuiceApplicationBuilder()
+    .configure(
+      conf = applicationConfig
+    )
+    .build()
+
+  "StreamedResubmissionServiceJob" should {
+    "resubmit failed jobs in the scheme filter list using a streamed request body" +
+      ", assigning successful jobs with the correct status" in new StreamedResubmissionJobSetUp(app = app) {
+
+        val storeDocs: Boolean           = await(storeMultipleErsSummary(ersSummaries.map(Json.toJsObject(_))))
+        val storePresubmissions: Boolean =
+          await(storeMultiplePresubmissionData(presubmissionsData.map(Json.toJsObject(_))))
+        storeDocs           shouldBe true
+        storePresubmissions shouldBe true
+
+        countMetadataRecordsWithSelector(Filters.empty())                       shouldBe 7
+        countMetadataRecordsWithSelector(successResubmitTransferStatusSelector) shouldBe 1
+        countMetadataRecordsWithSelector(failedJobSelector)                     shouldBe 3
+
+        val firstUpdateCompleted: Either[ERSError, Boolean] = await(getJob.scheduledMessage.service.invoke.value)
+        firstUpdateCompleted shouldBe Right(true)
+
+        countMetadataRecordsWithSelector(Filters.empty())                       shouldBe 7
+        countMetadataRecordsWithSelector(successResubmitTransferStatusSelector) shouldBe 3 // 2 resubmissions
+        countMetadataRecordsWithSelector(failedJobSelector)                     shouldBe 1
+
+        val secondUpdateCompleted: Either[ERSError, Boolean] = await(getJob.scheduledMessage.service.invoke.value)
+        secondUpdateCompleted shouldBe Right(true)
+
+        countMetadataRecordsWithSelector(Filters.empty())                       shouldBe 7
+        countMetadataRecordsWithSelector(successResubmitTransferStatusSelector) shouldBe 4 // 1 resubmission
+        countMetadataRecordsWithSelector(failedJobSelector)                     shouldBe 0
+      }
+  }
+
+}

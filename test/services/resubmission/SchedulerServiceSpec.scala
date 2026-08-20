@@ -79,4 +79,64 @@ class SchedulerServiceSpec extends ERSTestHelper with BeforeAndAfterEach with Ei
     }
   }
 
+  "streamed resubmit" should {
+
+    "return the result of processFailedSubmissions if it returns true" in {
+      val schedulerService: StreamedResubmissionSchedulerService =
+        new StreamedResubmissionSchedulerService(
+          mockApplicationConfig,
+          mockMongoLockRepository,
+          mockResubPresubmissionService
+        )
+
+      when(mockResubPresubmissionService.processFailedSubmissions(any())(any(), any()))
+        .thenReturn(ERSEnvelope(Future.successful(true)))
+
+      val result = await(schedulerService.resubmit().value)
+      result.value shouldBe true
+    }
+
+    "return the result of processFailedSubmissions if it returns false" in {
+      val schedulerService: StreamedResubmissionSchedulerService =
+        new StreamedResubmissionSchedulerService(
+          mockApplicationConfig,
+          mockMongoLockRepository,
+          mockResubPresubmissionService
+        )
+
+      when(mockResubPresubmissionService.processFailedSubmissions(any())(any(), any()))
+        .thenReturn(ERSEnvelope(Future.successful(false)))
+
+      val result = await(schedulerService.resubmit().value)
+      result.value shouldBe false
+    }
+
+    "return ResubmissionError if processFailedSubmissions returns an error" in {
+      val schedulerService: StreamedResubmissionSchedulerService =
+        new StreamedResubmissionSchedulerService(
+          mockApplicationConfig,
+          mockMongoLockRepository,
+          mockResubPresubmissionService
+        )
+
+      when(mockResubPresubmissionService.processFailedSubmissions(any())(any(), any()))
+        .thenReturn(ERSEnvelope(ResubmissionError()))
+
+      val result = await(schedulerService.resubmit().value)
+      result.swap.value shouldBe ResubmissionError()
+    }
+
+    "build its config with streamed set to true" in {
+      val schedulerService: StreamedResubmissionSchedulerService =
+        new StreamedResubmissionSchedulerService(
+          mockApplicationConfig,
+          mockMongoLockRepository,
+          mockResubPresubmissionService
+        )
+
+      schedulerService.processFailedSubmissionsConfig.streamed shouldBe true
+      schedulerService.jobName                                 shouldBe "resubmission-streamed-service"
+    }
+  }
+
 }

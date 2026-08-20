@@ -22,7 +22,7 @@ import fixtures.Fixtures
 import helpers.ERSTestHelper
 import models._
 import org.bson.BsonValue
-import org.mockito.ArgumentMatchers.{any, anyString, eq => mockEq}
+import org.mockito.ArgumentMatchers.{any, anyBoolean, anyString, eq => mockEq}
 import org.mockito.Mockito._
 import org.mongodb.scala.bson.{BsonString, ObjectId}
 import org.scalatest.{BeforeAndAfterEach, EitherValues}
@@ -128,7 +128,7 @@ class ResubPresubmissionServiceSpec extends ERSTestHelper with BeforeAndAfterEac
         .thenReturn(ERSEnvelope(updateResult))
       when(mockMetadataMongoRepository.findErsSummaries(any(), any()))
         .thenReturn(ERSEnvelope(scala.Seq(ersSummary)))
-      when(mockSubmissionService.callProcessData(any(), any(), any())(any(), any()))
+      when(mockSubmissionService.callProcessData(any(), any(), any(), anyBoolean())(any(), any()))
         .thenReturn(ERSEnvelope(true))
 
       val result = await(resubPresubmissionService.processFailedSubmissions(processFailedSubmissionsConfig).value)
@@ -142,7 +142,7 @@ class ResubPresubmissionServiceSpec extends ERSTestHelper with BeforeAndAfterEac
         .thenReturn(ERSEnvelope(updateResult))
       when(mockMetadataMongoRepository.findErsSummaries(any(), any()))
         .thenReturn(ERSEnvelope(Seq(ersSummary)))
-      when(mockSubmissionService.callProcessData(any(), any(), any())(any(), any()))
+      when(mockSubmissionService.callProcessData(any(), any(), any(), anyBoolean())(any(), any()))
         .thenReturn(ERSEnvelope(false))
 
       val result = await(resubPresubmissionService.processFailedSubmissions(processFailedSubmissionsConfig).value)
@@ -156,7 +156,7 @@ class ResubPresubmissionServiceSpec extends ERSTestHelper with BeforeAndAfterEac
         .thenReturn(ERSEnvelope(updateResult))
       when(mockMetadataMongoRepository.findErsSummaries(any(), any()))
         .thenReturn(ERSEnvelope(scala.Seq(ersSummary)))
-      when(mockSubmissionService.callProcessData(any(), any(), any())(any(), any()))
+      when(mockSubmissionService.callProcessData(any(), any(), any(), anyBoolean())(any(), any()))
         .thenReturn(ERSEnvelope(JsonFromSheetsCreationError("error occurred")))
 
       val result = await(resubPresubmissionService.processFailedSubmissions(processFailedSubmissionsConfig).value)
@@ -171,7 +171,7 @@ class ResubPresubmissionServiceSpec extends ERSTestHelper with BeforeAndAfterEac
         .thenReturn(ERSEnvelope(Seq(new ObjectId())))
       when(mockMetadataMongoRepository.findErsSummaries(any(), any()))
         .thenReturn(ERSEnvelope(scala.Seq(ersSummary)))
-      when(mockSubmissionService.callProcessData(any(), any(), any())(any(), any()))
+      when(mockSubmissionService.callProcessData(any(), any(), any(), anyBoolean())(any(), any()))
         .thenReturn(ERSEnvelope(false))
 
       val result = await(resubPresubmissionService.processFailedSubmissions(processFailedSubmissionsConfig).value)
@@ -209,9 +209,11 @@ class ResubPresubmissionServiceSpec extends ERSTestHelper with BeforeAndAfterEac
             .thenReturn(ERSEnvelope(updateResult))
           when(mockMetadataMongoRepository.findErsSummaries(mockEq(failedJobIds), any()))
             .thenReturn(ERSEnvelope(ersSummaries))
-          when(mockSubmissionService.callProcessData(mockEq(firstErsSummary), any(), any())(any(), any()))
+          when(mockSubmissionService.callProcessData(mockEq(firstErsSummary), any(), any(), anyBoolean())(any(), any()))
             .thenReturn(ERSEnvelope(firstResult))
-          when(mockSubmissionService.callProcessData(mockEq(secondErsSummary), any(), any())(any(), any()))
+          when(
+            mockSubmissionService.callProcessData(mockEq(secondErsSummary), any(), any(), anyBoolean())(any(), any())
+          )
             .thenReturn(ERSEnvelope(secondResult))
 
           val result = await(
@@ -228,7 +230,9 @@ class ResubPresubmissionServiceSpec extends ERSTestHelper with BeforeAndAfterEac
   "startResubmission" should {
 
     "return the result of callProcessData if ErsSubmissions is successfully extracted" in {
-      when(mockSubmissionService.callProcessData(any[ErsSummary](), anyString(), anyString())(any(), any()))
+      when(
+        mockSubmissionService.callProcessData(any[ErsSummary](), anyString(), anyString(), anyBoolean())(any(), any())
+      )
         .thenReturn(ERSEnvelope(true))
 
       val result = await(
@@ -238,7 +242,9 @@ class ResubPresubmissionServiceSpec extends ERSTestHelper with BeforeAndAfterEac
     }
 
     "audit failed submission if callProcessData returns error" in {
-      when(mockSubmissionService.callProcessData(any[ErsSummary](), anyString(), anyString())(any(), any()))
+      when(
+        mockSubmissionService.callProcessData(any[ErsSummary](), anyString(), anyString(), anyBoolean())(any(), any())
+      )
         .thenReturn(ERSEnvelope(ResubmissionError()))
 
       val result =
@@ -248,7 +254,9 @@ class ResubPresubmissionServiceSpec extends ERSTestHelper with BeforeAndAfterEac
     }
 
     "return ResubmissionError if ADRTransferError occurs" in {
-      when(mockSubmissionService.callProcessData(any[ErsSummary](), anyString(), anyString())(any(), any()))
+      when(
+        mockSubmissionService.callProcessData(any[ErsSummary](), anyString(), anyString(), anyBoolean())(any(), any())
+      )
         .thenReturn(ERSEnvelope(ADRTransferError()))
 
       val result =
@@ -258,7 +266,9 @@ class ResubPresubmissionServiceSpec extends ERSTestHelper with BeforeAndAfterEac
     }
 
     "log error and send ADR audit event if callProcessData returns false" in {
-      when(mockSubmissionService.callProcessData(any[ErsSummary](), anyString(), anyString())(any(), any()))
+      when(
+        mockSubmissionService.callProcessData(any[ErsSummary](), anyString(), anyString(), anyBoolean())(any(), any())
+      )
         .thenReturn(ERSEnvelope(false))
 
       val logMessage = Fixtures.metadata.metaData.schemeInfo.basicLogMessage

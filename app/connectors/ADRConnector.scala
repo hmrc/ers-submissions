@@ -70,8 +70,10 @@ class ADRConnector @Inject() (applicationConfig: ApplicationConfig, http: HttpCl
     hc: HeaderCarrier
   ): ERSEnvelope[HttpResponse] = EitherT {
     val url: String                       = buildEtmpPath(s"${applicationConfig.adrFullSubmissionURI}/${schemeType.toLowerCase()}")
-    val payload: ByteString = ByteString(Json.stringify(adrData))
-    logInfo(s"[ADRConnector][sendDataStreamed] Streaming ${payload.length} bytes as a single chunk for scheme type [$schemeType]")
+    val payload: ByteString               = ByteString(Json.stringify(adrData))
+    logInfo(
+      s"[ADRConnector][sendDataStreamed] Streaming ${payload.length} bytes as a single chunk for scheme type [$schemeType]"
+    )
     val streamData: Source[ByteString, _] = Source.single(payload)
     val headersForRequest                 = hc
       .withExtraHeaders(explicitHeaders(): _*)

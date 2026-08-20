@@ -23,7 +23,7 @@ import play.api.inject.ApplicationLifecycle
 import scheduler.SchedulingActor.StreamedResubmissionServiceClass
 import services.resubmission.StreamedResubmissionSchedulerService
 
-class StreamedResubmissionServiceImpl @Inject()(
+class StreamedResubmissionServiceImpl @Inject() (
   val config: Configuration,
   val resubmissionService: StreamedResubmissionSchedulerService,
   val applicationLifecycle: ApplicationLifecycle

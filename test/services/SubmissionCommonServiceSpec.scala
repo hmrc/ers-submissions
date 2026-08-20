@@ -309,7 +309,7 @@ class SubmissionCommonServiceSpec extends ERSTestHelper with BeforeAndAfterEach 
       verify(metrics, VerificationModeFactory.times(0)).failedSendToADR()
     }
 
-    "use the streamed method when streamed is true" in {
+    "return result from updatePostsubmission if sending to ADR is successful when streamed" in {
       when(adrConnector.sendDataStreamed(any[JsObject](), anyString())(any[ExecutionContext](), any[HeaderCarrier]()))
         .thenReturn(ERSEnvelope(Future.successful(HttpResponse(202, ""))))
 
@@ -325,11 +325,52 @@ class SubmissionCommonServiceSpec extends ERSTestHelper with BeforeAndAfterEach 
           .value
       ).value
       result shouldBe true
-      verify(adrConnector, VerificationModeFactory.times(1))
-        .sendDataStreamed(any[JsObject](), anyString())(any[ExecutionContext](), any[HeaderCarrier]())
       verify(adrConnector, VerificationModeFactory.times(0))
         .sendData(any[JsObject](), anyString())(any[ExecutionContext](), any[HeaderCarrier]())
+      verify(metrics, VerificationModeFactory.times(1)).sendToADR(any[Long](), any[TimeUnit]())
       verify(metrics, VerificationModeFactory.times(1)).successfulSendToADR()
+      verify(metrics, VerificationModeFactory.times(0)).failedSendToADR()
+    }
+
+    "return result from updatePostsubmission if sending to ADR failed when streamed" in {
+      when(adrConnector.sendDataStreamed(any[JsObject](), anyString())(any[ExecutionContext](), any[HeaderCarrier]()))
+        .thenReturn(ERSEnvelope(Future.successful(HttpResponse(500, ""))))
+
+      val result = await(
+        submissionCommonService
+          .sendToADRUpdatePostData(
+            Fixtures.metadata,
+            Fixtures.metadataJson,
+            Statuses.Failed.toString,
+            Statuses.Sent.toString,
+            streamed = true
+          )
+          .value
+      )
+      result.value shouldBe true
+      verify(metrics, VerificationModeFactory.times(0)).sendToADR(any[Long](), any[TimeUnit]())
+      verify(metrics, VerificationModeFactory.times(1)).failedSendToADR()
+    }
+
+    "return ADRTransferError if sending to ADR returns error when streamed" in {
+      when(adrConnector.sendDataStreamed(any[JsObject](), anyString())(any[ExecutionContext](), any[HeaderCarrier]()))
+        .thenReturn(ERSEnvelope(ADRTransferError()))
+
+      val result = await(
+        submissionCommonService
+          .sendToADRUpdatePostData(
+            Fixtures.metadata,
+            Fixtures.metadataJson,
+            Statuses.Failed.toString,
+            Statuses.Sent.toString,
+            streamed = true
+          )
+          .value
+      )
+      result.swap.value shouldBe ADRTransferError()
+      verify(metrics, VerificationModeFactory.times(0)).sendToADR(any[Long](), any[TimeUnit]())
+      verify(metrics, VerificationModeFactory.times(0)).successfulSendToADR()
+      verify(metrics, VerificationModeFactory.times(0)).failedSendToADR()
     }
   }
 

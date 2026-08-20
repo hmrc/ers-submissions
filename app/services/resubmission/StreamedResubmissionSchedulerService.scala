@@ -34,11 +34,11 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
 
 class StreamedResubmissionSchedulerService @Inject() (
-                                                       val applicationConfig: ApplicationConfig,
-                                                       lockRepositoryProvider: LockRepositoryProvider,
-                                                       resubPresubmissionService: ResubPresubmissionService
-                                                     )(implicit ec: ExecutionContext)
-  extends ScheduledService[Boolean] with ErsLogger with SchedulerConfig with CorrelationIdHelper {
+  val applicationConfig: ApplicationConfig,
+  lockRepositoryProvider: LockRepositoryProvider,
+  resubPresubmissionService: ResubPresubmissionService
+)(implicit ec: ExecutionContext)
+    extends ScheduledService[Boolean] with ErsLogger with SchedulerConfig with CorrelationIdHelper {
 
   override val jobName: String  = "resubmission-streamed-service"
   private val resubmissionLimit = getResubmissionLimit(jobName)
@@ -89,4 +89,5 @@ class StreamedResubmissionSchedulerService @Inject() (
         false
     })
   }
+
 }
