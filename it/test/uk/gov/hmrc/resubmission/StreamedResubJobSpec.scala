@@ -31,22 +31,21 @@ import java.time.format.DateTimeFormatter
 import java.time.{Instant, LocalDate, ZoneId}
 import scala.collection.mutable.ListBuffer
 
-class StreamedResubJobSpec
-    extends AnyWordSpecLike with Matchers with GuiceOneServerPerSuite with FakeErsStubService {
+class StreamedResubJobSpec extends AnyWordSpecLike with Matchers with GuiceOneServerPerSuite with FakeErsStubService {
 
   val applicationConfig: Map[String, Any] = Map(
-    "microservice.services.ers-stub.port"                              -> "19339",
-    "schedules.resubmission-service.enabled"                           -> false,
-    "schedules.resubmission-streamed-service.enabled"                  -> true,
-    "schedules.resubmission-streamed-service.dateTimeFilter.enabled"   -> false,
-    "schedules.resubmission-streamed-service.schemaRefsFilter.enabled" -> true,
-    "schedules.resubmission-streamed-service.schemaFilter.enabled"     -> false,
-    "schedules.resubmission-streamed-service.schemaRefsFilter.filter"  -> "123,789,101",
-    "schedules.resubmission-streamed-service.resubmissionLimit"        -> 2,
-    "schedules.resubmission-streamed-service.resubmit-list-statuses"   -> "failed",
-    "schedules.resubmission-streamed-service.resubmit-fail-status"     -> "failedResubmission",
+    "microservice.services.ers-stub.port"                                -> "19339",
+    "schedules.resubmission-service.enabled"                             -> false,
+    "schedules.resubmission-streamed-service.enabled"                    -> true,
+    "schedules.resubmission-streamed-service.dateTimeFilter.enabled"     -> false,
+    "schedules.resubmission-streamed-service.schemaRefsFilter.enabled"   -> true,
+    "schedules.resubmission-streamed-service.schemaFilter.enabled"       -> false,
+    "schedules.resubmission-streamed-service.schemaRefsFilter.filter"    -> "123,789,101",
+    "schedules.resubmission-streamed-service.resubmissionLimit"          -> 2,
+    "schedules.resubmission-streamed-service.resubmit-list-statuses"     -> "failed",
+    "schedules.resubmission-streamed-service.resubmit-fail-status"       -> "failedResubmission",
     "schedules.resubmission-streamed-service.resubmit-successful-status" -> "successResubmit",
-    "auditing.enabled"                                                 -> false
+    "auditing.enabled"                                                   -> false
   )
 
   val formatter: DateTimeFormatter           = DateTimeFormatter.ofPattern("dd/MM/yyyy")

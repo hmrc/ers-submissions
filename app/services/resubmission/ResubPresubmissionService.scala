@@ -138,6 +138,17 @@ class ResubPresubmissionService @Inject() (
     hc: HeaderCarrier
   ): ERSEnvelope[Boolean] = {
     logInfo(ProcessingResubmitMessage.message + ersSummary.metaData.schemeInfo.basicLogMessage)
+
+    if (processFailedSubmissionsConfig.streamed) {
+      logInfo(
+        s"[ResubPresubmissionService][startResubmission] STREAMED_RESUBMISSION: " +
+          s"${ersSummary.metaData.schemeInfo.basicLogMessage} " +
+          s"bundleRef ${ersSummary.bundleRef}, " +
+          s"transferStatus ${ersSummary.transferStatus.getOrElse("none")}, " +
+          s"nofOfRows ${ersSummary.nofOfRows.getOrElse(0)}"
+      )
+    }
+
     submissionCommonService
       .callProcessData(
         ersSummary,

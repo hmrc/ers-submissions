@@ -63,4 +63,5 @@ case class StreamedResubmissionJobSetUp(app: Application) {
     "transferStatus",
     app.configuration.get[String]("schedules.resubmission-streamed-service.resubmit-successful-status")
   )
+
 }
