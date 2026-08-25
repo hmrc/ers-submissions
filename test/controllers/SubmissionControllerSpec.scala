@@ -63,7 +63,7 @@ class SubmissionControllerSpec extends ERSTestHelper with BeforeAndAfterEach {
         )
 
         when(
-          mockSubmissionCommonService.callProcessData(any[ErsSummary], anyString(), anyString())(
+          mockSubmissionCommonService.callProcessData(any[ErsSummary], anyString(), anyString(), anyBoolean())(
             any[Request[_]](),
             any[HeaderCarrier]()
           )

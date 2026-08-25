@@ -20,32 +20,36 @@ import config.ApplicationConfig
 
 trait SchedulerConfig {
   val applicationConfig: ApplicationConfig
+  def jobName: String
 
-  val failedStatus: String = applicationConfig.schedulerSchemeRefFailStatus
+  lazy val failedStatus: String = applicationConfig.schedulerSchemeRefFailStatus(jobName)
 
-  val searchStatusList: List[String] = applicationConfig.schedulerSchemeRefStatusList
+  lazy val searchStatusList: List[String] = applicationConfig.schedulerSchemeRefStatusList(jobName)
 
-  val schemeRefList: Option[List[String]] = if (applicationConfig.schedulerSchemeRefListEnabled) {
-    Some(applicationConfig.schedulerSchemeRefList)
+  lazy val schemeRefList: Option[List[String]] = if (applicationConfig.schedulerSchemeRefListEnabled(jobName)) {
+    Some(applicationConfig.schedulerSchemeRefList(jobName))
   } else {
     None
   }
 
-  val resubmitScheme: Option[String] = if (applicationConfig.schedulerEnableResubmitByScheme) {
-    Some(applicationConfig.schedulerResubmitScheme)
+  lazy val resubmitScheme: Option[String] = if (applicationConfig.schedulerEnableResubmitByScheme(jobName)) {
+    Some(applicationConfig.schedulerResubmitScheme(jobName))
   } else {
     None
   }
 
-  val resubmitSuccessStatus: String = applicationConfig.schedulerSuccessStatus
+  lazy val resubmitSuccessStatus: String = applicationConfig.schedulerSuccessStatus(jobName)
 
-  val dateTimeFilter: Option[String] = applicationConfig.dateFilter
+  lazy val dateTimeFilter: Option[String] = applicationConfig.dateFilter(jobName)
 
   def getResubmissionLimit(jobName: String): Int = applicationConfig.resubmissionLimit(jobName)
 
   def getLockoutTimeout(jobName: String): Int = applicationConfig.lockoutTimeout(jobName)
 
-  def getProcessFailedSubmissionsConfig(resubmissionLimit: Int): ProcessFailedSubmissionsConfig =
+  def getProcessFailedSubmissionsConfig(
+    resubmissionLimit: Int,
+    streamed: Boolean = false
+  ): ProcessFailedSubmissionsConfig =
     ProcessFailedSubmissionsConfig(
       resubmissionLimit,
       searchStatusList,
@@ -53,7 +57,8 @@ trait SchedulerConfig {
       resubmitScheme,
       dateTimeFilter,
       failedStatus,
-      resubmitSuccessStatus
+      resubmitSuccessStatus,
+      streamed
     )
 
 }

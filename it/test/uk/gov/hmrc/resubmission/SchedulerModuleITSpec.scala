@@ -21,13 +21,14 @@ import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
-import scheduler.{PreSubWithoutMetadataQueryImpl, ResubmissionServiceImpl}
+import scheduler.{PreSubWithoutMetadataQueryImpl, ResubmissionServiceImpl, StreamedResubmissionServiceImpl}
 
 class SchedulerModuleITSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite {
 
   override lazy val app: Application = new GuiceApplicationBuilder()
     .configure(
       "schedules.resubmission-service.enabled"                    -> false,
+      "schedules.resubmission-streamed-service.enabled"           -> false,
       "schedules.generate-pre-sub-without-metadata-query.enabled" -> false,
       "auditing.enabled"                                          -> false
     )
@@ -42,6 +43,10 @@ class SchedulerModuleITSpec extends AnyWordSpec with Matchers with GuiceOneAppPe
     "construct PreSubWithoutMetadataQueryImpl" in {
       app.injector.instanceOf[PreSubWithoutMetadataQueryImpl].jobName shouldBe
         "generate-pre-sub-without-metadata-query"
+    }
+
+    "construct StreamedResubmissionServiceImpl" in {
+      app.injector.instanceOf[StreamedResubmissionServiceImpl].jobName shouldBe "resubmission-streamed-service"
     }
   }
 

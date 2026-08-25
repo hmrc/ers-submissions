@@ -17,7 +17,7 @@
 package config
 
 import com.google.inject.AbstractModule
-import scheduler.{PreSubWithoutMetadataQueryImpl, ResubmissionServiceImpl}
+import scheduler.{PreSubWithoutMetadataQueryImpl, ResubmissionServiceImpl, StreamedResubmissionServiceImpl}
 
 class SchedulerModule extends AbstractModule {
 
@@ -25,6 +25,7 @@ class SchedulerModule extends AbstractModule {
     bind(classOf[ResubmissionServiceImpl]).asEagerSingleton() // THIS IS NEEDED TO RUN THE RESUBMISSION SERVICE
     bind(classOf[PreSubWithoutMetadataQueryImpl])
       .asEagerSingleton() // THIS IS NEEDED TO RUN THE QUERY TO FIND PRESUBMISSION RECORDS WITHOUT METADATA
+    bind(classOf[StreamedResubmissionServiceImpl]).asEagerSingleton()
   }
 
 }

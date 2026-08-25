@@ -26,7 +26,7 @@ import play.api.libs.json.{JsError, JsObject, JsPath, JsString, JsSuccess, __}
 import play.api.mvc.Request
 import repositories.MetadataMongoRepository
 import services.audit.AuditEvents
-import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 import utils.LoggingAndExceptions.ErsLogger
 import utils.{ADRSubmission, Session, SubmissionCommon}
 
@@ -45,11 +45,12 @@ class SubmissionService @Inject() (
 )(implicit ec: ExecutionContext)
     extends ErsLogger {
 
-  def callProcessData(ersSummary: ErsSummary, failedStatus: String, successStatus: String)(implicit
+  def callProcessData(ersSummary: ErsSummary, failedStatus: String, successStatus: String, streamed: Boolean = false)(
+    implicit
     request: Request[_],
     hc: HeaderCarrier
   ): ERSEnvelope[Boolean] =
-    processData(ersSummary, failedStatus, successStatus).recover { case error =>
+    processData(ersSummary, failedStatus, successStatus, streamed).recover { case error =>
       metadataRepository.updateStatus(ersSummary.metaData.schemeInfo, failedStatus, Session.id(hc))
       logError(
         s"[SubmissionService][callProcessData] Processing data failed with error: [$error]. Updating transfer status to: [$failedStatus] " +
@@ -58,13 +59,14 @@ class SubmissionService @Inject() (
       false
     }
 
-  def processData(ersSummary: ErsSummary, failedStatus: String, successStatus: String)(implicit
+  def processData(ersSummary: ErsSummary, failedStatus: String, successStatus: String, streamed: Boolean = false)(
+    implicit
     request: Request[_],
     hc: HeaderCarrier
   ): ERSEnvelope[Boolean] =
     for {
       adrData               <- transformData(ersSummary)
-      postSubmissionUpdated <- sendToADRUpdatePostData(ersSummary, adrData, failedStatus, successStatus)
+      postSubmissionUpdated <- sendToADRUpdatePostData(ersSummary, adrData, failedStatus, successStatus, streamed)
     } yield postSubmissionUpdated
 
   def transformData(ersSummary: ErsSummary)(implicit request: Request[_], hc: HeaderCarrier): ERSEnvelope[JsObject] = {
@@ -106,35 +108,52 @@ class SubmissionService @Inject() (
     }
   }
 
-  def sendToADRUpdatePostData(ersSummary: ErsSummary, adrData: JsObject, failedStatus: String, successStatus: String)(
-    implicit hc: HeaderCarrier
+  def sendToADRUpdatePostData(
+    ersSummary: ErsSummary,
+    adrData: JsObject,
+    failedStatus: String,
+    successStatus: String,
+    streamed: Boolean = false
+  )(implicit
+    hc: HeaderCarrier
   ): ERSEnvelope[Boolean] = {
-    val startTime = System.currentTimeMillis()
+    val startTime  = System.currentTimeMillis()
+    val schemeType = ersSummary.metaData.schemeInfo.schemeType
 
-    val result: ERSEnvelope[Boolean] =
-      adrConnector.sendData(adrData, ersSummary.metaData.schemeInfo.schemeType).flatMap { response =>
-        val correlationID: String  = submissionCommon.getCorrelationID(response)
-        val transferStatus: String = response.status match {
-          case ACCEPTED =>
-            metrics.sendToADR(System.currentTimeMillis() - startTime, TimeUnit.MILLISECONDS)
-            metrics.successfulSendToADR()
-            auditEvents.sendToAdrEvent("ErsTransferToAdrResponseReceived", ersSummary, Some(correlationID))
-            logInfo(
-              s"[SubmissionService][sendToADRUpdatePostData] Data transfer to ADR was successful for" +
-                s" ${ersSummary.metaData.schemeInfo.basicLogMessage}, correlationId: $correlationID"
-            )
-            successStatus
-          case _        =>
-            metrics.failedSendToADR()
-            auditEvents.sendToAdrEvent("ErsTransferToAdrFailed", ersSummary)
-            logError(
-              s"[SubmissionService][sendToADRUpdatePostData] Data transfer to ADR failed for ${ersSummary.metaData.schemeInfo.basicLogMessage}," +
-                s" correlationId: $correlationID"
-            )
-            failedStatus
-        }
-        updatePostsubmission(response.status, transferStatus, ersSummary.metaData.schemeInfo)
+    val adrResponse: ERSEnvelope[HttpResponse] =
+      if (streamed) {
+        logInfo(
+          s"[SubmissionService][sendToADRUpdatePostData] Using streamed submission for " +
+            s"${ersSummary.metaData.schemeInfo.basicLogMessage}"
+        )
+        adrConnector.sendDataStreamed(adrData, schemeType)
+      } else {
+        adrConnector.sendData(adrData, schemeType)
       }
+
+    val result: ERSEnvelope[Boolean] = adrResponse.flatMap { response =>
+      val correlationID: String  = submissionCommon.getCorrelationID(response)
+      val transferStatus: String = response.status match {
+        case ACCEPTED =>
+          metrics.sendToADR(System.currentTimeMillis() - startTime, TimeUnit.MILLISECONDS)
+          metrics.successfulSendToADR()
+          auditEvents.sendToAdrEvent("ErsTransferToAdrResponseReceived", ersSummary, Some(correlationID))
+          logInfo(
+            s"[SubmissionService][sendToADRUpdatePostData] Data transfer to ADR was successful for" +
+              s" ${ersSummary.metaData.schemeInfo.basicLogMessage}, correlationId: $correlationID"
+          )
+          successStatus
+        case _        =>
+          metrics.failedSendToADR()
+          auditEvents.sendToAdrEvent("ErsTransferToAdrFailed", ersSummary)
+          logError(
+            s"[SubmissionService][sendToADRUpdatePostData] Data transfer to ADR failed for ${ersSummary.metaData.schemeInfo.basicLogMessage}," +
+              s" correlationId: $correlationID"
+          )
+          failedStatus
+      }
+      updatePostsubmission(response.status, transferStatus, ersSummary.metaData.schemeInfo)
+    }
     result
   }
 
