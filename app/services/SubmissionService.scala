@@ -18,6 +18,7 @@ package services
 
 import common.ERSEnvelope
 import common.ERSEnvelope.ERSEnvelope
+import config.ApplicationConfig
 import connectors.ADRConnector
 import metrics.Metrics
 import models.{ErsSummary, SchemeInfo, SubmissionStatusUpdateError}
@@ -41,7 +42,8 @@ class SubmissionService @Inject() (
   adrSubmission: ADRSubmission,
   submissionCommon: SubmissionCommon,
   auditEvents: AuditEvents,
-  metrics: Metrics
+  metrics: Metrics,
+  applicationConfig: ApplicationConfig
 )(implicit ec: ExecutionContext)
     extends ErsLogger {
 
@@ -109,31 +111,38 @@ class SubmissionService @Inject() (
   def sendToADRUpdatePostData(ersSummary: ErsSummary, adrData: JsObject, failedStatus: String, successStatus: String)(
     implicit hc: HeaderCarrier
   ): ERSEnvelope[Boolean] = {
-    val startTime = System.currentTimeMillis()
-
+    val startTime                    = System.currentTimeMillis()
     val result: ERSEnvelope[Boolean] =
-      adrConnector.sendData(adrData, ersSummary.metaData.schemeInfo.schemeType).flatMap { response =>
-        val correlationID: String  = submissionCommon.getCorrelationID(response)
-        val transferStatus: String = response.status match {
-          case ACCEPTED =>
-            metrics.sendToADR(System.currentTimeMillis() - startTime, TimeUnit.MILLISECONDS)
-            metrics.successfulSendToADR()
-            auditEvents.sendToAdrEvent("ErsTransferToAdrResponseReceived", ersSummary, Some(correlationID))
-            logInfo(
-              s"[SubmissionService][sendToADRUpdatePostData] Data transfer to ADR was successful for" +
-                s" ${ersSummary.metaData.schemeInfo.basicLogMessage}, correlationId: $correlationID"
-            )
-            successStatus
-          case _        =>
-            metrics.failedSendToADR()
-            auditEvents.sendToAdrEvent("ErsTransferToAdrFailed", ersSummary)
-            logError(
-              s"[SubmissionService][sendToADRUpdatePostData] Data transfer to ADR failed for ${ersSummary.metaData.schemeInfo.basicLogMessage}," +
-                s" correlationId: $correlationID"
-            )
-            failedStatus
+      if (applicationConfig.adrSubmissionPaused) {
+        logInfo(
+          s"[SubmissionService][sendToADRUpdatePostData] not initiating Data transfer to ADR due to an outage, setting the response status as 0" +
+            s" ${ersSummary.metaData.schemeInfo.basicLogMessage}"
+        )
+        updatePostsubmission(0, failedStatus, ersSummary.metaData.schemeInfo)
+      } else {
+        adrConnector.sendData(adrData, ersSummary.metaData.schemeInfo.schemeType).flatMap { response =>
+          val correlationID: String  = submissionCommon.getCorrelationID(response)
+          val transferStatus: String = response.status match {
+            case ACCEPTED =>
+              metrics.sendToADR(System.currentTimeMillis() - startTime, TimeUnit.MILLISECONDS)
+              metrics.successfulSendToADR()
+              auditEvents.sendToAdrEvent("ErsTransferToAdrResponseReceived", ersSummary, Some(correlationID))
+              logInfo(
+                s"[SubmissionService][sendToADRUpdatePostData] Data transfer to ADR was successful for" +
+                  s" ${ersSummary.metaData.schemeInfo.basicLogMessage}, correlationId: $correlationID"
+              )
+              successStatus
+            case _        =>
+              metrics.failedSendToADR()
+              auditEvents.sendToAdrEvent("ErsTransferToAdrFailed", ersSummary)
+              logError(
+                s"[SubmissionService][sendToADRUpdatePostData] Data transfer to ADR failed for ${ersSummary.metaData.schemeInfo.basicLogMessage}," +
+                  s" correlationId: $correlationID"
+              )
+              failedStatus
+          }
+          updatePostsubmission(response.status, transferStatus, ersSummary.metaData.schemeInfo)
         }
-        updatePostsubmission(response.status, transferStatus, ersSummary.metaData.schemeInfo)
       }
     result
   }

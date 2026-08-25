@@ -50,6 +50,9 @@ class ApplicationConfig @Inject() (serviceConfig: ServicesConfig) {
   lazy val schedulerSchemeRefListEnabled: Boolean =
     serviceConfig.getBoolean("schedules.resubmission-service.schemaRefsFilter.enabled")
 
+  lazy val adrSubmissionPaused: Boolean =
+    serviceConfig.getBoolean("schedules.adrSubmission.paused")
+
   lazy val schedulerSchemeRefList: List[String] =
     Try(serviceConfig.getString("schedules.resubmission-service.schemaRefsFilter.filter").split(",").toList)
       .getOrElse(List())

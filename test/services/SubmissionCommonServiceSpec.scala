@@ -18,6 +18,7 @@ package services
 
 import common.ERSEnvelope
 import common.ERSEnvelope.ERSEnvelope
+import config.ApplicationConfig
 import connectors.ADRConnector
 import fixtures.Fixtures
 import helpers.ERSTestHelper
@@ -52,6 +53,7 @@ class SubmissionCommonServiceSpec extends ERSTestHelper with BeforeAndAfterEach 
   val adrSubmission: ADRSubmission                    = mock[ADRSubmission]
   val submissionCommon: SubmissionCommon              = mock[SubmissionCommon]
   val metrics: Metrics                                = mock[Metrics]
+  val mockApplicationConfig: ApplicationConfig        = mock[ApplicationConfig]
 
   override def beforeEach(): Unit = {
     super.beforeEach()
@@ -70,7 +72,8 @@ class SubmissionCommonServiceSpec extends ERSTestHelper with BeforeAndAfterEach 
           adrSubmission,
           submissionCommon,
           auditEvents,
-          metrics
+          metrics,
+          mockApplicationConfig
         ) {
 
           override def processData(ersSummary: ErsSummary, failedStatus: String, successStatus: String)(implicit
@@ -92,7 +95,8 @@ class SubmissionCommonServiceSpec extends ERSTestHelper with BeforeAndAfterEach 
           adrSubmission,
           submissionCommon,
           auditEvents,
-          metrics
+          metrics,
+          mockApplicationConfig
         ) {
 
           when(mockMetadataRepository.updateStatus(any[SchemeInfo](), anyString(), any()))
@@ -118,7 +122,8 @@ class SubmissionCommonServiceSpec extends ERSTestHelper with BeforeAndAfterEach 
           adrSubmission,
           submissionCommon,
           auditEvents,
-          metrics
+          metrics,
+          mockApplicationConfig
         ) {
 
           when(mockMetadataRepository.updateStatus(any[SchemeInfo](), anyString(), any()))
@@ -145,7 +150,8 @@ class SubmissionCommonServiceSpec extends ERSTestHelper with BeforeAndAfterEach 
         adrSubmission,
         submissionCommon,
         auditEvents,
-        metrics
+        metrics,
+        mockApplicationConfig
       ) {
 
         override def transformData(ersSummary: ErsSummary)(implicit
@@ -176,7 +182,8 @@ class SubmissionCommonServiceSpec extends ERSTestHelper with BeforeAndAfterEach 
         adrSubmission,
         submissionCommon,
         auditEvents,
-        metrics
+        metrics,
+        mockApplicationConfig
       ) {}
 
     "return created json" in {
@@ -223,7 +230,8 @@ class SubmissionCommonServiceSpec extends ERSTestHelper with BeforeAndAfterEach 
         adrSubmission,
         submissionCommon,
         auditEvents,
-        metrics
+        metrics,
+        mockApplicationConfig
       ) {
 
         override def updatePostsubmission(adrSubmissionStatus: Int, status: String, ersSummary: SchemeInfo)(implicit
@@ -302,7 +310,8 @@ class SubmissionCommonServiceSpec extends ERSTestHelper with BeforeAndAfterEach 
         adrSubmission,
         submissionCommon,
         auditEvents,
-        metrics
+        metrics,
+        mockApplicationConfig
       ) {}
 
     "true if update is successful and sending to ADR returned 202" in {
