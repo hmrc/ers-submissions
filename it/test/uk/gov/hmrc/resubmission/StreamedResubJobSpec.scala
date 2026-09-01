@@ -26,6 +26,7 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 import org.scalatestplus.play.guice.GuiceOneServerPerSuite
 import uk.gov.hmrc.{CSOP, FakeErsStubService, Fixtures}
+import com.github.tomakehurst.wiremock.client.WireMock.{containing, postRequestedFor, urlMatching}
 
 import java.time.format.DateTimeFormatter
 import java.time.{Instant, LocalDate, ZoneId}
@@ -104,6 +105,17 @@ class StreamedResubJobSpec extends AnyWordSpecLike with Matchers with GuiceOneSe
 
         val firstUpdateCompleted: Either[ERSError, Boolean] = await(getJob.scheduledMessage.service.invoke.value)
         firstUpdateCompleted shouldBe Right(true)
+
+        stubServer.verify(
+          postRequestedFor(urlMatching("/.*"))
+            .withHeader("Content-Type", containing("application/json"))
+        )
+
+        stubServer.verify(
+          0,
+          postRequestedFor(urlMatching("/.*"))
+            .withHeader("Content-Type", containing("octet-stream"))
+        )
 
         countMetadataRecordsWithSelector(Filters.empty())                       shouldBe 7
         countMetadataRecordsWithSelector(successResubmitTransferStatusSelector) shouldBe 3 // 2 resubmissions
