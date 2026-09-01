@@ -28,6 +28,8 @@ import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, StringContextOps}
 import uk.gov.hmrc.http.HttpReads.Implicits._
 import uk.gov.hmrc.http.client.HttpClientV2
 import utils.{CorrelationIdHelper, ErrorHandlerHelper}
+import play.api.http.HeaderNames.CONTENT_TYPE
+import play.api.http.MimeTypes.JSON
 
 import javax.inject.Inject
 import scala.concurrent.ExecutionContext
@@ -81,8 +83,9 @@ class ADRConnector @Inject() (applicationConfig: ApplicationConfig, http: HttpCl
 
     http
       .post(url"$url")
-      .withBody(streamData)
       .setHeader(headersForRequest: _*)
+      .setHeader(CONTENT_TYPE -> JSON)
+      .withBody(streamData)
       .execute[HttpResponse]
       .map(_.asRight)
       .recover { case ex =>
