@@ -109,6 +109,7 @@ class StreamedResubJobSpec extends AnyWordSpecLike with Matchers with GuiceOneSe
         stubServer.verify(
           postRequestedFor(urlMatching("/.*"))
             .withHeader("Content-Type", containing("application/json"))
+            .withHeader("Content-Encoding", containing("gzip"))
         )
 
         stubServer.verify(
