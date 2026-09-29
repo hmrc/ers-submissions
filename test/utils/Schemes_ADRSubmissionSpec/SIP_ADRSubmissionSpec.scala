@@ -1439,6 +1439,77 @@ class SIP_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with E
                                    |}""".stripMargin)
     }
 
+    // SIP_Awards_V7
+
+    "create valid JSON for V7 version with withAllFields = true, sharesListedOnSE = \"no\", marketValueAgreedHMRC = (\"yes\" or \"no\")" in {
+      val configData: Config = Common.loadConfiguration(SIP.schemeType, "SIP_Awards_V7", mockConfigUtils)
+
+      val result = mockAdrSubmission.buildJson(
+        configData,
+        ListBuffer(
+          SIP.buildAwards(withAllFields = true, sharesListedOnSE = "no", marketValueAgreedHMRC = "yes"),
+          SIP.buildAwards(withAllFields = true, sharesListedOnSE = "no", marketValueAgreedHMRC = "no")
+        )
+      )
+
+      result shouldBe Json.parse("""{
+                                   |"sharesAcquiredOrAwardedInYear":true,
+                                   |"award":{
+                                   |"awards":[
+                                   |{
+                                   |"dateOfEvent":"2015-12-09",
+                                   |"numberOfIndividualsAwardedShares":1000,
+                                   |"awarded":{
+                                   |"awardedEvents":[
+                                   |{
+                                   |"typeOfAward":"2",
+                                   |"freePerformanceConditions":false,
+                                   |"matchingRatio":"2/1",
+                                   |"marketValuePerShareOnAcquisitionOrAward":10.1234,
+                                   |"totalNumberOfSharesAwarded":100.0,
+                                   |"totalValueOfSharesAwarded":10.1234,
+                                   |"totalFreeAwardsPerEmployeeGreaterThan3600":1000.0,
+                                   |"totalFreeAwardsPerEmployeeAtLimitOf3000":1000.0,
+                                   |"totalPartnershipAwardsPerEmployeeGreaterThan1800":1000.0,
+                                   |"totalPartnershipAwardsPerEmployeeAtLimitOf1500":1000.0,
+                                   |"totalMatchingAwardsPerEmployeeGreaterThan3600":1000.0,
+                                   |"totalMatchingAwardsPerEmployeeAtLimitOf3000":100.0,
+                                   |"sharesListedOnSE":false,
+                                   |"marketValueAgreedHMRC":true,
+                                   |"hmrcRef":"aa12345678"
+                                   |}
+                                   |]
+                                   |}
+                                   |},
+                                   |{
+                                   |"dateOfEvent":"2015-12-09",
+                                   |"numberOfIndividualsAwardedShares":1000,
+                                   |"awarded":{
+                                   |"awardedEvents":[
+                                   |{
+                                   |"typeOfAward":"2",
+                                   |"freePerformanceConditions":false,
+                                   |"matchingRatio":"2/1",
+                                   |"marketValuePerShareOnAcquisitionOrAward":10.1234,
+                                   |"totalNumberOfSharesAwarded":100.0,
+                                   |"totalValueOfSharesAwarded":10.1234,
+                                   |"totalFreeAwardsPerEmployeeGreaterThan3600":1000.0,
+                                   |"totalFreeAwardsPerEmployeeAtLimitOf3000":1000.0,
+                                   |"totalPartnershipAwardsPerEmployeeGreaterThan1800":1000.0,
+                                   |"totalPartnershipAwardsPerEmployeeAtLimitOf1500":1000.0,
+                                   |"totalMatchingAwardsPerEmployeeGreaterThan3600":1000.0,
+                                   |"totalMatchingAwardsPerEmployeeAtLimitOf3000":100.0,
+                                   |"sharesListedOnSE":false,
+                                   |"marketValueAgreedHMRC":false
+                                   |}
+                                   |]
+                                   |}
+                                   |}
+                                   |]
+                                   |}
+                                   |}""".stripMargin)
+    }
+
   }
 
   // SIP_Out_V4
@@ -1560,7 +1631,70 @@ class SIP_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with E
                                    |}""".stripMargin)
     }
 
+    // SIP_Out_V7
     "create valid JSON with withAllFields = true, sharesHeld = \"no\", payeApplied = (\"yes\" or \"no\")" in {
+
+      val result = mockAdrSubmission.buildJson(
+        configData,
+        ListBuffer(
+          SIP.buildOutOfPlan(withAllFields = true, sharesHeld = "no", payeApplied = "yes"),
+          SIP.buildOutOfPlan(withAllFields = true, sharesHeld = "no", payeApplied = "no")
+        )
+      )
+
+      result shouldBe Json.parse("""
+                                   |{
+                                   |"sharesComeOutOfThePlanInYear":true,
+                                   |"outOfPlan":{
+                                   |"outOfPlanEvents":[
+                                   |{
+                                   |"dateOfEvent":"2011-10-13",
+                                   |"individual":{
+                                   |"firstName":"First",
+                                   |"secondName":"Second",
+                                   |"surname":"Last",
+                                   |"nino":"NINO",
+                                   |"payeReference":"123/XZ55555555"
+                                   |},
+                                   |"numberOfFreeSharesOutOfPlan":100.0,
+                                   |"numberOfPartnershipSharesOutOfPlan":100.0,
+                                   |"numberOfMatchingSharesOutOfPlan":100.0,
+                                   |"numberOfDividendSharesOutOfPlan":100.0,
+                                   |"marketValuePerFreeShare":10.1234,
+                                   |"marketValuePerPartnershipShare":10.1234,
+                                   |"marketValuePerMatchingShare":10.1234,
+                                   |"marketValuePerDividendShare":10.1234,
+                                   |"sharesHeldInPlanForMoreThan5Years":false,
+                                   |"payeOperatedApplied":true
+                                   |},
+                                   |{
+                                   |"dateOfEvent":"2011-10-13",
+                                   |"individual":{
+                                   |"firstName":"First",
+                                   |"secondName":"Second",
+                                   |"surname":"Last",
+                                   |"nino":"NINO",
+                                   |"payeReference":"123/XZ55555555"
+                                   |},
+                                   |"numberOfFreeSharesOutOfPlan":100.0,
+                                   |"numberOfPartnershipSharesOutOfPlan":100.0,
+                                   |"numberOfMatchingSharesOutOfPlan":100.0,
+                                   |"numberOfDividendSharesOutOfPlan":100.0,
+                                   |"marketValuePerFreeShare":10.1234,
+                                   |"marketValuePerPartnershipShare":10.1234,
+                                   |"marketValuePerMatchingShare":10.1234,
+                                   |"marketValuePerDividendShare":10.1234,
+                                   |"sharesHeldInPlanForMoreThan5Years":false,
+                                   |"payeOperatedApplied":false,
+                                   |"qualifyForTaxRelief":false
+                                   |}
+                                   |]
+                                   |}
+                                   |}""".stripMargin)
+    }
+
+    "create valid JSON for V7 version with withAllFields = true, sharesHeld = \"no\", payeApplied = (\"yes\" or \"no\")" in {
+      val configData: Config = Common.loadConfiguration(SIP.schemeType, "SIP_Out_V7", mockConfigUtils)
 
       val result = mockAdrSubmission.buildJson(
         configData,
