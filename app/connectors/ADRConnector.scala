@@ -21,14 +21,14 @@ import cats.syntax.all._
 import com.typesafe.config.ConfigFactory
 import common.ERSEnvelope.ERSEnvelope
 import config.ApplicationConfig
-import org.apache.pekko.stream.scaladsl.{Compression, Source}
+import org.apache.pekko.stream.scaladsl.Source
 import org.apache.pekko.util.ByteString
 import play.api.libs.json.{JsObject, Json}
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, StringContextOps}
 import uk.gov.hmrc.http.HttpReads.Implicits._
 import uk.gov.hmrc.http.client.HttpClientV2
 import utils.{CorrelationIdHelper, ErrorHandlerHelper}
-import play.api.http.HeaderNames.{CONTENT_ENCODING, CONTENT_TYPE}
+import play.api.http.HeaderNames.CONTENT_TYPE
 import play.api.http.MimeTypes.JSON
 
 import javax.inject.Inject
@@ -73,13 +73,11 @@ class ADRConnector @Inject() (applicationConfig: ApplicationConfig, http: HttpCl
   ): ERSEnvelope[HttpResponse] = EitherT {
     val url: String                       = buildEtmpPath(s"${applicationConfig.adrFullSubmissionURI}/${schemeType.toLowerCase()}")
     val payload: ByteString               = ByteString(Json.stringify(adrData))
-    val streamData: Source[ByteString, _] = Source.single(payload).via(Compression.gzip)
-
     logInfo(
-      s"[ADRConnector][sendDataStreamed] Streaming ${payload.length} uncompressed bytes as gzip for scheme type [$schemeType]"
+      s"[ADRConnector][sendDataStreamed] Streaming ${payload.length} bytes as a single chunk for scheme type [$schemeType]"
     )
-
-    val headersForRequest = hc
+    val streamData: Source[ByteString, _] = Source.single(payload)
+    val headersForRequest                 = hc
       .withExtraHeaders(explicitHeaders(): _*)
       .headersForUrl(headerCarrierConfig)(url)
 
@@ -87,7 +85,6 @@ class ADRConnector @Inject() (applicationConfig: ApplicationConfig, http: HttpCl
       .post(url"$url")
       .setHeader(headersForRequest: _*)
       .setHeader(CONTENT_TYPE -> JSON)
-      .setHeader(CONTENT_ENCODING -> "gzip")
       .withBody(streamData)
       .execute[HttpResponse]
       .map(_.asRight)
