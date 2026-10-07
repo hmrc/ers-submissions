@@ -86,7 +86,8 @@ case class MetaDataSelectedSchemeRefLogs(selectedErsSummary: Seq[ErsSummary]) ex
     if (selectedErsSummary.isEmpty) {
       s"$prefix MetaDataSelectedSchemeRefLogs - Could not find any records for the selected scheme reference"
     } else if (numberSelectedErsRecords > 50) {
-      s"$prefix MetaDataSelectedSchemeRefLogs - Selected schemes have more then 50 records ($numberSelectedErsRecords records selected)"
+      s"$prefix MetaDataSelectedSchemeRefLogs - Selected schemes have more then 50 records ($numberSelectedErsRecords records selected)" +
+        s", here are 50: ${selectedErsSummary.take(50).map(logLine).mkString("\n", "\n", "\n")}"
     } else {
       s"$prefix MetaDataSelectedSchemeRefLogs - Selected scheme details: ${selectedErsSummary.map(logLine).mkString("\n", "\n", "\n")}"
     }
@@ -109,7 +110,8 @@ case class PreSubSelectedSchemeRefLogs(selectedErsSummary: Seq[(SchemeData, Loca
     if (selectedErsSummary.isEmpty) {
       s"$prefix PreSubSelectedSchemeRefLogs - Could not find any records for the selected scheme reference"
     } else if (numberSelectedErsRecords > 50) {
-      s"$prefix PreSubSelectedSchemeRefLogs - Selected schemes have more then 50 records ($numberSelectedErsRecords records selected)"
+      s"$prefix PreSubSelectedSchemeRefLogs - Selected schemes have more then 50 records ($numberSelectedErsRecords " +
+        s"records selected), here are 50: ${selectedErsSummary.take(50).map(logLine).mkString("\n", "\n", "\n")}"
     } else {
       s"$prefix PreSubSelectedSchemeRefLogs - Selected scheme details: ${selectedErsSummary.map(logLine).mkString("\n", "\n", "\n")}"
     }

@@ -354,8 +354,15 @@ class ResubPresubmissionServiceSpec extends ERSTestHelper with BeforeAndAfterEac
           )
         )
 
+      val schemeRefLog = Seq
+        .fill(50)(
+          "schemaRef: 123, schemaType: 123, taxYear: 123, timestamp: 2023-10-07T10:15:30Z, createdAt: 2015-01-01T10:00"
+        )
+        .mkString("\n", "\n", "\n")
+
       val expectedOutput =
-        s"[ResubmissionService] PreSubSelectedSchemeRefLogs - Selected schemes have more then 50 records (51 records selected)"
+        s"[ResubmissionService] PreSubSelectedSchemeRefLogs - Selected schemes have more then 50 records (51 records " +
+          s"selected), here are 50: $schemeRefLog"
 
       val result: String = await(
         resubPresubmissionService.getPreSubSelectedSchemeRefDetailsMessage(processFailedSubmissionsConfig).value
@@ -496,8 +503,15 @@ class ResubPresubmissionServiceSpec extends ERSTestHelper with BeforeAndAfterEac
       when(mockMetadataMongoRepository.getStatusForSelectedSchemes(anyString(), any()))
         .thenReturn(ERSEnvelope(Seq.fill(51)(getSimpleErsSummary(schemeInfo)).map(Json.toJson(_).as[JsObject])))
 
+      val schemeRefLog = Seq
+        .fill(50)(
+          "schemaRef: 123, schemaType: 123, taxYear: 123, transferStatus: saved, timestamp: 2023-10-07T10:15:30Z"
+        )
+        .mkString("\n", "\n", "\n")
+
       val expectedOutput =
-        s"[ResubmissionService] MetaDataSelectedSchemeRefLogs - Selected schemes have more then 50 records (51 records selected)"
+        s"[ResubmissionService] MetaDataSelectedSchemeRefLogs - Selected schemes have more then 50 records (51 records " +
+          s"selected), here are 50: $schemeRefLog"
 
       val result: String = await(
         resubPresubmissionService.getMetadataSelectedSchemeRefDetailsMessage(processFailedSubmissionsConfig).value
