@@ -18,7 +18,6 @@ package utils.LoggingAndExceptions
 
 import fixtures.Fixtures
 import helpers.ERSTestHelper
-import utils.LoggingAndExceptions.ErsDataMessages
 
 class ErsDataMessagesSpec extends ERSTestHelper {
 

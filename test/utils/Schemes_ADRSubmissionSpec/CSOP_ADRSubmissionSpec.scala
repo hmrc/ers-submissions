@@ -39,8 +39,8 @@ class CSOP_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with 
   val mockConfigUtils: ConfigUtils                   = app.injector.instanceOf[ConfigUtils]
   val mockPresubmissionService: PresubmissionService = mock[PresubmissionService]
 
-  implicit val hc: HeaderCarrier              = new HeaderCarrier()
-  implicit val request: FakeRequest[JsObject] = FakeRequest().withBody(Fixtures.metadataJson)
+  given hc: HeaderCarrier              = new HeaderCarrier()
+  given request: FakeRequest[JsObject] = FakeRequest().withBody(Fixtures.metadataJson)
 
   val adrSubmission: ADRSubmission = new ADRSubmission(
     mockSubmissionCommon,
@@ -58,12 +58,12 @@ class CSOP_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with 
     "return a valid NilReturn without ammends" in {
 
       when(
-        mockPresubmissionService.getJson(any[SchemeInfo]())(any())
+        mockPresubmissionService.getJson(any[SchemeInfo]())(using any())
       ).thenReturn(
         ERSEnvelope(Future.successful(List()))
       )
 
-      val result = await(adrSubmission.generateSubmission(CSOP.metadataNilReturnWithoutAltAmmends)(request, hc).value)
+      val result = await(adrSubmission.generateSubmission(CSOP.metadataNilReturnWithoutAltAmmends)(using request, hc).value)
       result.value - "acknowledgementReference" shouldBe Json.parse("""{
           |"regime":"ERS",
           |"schemeType":"CSOP",
@@ -109,12 +109,12 @@ class CSOP_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with 
     "return a valid NilReturn without some ammends" in {
 
       when(
-        mockPresubmissionService.getJson(any[SchemeInfo]())(any())
+        mockPresubmissionService.getJson(any[SchemeInfo]())(using any())
       ).thenReturn(
         ERSEnvelope(Future.successful(List()))
       )
 
-      val result = await(adrSubmission.generateSubmission(CSOP.metadataNilReturnWithSomeAltAmmends)(request, hc).value)
+      val result = await(adrSubmission.generateSubmission(CSOP.metadataNilReturnWithSomeAltAmmends)(using request, hc).value)
       result.value - "acknowledgementReference" shouldBe Json.parse("""{
           |"regime":"ERS",
           |"schemeType":"CSOP",
@@ -173,12 +173,12 @@ class CSOP_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with 
     "return a valid NilReturn with list of all ammends" in {
 
       when(
-        mockPresubmissionService.getJson(any[SchemeInfo]())(any())
+        mockPresubmissionService.getJson(any[SchemeInfo]())(using any())
       ).thenReturn(
         ERSEnvelope(Future.successful(List()))
       )
 
-      val result = await(adrSubmission.generateSubmission(CSOP.metadataNilReturnWithAllAltAmmends)(request, hc).value)
+      val result = await(adrSubmission.generateSubmission(CSOP.metadataNilReturnWithAllAltAmmends)(using request, hc).value)
       result.value - "acknowledgementReference" shouldBe Json.parse("""{
           |"regime":"ERS",
           |"schemeType":"CSOP",
@@ -243,12 +243,12 @@ class CSOP_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with 
     "create valid json for not NulReturn without data with participants" in {
 
       when(
-        mockPresubmissionService.getJson(any[SchemeInfo]())(any())
+        mockPresubmissionService.getJson(any[SchemeInfo]())(using any())
       ).thenReturn(
         ERSEnvelope(Future.successful(List()))
       )
 
-      val result = await(adrSubmission.generateSubmission(CSOP.metadata)(request, hc).value)
+      val result = await(adrSubmission.generateSubmission(CSOP.metadata)(using request, hc).value)
       result.value - "acknowledgementReference" shouldBe Json.parse("""{
           |"regime":"ERS",
           |"schemeType":"CSOP",
@@ -317,7 +317,7 @@ class CSOP_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with 
     "create valid json for not NulReturn with OptinsGranted and participants" in {
 
       when(
-        mockPresubmissionService.getJson(any[SchemeInfo]())(any())
+        mockPresubmissionService.getJson(any[SchemeInfo]())(using any())
       ).thenReturn(
         ERSEnvelope(
           Future.successful(
@@ -333,7 +333,7 @@ class CSOP_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with 
         )
       )
 
-      val result = await(adrSubmission.generateSubmission(CSOP.metadata)(request, hc).value)
+      val result = await(adrSubmission.generateSubmission(CSOP.metadata)(using request, hc).value)
       result.value - "acknowledgementReference" shouldBe Json.parse("""{
           |"regime":"ERS",
           |"schemeType":"CSOP",
@@ -415,7 +415,7 @@ class CSOP_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with 
     "create valid json for not NulReturn with OptinsGranted and participants from 2 records of sheet data" in {
 
       when(
-        mockPresubmissionService.getJson(any[SchemeInfo]())(any())
+        mockPresubmissionService.getJson(any[SchemeInfo]())(using any())
       ).thenReturn(
         ERSEnvelope(
           Future.successful(
@@ -437,7 +437,7 @@ class CSOP_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with 
         )
       )
 
-      val result = await(adrSubmission.generateSubmission(CSOP.metadata)(request, hc).value)
+      val result = await(adrSubmission.generateSubmission(CSOP.metadata)(using request, hc).value)
       result.value - "acknowledgementReference" shouldBe Json.parse("""{
           |"regime":"ERS",
           |"schemeType":"CSOP",
@@ -528,7 +528,7 @@ class CSOP_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with 
     "create valid json for not NilReturn with Released and participants" in {
 
       when(
-        mockPresubmissionService.getJson(any[SchemeInfo]())(any())
+        mockPresubmissionService.getJson(any[SchemeInfo]())(using any())
       ).thenReturn(
         ERSEnvelope(
           Future.successful(
@@ -544,7 +544,7 @@ class CSOP_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with 
         )
       )
 
-      val result = await(adrSubmission.generateSubmission(CSOP.metadata)(request, hc).value)
+      val result = await(adrSubmission.generateSubmission(CSOP.metadata)(using request, hc).value)
       result.value - "acknowledgementReference" shouldBe Json.parse("""{
           |"regime":"ERS",
           |"schemeType":"CSOP",
@@ -630,7 +630,7 @@ class CSOP_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with 
     "create valid json for not NilReturn with Released and participants from 2 records of sheet data" in {
 
       when(
-        mockPresubmissionService.getJson(any[SchemeInfo]())(any())
+        mockPresubmissionService.getJson(any[SchemeInfo]())(using any())
       ).thenReturn(
         ERSEnvelope(
           Future.successful(
@@ -652,7 +652,7 @@ class CSOP_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with 
         )
       )
 
-      val result = await(adrSubmission.generateSubmission(CSOP.metadata)(request, hc).value)
+      val result = await(adrSubmission.generateSubmission(CSOP.metadata)(using request, hc).value)
       result.value - "acknowledgementReference" shouldBe Json.parse("""{
           |"regime":"ERS",
           |"schemeType":"CSOP",
@@ -748,7 +748,7 @@ class CSOP_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with 
     "create valid json for not NilReturn with OptionsExercised and participants" in {
 
       when(
-        mockPresubmissionService.getJson(any[SchemeInfo]())(any())
+        mockPresubmissionService.getJson(any[SchemeInfo]())(using any())
       ).thenReturn(
         ERSEnvelope(
           Future.successful(
@@ -773,7 +773,7 @@ class CSOP_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with 
         )
       )
 
-      val result = await(adrSubmission.generateSubmission(CSOP.metadata)(request, hc).value)
+      val result = await(adrSubmission.generateSubmission(CSOP.metadata)(using request, hc).value)
       result.value - "acknowledgementReference" shouldBe Json.parse("""{
           |"regime":"ERS",
           |"schemeType":"CSOP",
@@ -868,7 +868,7 @@ class CSOP_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with 
     "create valid json for not NilReturn with OptionsExercised and participants from 2 records of sheet data" in {
 
       when(
-        mockPresubmissionService.getJson(any[SchemeInfo]())(any())
+        mockPresubmissionService.getJson(any[SchemeInfo]())(using any())
       ).thenReturn(
         ERSEnvelope(
           Future.successful(
@@ -908,7 +908,7 @@ class CSOP_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with 
         )
       )
 
-      val result = await(adrSubmission.generateSubmission(CSOP.metadata)(request, hc).value)
+      val result = await(adrSubmission.generateSubmission(CSOP.metadata)(using request, hc).value)
       result.value - "acknowledgementReference" shouldBe Json.parse("""{
           |"regime":"ERS",
           |"schemeType":"CSOP",
@@ -1025,7 +1025,7 @@ class CSOP_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with 
     "create valid json for not NilReturn with participants, ammends, OptinsGranted, Released and OptionsExercised" in {
 
       when(
-        mockPresubmissionService.getJson(any[SchemeInfo]())(any())
+        mockPresubmissionService.getJson(any[SchemeInfo]())(using any())
       ).thenReturn(
         ERSEnvelope(
           Future.successful(
@@ -1062,7 +1062,7 @@ class CSOP_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with 
         )
       )
 
-      val result = await(adrSubmission.generateSubmission(CSOP.metadataWithAllAmmends)(request, hc).value)
+      val result = await(adrSubmission.generateSubmission(CSOP.metadataWithAllAmmends)(using request, hc).value)
       result.value - "acknowledgementReference" shouldBe Json.parse("""{
           |"regime":"ERS",
           |"schemeType":"CSOP",
@@ -1206,7 +1206,7 @@ class CSOP_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with 
     "create valid json for not NilReturn with participants, ammends, OptinsGranted, Released and OptionsExercised from 2 records for each sheet" in {
 
       when(
-        mockPresubmissionService.getJson(any[SchemeInfo]())(any())
+        mockPresubmissionService.getJson(any[SchemeInfo]())(using any())
       ).thenReturn(
         ERSEnvelope(
           Future.successful(
@@ -1270,7 +1270,7 @@ class CSOP_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with 
         )
       )
 
-      val result = await(adrSubmission.generateSubmission(CSOP.metadataWithAllAmmends)(request, hc).value)
+      val result = await(adrSubmission.generateSubmission(CSOP.metadataWithAllAmmends)(using request, hc).value)
       result.value - "acknowledgementReference" shouldBe Json.parse("""{
           |"regime":"ERS",
           |"schemeType":"CSOP",

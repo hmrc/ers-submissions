@@ -41,7 +41,7 @@ trait DateTimeFormats {
 
   private val dateTimeWrite: Writes[Instant] = MongoJavatimeFormats.instantWrites
 
-  implicit val dateTimeFormats: Format[Instant] = Format(dateTimeRead, dateTimeWrite)
+  given dateTimeFormats: Format[Instant] = Format(dateTimeRead, dateTimeWrite)
 }
 
 object DateTimeFormats extends DateTimeFormats

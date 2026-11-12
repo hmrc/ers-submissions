@@ -30,14 +30,14 @@ import scala.concurrent.ExecutionContext
 import scala.util.Try
 
 @Singleton
-class PresubmissionService @Inject() (presubmissionRepository: PresubmissionMongoRepository)(implicit
+class PresubmissionService @Inject() (presubmissionRepository: PresubmissionMongoRepository)(using
   ec: ExecutionContext
 ) extends ErsLogger {
 
-  def storeJson(schemeData: SchemeData)(implicit hc: HeaderCarrier): ERSEnvelope[Boolean] =
+  def storeJson(schemeData: SchemeData)(using hc: HeaderCarrier): ERSEnvelope[Boolean] =
     presubmissionRepository.storeJson(schemeData, Session.id(hc))
 
-  def getJson(schemeInfo: SchemeInfo)(implicit hc: HeaderCarrier): ERSEnvelope[scala.Seq[SchemeData]] =
+  def getJson(schemeInfo: SchemeInfo)(using hc: HeaderCarrier): ERSEnvelope[scala.Seq[SchemeData]] =
     presubmissionRepository.getJson(schemeInfo, Session.id(hc)).flatMap { result =>
       if (result.nonEmpty) {
         logInfo(
@@ -61,7 +61,7 @@ class PresubmissionService @Inject() (presubmissionRepository: PresubmissionMong
       }
     }
 
-  def removeJson(schemeInfo: SchemeInfo)(implicit hc: HeaderCarrier): ERSEnvelope[Boolean] =
+  def removeJson(schemeInfo: SchemeInfo)(using hc: HeaderCarrier): ERSEnvelope[Boolean] =
     presubmissionRepository.removeJson(schemeInfo, Session.id(hc)).flatMap {
       case result if result.wasAcknowledged() && result.getDeletedCount > 0 =>
         logInfo(
@@ -80,7 +80,7 @@ class PresubmissionService @Inject() (presubmissionRepository: PresubmissionMong
         ERSEnvelope(false)
     }
 
-  def compareSheetsNumber(expectedSheets: Int, schemeInfo: SchemeInfo)(implicit
+  def compareSheetsNumber(expectedSheets: Int, schemeInfo: SchemeInfo)(using
     hc: HeaderCarrier
   ): ERSEnvelope[(Boolean, Long)] =
     presubmissionRepository.count(schemeInfo, Session.id(hc)).map { existingSheets =>

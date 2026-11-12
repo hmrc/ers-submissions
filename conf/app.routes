@@ -8,10 +8,10 @@ POST        /:empRef/submit-presubmission                       @controllers.Rec
 # Used by csv files
 POST        /v2/:empRef/submit-presubmission                    @controllers.ReceivePresubmissionController.receivePresubmissionJsonV2(empRef: String)
 
-POST        /submit-metadata                                    @controllers.SubmissionController.receiveMetadataJson
+POST        /submit-metadata                                    @controllers.SubmissionController.receiveMetadataJson()
 
-POST        /remove-presubmission                               @controllers.PresubmissionController.removePresubmissionJson
+POST        /remove-presubmission                               @controllers.PresubmissionController.removePresubmissionJson()
 
-POST        /save-metadata                                      @controllers.SubmissionController.saveMetadata
+POST        /save-metadata                                      @controllers.SubmissionController.saveMetadata()
 
 POST        /check-for-presubmission/:validatedSheets           @controllers.PresubmissionController.checkForExistingPresubmission(validatedSheets: Int)

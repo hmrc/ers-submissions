@@ -49,9 +49,7 @@ object ERSRequest {
 
       override def method: String = "POST"
 
-      override def headers: Headers = new Headers(Seq()) {
-        protected val data: Seq[(String, Seq[String])] = Seq()
-      }
+      override def headers: Headers = new Headers(Seq())
 
       override def attrs: TypedMap =
         TypedMap(

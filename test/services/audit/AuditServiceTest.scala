@@ -22,15 +22,14 @@ import org.mockito.Mockito.verify
 import org.mockito.internal.verification.VerificationModeFactory
 import play.api.mvc.AnyContent
 import play.api.test.FakeRequest
-import services.audit.AuditService
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 import uk.gov.hmrc.play.audit.model.DataEvent
 
 class AuditServiceTest extends ERSTestHelper {
 
-  implicit val request: FakeRequest[AnyContent] = FakeRequest()
-  implicit val hc: HeaderCarrier                = new HeaderCarrier
+  given request: FakeRequest[AnyContent] = FakeRequest()
+  given hc: HeaderCarrier                = new HeaderCarrier
 
   val mockAuditConnector: AuditConnector = mock[AuditConnector]
 
@@ -42,7 +41,7 @@ class AuditServiceTest extends ERSTestHelper {
     auditTest.sendEvent("source", Map("details1" -> "randomDetail"))
 
     verify(mockAuditConnector, VerificationModeFactory.times(1))
-      .sendEvent(any())(any(), any())
+      .sendEvent(any())(using any(), any())
   }
 
   "buildEvent should build a data event" in {

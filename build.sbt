@@ -1,8 +1,10 @@
 import sbt.*
+import uk.gov.hmrc.DefaultBuildSettings.targetJvm
 import uk.gov.hmrc.sbtdistributables.SbtDistributablesPlugin
 
-ThisBuild / majorVersion := 1
-ThisBuild / scalaVersion := "2.13.18"
+ThisBuild / majorVersion := 2
+ThisBuild / scalaVersion := "3.9.0"
+ThisBuild / targetJvm := "jvm-21"
 
 lazy val testSettings = Seq(
   javaOptions ++= Seq(

@@ -28,6 +28,6 @@ case class AggregatedLog(_id: Id, count: Int) {
 }
 
 object AggregatedLog {
-  implicit val idFormat: Format[Id]              = Json.format[Id]
-  implicit val dataFormat: Format[AggregatedLog] = Json.format[AggregatedLog]
+  given idFormat: Format[Id]              = Json.format[Id]
+  given dataFormat: Format[AggregatedLog] = Json.format[AggregatedLog]
 }

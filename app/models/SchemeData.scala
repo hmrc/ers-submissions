@@ -37,10 +37,10 @@ case class SchemeInfo(
 }
 
 object SchemeInfo {
-  implicit val dateTimeWrite: Writes[Instant] = (dateTime: Instant) => Json.toJson(dateTime.toEpochMilli)
-  implicit val dateTimeRead: Reads[Instant]   = DateTimeFormats.dateTimeRead
+  given dateTimeWrite: Writes[Instant] = (dateTime: Instant) => Json.toJson(dateTime.toEpochMilli)
+  given dateTimeRead: Reads[Instant]   = DateTimeFormats.dateTimeRead
 
-  implicit val format: OFormat[SchemeInfo] = Json.format[SchemeInfo]
+  given format: OFormat[SchemeInfo] = Json.format[SchemeInfo]
 }
 
 case class SchemeData(
@@ -51,11 +51,11 @@ case class SchemeData(
 )
 
 object SchemeData {
-  implicit val format: OFormat[SchemeData] = Json.format[SchemeData]
+  given format: OFormat[SchemeData] = Json.format[SchemeData]
 }
 
 case class SubmissionsSchemeData(schemeInfo: SchemeInfo, sheetName: String, data: UpscanCallback, numberOfRows: Int)
 
 object SubmissionsSchemeData {
-  implicit val format: OFormat[SubmissionsSchemeData] = Json.format[SubmissionsSchemeData]
+  given format: OFormat[SubmissionsSchemeData] = Json.format[SubmissionsSchemeData]
 }

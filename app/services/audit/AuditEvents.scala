@@ -26,9 +26,9 @@ import utils.LoggingAndExceptions.ErsLogger
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
-class AuditEvents @Inject() (auditService: AuditService)(implicit ec: ExecutionContext) extends ErsLogger {
+class AuditEvents @Inject() (auditService: AuditService)(using ec: ExecutionContext) extends ErsLogger {
 
-  def auditRunTimeError(exception: Throwable, contextInfo: String)(implicit hc: HeaderCarrier): Future[AuditResult] = {
+  def auditRunTimeError(exception: Throwable, contextInfo: String)(using hc: HeaderCarrier): Future[AuditResult] = {
     val transactionName = "ERSRunTimeError"
     auditService
       .sendEvent(
@@ -42,7 +42,7 @@ class AuditEvents @Inject() (auditService: AuditService)(implicit ec: ExecutionC
       .map(handleResponse(_, transactionName))
   }
 
-  def auditError(contextInfo: String, message: String)(implicit hc: HeaderCarrier): Future[AuditResult] = {
+  def auditError(contextInfo: String, message: String)(using hc: HeaderCarrier): Future[AuditResult] = {
     val transactionName = "ERSRunTimeError"
     auditService
       .sendEvent(
@@ -55,7 +55,7 @@ class AuditEvents @Inject() (auditService: AuditService)(implicit ec: ExecutionC
       .map(handleResponse(_, transactionName))
   }
 
-  def auditADRTransferFailure(schemeInfo: SchemeInfo, data: Map[String, String])(implicit
+  def auditADRTransferFailure(schemeInfo: SchemeInfo, data: Map[String, String])(using
     hc: HeaderCarrier
   ): Future[AuditResult] = {
     val transactionName = "ErsADRTransferFailure"
@@ -67,7 +67,7 @@ class AuditEvents @Inject() (auditService: AuditService)(implicit ec: ExecutionC
       .map(handleResponse(_, transactionName))
   }
 
-  def publicToProtectedEvent(schemeInfo: SchemeInfo, sheetName: String, numRows: String)(implicit
+  def publicToProtectedEvent(schemeInfo: SchemeInfo, sheetName: String, numRows: String)(using
     hc: HeaderCarrier
   ): Future[AuditResult] = {
     val transactionName                     = "ErsFileTransfer"
@@ -88,7 +88,7 @@ class AuditEvents @Inject() (auditService: AuditService)(implicit ec: ExecutionC
     ersSummaryData: ErsSummary,
     correlationId: Option[String] = None,
     source: Option[String] = None
-  )(implicit hc: HeaderCarrier): Future[AuditResult] = {
+  )(using hc: HeaderCarrier): Future[AuditResult] = {
     val additionalData: Map[String, String] = Map(
       "sapNumber"     -> ersSummaryData.metaData.sapNumber.getOrElse(""),
       "ipRef"         -> ersSummaryData.metaData.ipRef,
@@ -110,7 +110,7 @@ class AuditEvents @Inject() (auditService: AuditService)(implicit ec: ExecutionC
       .map(handleResponse(_, transactionName))
   }
 
-  def resubmissionResult(schemeInfo: SchemeInfo, res: Boolean)(implicit hc: HeaderCarrier): Future[AuditResult] = {
+  def resubmissionResult(schemeInfo: SchemeInfo, res: Boolean)(using hc: HeaderCarrier): Future[AuditResult] = {
     val transactionName = "resubmissionResult"
     auditService
       .sendEvent(

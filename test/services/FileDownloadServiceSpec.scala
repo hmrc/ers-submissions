@@ -67,7 +67,7 @@ class FileDownloadServiceSpec extends TestKit(ActorSystem("FileDownloadServiceSp
 
     "extract body of request" in {
       val testService            = new FileDownloadService(mockAppConfig) {
-        override def extractEntityData(response: HttpResponse): Source[ByteString, _] =
+        override def extractEntityData(response: HttpResponse): Source[ByteString, ?] =
           Source.fromIterator(() => Seq(ByteString("aSingleRow,withTwoEntries\n"), ByteString("anotherRow")).iterator)
       }
       val response: HttpResponse = HttpResponse(StatusCodes.OK, entity = HttpEntity.apply("gotABody"))
@@ -87,7 +87,7 @@ class FileDownloadServiceSpec extends TestKit(ActorSystem("FileDownloadServiceSp
         SubmissionsSchemeData(SIP.schemeInfo, "sip sheet name", UpscanCallback("name", "/download/url"), 1)
 
       val testService: FileDownloadService = new FileDownloadService(mockAppConfig) {
-        override def extractBodyOfRequest: Source[HttpResponse, _] => Source[List[ByteString], _] = { _ =>
+        override def extractBodyOfRequest: Source[HttpResponse, ?] => Source[List[ByteString], ?] = { _ =>
           Source.fromIterator(() =>
             List(
               List(ByteString("one"), ByteString("two")),
@@ -96,7 +96,7 @@ class FileDownloadServiceSpec extends TestKit(ActorSystem("FileDownloadServiceSp
           )
         }
 
-        override def streamFile(downloadUrl: String): Source[HttpResponse, _] =
+        override def streamFile(downloadUrl: String): Source[HttpResponse, ?] =
           Source.single(HttpResponse(StatusCodes.OK, entity = HttpEntity.apply("gotABody")))
       }
 

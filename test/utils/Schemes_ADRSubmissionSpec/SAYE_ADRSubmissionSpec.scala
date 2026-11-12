@@ -35,8 +35,8 @@ import scala.concurrent.Future
 
 class SAYE_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with EitherValues {
 
-  implicit val hc: HeaderCarrier              = new HeaderCarrier()
-  implicit val request: FakeRequest[JsObject] = FakeRequest().withBody(Fixtures.metadataJson)
+  given hc: HeaderCarrier              = new HeaderCarrier()
+  given request: FakeRequest[JsObject] = FakeRequest().withBody(Fixtures.metadataJson)
 
   val mockSubmissionCommon: SubmissionCommon         = app.injector.instanceOf[SubmissionCommon]
   val mockPresubmissionService: PresubmissionService = mock[PresubmissionService]
@@ -58,13 +58,13 @@ class SAYE_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with 
     "return a valid NilReturn without ammends" in {
 
       when(
-        mockPresubmissionService.getJson(any[SchemeInfo]())(any())
+        mockPresubmissionService.getJson(any[SchemeInfo]())(using any())
       ).thenReturn(
         ERSEnvelope(Future.successful(List()))
       )
 
       val result =
-        await(mockAdrSubmission.generateSubmission(SAYE.ersSummaryNilReturnWithoutAltAmmends)(request, hc).value)
+        await(mockAdrSubmission.generateSubmission(SAYE.ersSummaryNilReturnWithoutAltAmmends)(using request, hc).value)
       result.value - "acknowledgementReference" shouldBe Json.parse("""{
                                                                 |"regime":"ERS",
                                                                 |"schemeType":"SAYE",
@@ -112,13 +112,13 @@ class SAYE_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with 
     "return a valid NilReturn with some ammends" in {
 
       when(
-        mockPresubmissionService.getJson(any[SchemeInfo]())(any())
+        mockPresubmissionService.getJson(any[SchemeInfo]())(using any())
       ).thenReturn(
         ERSEnvelope(Future.successful(List()))
       )
 
       val result =
-        await(mockAdrSubmission.generateSubmission(SAYE.ersSummaryNilReturnWithSomeAltAmmends)(request, hc).value)
+        await(mockAdrSubmission.generateSubmission(SAYE.ersSummaryNilReturnWithSomeAltAmmends)(using request, hc).value)
       result.value - "acknowledgementReference" shouldBe Json.parse("""{
                                                                 |"regime":"ERS",
                                                                 |"schemeType":"SAYE",
@@ -179,13 +179,13 @@ class SAYE_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with 
     "return a valid NilReturn with all ammends" in {
 
       when(
-        mockPresubmissionService.getJson(any[SchemeInfo]())(any())
+        mockPresubmissionService.getJson(any[SchemeInfo]())(using any())
       ).thenReturn(
         ERSEnvelope(Future.successful(List()))
       )
 
       val result =
-        await(mockAdrSubmission.generateSubmission(SAYE.ersSummaryNilReturnWithAllAltAmmends)(request, hc).value)
+        await(mockAdrSubmission.generateSubmission(SAYE.ersSummaryNilReturnWithAllAltAmmends)(using request, hc).value)
       result.value - "acknowledgementReference" shouldBe Json.parse("""{
                                                                 |"regime":"ERS",
                                                                 |"schemeType":"SAYE",
@@ -252,12 +252,12 @@ class SAYE_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with 
     "return a valid not NilReturn with ammends and participants without data" in {
 
       when(
-        mockPresubmissionService.getJson(any[SchemeInfo]())(any())
+        mockPresubmissionService.getJson(any[SchemeInfo]())(using any())
       ).thenReturn(
         ERSEnvelope(Future.successful(List()))
       )
 
-      val result = await(mockAdrSubmission.generateSubmission(SAYE.ersSumarryWithAllAmmends)(request, hc).value)
+      val result = await(mockAdrSubmission.generateSubmission(SAYE.ersSumarryWithAllAmmends)(using request, hc).value)
       result.value - "acknowledgementReference" shouldBe Json.parse("""{
                                                                 |"regime":"ERS",
                                                                 |"schemeType":"SAYE",
@@ -347,7 +347,7 @@ class SAYE_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with 
     "return a valid not NilReturn with Granted, ammends and participants" in {
 
       when(
-        mockPresubmissionService.getJson(any[SchemeInfo]())(any())
+        mockPresubmissionService.getJson(any[SchemeInfo]())(using any())
       ).thenReturn(
         ERSEnvelope(
           Future.successful(
@@ -358,7 +358,7 @@ class SAYE_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with 
         )
       )
 
-      val result = await(mockAdrSubmission.generateSubmission(SAYE.ersSumarryWithAllAmmends)(request, hc).value)
+      val result = await(mockAdrSubmission.generateSubmission(SAYE.ersSumarryWithAllAmmends)(using request, hc).value)
       result.value - "acknowledgementReference" shouldBe Json.parse("""{
                                                                 |"regime":"ERS",
                                                                 |"schemeType":"SAYE",
@@ -460,7 +460,7 @@ class SAYE_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with 
     "return a valid not NilReturn with Granted, ammends and participants from 2 records of sheet data" in {
 
       when(
-        mockPresubmissionService.getJson(any[SchemeInfo]())(any())
+        mockPresubmissionService.getJson(any[SchemeInfo]())(using any())
       ).thenReturn(
         ERSEnvelope(
           Future.successful(
@@ -472,7 +472,7 @@ class SAYE_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with 
         )
       )
 
-      val result = await(mockAdrSubmission.generateSubmission(SAYE.ersSumarryWithAllAmmends)(request, hc).value)
+      val result = await(mockAdrSubmission.generateSubmission(SAYE.ersSumarryWithAllAmmends)(using request, hc).value)
       result.value - "acknowledgementReference" shouldBe Json.parse("""{
                                                                 |"regime":"ERS",
                                                                 |"schemeType":"SAYE",
@@ -582,7 +582,7 @@ class SAYE_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with 
     "return a valid not NilReturn with RCL, amends and participants" in {
 
       when(
-        mockPresubmissionService.getJson(any[SchemeInfo]())(any())
+        mockPresubmissionService.getJson(any[SchemeInfo]())(using any())
       ).thenReturn(
         ERSEnvelope(
           Future.successful(
@@ -593,7 +593,7 @@ class SAYE_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with 
         )
       )
 
-      val result = await(mockAdrSubmission.generateSubmission(SAYE.ersSumarryWithAllAmmends)(request, hc).value)
+      val result = await(mockAdrSubmission.generateSubmission(SAYE.ersSumarryWithAllAmmends)(using request, hc).value)
       result.value - "acknowledgementReference" shouldBe Json.parse("""{
                                                                 |"regime":"ERS",
                                                                 |"schemeType":"SAYE",
@@ -700,7 +700,7 @@ class SAYE_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with 
     "return a valid not NilReturn with RCL, amends and participants from 2 records of sheet data" in {
 
       when(
-        mockPresubmissionService.getJson(any[SchemeInfo]())(any())
+        mockPresubmissionService.getJson(any[SchemeInfo]())(using any())
       ).thenReturn(
         ERSEnvelope(
           Future.successful(
@@ -712,7 +712,7 @@ class SAYE_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with 
         )
       )
 
-      val result = await(mockAdrSubmission.generateSubmission(SAYE.ersSumarryWithAllAmmends)(request, hc).value)
+      val result = await(mockAdrSubmission.generateSubmission(SAYE.ersSumarryWithAllAmmends)(using request, hc).value)
       result.value - "acknowledgementReference" shouldBe Json.parse("""{
                                                                 |"regime":"ERS",
                                                                 |"schemeType":"SAYE",
@@ -832,7 +832,7 @@ class SAYE_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with 
     "return a valid not NilReturn with Exercised, amends and participants" in {
 
       when(
-        mockPresubmissionService.getJson(any[SchemeInfo]())(any())
+        mockPresubmissionService.getJson(any[SchemeInfo]())(using any())
       ).thenReturn(
         ERSEnvelope(
           Future.successful(
@@ -852,7 +852,7 @@ class SAYE_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with 
         )
       )
 
-      val result = await(mockAdrSubmission.generateSubmission(SAYE.ersSumarryWithAllAmmends)(request, hc).value)
+      val result = await(mockAdrSubmission.generateSubmission(SAYE.ersSumarryWithAllAmmends)(using request, hc).value)
       result.value - "acknowledgementReference" shouldBe Json.parse("""{
                                                                 |"regime":"ERS",
                                                                 |"schemeType":"SAYE",
@@ -964,7 +964,7 @@ class SAYE_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with 
     "return a valid not NilReturn with Exercised, amends and participants from 2 records of sheet data" in {
 
       when(
-        mockPresubmissionService.getJson(any[SchemeInfo]())(any())
+        mockPresubmissionService.getJson(any[SchemeInfo]())(using any())
       ).thenReturn(
         ERSEnvelope(
           Future.successful(
@@ -994,7 +994,7 @@ class SAYE_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with 
         )
       )
 
-      val result = await(mockAdrSubmission.generateSubmission(SAYE.ersSumarryWithAllAmmends)(request, hc).value)
+      val result = await(mockAdrSubmission.generateSubmission(SAYE.ersSumarryWithAllAmmends)(using request, hc).value)
       result.value - "acknowledgementReference" shouldBe Json.parse("""{
                                                                 |"regime":"ERS",
                                                                 |"schemeType":"SAYE",
@@ -1124,7 +1124,7 @@ class SAYE_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with 
     "return valid json with Granted, RCL, exercised, ammends and participants" in {
 
       when(
-        mockPresubmissionService.getJson(any[SchemeInfo]())(any())
+        mockPresubmissionService.getJson(any[SchemeInfo]())(using any())
       ).thenReturn(
         ERSEnvelope(
           Future.successful(
@@ -1146,7 +1146,7 @@ class SAYE_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with 
         )
       )
 
-      val result = await(mockAdrSubmission.generateSubmission(SAYE.ersSumarryWithAllAmmends)(request, hc).value)
+      val result = await(mockAdrSubmission.generateSubmission(SAYE.ersSumarryWithAllAmmends)(using request, hc).value)
       result.value - "acknowledgementReference" shouldBe Json.parse("""{
                                                                 |"regime":"ERS",
                                                                 |"schemeType":"SAYE",
@@ -1287,7 +1287,7 @@ class SAYE_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with 
     "return valid json with Granted, RCL, exercised, ammends and participants from 2 records of sheet data" in {
 
       when(
-        mockPresubmissionService.getJson(any[SchemeInfo]())(any())
+        mockPresubmissionService.getJson(any[SchemeInfo]())(using any())
       ).thenReturn(
         ERSEnvelope(
           Future.successful(
@@ -1321,7 +1321,7 @@ class SAYE_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with 
         )
       )
 
-      val result = await(mockAdrSubmission.generateSubmission(SAYE.ersSumarryWithAllAmmends)(request, hc).value)
+      val result = await(mockAdrSubmission.generateSubmission(SAYE.ersSumarryWithAllAmmends)(using request, hc).value)
       result.value - "acknowledgementReference" shouldBe Json.parse("""{
                                                                 |"regime":"ERS",
                                                                 |"schemeType":"SAYE",

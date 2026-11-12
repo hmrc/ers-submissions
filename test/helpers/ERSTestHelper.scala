@@ -41,8 +41,8 @@ trait ERSTestHelper extends AnyWordSpecLike with Matchers with OptionValues with
       .build()
 
   val mockCc: ControllerComponents        = stubControllerComponents()
-  implicit def materializer: Materializer = Play.materializer(fakeApplication())
-  implicit val ec: ExecutionContext       = mockCc.executionContext
+  given materializer: Materializer = Play.materializer(using fakeApplication())
+  given ec: ExecutionContext       = mockCc.executionContext
 
   def status(result: Future[Result]): Int = Await.result(result, 10.seconds).header.status
 
