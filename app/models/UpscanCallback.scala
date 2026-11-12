@@ -29,7 +29,7 @@ case class UpscanCallback(
 )
 
 object UpscanCallback {
-  implicit val upscanCallbackWrites: Writes[UpscanCallback] = Json.writes[UpscanCallback]
+  given upscanCallbackWrites: Writes[UpscanCallback] = Json.writes[UpscanCallback]
 
-  implicit val upscanCallbackReads: Reads[UpscanCallback] = Json.reads[UpscanCallback]
+  given upscanCallbackReads: Reads[UpscanCallback] = Json.reads[UpscanCallback]
 }

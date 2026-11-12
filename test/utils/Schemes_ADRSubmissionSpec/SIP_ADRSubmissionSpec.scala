@@ -35,8 +35,8 @@ import scala.concurrent.Future
 
 class SIP_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with EitherValues {
 
-  implicit val hc: HeaderCarrier              = new HeaderCarrier()
-  implicit val request: FakeRequest[JsObject] = FakeRequest().withBody(Fixtures.metadataJson)
+  given hc: HeaderCarrier              = new HeaderCarrier()
+  given request: FakeRequest[JsObject] = FakeRequest().withBody(Fixtures.metadataJson)
 
   val mockSubmissionCommon: SubmissionCommon         = app.injector.instanceOf[SubmissionCommon]
   val mockPresubmissionService: PresubmissionService = mock[PresubmissionService]
@@ -57,10 +57,10 @@ class SIP_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with E
 
     "create valid NilReturn" in {
 
-      when(mockPresubmissionService.getJson(any[SchemeInfo]())(any()))
+      when(mockPresubmissionService.getJson(any[SchemeInfo]())(using any()))
         .thenReturn(ERSEnvelope(Future.successful(List())))
 
-      val result = await(mockAdrSubmission.generateSubmission(SIP.metadataNilReturn)(request, hc).value)
+      val result = await(mockAdrSubmission.generateSubmission(SIP.metadataNilReturn)(using request, hc).value)
       result.value - "acknowledgementReference" shouldBe Json.parse("""{
                                                                 |"regime":"ERS",
                                                                 |"schemeType":"SIP",
@@ -100,11 +100,11 @@ class SIP_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with E
 
     "create valid NilReturn with some ammends" in {
 
-      when(mockPresubmissionService.getJson(any[SchemeInfo]())(any()))
+      when(mockPresubmissionService.getJson(any[SchemeInfo]())(using any()))
         .thenReturn(ERSEnvelope(Future.successful(List())))
 
       val result =
-        await(mockAdrSubmission.generateSubmission(SIP.metadataNilReturnWithSomeAltAmmends)(request, hc).value)
+        await(mockAdrSubmission.generateSubmission(SIP.metadataNilReturnWithSomeAltAmmends)(using request, hc).value)
       result.value - "acknowledgementReference" shouldBe Json.parse("""{
                                                                 |"regime":"ERS",
                                                                 |"schemeType":"SIP",
@@ -157,11 +157,11 @@ class SIP_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with E
 
     "create valid NilReturn with all ammends" in {
 
-      when(mockPresubmissionService.getJson(any[SchemeInfo]())(any()))
+      when(mockPresubmissionService.getJson(any[SchemeInfo]())(using any()))
         .thenReturn(ERSEnvelope(Future.successful(List())))
 
       val result =
-        await(mockAdrSubmission.generateSubmission(SIP.metadataNilReturnWithAllAltAmmends)(request, hc).value)
+        await(mockAdrSubmission.generateSubmission(SIP.metadataNilReturnWithAllAltAmmends)(using request, hc).value)
       result.value - "acknowledgementReference" shouldBe Json.parse("""{
                                                                 |"regime":"ERS",
                                                                 |"schemeType":"SIP",
@@ -220,10 +220,10 @@ class SIP_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with E
 
     "create valid not NilReturn with participants and trustees without data" in {
 
-      when(mockPresubmissionService.getJson(any[SchemeInfo]())(any()))
+      when(mockPresubmissionService.getJson(any[SchemeInfo]())(using any()))
         .thenReturn(ERSEnvelope(Future.successful(List())))
 
-      val result = await(mockAdrSubmission.generateSubmission(SIP.metadata)(request, hc).value)
+      val result = await(mockAdrSubmission.generateSubmission(SIP.metadata)(using request, hc).value)
       result.value - "acknowledgementReference" shouldBe Json.parse("""{
                                                                 |"regime":"ERS",
                                                                 |"schemeType":"SIP",
@@ -308,7 +308,7 @@ class SIP_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with E
 
     "create valid not NilReturn with Awards_V4, participants and trustees without data" in {
 
-      when(mockPresubmissionService.getJson(any[SchemeInfo]())(any())).thenReturn(
+      when(mockPresubmissionService.getJson(any[SchemeInfo]())(using any())).thenReturn(
         ERSEnvelope(
           Future.successful(
             List(
@@ -323,7 +323,7 @@ class SIP_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with E
         )
       )
 
-      val result = await(mockAdrSubmission.generateSubmission(SIP.metadata)(request, hc).value)
+      val result = await(mockAdrSubmission.generateSubmission(SIP.metadata)(using request, hc).value)
       result.value - "acknowledgementReference" shouldBe Json.parse("""{
                                                                 |"regime":"ERS",
                                                                 |"schemeType":"SIP",
@@ -436,7 +436,7 @@ class SIP_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with E
     "create valid not NilReturn with Awards_V4, participants and trustees without data from 2 records of sheet data" in {
 
       when(
-        mockPresubmissionService.getJson(any[SchemeInfo]())(any())
+        mockPresubmissionService.getJson(any[SchemeInfo]())(using any())
       ).thenReturn(
         ERSEnvelope(
           Future.successful(
@@ -458,7 +458,7 @@ class SIP_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with E
         )
       )
 
-      val result = await(mockAdrSubmission.generateSubmission(SIP.metadata)(request, hc).value)
+      val result = await(mockAdrSubmission.generateSubmission(SIP.metadata)(using request, hc).value)
       result.value - "acknowledgementReference" shouldBe Json.parse("""{
                                                                 |"regime":"ERS",
                                                                 |"schemeType":"SIP",
@@ -594,7 +594,7 @@ class SIP_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with E
     "create valid not NilReturn with Out_V4, participants and trustees without data" in {
 
       when(
-        mockPresubmissionService.getJson(any[SchemeInfo]())(any())
+        mockPresubmissionService.getJson(any[SchemeInfo]())(using any())
       ).thenReturn(
         ERSEnvelope(
           Future.successful(
@@ -610,7 +610,7 @@ class SIP_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with E
         )
       )
 
-      val result = await(mockAdrSubmission.generateSubmission(SIP.metadata)(request, hc).value)
+      val result = await(mockAdrSubmission.generateSubmission(SIP.metadata)(using request, hc).value)
       result.value - "acknowledgementReference" shouldBe Json.parse("""{
                                                                 |"regime":"ERS",
                                                                 |"schemeType":"SIP",
@@ -719,7 +719,7 @@ class SIP_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with E
     "create valid not NilReturn with Out_V4, participants and trustees without data from 2 records of sheet data" in {
 
       when(
-        mockPresubmissionService.getJson(any[SchemeInfo]())(any())
+        mockPresubmissionService.getJson(any[SchemeInfo]())(using any())
       ).thenReturn(
         ERSEnvelope(
           Future.successful(
@@ -741,7 +741,7 @@ class SIP_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with E
         )
       )
 
-      val result = await(mockAdrSubmission.generateSubmission(SIP.metadata)(request, hc).value)
+      val result = await(mockAdrSubmission.generateSubmission(SIP.metadata)(using request, hc).value)
       result.value - "acknowledgementReference" shouldBe Json.parse("""{
                                                                 |"regime":"ERS",
                                                                 |"schemeType":"SIP",
@@ -869,7 +869,7 @@ class SIP_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with E
     "create valid not NilReturn with Awards_V4, Out_V4, participants and trustees without data" in {
 
       when(
-        mockPresubmissionService.getJson(any[SchemeInfo]())(any())
+        mockPresubmissionService.getJson(any[SchemeInfo]())(using any())
       ).thenReturn(
         ERSEnvelope(
           Future.successful(
@@ -891,7 +891,7 @@ class SIP_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with E
         )
       )
 
-      val result = await(mockAdrSubmission.generateSubmission(SIP.metadata)(request, hc).value)
+      val result = await(mockAdrSubmission.generateSubmission(SIP.metadata)(using request, hc).value)
       result.value - "acknowledgementReference" shouldBe Json.parse("""{
                                                                 |"regime":"ERS",
                                                                 |"schemeType":"SIP",
@@ -1027,7 +1027,7 @@ class SIP_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with E
     "create valid not NilReturn with Awards_V4, Out_V4, participants and trustees without data from 2 records of sheet data" in {
 
       when(
-        mockPresubmissionService.getJson(any[SchemeInfo]())(any())
+        mockPresubmissionService.getJson(any[SchemeInfo]())(using any())
       ).thenReturn(
         ERSEnvelope(
           Future.successful(
@@ -1061,7 +1061,7 @@ class SIP_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with E
         )
       )
 
-      val result = await(mockAdrSubmission.generateSubmission(SIP.metadata)(request, hc).value)
+      val result = await(mockAdrSubmission.generateSubmission(SIP.metadata)(using request, hc).value)
       result.value - "acknowledgementReference" shouldBe Json.parse("""{
                                                                 |"regime":"ERS",
                                                                 |"schemeType":"SIP",

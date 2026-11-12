@@ -50,7 +50,7 @@ class ReceivePresubmissionController @Inject() (
   cc: ControllerComponents,
   bodyParser: PlayBodyParsers,
   appConfig: ApplicationConfig
-)(implicit actorSystem: ActorSystem, ec: ExecutionContext)
+)(using actorSystem: ActorSystem, ec: ExecutionContext)
     extends BackendController(cc) with ErsLogger with ErrorHandlerHelper {
 
   override val className: String = getClass.getSimpleName
@@ -83,9 +83,9 @@ class ReceivePresubmissionController @Inject() (
 
   private[controllers] def storePresubmission(
     submissionsSchemeData: SubmissionsSchemeData
-  )(implicit hc: HeaderCarrier): Future[Result] = {
+  )(using hc: HeaderCarrier): Future[Result] = {
     val startTime                                           = System.currentTimeMillis()
-    val fileSource: Source[(Seq[Seq[ByteString]], Long), _] =
+    val fileSource: Source[(Seq[Seq[ByteString]], Long), ?] =
       fileDownloadService.schemeDataToChunksWithIndex(submissionsSchemeData)
 
     submitJson(fileSource, submissionsSchemeData).value.map {
@@ -129,7 +129,7 @@ class ReceivePresubmissionController @Inject() (
     }
   }
 
-  private def storePresubmission(schemeData: SchemeData)(implicit hc: HeaderCarrier): Future[Result] = {
+  private def storePresubmission(schemeData: SchemeData)(using hc: HeaderCarrier): Future[Result] = {
     val startTime = System.currentTimeMillis()
     presubmissionService.storeJson(schemeData).value.map {
       case Right(true)  =>
@@ -170,9 +170,9 @@ class ReceivePresubmissionController @Inject() (
   }
 
   private[controllers] def submitJson(
-    fileSource: Source[(Seq[Seq[ByteString]], Long), _],
+    fileSource: Source[(Seq[Seq[ByteString]], Long), ?],
     submissionsSchemeData: SubmissionsSchemeData
-  )(implicit hc: HeaderCarrier): ERSEnvelope[(Boolean, Long)] = EitherT {
+  )(using hc: HeaderCarrier): ERSEnvelope[(Boolean, Long)] = EitherT {
     logInfo(
       s"[ReceivePresubmissionController][submitJson] data from fileSource will be stored in mongo for ${submissionsSchemeData.schemeInfo.basicLogMessage}"
     )

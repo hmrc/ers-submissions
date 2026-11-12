@@ -35,8 +35,8 @@ import scala.concurrent.Future
 
 class OTHER_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with EitherValues {
 
-  implicit val hc: HeaderCarrier              = new HeaderCarrier()
-  implicit val request: FakeRequest[JsObject] = FakeRequest().withBody(Fixtures.metadataJson)
+  given hc: HeaderCarrier              = new HeaderCarrier()
+  given request: FakeRequest[JsObject] = FakeRequest().withBody(Fixtures.metadataJson)
 
   val mockSubmissionCommon: SubmissionCommon         = app.injector.instanceOf[SubmissionCommon]
   val mockPresubmissionService: PresubmissionService = mock[PresubmissionService]
@@ -58,12 +58,12 @@ class OTHER_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with
     "create valid json for NilReturn" in {
 
       when(
-        mockPresubmissionService.getJson(any[SchemeInfo]())(any())
+        mockPresubmissionService.getJson(any[SchemeInfo]())(using any())
       ).thenReturn(
         ERSEnvelope(Future.successful(List()))
       )
 
-      val result = await(mockAdrSubmission.generateSubmission(OTHER.metadataNilReturn)(request, hc).value)
+      val result = await(mockAdrSubmission.generateSubmission(OTHER.metadataNilReturn)(using request, hc).value)
       result.value - "acknowledgementReference" shouldBe Json.parse("""{
                                                                 |"regime":"ERS",
                                                                 |"schemeType":"OTHER",
@@ -100,12 +100,12 @@ class OTHER_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with
     "create valid json for not NilReturn without data" in {
 
       when(
-        mockPresubmissionService.getJson(any[SchemeInfo]())(any())
+        mockPresubmissionService.getJson(any[SchemeInfo]())(using any())
       ).thenReturn(
         ERSEnvelope(List())
       )
 
-      val result = await(mockAdrSubmission.generateSubmission(OTHER.metadata)(request, hc).value)
+      val result = await(mockAdrSubmission.generateSubmission(OTHER.metadata)(using request, hc).value)
       result.value - "acknowledgementReference" shouldBe Json.parse("""{
                                                                 |"regime":"ERS",
                                                                 |"schemeType":"OTHER",
@@ -165,7 +165,7 @@ class OTHER_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with
     "create valid json for not Nil return with all sheets" in {
 
       when(
-        mockPresubmissionService.getJson(any[SchemeInfo]())(any())
+        mockPresubmissionService.getJson(any[SchemeInfo]())(using any())
       ).thenReturn(
         ERSEnvelope(
           List(
@@ -212,7 +212,7 @@ class OTHER_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with
         )
       )
 
-      val result = await(mockAdrSubmission.generateSubmission(OTHER.metadata)(request, hc).value)
+      val result = await(mockAdrSubmission.generateSubmission(OTHER.metadata)(using request, hc).value)
       result.value - "acknowledgementReference" shouldBe Json.parse("""{
                                                                  |"regime":"ERS",
                                                                  |"schemeType":"OTHER",
@@ -520,7 +520,7 @@ class OTHER_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with
     "create valid json for not Nil return with all sheets from 2 records of sheet data" in {
 
       when(
-        mockPresubmissionService.getJson(any[SchemeInfo]())(any())
+        mockPresubmissionService.getJson(any[SchemeInfo]())(using any())
       ).thenReturn(
         ERSEnvelope(
           Future.successful(
@@ -608,7 +608,7 @@ class OTHER_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with
         )
       )
 
-      val result = await(mockAdrSubmission.generateSubmission(OTHER.metadata)(request, hc).value)
+      val result = await(mockAdrSubmission.generateSubmission(OTHER.metadata)(using request, hc).value)
       result.value - "acknowledgementReference" shouldBe Json.parse("""{
                                                                 |"regime":"ERS",
                                                                 |"schemeType":"OTHER",

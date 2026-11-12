@@ -35,8 +35,8 @@ import scala.concurrent.Future
 
 class EMI_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with EitherValues {
 
-  implicit val hc: HeaderCarrier              = new HeaderCarrier()
-  implicit val request: FakeRequest[JsObject] = FakeRequest().withBody(Fixtures.metadataJson)
+  given hc: HeaderCarrier              = new HeaderCarrier()
+  given request: FakeRequest[JsObject] = FakeRequest().withBody(Fixtures.metadataJson)
 
   val mockSubmissionCommon: SubmissionCommon         = app.injector.instanceOf[SubmissionCommon]
   val mockPresubmissionService: PresubmissionService = mock[PresubmissionService]
@@ -57,10 +57,10 @@ class EMI_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with E
 
     "create valid json for NilReturn" in {
 
-      when(mockPresubmissionService.getJson(any[SchemeInfo]())(any()))
+      when(mockPresubmissionService.getJson(any[SchemeInfo]())(using any()))
         .thenReturn(ERSEnvelope(Future.successful(List())))
 
-      val result = await(mockAdrSubmission.generateSubmission(EMI.metadataNilReturn)(request, hc).value)
+      val result = await(mockAdrSubmission.generateSubmission(EMI.metadataNilReturn)(using request, hc).value)
       result.value - "acknowledgementReference" shouldBe Json.parse("""{
                                                                 |"regime":"ERS",
                                                                 |"schemeType":"EMI",
@@ -100,12 +100,12 @@ class EMI_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with E
     "create valid json for not NulReturn without data with participants" in {
 
       when(
-        mockPresubmissionService.getJson(any[SchemeInfo]())(any())
+        mockPresubmissionService.getJson(any[SchemeInfo]())(using any())
       ).thenReturn(
         ERSEnvelope(Future.successful(List()))
       )
 
-      val result = await(mockAdrSubmission.generateSubmission(EMI.metadata)(request, hc).value)
+      val result = await(mockAdrSubmission.generateSubmission(EMI.metadata)(using request, hc).value)
       result.value - "acknowledgementReference" shouldBe Json.parse("""{
                                                                 |"regime":"ERS",
                                                                 |"schemeType":"EMI",
@@ -168,7 +168,7 @@ class EMI_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with E
     "create valid json for not NilReturn with all sheets and participants" in {
 
       when(
-        mockPresubmissionService.getJson(any[SchemeInfo]())(any())
+        mockPresubmissionService.getJson(any[SchemeInfo]())(using any())
       ).thenReturn(
         ERSEnvelope(
           Future.successful(
@@ -203,7 +203,7 @@ class EMI_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with E
         )
       )
 
-      val result = await(mockAdrSubmission.generateSubmission(EMI.metadata)(request, hc).value)
+      val result = await(mockAdrSubmission.generateSubmission(EMI.metadata)(using request, hc).value)
       result.value - "acknowledgementReference" shouldBe Json.parse("""{
                                                                 |"regime":"ERS",
                                                                 |"schemeType":"EMI",
@@ -383,7 +383,7 @@ class EMI_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with E
     "create valid json for not NilReturn with all sheets and participants from 2 records of sheet data" in {
 
       when(
-        mockPresubmissionService.getJson(any[SchemeInfo]())(any())
+        mockPresubmissionService.getJson(any[SchemeInfo]())(using any())
       ).thenReturn(
         ERSEnvelope(
           Future.successful(
@@ -443,7 +443,7 @@ class EMI_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with E
         )
       )
 
-      val result = await(mockAdrSubmission.generateSubmission(EMI.metadata)(request, hc).value)
+      val result = await(mockAdrSubmission.generateSubmission(EMI.metadata)(using request, hc).value)
       result.value - "acknowledgementReference" shouldBe Json.parse("""{
                                                                 |"regime":"ERS",
                                                                 |"schemeType":"EMI",
@@ -717,7 +717,7 @@ class EMI_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with E
     "create valid json for not NilReturn with Adjustments and participants" in {
 
       when(
-        mockPresubmissionService.getJson(any[SchemeInfo]())(any())
+        mockPresubmissionService.getJson(any[SchemeInfo]())(using any())
       ).thenReturn(
         ERSEnvelope(
           Future.successful(
@@ -733,7 +733,7 @@ class EMI_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with E
         )
       )
 
-      val result = await(mockAdrSubmission.generateSubmission(EMI.metadata)(request, hc).value)
+      val result = await(mockAdrSubmission.generateSubmission(EMI.metadata)(using request, hc).value)
       result.value - "acknowledgementReference" shouldBe Json.parse("""{
                                                                 |"regime":"ERS",
                                                                 |"schemeType":"EMI",
@@ -817,7 +817,7 @@ class EMI_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with E
     "create valid json for not NilReturn with Adjustments and participants from 2 records of sheet data" in {
 
       when(
-        mockPresubmissionService.getJson(any[SchemeInfo]())(any())
+        mockPresubmissionService.getJson(any[SchemeInfo]())(using any())
       ).thenReturn(
         ERSEnvelope(
           Future.successful(
@@ -839,7 +839,7 @@ class EMI_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with E
         )
       )
 
-      val result = await(mockAdrSubmission.generateSubmission(EMI.metadata)(request, hc).value)
+      val result = await(mockAdrSubmission.generateSubmission(EMI.metadata)(using request, hc).value)
       result.value - "acknowledgementReference" shouldBe Json.parse("""{
                                                                 |"regime":"ERS",
                                                                 |"schemeType":"EMI",
@@ -937,7 +937,7 @@ class EMI_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with E
     "create valid json for not NilReturn with Released and participants" in {
 
       when(
-        mockPresubmissionService.getJson(any[SchemeInfo]())(any())
+        mockPresubmissionService.getJson(any[SchemeInfo]())(using any())
       ).thenReturn(
         ERSEnvelope(
           Future.successful(
@@ -953,7 +953,7 @@ class EMI_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with E
         )
       )
 
-      val result = await(mockAdrSubmission.generateSubmission(EMI.metadata)(request, hc).value)
+      val result = await(mockAdrSubmission.generateSubmission(EMI.metadata)(using request, hc).value)
       result.value - "acknowledgementReference" shouldBe Json.parse("""{
                                                                 |"regime":"ERS",
                                                                 |"schemeType":"EMI",
@@ -1036,7 +1036,7 @@ class EMI_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with E
     "create valid json for not NilReturn with Released and participants from 2 records of sheet data" in {
 
       when(
-        mockPresubmissionService.getJson(any[SchemeInfo]())(any())
+        mockPresubmissionService.getJson(any[SchemeInfo]())(using any())
       ).thenReturn(
         ERSEnvelope(
           Future.successful(
@@ -1058,7 +1058,7 @@ class EMI_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with E
         )
       )
 
-      val result = await(mockAdrSubmission.generateSubmission(EMI.metadata)(request, hc).value)
+      val result = await(mockAdrSubmission.generateSubmission(EMI.metadata)(using request, hc).value)
       result.value - "acknowledgementReference" shouldBe Json.parse("""{
                                                                 |"regime":"ERS",
                                                                 |"schemeType":"EMI",
@@ -1157,7 +1157,7 @@ class EMI_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with E
     "create valid json for not NilReturn with RLC and participants" in {
 
       when(
-        mockPresubmissionService.getJson(any[SchemeInfo]())(any())
+        mockPresubmissionService.getJson(any[SchemeInfo]())(using any())
       ).thenReturn(
         ERSEnvelope(
           Future.successful(
@@ -1173,7 +1173,7 @@ class EMI_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with E
         )
       )
 
-      val result = await(mockAdrSubmission.generateSubmission(EMI.metadata)(request, hc).value)
+      val result = await(mockAdrSubmission.generateSubmission(EMI.metadata)(using request, hc).value)
       result.value - "acknowledgementReference" shouldBe Json.parse("""{
                                                                 |"regime":"ERS",
                                                                 |"schemeType":"EMI",
@@ -1256,7 +1256,7 @@ class EMI_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with E
     "create valid json for not NilReturn with RLC and participants from 2 records of sheet data" in {
 
       when(
-        mockPresubmissionService.getJson(any[SchemeInfo]())(any())
+        mockPresubmissionService.getJson(any[SchemeInfo]())(using any())
       ).thenReturn(
         ERSEnvelope(
           Future.successful(
@@ -1278,7 +1278,7 @@ class EMI_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with E
         )
       )
 
-      val result = await(mockAdrSubmission.generateSubmission(EMI.metadata)(request, hc).value)
+      val result = await(mockAdrSubmission.generateSubmission(EMI.metadata)(using request, hc).value)
       result.value - "acknowledgementReference" shouldBe Json.parse("""{
                                                                 |"regime":"ERS",
                                                                 |"schemeType":"EMI",
@@ -1377,7 +1377,7 @@ class EMI_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with E
     "create valid json for not NilReturn with NonTaxable and participants" in {
 
       when(
-        mockPresubmissionService.getJson(any[SchemeInfo]())(any())
+        mockPresubmissionService.getJson(any[SchemeInfo]())(using any())
       ).thenReturn(
         ERSEnvelope(
           Future.successful(
@@ -1393,7 +1393,7 @@ class EMI_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with E
         )
       )
 
-      val result = await(mockAdrSubmission.generateSubmission(EMI.metadata)(request, hc).value)
+      val result = await(mockAdrSubmission.generateSubmission(EMI.metadata)(using request, hc).value)
       result.value - "acknowledgementReference" shouldBe Json.parse("""{
                                                                 |"regime":"ERS",
                                                                 |"schemeType":"EMI",
@@ -1477,7 +1477,7 @@ class EMI_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with E
     "create valid json for not NilReturn with NonTaxable and participants from 2 records of sheet data" in {
 
       when(
-        mockPresubmissionService.getJson(any[SchemeInfo]())(any())
+        mockPresubmissionService.getJson(any[SchemeInfo]())(using any())
       ).thenReturn(
         ERSEnvelope(
           Future.successful(
@@ -1499,7 +1499,7 @@ class EMI_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with E
         )
       )
 
-      val result = await(mockAdrSubmission.generateSubmission(EMI.metadata)(request, hc).value)
+      val result = await(mockAdrSubmission.generateSubmission(EMI.metadata)(using request, hc).value)
       result.value - "acknowledgementReference" shouldBe Json.parse("""{
                                                                 |"regime":"ERS",
                                                                 |"schemeType":"EMI",
@@ -1600,7 +1600,7 @@ class EMI_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with E
     "create valid json for not NilReturn with Taxable and participants" in {
 
       when(
-        mockPresubmissionService.getJson(any[SchemeInfo]())(any())
+        mockPresubmissionService.getJson(any[SchemeInfo]())(using any())
       ).thenReturn(
         ERSEnvelope(
           Future.successful(
@@ -1616,7 +1616,7 @@ class EMI_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with E
         )
       )
 
-      val result = await(mockAdrSubmission.generateSubmission(EMI.metadata)(request, hc).value)
+      val result = await(mockAdrSubmission.generateSubmission(EMI.metadata)(using request, hc).value)
       result.value - "acknowledgementReference" shouldBe Json.parse("""{
                                                                 |"regime":"ERS",
                                                                 |"schemeType":"EMI",
@@ -1705,7 +1705,7 @@ class EMI_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with E
     "create valid json for not NilReturn with Taxable and participants from 2 records of sheet data" in {
 
       when(
-        mockPresubmissionService.getJson(any[SchemeInfo]())(any())
+        mockPresubmissionService.getJson(any[SchemeInfo]())(using any())
       ).thenReturn(
         ERSEnvelope(
           Future.successful(
@@ -1727,7 +1727,7 @@ class EMI_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with E
         )
       )
 
-      val result = await(mockAdrSubmission.generateSubmission(EMI.metadata)(request, hc).value)
+      val result = await(mockAdrSubmission.generateSubmission(EMI.metadata)(using request, hc).value)
       result.value - "acknowledgementReference" shouldBe Json.parse("""{
                                                                 |"regime":"ERS",
                                                                 |"schemeType":"EMI",

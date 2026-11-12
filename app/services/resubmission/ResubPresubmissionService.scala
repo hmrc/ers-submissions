@@ -40,10 +40,10 @@ class ResubPresubmissionService @Inject() (
   presubmissionRepository: PresubmissionMongoRepository,
   submissionCommonService: SubmissionService,
   auditEvents: AuditEvents
-)(implicit ec: ExecutionContext)
+)(using ec: ExecutionContext)
     extends ErsLogger {
 
-  def validateJson[T](record: JsObject)(implicit reads: Reads[T]): Option[T] =
+  def validateJson[T](record: JsObject)(using reads: Reads[T]): Option[T] =
     record.validate[T] match {
       case JsSuccess(obj, _)                                                              =>
         Some(obj)
@@ -55,7 +55,7 @@ class ResubPresubmissionService @Inject() (
         None
     }
 
-  def logAggregateMetadataMetrics()(implicit hc: HeaderCarrier): ERSEnvelope[String] =
+  def logAggregateMetadataMetrics()(using hc: HeaderCarrier): ERSEnvelope[String] =
     for {
       aggregatedRecords <- metadataRepository
                              .getAggregateCountOfSubmissions(Session.id(hc))
@@ -66,7 +66,7 @@ class ResubPresubmissionService @Inject() (
 
   def logFailedSubmissionCount(
     processFailedSubmissionsConfig: ProcessFailedSubmissionsConfig
-  )(implicit hc: HeaderCarrier): ERSEnvelope[String] = {
+  )(using hc: HeaderCarrier): ERSEnvelope[String] = {
     val failedJobSelector: BsonDocument = metadataRepository.createFailedJobSelector(processFailedSubmissionsConfig)
     for {
       numberOfRecords <- metadataRepository
@@ -89,7 +89,7 @@ class ResubPresubmissionService @Inject() (
 
   def getPreSubSelectedSchemeRefDetailsMessage(
     processFailedSubmissionsConfig: ProcessFailedSubmissionsConfig
-  )(implicit hc: HeaderCarrier): ERSEnvelope[String] =
+  )(using hc: HeaderCarrier): ERSEnvelope[String] =
     for {
       preSubmissionStatuses                                    <- presubmissionRepository
                                                                     .getStatusForSelectedSchemes(Session.id(hc), Selectors(processFailedSubmissionsConfig))
@@ -100,7 +100,7 @@ class ResubPresubmissionService @Inject() (
 
   def getMetadataSelectedSchemeRefDetailsMessage(
     processFailedSubmissionsConfig: ProcessFailedSubmissionsConfig
-  )(implicit hc: HeaderCarrier): ERSEnvelope[String] =
+  )(using hc: HeaderCarrier): ERSEnvelope[String] =
     for {
       metadataStatuses                     <- metadataRepository
                                                 .getStatusForSelectedSchemes(Session.id(hc), Selectors(processFailedSubmissionsConfig))
@@ -111,7 +111,7 @@ class ResubPresubmissionService @Inject() (
 
   def processFailedSubmissions(
     processFailedSubmissionsConfig: ProcessFailedSubmissionsConfig
-  )(implicit request: Request[_], hc: HeaderCarrier): ERSEnvelope[Boolean] = {
+  )(using request: Request[?], hc: HeaderCarrier): ERSEnvelope[Boolean] = {
 
     val failedJobSelector: BsonDocument = metadataRepository.createFailedJobSelector(processFailedSubmissionsConfig)
     for {
@@ -133,8 +133,8 @@ class ResubPresubmissionService @Inject() (
     } yield resubmissionResults.forall(identity)
   }
 
-  def startResubmission(ersSummary: ErsSummary, processFailedSubmissionsConfig: ProcessFailedSubmissionsConfig)(implicit
-    request: Request[_],
+  def startResubmission(ersSummary: ErsSummary, processFailedSubmissionsConfig: ProcessFailedSubmissionsConfig)(using
+    request: Request[?],
     hc: HeaderCarrier
   ): ERSEnvelope[Boolean] = {
     logInfo(ProcessingResubmitMessage.message + ersSummary.metaData.schemeInfo.basicLogMessage)

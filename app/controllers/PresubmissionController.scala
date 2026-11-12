@@ -35,7 +35,7 @@ class PresubmissionController @Inject() (
   auditEvents: AuditEvents,
   metrics: Metrics,
   cc: ControllerComponents
-)(implicit ec: ExecutionContext)
+)(using ec: ExecutionContext)
     extends BackendController(cc) with ErsLogger with ErrorHandlerHelper {
 
   override val className: String = getClass.getSimpleName

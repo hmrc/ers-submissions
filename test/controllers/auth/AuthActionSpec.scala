@@ -46,11 +46,11 @@ class AuthActionSpec extends ERSTestHelper with BeforeAndAfterEach {
   def authAction(empRef: String): AuthAction = new AuthAction {
     override val optionalEmpRef: Option[EmpRef]              = Try(EmpRef.fromIdentifiers(empRef)).toOption
     override def authConnector: AuthConnector                = mockAuthConnector
-    implicit override val executionContext: ExecutionContext = ec
+    override given executionContext: ExecutionContext = ec
     override def parser: BodyParser[AnyContent]              = mockBodyParser.default
   }
 
-  def defaultAsyncBody: Request[_] => Result = _ => Results.Ok("Successful")
+  def defaultAsyncBody: Request[?] => Result = _ => Results.Ok("Successful")
 
   def getEnrolmentPredicate(taxOfficeNumber: String, taxOfficeReference: String): Predicate =
     ConfidenceLevel.L50 and Enrolment("IR-PAYE")
@@ -66,7 +66,7 @@ class AuthActionSpec extends ERSTestHelper with BeforeAndAfterEach {
             eqTo(getEnrolmentPredicate("123", "2343234")),
             eqTo(EmptyRetrieval)
           )(
-            any(),
+            using any(),
             any()
           )
       ).thenReturn(Future.successful(()))
@@ -87,7 +87,7 @@ class AuthActionSpec extends ERSTestHelper with BeforeAndAfterEach {
             eqTo(getEnrolmentPredicate("123", "2343234")),
             eqTo(EmptyRetrieval)
           )(
-            any(),
+            using any(),
             any()
           )
       ).thenReturn(Future.failed(InsufficientConfidenceLevel("failed")))
@@ -103,7 +103,7 @@ class AuthActionSpec extends ERSTestHelper with BeforeAndAfterEach {
             eqTo(getEnrolmentPredicate("123", "2343234")),
             eqTo(EmptyRetrieval)
           )(
-            any(),
+            using any(),
             any()
           )
       ).thenReturn(Future.failed(BearerTokenExpired("failed")))
@@ -119,7 +119,7 @@ class AuthActionSpec extends ERSTestHelper with BeforeAndAfterEach {
             eqTo(getEnrolmentPredicate("123", "2343234")),
             eqTo(EmptyRetrieval)
           )(
-            any(),
+            using any(),
             any()
           )
       ).thenReturn(Future.failed(InsufficientConfidenceLevel("failed")))

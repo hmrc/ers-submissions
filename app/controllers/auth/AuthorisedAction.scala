@@ -28,7 +28,7 @@ import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Try
 
 case class AuthorisedAction(slashSeperatedRef: String, authConnector: AuthConnector, bodyParser: PlayBodyParsers)(
-  implicit val executionContext: ExecutionContext
+  using val executionContext: ExecutionContext
 ) extends AuthAction {
   override val optionalEmpRef: Option[EmpRef] = Try(EmpRef.fromIdentifiers(slashSeperatedRef)).toOption
   val parser: BodyParser[AnyContent]          = bodyParser.default
@@ -41,10 +41,10 @@ trait AuthAction
     with ErsLogger {
 
   val optionalEmpRef: Option[EmpRef]
-  implicit val executionContext: ExecutionContext
+  given executionContext: ExecutionContext
 
   override def invokeBlock[A](request: Request[A], block: Request[A] => Future[Result]): Future[Result] = {
-    implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
+    given hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
 
     optionalEmpRef
       .map(empRef =>

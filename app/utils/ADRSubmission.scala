@@ -35,14 +35,14 @@ class ADRSubmission @Inject() (
   submissionCommon: SubmissionCommon,
   presubmissionService: PresubmissionService,
   configUtils: ConfigUtils
-)(implicit ec: ExecutionContext)
+)(using ec: ExecutionContext)
     extends ErsLogger {
 
   private val EmptyJson: JsObject = Json.obj()
 
   def generateSubmission(
     ersSummary: ErsSummary
-  )(implicit request: Request[_], hc: HeaderCarrier): ERSEnvelope[JsObject] = {
+  )(using request: Request[?], hc: HeaderCarrier): ERSEnvelope[JsObject] = {
     val schemeType: String = ersSummary.metaData.schemeInfo.schemeType.toUpperCase()
     logInfo(
       s"[ADRSubmission][generateSubmission] ${ersSummary.basicLogMessage} ${ersSummary.metaData.schemeInfo.basicLogMessage}"
@@ -55,8 +55,8 @@ class ADRSubmission @Inject() (
     }
   }
 
-  def createSubmissionJson(ersSummary: ErsSummary, schemeType: String)(implicit
-    request: Request[_],
+  def createSubmissionJson(ersSummary: ErsSummary, schemeType: String)(using
+    request: Request[?],
     hc: HeaderCarrier
   ): ERSEnvelope[JsObject] =
     for {
@@ -64,8 +64,8 @@ class ADRSubmission @Inject() (
       rootJson       <- createRootJson(sheetsDataJson, ersSummary, schemeType)
     } yield rootJson
 
-  def createSheetsJson(sheetsJson: JsObject, ersSummary: ErsSummary, schemeType: String)(implicit
-    request: Request[_],
+  def createSheetsJson(sheetsJson: JsObject, ersSummary: ErsSummary, schemeType: String)(using
+    request: Request[?],
     hc: HeaderCarrier
   ): ERSEnvelope[JsObject] =
     presubmissionService.getJson(ersSummary.metaData.schemeInfo).map { schemeDataSeq =>
@@ -96,8 +96,8 @@ class ADRSubmission @Inject() (
       }
     }
 
-  def createRootJson(sheetsJson: JsObject, ersSummary: ErsSummary, schemeType: String)(implicit
-    request: Request[_],
+  def createRootJson(sheetsJson: JsObject, ersSummary: ErsSummary, schemeType: String)(using
+    request: Request[?],
     hc: HeaderCarrier
   ): ERSEnvelope[JsObject] = {
     val rootConfigData: Config = configUtils.getConfigData(s"$schemeType/$schemeType", schemeType, ersSummary)
@@ -107,8 +107,8 @@ class ADRSubmission @Inject() (
   import scala.jdk.CollectionConverters._
 
   def buildRoot(configData: Config, metadata: Object, sheetsJson: JsObject, ersSummary: ErsSummary, schemeType: String)(
-    implicit
-    request: Request[_],
+    using
+    request: Request[?],
     hc: HeaderCarrier
   ): JsObject = {
     @annotation.tailrec
@@ -176,7 +176,7 @@ class ADRSubmission @Inject() (
     row: Option[Int] = None,
     sheetName: Option[String] = None,
     schemeInfo: Option[SchemeInfo] = None
-  )(implicit request: Request[_], hc: HeaderCarrier): JsObject = {
+  )(using request: Request[?], hc: HeaderCarrier): JsObject = {
     import scala.jdk.CollectionConverters._
 
     val fieldsConfigList = configData.getConfigList("fields").asScala

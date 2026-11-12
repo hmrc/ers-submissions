@@ -24,5 +24,5 @@ trait LockRepositoryProvider {
 }
 
 class DefaultLockRepositoryProvider @Inject() (component: MongoLockRepository) extends LockRepositoryProvider {
-  lazy val repo: MongoLockRepository = component
+  val repo: MongoLockRepository = component
 }

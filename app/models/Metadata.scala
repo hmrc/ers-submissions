@@ -30,7 +30,7 @@ case class ErsMetaData(
 )
 
 object ErsMetaData {
-  implicit val format: OFormat[ErsMetaData] = Json.format[ErsMetaData]
+  given format: OFormat[ErsMetaData] = Json.format[ErsMetaData]
 }
 
 case class AlterationAmends(
@@ -42,13 +42,13 @@ case class AlterationAmends(
 )
 
 object AlterationAmends {
-  implicit val format: OFormat[AlterationAmends] = Json.format[AlterationAmends]
+  given format: OFormat[AlterationAmends] = Json.format[AlterationAmends]
 }
 
 case class GroupSchemeInfo(groupScheme: Option[String], groupSchemeType: Option[String])
 
 object GroupSchemeInfo {
-  implicit val format: OFormat[GroupSchemeInfo] = Json.format[GroupSchemeInfo]
+  given format: OFormat[GroupSchemeInfo] = Json.format[GroupSchemeInfo]
 }
 
 case class SchemeOrganiserDetails(
@@ -64,7 +64,7 @@ case class SchemeOrganiserDetails(
 )
 
 object SchemeOrganiserDetails {
-  implicit val format: OFormat[SchemeOrganiserDetails] = Json.format[SchemeOrganiserDetails]
+  given format: OFormat[SchemeOrganiserDetails] = Json.format[SchemeOrganiserDetails]
 }
 
 case class CompanyDetails(
@@ -80,13 +80,13 @@ case class CompanyDetails(
 )
 
 object CompanyDetails {
-  implicit val format: OFormat[CompanyDetails] = Json.format[CompanyDetails]
+  given format: OFormat[CompanyDetails] = Json.format[CompanyDetails]
 }
 
 case class CompanyDetailsList(companies: List[CompanyDetails])
 
 object CompanyDetailsList {
-  implicit val format: OFormat[CompanyDetailsList] = Json.format[CompanyDetailsList]
+  given format: OFormat[CompanyDetailsList] = Json.format[CompanyDetailsList]
 }
 
 case class TrusteeDetails(
@@ -100,19 +100,19 @@ case class TrusteeDetails(
 )
 
 object TrusteeDetails {
-  implicit val format: OFormat[TrusteeDetails] = Json.format[TrusteeDetails]
+  given format: OFormat[TrusteeDetails] = Json.format[TrusteeDetails]
 }
 
 case class TrusteeDetailsList(trustees: List[TrusteeDetails])
 
 object TrusteeDetailsList {
-  implicit val format: OFormat[TrusteeDetailsList] = Json.format[TrusteeDetailsList]
+  given format: OFormat[TrusteeDetailsList] = Json.format[TrusteeDetailsList]
 }
 
 case class AltAmendsActivity(altActivity: String)
 
 object AltAmendsActivity {
-  implicit val format: OFormat[AltAmendsActivity] = Json.format[AltAmendsActivity]
+  given format: OFormat[AltAmendsActivity] = Json.format[AltAmendsActivity]
 }
 
 case class ErsSummary(
@@ -142,5 +142,5 @@ case class ErsSummary(
 
 object ErsSummary extends DateTimeFormats {
 
-  implicit val format: OFormat[ErsSummary] = Json.format[ErsSummary]
+  given format: OFormat[ErsSummary] = Json.format[ErsSummary]
 }

@@ -42,12 +42,12 @@ class SubmissionService @Inject() (
   submissionCommon: SubmissionCommon,
   auditEvents: AuditEvents,
   metrics: Metrics
-)(implicit ec: ExecutionContext)
+)(using ec: ExecutionContext)
     extends ErsLogger {
 
   def callProcessData(ersSummary: ErsSummary, failedStatus: String, successStatus: String, streamed: Boolean = false)(
-    implicit
-    request: Request[_],
+    using
+    request: Request[?],
     hc: HeaderCarrier
   ): ERSEnvelope[Boolean] =
     processData(ersSummary, failedStatus, successStatus, streamed).recover { case error =>
@@ -60,8 +60,8 @@ class SubmissionService @Inject() (
     }
 
   def processData(ersSummary: ErsSummary, failedStatus: String, successStatus: String, streamed: Boolean = false)(
-    implicit
-    request: Request[_],
+    using
+    request: Request[?],
     hc: HeaderCarrier
   ): ERSEnvelope[Boolean] =
     for {
@@ -69,7 +69,7 @@ class SubmissionService @Inject() (
       postSubmissionUpdated <- sendToADRUpdatePostData(ersSummary, adrData, failedStatus, successStatus, streamed)
     } yield postSubmissionUpdated
 
-  def transformData(ersSummary: ErsSummary)(implicit request: Request[_], hc: HeaderCarrier): ERSEnvelope[JsObject] = {
+  def transformData(ersSummary: ErsSummary)(using request: Request[?], hc: HeaderCarrier): ERSEnvelope[JsObject] = {
     val startTime                        = System.currentTimeMillis()
     val (maxFirstNameLen, maxCountryLen) = (35, 18)
 
@@ -94,7 +94,7 @@ class SubmissionService @Inject() (
         json
     }
 
-    adrSubmission.generateSubmission(ersSummary)(request, hc).map { json =>
+    adrSubmission.generateSubmission(ersSummary)(using request, hc).map { json =>
       metrics.generateJson(System.currentTimeMillis() - startTime, TimeUnit.MILLISECONDS)
       val transformedFirstNameJson =
         trimDataIfSizeExceeded(json, "firstName", __ \ "submitter" \ "firstName", maxFirstNameLen)
@@ -114,7 +114,7 @@ class SubmissionService @Inject() (
     failedStatus: String,
     successStatus: String,
     streamed: Boolean = false
-  )(implicit
+  )(using
     hc: HeaderCarrier
   ): ERSEnvelope[Boolean] = {
     val startTime  = System.currentTimeMillis()
@@ -157,7 +157,7 @@ class SubmissionService @Inject() (
     result
   }
 
-  def updatePostsubmission(adrSubmissionStatus: Int, transferStatus: String, schemeInfo: SchemeInfo)(implicit
+  def updatePostsubmission(adrSubmissionStatus: Int, transferStatus: String, schemeInfo: SchemeInfo)(using
     hc: HeaderCarrier
   ): ERSEnvelope[Boolean] = {
     val startUpdateTime = System.currentTimeMillis()

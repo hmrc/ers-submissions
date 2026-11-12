@@ -30,7 +30,7 @@ import uk.gov.hmrc.http.HeaderCarrier
 
 class MetadataServiceSpec extends ERSTestHelper with BeforeAndAfterEach with EitherValues {
 
-  implicit val hc: HeaderCarrier = new HeaderCarrier()
+  given hc: HeaderCarrier = new HeaderCarrier()
 
   val mockAuditEvents: AuditEvents                    = mock[AuditEvents]
   val mockMetadataRepository: MetadataMongoRepository = mock[MetadataMongoRepository]
@@ -48,7 +48,7 @@ class MetadataServiceSpec extends ERSTestHelper with BeforeAndAfterEach with Eit
       when(mockMetadataRepository.storeErsSummary(any[ErsSummary](), any()))
         .thenReturn(ERSEnvelope(true))
 
-      val result = await(metadataService.storeErsSummary(Fixtures.metadata)(hc).value)
+      val result = await(metadataService.storeErsSummary(Fixtures.metadata)(using hc).value)
       result.value shouldBe true
     }
 
@@ -56,9 +56,9 @@ class MetadataServiceSpec extends ERSTestHelper with BeforeAndAfterEach with Eit
       when(mockMetadataRepository.storeErsSummary(any[ErsSummary](), any()))
         .thenReturn(ERSEnvelope(MongoGenericError("Mongo operation failed")))
 
-      val result = await(metadataService.storeErsSummary(Fixtures.metadata)(hc).value)
+      val result = await(metadataService.storeErsSummary(Fixtures.metadata)(using hc).value)
       result.value shouldBe false
-      verify(mockAuditEvents, VerificationModeFactory.times(1)).auditError(any(), any())(any())
+      verify(mockAuditEvents, VerificationModeFactory.times(1)).auditError(any(), any())(using any())
 
     }
   }
