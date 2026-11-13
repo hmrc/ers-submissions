@@ -25,5 +25,5 @@ case class PreSubWithoutMetadata(
 )
 
 object PreSubWithoutMetadata {
-  implicit val dataFormat: Format[PreSubWithoutMetadata] = Json.format[PreSubWithoutMetadata]
+  given dataFormat: Format[PreSubWithoutMetadata] = Json.format[PreSubWithoutMetadata]
 }

@@ -37,19 +37,19 @@ class SubmissionController @Inject() (
   metrics: Metrics,
   auditEvents: AuditEvents,
   cc: ControllerComponents
-)(implicit val ec: ExecutionContext)
+)(using val ec: ExecutionContext)
     extends BackendController(cc) with CorrelationIdHelper with ErsLogger with ErrorHandlerHelper {
 
   override val className: String = getClass.getSimpleName
 
   def receiveMetadataJson(): Action[JsObject] = Action.async(parse.json[JsObject]) { implicit request =>
-    implicit val hc: HeaderCarrier = getOrCreateCorrelationID(request)
+    given hc: HeaderCarrier = getOrCreateCorrelationID(request)
 
     metadataService.validateErsSummaryFromJson(request.body) match {
       case JsSuccess(ersSummary, _) =>
         (for {
           result <-
-            submissionCommonService.callProcessData(ersSummary, Statuses.Failed.toString, Statuses.Sent.toString)(
+            submissionCommonService.callProcessData(ersSummary, Statuses.Failed.toString, Statuses.Sent.toString)(using
               request,
               hc
             )

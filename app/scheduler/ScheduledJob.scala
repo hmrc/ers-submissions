@@ -29,13 +29,13 @@ import java.util.TimeZone
 import scala.concurrent.Future
 
 trait ScheduledJob extends ErsLogger {
-  val scheduledMessage: ScheduledMessage[_]
+  val scheduledMessage: ScheduledMessage[?]
   val config: Configuration
   val actorSystem: ActorSystem
 
   def jobName: String
 
-  val applicationLifecycle: ApplicationLifecycle
+  def applicationLifecycle: ApplicationLifecycle
 
   lazy val scheduler: QuartzSchedulerExtension = QuartzSchedulerExtension(actorSystem)
 

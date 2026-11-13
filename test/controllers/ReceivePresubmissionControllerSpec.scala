@@ -78,7 +78,6 @@ class ReceivePresubmissionControllerSpec
   }
 
   def buildPresubmissionController(
-    validationResult: Boolean = true,
     storeJsonResult: Option[Boolean] = Some(true),
     downloadResponse: String = Fixtures.submissionsSchemeData.toString,
     mockSubmissionResult: Boolean = false,
@@ -97,15 +96,15 @@ class ReceivePresubmissionControllerSpec
       mockJsValueAuthAction
 
       when(mockApplicationConfig.submissionParallelism).thenReturn(2)
-      when(mockPresubmissionService.storeJson(any[SchemeData])(any[HeaderCarrier]()))
+      when(mockPresubmissionService.storeJson(any[SchemeData])(using any[HeaderCarrier]()))
         .thenReturn(ERSEnvelope(storeJsonResult.toRight(MongoUnavailableError("mongo error"))))
 
       override def authorisedAction(empRef: String): AuthAction = mockAuthAction
 
       override def submitJson(
-        fileSource: Source[(Seq[Seq[ByteString]], Long), _],
+        fileSource: Source[(Seq[Seq[ByteString]], Long), ?],
         submissionsSchemeData: SubmissionsSchemeData
-      )(implicit hc: HeaderCarrier): ERSEnvelope[(Boolean, Long)] =
+      )(using hc: HeaderCarrier): ERSEnvelope[(Boolean, Long)] =
         (mockSubmissionResult, failSubmitJson) match {
           case (true, _)           => ERSEnvelope[(Boolean, Long)]((false, 3L))
           case (_, Some(ersError)) => ERSEnvelope[(Boolean, Long)](ersError)
@@ -115,7 +114,7 @@ class ReceivePresubmissionControllerSpec
 
   "calling receivePresubmissionJson" should {
     "return BadRequest if invalid json is given" in {
-      val presubmissionController = buildPresubmissionController(validationResult = false)
+      val presubmissionController = buildPresubmissionController()
       val result                  = presubmissionController.receivePresubmissionJson("")(FakeRequest().withBody(Fixtures.invalidJson))
       status(result) shouldBe BAD_REQUEST
       verify(mockMetrics, VerificationModeFactory.times(0)).storePresubmission(anyLong(), any())
@@ -150,7 +149,7 @@ class ReceivePresubmissionControllerSpec
   "calling receivePresubmissionJsonV2" should {
 
     "return BadRequest if invalid json is given" in {
-      val presubmissionController = buildPresubmissionController(validationResult = false)
+      val presubmissionController = buildPresubmissionController()
       val result                  = presubmissionController.receivePresubmissionJsonV2("")(FakeRequest().withBody(Fixtures.invalidJson))
       status(result) shouldBe BAD_REQUEST
       verify(mockMetrics, VerificationModeFactory.times(0)).storePresubmission(anyLong(), any())
@@ -159,7 +158,7 @@ class ReceivePresubmissionControllerSpec
 
     "return INTERNAL_SERVER_ERROR if valid json is given but storage fails" in {
       val presubmissionController = buildPresubmissionController(storeJsonResult = Some(false))
-      when(mockPresubmissionService.removeJson(any())(any())).thenReturn(ERSEnvelope(Future(true)))
+      when(mockPresubmissionService.removeJson(any())(using any())).thenReturn(ERSEnvelope(Future(true)))
       val result                  = presubmissionController.receivePresubmissionJsonV2("")(
         FakeRequest().withBody(Fixtures.submissionsSchemeDataJson)
       )
@@ -170,7 +169,7 @@ class ReceivePresubmissionControllerSpec
 
     "return INTERNAL_SERVER_ERROR and log a warning if valid json is given, some data is stored and then failed to be removed" in {
       val presubmissionController = buildPresubmissionController(mockSubmissionResult = true)
-      when(mockPresubmissionService.removeJson(any())(any())).thenReturn(ERSEnvelope(Future(false)))
+      when(mockPresubmissionService.removeJson(any())(using any())).thenReturn(ERSEnvelope(Future(false)))
       val result                  = presubmissionController.receivePresubmissionJsonV2("")(
         FakeRequest().withBody(Fixtures.submissionsSchemeDataJson)
       )
@@ -197,7 +196,7 @@ class ReceivePresubmissionControllerSpec
         SubmissionsSchemeData(SIP.schemeInfo, "sip sheet name", UpscanCallback("name", "/download/url"), 1)
 
       val presubmissionController = buildPresubmissionController(failSubmitJson = Some(MongoGenericError("Failed")))
-      val result                  = await(presubmissionController.storePresubmission(submissionsSchemeData)(HeaderCarrier.apply()))
+      val result                  = await(presubmissionController.storePresubmission(submissionsSchemeData)(using HeaderCarrier.apply()))
 
       result.header.status shouldBe Status.INTERNAL_SERVER_ERROR
       bodyOf(result)       shouldBe "Storing presubmission data failed."
@@ -209,7 +208,7 @@ class ReceivePresubmissionControllerSpec
 
       val presubmissionController =
         buildPresubmissionController(failSubmitJson = Some(JsonFromSheetsCreationError("could not parse csv")))
-      val result                  = await(presubmissionController.storePresubmission(submissionsSchemeData)(HeaderCarrier.apply()))
+      val result                  = await(presubmissionController.storePresubmission(submissionsSchemeData)(using HeaderCarrier.apply()))
 
       result.header.status shouldBe Status.INTERNAL_SERVER_ERROR
       bodyOf(result)       shouldBe "Storing presubmission data failed."

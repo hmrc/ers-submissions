@@ -25,7 +25,7 @@ import javax.inject.Inject
 
 class ConfigUtils @Inject() (adrExceptionEmitter: ADRExceptionEmitter) extends ErsLogger {
 
-  def getConfigData(configPath: String, configValue: String, ersSummary: ErsSummary)(implicit
+  def getConfigData(configPath: String, configValue: String, ersSummary: ErsSummary)(using
     hc: HeaderCarrier
   ): Config =
     try
@@ -47,7 +47,7 @@ class ConfigUtils @Inject() (adrExceptionEmitter: ADRExceptionEmitter) extends E
     }
 
   def extractField(configData: Config, data: Object): Object =
-    if (!configData.hasPath("extract") || data.isInstanceOf[Option[_]]) {
+    if (!configData.hasPath("extract") || data.isInstanceOf[Option[?]]) {
       data
     } else {
       val currentElem: Config = configData.getConfig("extract")

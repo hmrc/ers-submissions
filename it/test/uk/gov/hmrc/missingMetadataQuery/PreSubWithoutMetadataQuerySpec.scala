@@ -30,6 +30,8 @@ import scala.concurrent.ExecutionContext
 
 class PreSubWithoutMetadataQuerySpec extends AnyWordSpec with Matchers with MockitoSugar {
 
+  implicit val ec: ExecutionContext = ExecutionContext.global
+
   val mockApplicationConfig: ApplicationConfig = mock[ApplicationConfig]
 
   when(mockApplicationConfig.dateTimeFilterForQuery).thenReturn("02/05/2023")
@@ -44,8 +46,6 @@ class PreSubWithoutMetadataQuerySpec extends AnyWordSpec with Matchers with Mock
 
   val localDateTime: LocalDateTime = LocalDateTime.of(2023, 12, 2, 10, 15, 30)
   val defaultInstant: Instant      = localDateTime.toInstant(ZoneOffset.UTC)
-
-  implicit val ec: ExecutionContext = ExecutionContext.global
 
   "PreSubWithoutMetadataQueryService" should {
 
@@ -78,7 +78,7 @@ class PreSubWithoutMetadataQuerySpec extends AnyWordSpec with Matchers with Mock
       whenReady(
         future = getQueryResult(metaData, presubmissionData),
         timeout = timeout(Span(30, Seconds))
-      ) { testQueryResults: TestQueryResults =>
+      ) { (testQueryResults: TestQueryResults) =>
         testQueryResults.numMetadataRecords shouldBe 1
         testQueryResults.numPreSubRecords   shouldBe 2
         testQueryResults.queryResults       shouldBe Seq.empty[PreSubWithoutMetadata]
@@ -113,7 +113,7 @@ class PreSubWithoutMetadataQuerySpec extends AnyWordSpec with Matchers with Mock
       whenReady(
         future = getQueryResult(metaData, presubmissionData),
         timeout = timeout(Span(30, Seconds))
-      ) { testQueryResults: TestQueryResults =>
+      ) { (testQueryResults: TestQueryResults) =>
         testQueryResults.numMetadataRecords shouldBe 2
         testQueryResults.numPreSubRecords   shouldBe 2
         testQueryResults.queryResults       shouldBe Seq.empty[PreSubWithoutMetadata]
@@ -154,10 +154,12 @@ class PreSubWithoutMetadataQuerySpec extends AnyWordSpec with Matchers with Mock
       whenReady(
         future = getQueryResult(metaData, presubmissionData),
         timeout = timeout(Span(30, Seconds))
-      ) { testQueryResults: TestQueryResults =>
+      ) { (testQueryResults: TestQueryResults) =>
         testQueryResults.numMetadataRecords shouldBe 2
         testQueryResults.numPreSubRecords   shouldBe 3
-        testQueryResults.queryResults       shouldBe Seq(PreSubWithoutMetadata("CSOP00000000001", "2019/20", 1701512130000L))
+        testQueryResults.queryResults       shouldBe Seq(
+          PreSubWithoutMetadata("CSOP00000000001", "2019/20", 1701512130000L)
+        )
         testQueryResults.queryErrors.length shouldBe 0
       }
     }
@@ -190,12 +192,12 @@ class PreSubWithoutMetadataQuerySpec extends AnyWordSpec with Matchers with Mock
       whenReady(
         future = getQueryResult(metaData, presubmissionData),
         timeout = timeout(Span(30, Seconds))
-      ) { testQueryResults: TestQueryResults =>
+      ) { (testQueryResults: TestQueryResults) =>
         testQueryResults.numMetadataRecords shouldBe 2
         testQueryResults.numPreSubRecords   shouldBe 1
         testQueryResults.queryResults       shouldBe Seq.empty[PreSubWithoutMetadata]
         testQueryResults.queryErrors.length shouldBe 1
-        testQueryResults.queryErrors.head   shouldBe "/schemeRef: JsonValidationError(List(error.expected.jsstring),List())"
+        testQueryResults.queryErrors.head   shouldBe "/schemeRef: JsonValidationError(List(error.expected.jsstring),ArraySeq())"
       }
     }
   }

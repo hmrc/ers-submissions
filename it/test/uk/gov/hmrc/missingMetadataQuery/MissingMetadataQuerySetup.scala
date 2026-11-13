@@ -28,6 +28,7 @@ import java.time.Instant
 import java.time.temporal.ChronoUnit
 import scala.concurrent.duration.{DurationLong, FiniteDuration}
 import scala.concurrent.{ExecutionContext, Future}
+import uk.gov.hmrc.mongo.logging.ObservableFutureImplicits.{ObservableFuture, SingleObservableFuture}
 
 class MissingMetadataQuerySetup(applicationConfig: ApplicationConfig)(implicit ec: ExecutionContext)
     extends MongoSupport {

@@ -30,9 +30,9 @@ object ERSEnvelope {
   def apply[T](ersErrors: ERSError): ERSEnvelope[T] =
     EitherT[Future, ERSError, T](Future.successful(Left(ersErrors)))
 
-  def apply[T](t: Future[T])(implicit ec: ExecutionContext): ERSEnvelope[T] = EitherT.right(t)
+  def apply[T](t: Future[T])(using ec: ExecutionContext): ERSEnvelope[T] = EitherT.right(t)
 
-  def apply[T](eitherArg: Either[ERSError, T])(implicit ec: ExecutionContext): ERSEnvelope[T] =
+  def apply[T](eitherArg: Either[ERSError, T])(using ec: ExecutionContext): ERSEnvelope[T] =
     EitherT.fromEither[Future](eitherArg)
 
 }

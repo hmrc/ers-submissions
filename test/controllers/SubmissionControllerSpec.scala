@@ -54,7 +54,7 @@ class SubmissionControllerSpec extends ERSTestHelper with BeforeAndAfterEach {
     def buildSubmissionController(
       isValidJson: Boolean = true,
       expectedResult: ERSEnvelope[Boolean] = ERSEnvelope(true)
-    )(implicit ec: ExecutionContext): SubmissionController =
+    )(using ec: ExecutionContext): SubmissionController =
       new SubmissionController(mockSubmissionCommonService, mockMetaService, mockMetrics, mockAuditEvents, mockCc) {
 
         when(mockMetaService.validateErsSummaryFromJson(any[JsObject])).thenReturn(
@@ -63,8 +63,8 @@ class SubmissionControllerSpec extends ERSTestHelper with BeforeAndAfterEach {
         )
 
         when(
-          mockSubmissionCommonService.callProcessData(any[ErsSummary], anyString(), anyString(), anyBoolean())(
-            any[Request[_]](),
+          mockSubmissionCommonService.callProcessData(any[ErsSummary], anyString(), anyString(), anyBoolean())(using
+            any[Request[?]](),
             any[HeaderCarrier]()
           )
         ).thenReturn(expectedResult)
@@ -109,7 +109,7 @@ class SubmissionControllerSpec extends ERSTestHelper with BeforeAndAfterEach {
         )
 
         when(
-          mockMetaService.storeErsSummary(any[ErsSummary]())(any[HeaderCarrier]())
+          mockMetaService.storeErsSummary(any[ErsSummary]())(using any[HeaderCarrier]())
         ).thenReturn(
           ERSEnvelope(storeErsSummaryResult.toRight(MongoUnavailableError("mongo error")))
         )

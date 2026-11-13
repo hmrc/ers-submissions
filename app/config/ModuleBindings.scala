@@ -22,7 +22,7 @@ import repositories.{DefaultLockRepositoryProvider, LockRepositoryProvider}
 
 class ModuleBindings extends Module {
 
-  override def bindings(environment: Environment, configuration: Configuration): Seq[Binding[_]] = Seq(
+  override def bindings(environment: Environment, configuration: Configuration): Seq[Binding[?]] = Seq(
     bind[LockRepositoryProvider].to[DefaultLockRepositoryProvider]
   )
 

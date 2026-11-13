@@ -36,8 +36,8 @@ import scala.collection.mutable.ListBuffer
 
 class ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with EitherValues {
 
-  implicit val hc: HeaderCarrier                     = new HeaderCarrier()
-  implicit val request: FakeRequest[JsObject]        = FakeRequest().withBody(Fixtures.metadataJson)
+  given hc: HeaderCarrier                            = new HeaderCarrier()
+  given request: FakeRequest[JsObject]               = FakeRequest().withBody(Fixtures.metadataJson)
   val mockSubmissionCommon: SubmissionCommon         = mock[SubmissionCommon]
   val mockPresubmissionService: PresubmissionService = mock[PresubmissionService]
   val mockAdrExceptionEmitter: ADRExceptionEmitter   = app.injector.instanceOf[ADRExceptionEmitter]
@@ -46,7 +46,7 @@ class ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with Eithe
 
   val mockConfigUtils: ConfigUtils = mock[ConfigUtils]
 
-  when(mockConfigUtils.getConfigData(anyString(), anyString(), any[ErsSummary]())(any[HeaderCarrier]()))
+  when(mockConfigUtils.getConfigData(anyString(), anyString(), any[ErsSummary]())(using any[HeaderCarrier]()))
     .thenReturn(mockConfig)
 
   override def beforeEach(): Unit = {
@@ -87,7 +87,7 @@ class ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with Eithe
 
     "return unchanged json when fileData is empty and type is array" in {
       val config = ConfigFactory.parseString("fields = [{ type = array }]")
-      val result = adrSubmission.buildJson(config, ListBuffer.empty, None, None, None)(request, hc)
+      val result = adrSubmission.buildJson(config, ListBuffer.empty, None, None, None)(using request, hc)
       result shouldBe Json.obj()
     }
   }
@@ -100,24 +100,25 @@ class ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with Eithe
       mockConfigUtils
     ) {
 
-      override def createSubmissionJson(ersSummary: ErsSummary, schemeType: String)(implicit
-        request: Request[_],
+      override def createSubmissionJson(ersSummary: ErsSummary, schemeType: String)(using
+        request: Request[?],
         hc: HeaderCarrier
       ): ERSEnvelope[JsObject] = ERSEnvelope(notNilReturnJson)
 
-      override def createRootJson(sheetsJson: JsObject, ersSummary: ErsSummary, schemeType: String)(implicit
-        request: Request[_],
+      override def createRootJson(sheetsJson: JsObject, ersSummary: ErsSummary, schemeType: String)(using
+        request: Request[?],
         hc: HeaderCarrier
       ): ERSEnvelope[JsObject] = ERSEnvelope(nilReturnJson)
     }
 
     "return createSubmissionJson result for not NilReturn submission" in {
-      val result = await(mockAdrSubmission.generateSubmission(Fixtures.metadata)(request, hc).value).value
+      val result = await(mockAdrSubmission.generateSubmission(Fixtures.metadata)(using request, hc).value).value
       result shouldBe notNilReturnJson
     }
 
     "return createRootJson result for NilReturn submission" in {
-      val result = await(mockAdrSubmission.generateSubmission(Fixtures.metadataNilReturn)(request, hc).value).value
+      val result =
+        await(mockAdrSubmission.generateSubmission(Fixtures.metadataNilReturn)(using request, hc).value).value
       result shouldBe nilReturnJson
     }
   }
@@ -128,14 +129,14 @@ class ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with Eithe
       mockPresubmissionService,
       mockConfigUtils
     ) {
-      override def createSheetsJson(sheetsJson: JsObject, ersSummary: ErsSummary, schemeType: String)(implicit
-        request: Request[_],
+      override def createSheetsJson(sheetsJson: JsObject, ersSummary: ErsSummary, schemeType: String)(using
+        request: Request[?],
         hc: HeaderCarrier
       ): ERSEnvelope[JsObject] =
         ERSEnvelope(sheetsJson)
 
-      override def createRootJson(sheetsJson: JsObject, ersSummary: ErsSummary, schemeType: String)(implicit
-        request: Request[_],
+      override def createRootJson(sheetsJson: JsObject, ersSummary: ErsSummary, schemeType: String)(using
+        request: Request[?],
         hc: HeaderCarrier
       ): ERSEnvelope[JsObject] =
         ERSEnvelope(notNilReturnJson)
@@ -143,7 +144,9 @@ class ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with Eithe
 
     "return the result of createRootJson" in {
       val result =
-        await(mockAdrSubmission.createSubmissionJson(Fixtures.metadata, Fixtures.schemeType)(request, hc).value).value
+        await(
+          mockAdrSubmission.createSubmissionJson(Fixtures.metadata, Fixtures.schemeType)(using request, hc).value
+        ).value
       result shouldBe notNilReturnJson
     }
   }
@@ -162,35 +165,39 @@ class ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with Eithe
         row: Option[Int] = None,
         sheetName: Option[String],
         schemeInfo: Option[SchemeInfo]
-      )(implicit request: Request[_], hc: HeaderCarrier): JsObject =
+      )(using request: Request[?], hc: HeaderCarrier): JsObject =
         sheetsJson
     }
 
     "return given json as parameter if there is no data in the database" in {
-      when(mockPresubmissionService.getJson(any[SchemeInfo]())(any())).thenReturn(ERSEnvelope(List()))
+      when(mockPresubmissionService.getJson(any[SchemeInfo]())(using any())).thenReturn(ERSEnvelope(List()))
 
       val result = await(
-        mockAdrSubmission.createSheetsJson(sheetsJson, Fixtures.metadata, Fixtures.schemeType)(request, hc).value
+        mockAdrSubmission.createSheetsJson(sheetsJson, Fixtures.metadata, Fixtures.schemeType)(using request, hc).value
       ).value
       result shouldBe sheetsJson
     }
 
     "return merged data json if there is data in the database" in {
-      when(mockPresubmissionService.getJson(any[SchemeInfo]())(any()))
+      when(mockPresubmissionService.getJson(any[SchemeInfo]())(using any()))
         .thenReturn(ERSEnvelope(scala.Seq(Fixtures.schemeData)))
 
       val result = await(
-        mockAdrSubmission.createSheetsJson(Json.obj(), Fixtures.metadata, Fixtures.schemeType)(request, hc).value
+        mockAdrSubmission.createSheetsJson(Json.obj(), Fixtures.metadata, Fixtures.schemeType)(using request, hc).value
       ).value
       result shouldBe sheetsJson
     }
 
     "return MongoGenericError if retrieving data returns error" in {
-      when(mockPresubmissionService.getJson(any[SchemeInfo]())(any()))
+      when(mockPresubmissionService.getJson(any[SchemeInfo]())(using any()))
         .thenReturn(ERSEnvelope(MongoGenericError("There was a problem")))
 
       val result =
-        await(mockAdrSubmission.createSheetsJson(Json.obj(), Fixtures.metadata, Fixtures.schemeType)(request, hc).value)
+        await(
+          mockAdrSubmission
+            .createSheetsJson(Json.obj(), Fixtures.metadata, Fixtures.schemeType)(using request, hc)
+            .value
+        )
       result.swap.value shouldBe MongoGenericError("There was a problem")
     }
 
@@ -206,12 +213,12 @@ class ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with Eithe
           sheetsJson: JsObject,
           ersSummary: ErsSummary,
           schemeType: String
-        )(implicit request: Request[_], hc: HeaderCarrier): JsObject = nilReturnJson
+        )(using request: Request[?], hc: HeaderCarrier): JsObject = nilReturnJson
       }
       "return the result of buildRoot" in {
         val result = await(
           mockAdrSubmission
-            .createRootJson(Json.obj(), Fixtures.metadataNilReturn, Fixtures.schemeType)(request, hc)
+            .createRootJson(Json.obj(), Fixtures.metadataNilReturn, Fixtures.schemeType)(using request, hc)
             .value
         )
         result.value shouldBe nilReturnJson

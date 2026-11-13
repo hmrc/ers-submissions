@@ -32,8 +32,8 @@ import scala.concurrent.Future
 
 class SchedulerServiceSpec extends ERSTestHelper with BeforeAndAfterEach with EitherValues {
 
-  implicit val hc: HeaderCarrier                               = HeaderCarrier()
-  implicit val request: Request[_]                             = FakeRequest()
+  given hc: HeaderCarrier                                      = HeaderCarrier()
+  given request: Request[?]                                    = FakeRequest()
   val mockApplicationConfig: ApplicationConfig                 = app.injector.instanceOf[ApplicationConfig]
   val mockMongoLockRepository: DefaultLockRepositoryProvider   = mock[DefaultLockRepositoryProvider]
   val mockResubPresubmissionService: ResubPresubmissionService = mock[ResubPresubmissionService]
@@ -49,7 +49,7 @@ class SchedulerServiceSpec extends ERSTestHelper with BeforeAndAfterEach with Ei
       val schedulerService: ReSubmissionSchedulerService =
         new ReSubmissionSchedulerService(mockApplicationConfig, mockMongoLockRepository, mockResubPresubmissionService)
 
-      when(mockResubPresubmissionService.processFailedSubmissions(any())(any(), any()))
+      when(mockResubPresubmissionService.processFailedSubmissions(any())(using any(), any()))
         .thenReturn(ERSEnvelope(Future.successful(true)))
 
       val result = await(schedulerService.resubmit().value)
@@ -60,7 +60,7 @@ class SchedulerServiceSpec extends ERSTestHelper with BeforeAndAfterEach with Ei
       val schedulerService: ReSubmissionSchedulerService =
         new ReSubmissionSchedulerService(mockApplicationConfig, mockMongoLockRepository, mockResubPresubmissionService)
 
-      when(mockResubPresubmissionService.processFailedSubmissions(any())(any(), any()))
+      when(mockResubPresubmissionService.processFailedSubmissions(any())(using any(), any()))
         .thenReturn(ERSEnvelope(Future.successful(false)))
 
       val result = await(schedulerService.resubmit().value)
@@ -71,7 +71,7 @@ class SchedulerServiceSpec extends ERSTestHelper with BeforeAndAfterEach with Ei
       val schedulerService: ReSubmissionSchedulerService =
         new ReSubmissionSchedulerService(mockApplicationConfig, mockMongoLockRepository, mockResubPresubmissionService)
 
-      when(mockResubPresubmissionService.processFailedSubmissions(any())(any(), any()))
+      when(mockResubPresubmissionService.processFailedSubmissions(any())(using any(), any()))
         .thenReturn(ERSEnvelope(ResubmissionError()))
 
       val result = await(schedulerService.resubmit().value)
@@ -89,7 +89,7 @@ class SchedulerServiceSpec extends ERSTestHelper with BeforeAndAfterEach with Ei
           mockResubPresubmissionService
         )
 
-      when(mockResubPresubmissionService.processFailedSubmissions(any())(any(), any()))
+      when(mockResubPresubmissionService.processFailedSubmissions(any())(using any(), any()))
         .thenReturn(ERSEnvelope(Future.successful(true)))
 
       val result = await(schedulerService.resubmit().value)
@@ -104,7 +104,7 @@ class SchedulerServiceSpec extends ERSTestHelper with BeforeAndAfterEach with Ei
           mockResubPresubmissionService
         )
 
-      when(mockResubPresubmissionService.processFailedSubmissions(any())(any(), any()))
+      when(mockResubPresubmissionService.processFailedSubmissions(any())(using any(), any()))
         .thenReturn(ERSEnvelope(Future.successful(false)))
 
       val result = await(schedulerService.resubmit().value)
@@ -119,7 +119,7 @@ class SchedulerServiceSpec extends ERSTestHelper with BeforeAndAfterEach with Ei
           mockResubPresubmissionService
         )
 
-      when(mockResubPresubmissionService.processFailedSubmissions(any())(any(), any()))
+      when(mockResubPresubmissionService.processFailedSubmissions(any())(using any(), any()))
         .thenReturn(ERSEnvelope(ResubmissionError()))
 
       val result = await(schedulerService.resubmit().value)

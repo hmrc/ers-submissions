@@ -40,7 +40,7 @@ class PresubmissionControllerSpec extends ERSTestHelper with BeforeAndAfterEach 
   val mockMetrics: Metrics                           = mock[Metrics]
   val mockPresubmissionService: PresubmissionService = mock[PresubmissionService]
   val mockAuditEvents: AuditEvents                   = mock[AuditEvents]
-  implicit val hc: HeaderCarrier                     = new HeaderCarrier()
+  given hc: HeaderCarrier                            = new HeaderCarrier()
 
   override def beforeEach(): Unit = {
     super.beforeEach()
@@ -56,7 +56,7 @@ class PresubmissionControllerSpec extends ERSTestHelper with BeforeAndAfterEach 
       removeJsonResult: ERSEnvelope[Boolean] = ERSEnvelope(true)
     ): PresubmissionController =
       new PresubmissionController(mockPresubmissionService, mockAuditEvents, mockMetrics, mockCc) {
-        when(mockPresubmissionService.removeJson(any[SchemeInfo])(any[HeaderCarrier]()))
+        when(mockPresubmissionService.removeJson(any[SchemeInfo])(using any[HeaderCarrier]()))
           .thenReturn(removeJsonResult)
       }
 
@@ -107,7 +107,7 @@ class PresubmissionControllerSpec extends ERSTestHelper with BeforeAndAfterEach 
   "calling checkForExistingPresubmission" should {
     def buildPresubmissionController(checkResult: Option[(Boolean, Long)] = Some((true, 1L))): PresubmissionController =
       new PresubmissionController(mockPresubmissionService, mockAuditEvents, mockMetrics, mockCc) {
-        when(mockPresubmissionService.compareSheetsNumber(anyInt(), any[SchemeInfo])(any[HeaderCarrier]()))
+        when(mockPresubmissionService.compareSheetsNumber(anyInt(), any[SchemeInfo])(using any[HeaderCarrier]()))
           .thenReturn(ERSEnvelope(checkResult.toRight(MongoUnavailableError("mongo error"))))
       }
 
@@ -123,7 +123,7 @@ class PresubmissionControllerSpec extends ERSTestHelper with BeforeAndAfterEach 
       val presubmissionController = buildPresubmissionController(checkResult = Some((false, 0)))
       val result                  = presubmissionController.checkForExistingPresubmission(5)(FakeRequest().withBody(ersSchemeInfo))
       status(result) shouldBe INTERNAL_SERVER_ERROR
-      verify(mockAuditEvents, VerificationModeFactory.times(1)).auditADRTransferFailure(any(), any())(any())
+      verify(mockAuditEvents, VerificationModeFactory.times(1)).auditADRTransferFailure(any(), any())(using any())
       verify(mockMetrics, VerificationModeFactory.times(0)).checkForPresubmission(anyLong(), any[TimeUnit]())
     }
 
@@ -131,7 +131,7 @@ class PresubmissionControllerSpec extends ERSTestHelper with BeforeAndAfterEach 
       val presubmissionController = buildPresubmissionController(checkResult = None)
       val result                  = presubmissionController.checkForExistingPresubmission(5)(FakeRequest().withBody(ersSchemeInfo))
       status(result) shouldBe INTERNAL_SERVER_ERROR
-      verify(mockAuditEvents, VerificationModeFactory.times(1)).auditADRTransferFailure(any(), any())(any())
+      verify(mockAuditEvents, VerificationModeFactory.times(1)).auditADRTransferFailure(any(), any())(using any())
       verify(mockMetrics, VerificationModeFactory.times(0)).checkForPresubmission(anyLong(), any[TimeUnit]())
     }
 

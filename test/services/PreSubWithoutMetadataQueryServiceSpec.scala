@@ -43,7 +43,7 @@ class PreSubWithoutMetadataQueryServiceSpec
     )
   )
 
-  implicit val hc: HeaderCarrier = HeaderCarrier()
+  given hc: HeaderCarrier = HeaderCarrier()
 
   override def beforeEach(): Unit = {
     super.beforeEach()

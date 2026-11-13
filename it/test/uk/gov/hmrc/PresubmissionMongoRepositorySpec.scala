@@ -29,6 +29,7 @@ import repositories.PresubmissionMongoRepository
 
 import java.util.concurrent.TimeUnit
 import scala.collection.mutable.ListBuffer
+import org.mongodb.scala.ObservableFuture
 
 class PresubmissionMongoRepositorySpec extends AnyWordSpecLike with Matchers with BeforeAndAfterEach with EitherValues {
 

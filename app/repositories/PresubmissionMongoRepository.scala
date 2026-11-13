@@ -37,7 +37,7 @@ import javax.inject.{Inject, Singleton}
 import scala.concurrent.ExecutionContext
 
 @Singleton
-class PresubmissionMongoRepository @Inject() (applicationConfig: ApplicationConfig, mc: MongoComponent)(implicit
+class PresubmissionMongoRepository @Inject() (applicationConfig: ApplicationConfig, mc: MongoComponent)(using
   ec: ExecutionContext
 ) extends PlayMongoRepository[JsObject](
       mongoComponent = mc,
@@ -49,7 +49,7 @@ class PresubmissionMongoRepository @Inject() (applicationConfig: ApplicationConf
           ascending("createdAt"),
           indexOptions = IndexOptions()
             .name("schemeInfoTimeToLive")
-            .expireAfter(applicationConfig.presubmissionCollectionTTL, TimeUnit.DAYS)
+            .expireAfter(scala.Predef.long2Long(applicationConfig.presubmissionCollectionTTL), TimeUnit.DAYS)
         )
       ),
       replaceIndexes = applicationConfig.presubmissionCollectionIndexReplace
@@ -58,14 +58,16 @@ class PresubmissionMongoRepository @Inject() (applicationConfig: ApplicationConf
 
   private val className = getClass.getSimpleName
 
-  def buildSelector(schemeInfo: SchemeInfo): BsonDocument = BsonDocument(
-    "schemeInfo.schemeRef" -> BsonString(schemeInfo.schemeRef),
-    "schemeInfo.timestamp" -> BsonInt64(schemeInfo.timestamp.toEpochMilli)
-  )
+  def buildSelector(schemeInfo: SchemeInfo): BsonDocument = BsonDocument()
+    .append("schemeInfo.schemeRef", BsonString(schemeInfo.schemeRef))
+    .append("schemeInfo.timestamp", BsonInt64(schemeInfo.timestamp.toEpochMilli))
 
   def storeJson(presubmissionData: SchemeData, sessionId: String): ERSEnvelope[Boolean] = EitherT {
-    collection
-      .insertOne(createDocumentToInsert(presubmissionData))
+    this
+      .SingleObservableFuture(
+        collection
+          .insertOne(createDocumentToInsert(presubmissionData))
+      )
       .toFuture()
       .map(_.wasAcknowledged())
       .map(_.asRight)
@@ -82,9 +84,12 @@ class PresubmissionMongoRepository @Inject() (applicationConfig: ApplicationConf
 
   def getJson(schemeInfo: SchemeInfo, sessionId: String): ERSEnvelope[scala.Seq[JsObject]] = EitherT {
     logInfo(s"[PresubmissionMongoRepository][getJson][selector]: ${buildSelector(schemeInfo).toJson}")
-    collection
-      .find(buildSelector(schemeInfo))
-      .batchSize(Int.MaxValue)
+    this
+      .ObservableFuture(
+        collection
+          .find(buildSelector(schemeInfo))
+          .batchSize(Int.MaxValue)
+      )
       .toFuture()
       .map(_.asRight)
       .recover {
@@ -99,8 +104,11 @@ class PresubmissionMongoRepository @Inject() (applicationConfig: ApplicationConf
   }
 
   def count(schemeInfo: SchemeInfo, sessionId: String): ERSEnvelope[Long] = EitherT {
-    collection
-      .countDocuments(buildSelector(schemeInfo))
+    this
+      .SingleObservableFuture(
+        collection
+          .countDocuments(buildSelector(schemeInfo))
+      )
       .toFuture()
       .map(_.asRight)
       .recover {
@@ -115,8 +123,11 @@ class PresubmissionMongoRepository @Inject() (applicationConfig: ApplicationConf
   }
 
   def removeJson(schemeInfo: SchemeInfo, sessionId: String): ERSEnvelope[DeleteResult] = EitherT {
-    collection
-      .deleteMany(buildSelector(schemeInfo))
+    this
+      .SingleObservableFuture(
+        collection
+          .deleteMany(buildSelector(schemeInfo))
+      )
       .toFuture()
       .map(_.asRight)
       .recover {
@@ -135,8 +146,11 @@ class PresubmissionMongoRepository @Inject() (applicationConfig: ApplicationConf
       Json.obj("createdAt" -> MongoJavatimeFormats.instantWrites.writes(schemeData.schemeInfo.timestamp))
 
   def getStatusForSelectedSchemes(sessionId: String, selectors: Selectors): ERSEnvelope[Seq[JsObject]] = EitherT {
-    collection
-      .find(filter = selectors.preSubmissionSchemeRefSelector)
+    this
+      .ObservableFuture(
+        collection
+          .find(filter = selectors.preSubmissionSchemeRefSelector)
+      )
       .toFuture()
       .map(_.asRight)
       .recover {

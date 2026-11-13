@@ -34,6 +34,9 @@ import play.api.http.MimeTypes.JSON
 import javax.inject.Inject
 import scala.concurrent.ExecutionContext
 
+import play.api.libs.ws.JsonBodyWritables.writeableOf_JsValue
+import play.api.libs.ws.DefaultBodyWritables.writableOf_Source
+
 class ADRConnector @Inject() (applicationConfig: ApplicationConfig, http: HttpClientV2)
     extends ErrorHandlerHelper with CorrelationIdHelper {
 
@@ -42,24 +45,24 @@ class ADRConnector @Inject() (applicationConfig: ApplicationConfig, http: HttpCl
 
   private def buildEtmpPath(path: String): String = s"${applicationConfig.adrBaseURI}/$path"
 
-  private def explicitHeaders()(implicit hc: HeaderCarrier): scala.Seq[(String, String)] = scala.Seq(
+  private def explicitHeaders()(using hc: HeaderCarrier): scala.Seq[(String, String)] = scala.Seq(
     "Environment"   -> applicationConfig.UrlHeaderEnvironment,
     "Authorization" -> applicationConfig.UrlHeaderAuthorization
   ) ++ hc.headers(scala.Seq(HEADER_X_CORRELATION_ID))
 
-  def sendData(adrData: JsObject, schemeType: String)(implicit
+  def sendData(adrData: JsObject, schemeType: String)(using
     ec: ExecutionContext,
     hc: HeaderCarrier
   ): ERSEnvelope[HttpResponse] = EitherT {
     val url: String       = buildEtmpPath(s"${applicationConfig.adrFullSubmissionURI}/${schemeType.toLowerCase()}")
     val headersForRequest = hc
-      .withExtraHeaders(explicitHeaders(): _*)
+      .withExtraHeaders(explicitHeaders()*)
       .headersForUrl(headerCarrierConfig)(url)
 
     http
       .post(url"$url")
       .withBody(adrData)
-      .setHeader(headersForRequest: _*)
+      .setHeader(headersForRequest*)
       .execute[HttpResponse]
       .map(_.asRight)
       .recover { case ex =>
@@ -67,7 +70,7 @@ class ADRConnector @Inject() (applicationConfig: ApplicationConfig, http: HttpCl
       }
   }
 
-  def sendDataStreamed(adrData: JsObject, schemeType: String)(implicit
+  def sendDataStreamed(adrData: JsObject, schemeType: String)(using
     ec: ExecutionContext,
     hc: HeaderCarrier
   ): ERSEnvelope[HttpResponse] = EitherT {
@@ -76,14 +79,14 @@ class ADRConnector @Inject() (applicationConfig: ApplicationConfig, http: HttpCl
     logInfo(
       s"[ADRConnector][sendDataStreamed] Streaming ${payload.length} bytes as a single chunk for scheme type [$schemeType]"
     )
-    val streamData: Source[ByteString, _] = Source.single(payload)
+    val streamData: Source[ByteString, ?] = Source.single(payload)
     val headersForRequest                 = hc
-      .withExtraHeaders(explicitHeaders(): _*)
+      .withExtraHeaders(explicitHeaders()*)
       .headersForUrl(headerCarrierConfig)(url)
 
     http
       .post(url"$url")
-      .setHeader(headersForRequest: _*)
+      .setHeader(headersForRequest*)
       .setHeader(CONTENT_TYPE -> JSON)
       .withBody(streamData)
       .execute[HttpResponse]

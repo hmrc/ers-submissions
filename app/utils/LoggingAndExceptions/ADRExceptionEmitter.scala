@@ -24,7 +24,7 @@ import javax.inject.Inject
 
 class ADRExceptionEmitter @Inject() (auditEvents: AuditEvents) {
 
-  def auditAndThrowWithStackTrace(ersMetaData: ErsMetaData, data: Map[String, String], ex: Exception)(implicit
+  def auditAndThrowWithStackTrace(ersMetaData: ErsMetaData, data: Map[String, String], ex: Exception)(using
     hc: HeaderCarrier
   ): Nothing = {
     auditEvents.auditRunTimeError(ex, data("context"))
