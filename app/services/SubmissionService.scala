@@ -59,8 +59,7 @@ class SubmissionService @Inject() (
       false
     }
 
-  def processData(ersSummary: ErsSummary, failedStatus: String, successStatus: String, streamed: Boolean = false)(
-    using
+  def processData(ersSummary: ErsSummary, failedStatus: String, successStatus: String, streamed: Boolean = false)(using
     request: Request[?],
     hc: HeaderCarrier
   ): ERSEnvelope[Boolean] =

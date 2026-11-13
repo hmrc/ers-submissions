@@ -68,7 +68,7 @@ class ReSubmissionSchedulerService @Inject() (
 
   override def invoke(using ec: ExecutionContext): ERSEnvelope[Boolean] = {
     val request: Request[JsObject] = ERSRequest.createERSRequest()
-    given hc: HeaderCarrier = getOrCreateCorrelationID(request)
+    given hc: HeaderCarrier        = getOrCreateCorrelationID(request)
 
     logIfEnabled(applicationConfig.schedulerEnableAdditionalLogs(jobName)) {
       resubPresubmissionService

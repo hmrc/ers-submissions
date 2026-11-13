@@ -28,8 +28,8 @@ class ConfigUtilsSpec extends ERSTestHelper {
 
   val mockADRExceptionEmitter: ADRExceptionEmitter = app.injector.instanceOf[ADRExceptionEmitter]
   val testConfigUtils                              = new ConfigUtils(mockADRExceptionEmitter)
-  given request: FakeRequest[AnyContent]    = FakeRequest()
-  given hc: HeaderCarrier                   = HeaderCarrier()
+  given request: FakeRequest[AnyContent]           = FakeRequest()
+  given hc: HeaderCarrier                          = HeaderCarrier()
   val ersSummary: ErsSummary                       = Fixtures.EMISummaryDate
 
   "calling getConfigData" should {

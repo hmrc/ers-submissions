@@ -32,7 +32,9 @@ object Common extends ERSTestHelper {
 
   def loadConfiguration(schemeType: String, sheetName: String, configUtils: ConfigUtils): Config =
     running(app) {
-      configUtils.getConfigData(schemeType + "/" + sheetName, sheetName, Fixtures.EMISummaryDate)(using new HeaderCarrier())
+      configUtils.getConfigData(schemeType + "/" + sheetName, sheetName, Fixtures.EMISummaryDate)(using
+        new HeaderCarrier()
+      )
     }
 
 }

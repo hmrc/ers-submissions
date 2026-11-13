@@ -33,8 +33,8 @@ import scala.concurrent.ExecutionContext
 
 class PresubmissionServiceSpec extends ERSTestHelper with EitherValues {
 
-  given hc: HeaderCarrier                                = HeaderCarrier()
-  given request: FakeRequest[JsObject]                   = FakeRequest().withBody(Fixtures.metadataJson)
+  given hc: HeaderCarrier                                       = HeaderCarrier()
+  given request: FakeRequest[JsObject]                          = FakeRequest().withBody(Fixtures.metadataJson)
   val mockPresubmissionRepository: PresubmissionMongoRepository = mock[PresubmissionMongoRepository]
   val validGetJsonResult: Seq[JsObject]                         = Seq(Json.toJsObject(Fixtures.schemeData))
   val invalidGetJsonResult: Seq[JsObject]                       = Seq(Json.toJsObject(Fixtures.schemeData) - "sheetName")

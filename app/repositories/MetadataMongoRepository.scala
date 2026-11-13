@@ -76,7 +76,8 @@ class MetadataMongoRepository @Inject() (val applicationConfig: ApplicationConfi
       .append("metaData.schemeInfo.timestamp", BsonInt64(schemeInfo.timestamp.toEpochMilli))
 
   def storeErsSummary(ersSummary: ErsSummary, sessionId: String): ERSEnvelope[Boolean] = EitherT {
-    this.SingleObservableFuture(collection.insertOne(Json.toJsObject(ersSummary)))
+    this
+      .SingleObservableFuture(collection.insertOne(Json.toJsObject(ersSummary)))
       .toFuture()
       .map(_.wasAcknowledged())
       .map(_.asRight)
@@ -96,7 +97,8 @@ class MetadataMongoRepository @Inject() (val applicationConfig: ApplicationConfi
     // TODO: COME BACK TO
     val update   = BsonDocument().append("$setf", BsonDocument().append("transferStatus", BsonString(status)))
 
-    this.SingleObservableFuture(collection.updateOne(selector, update))
+    this
+      .SingleObservableFuture(collection.updateOne(selector, update))
       .toFuture()
       .map(_.wasAcknowledged())
       .map(_.asRight)
@@ -126,8 +128,11 @@ class MetadataMongoRepository @Inject() (val applicationConfig: ApplicationConfi
         .projection(projection)
         .limit(processFailedSubmissionsConfig.resubmissionLimit)
 
-    this.ObservableFuture(ersSubmissionsWithObjectIds
-      .map(json => (json \ objectIdKey).as[ObjectId](using MongoFormats.objectIdFormat)))
+    this
+      .ObservableFuture(
+        ersSubmissionsWithObjectIds
+          .map(json => (json \ objectIdKey).as[ObjectId](using MongoFormats.objectIdFormat))
+      )
       .toFuture()
       .map(_.asRight)
       .recover {
@@ -143,12 +148,16 @@ class MetadataMongoRepository @Inject() (val applicationConfig: ApplicationConfi
 
   def findAndUpdateByStatus(jobIdsToUpdate: scala.Seq[ObjectId], sessionId: String): ERSEnvelope[UpdateResult] =
     EitherT {
-      val selector               = Filters.in(objectIdKey, jobIdsToUpdate*)
+      val selector = Filters.in(objectIdKey, jobIdsToUpdate*)
       // TODO: COME BACK TO
-      val modifier   = BsonDocument().append("$setf", BsonDocument().append("transferStatus", BsonString(Statuses.Process.toString)))
+      val modifier =
+        BsonDocument().append("$setf", BsonDocument().append("transferStatus", BsonString(Statuses.Process.toString)))
 
-      this.SingleObservableFuture(collection
-        .updateMany(filter = selector, update = scala.Seq(modifier)))
+      this
+        .SingleObservableFuture(
+          collection
+            .updateMany(filter = selector, update = scala.Seq(modifier))
+        )
         .toFuture()
         .map(_.asRight)
         .recover {
@@ -166,9 +175,12 @@ class MetadataMongoRepository @Inject() (val applicationConfig: ApplicationConfi
     EitherT {
       val selector = Filters.in(objectIdKey, jobIdsToUpdate*)
 
-      this.ObservableFuture(collection
-        .find(filter = selector)
-        .map(_.as[ErsSummary]))
+      this
+        .ObservableFuture(
+          collection
+            .find(filter = selector)
+            .map(_.as[ErsSummary])
+        )
         .toFuture()
         .map(_.asRight)
         .recover {
@@ -183,8 +195,11 @@ class MetadataMongoRepository @Inject() (val applicationConfig: ApplicationConfi
     }
 
   def getNumberOfFailedJobs(failedJobSelector: BsonDocument, sessionId: String): ERSEnvelope[Long] = EitherT {
-    this.SingleObservableFuture(collection
-      .countDocuments(filter = failedJobSelector))
+    this
+      .SingleObservableFuture(
+        collection
+          .countDocuments(filter = failedJobSelector)
+      )
       .toFuture()
       .map(_.asRight)
       .recover {
@@ -199,18 +214,21 @@ class MetadataMongoRepository @Inject() (val applicationConfig: ApplicationConfi
   }
 
   def getAggregateCountOfSubmissions(sessionId: String): ERSEnvelope[Seq[JsObject]] = EitherT {
-    this.ObservableFuture(collection
-      .aggregate(
-        pipeline = scala.Seq(
-          Aggregates.sort(Sorts.ascending("metaData.schemeInfo.schemeType", "transferStatus")),
-          Aggregates.group(
-            BsonDocument()
-              .append("schemeType", BsonString("$metaData.schemeInfo.schemeType"))
-              .append("transferStatus", BsonString("$transferStatus")),
-            sum("count", 1)
+    this
+      .ObservableFuture(
+        collection
+          .aggregate(
+            pipeline = scala.Seq(
+              Aggregates.sort(Sorts.ascending("metaData.schemeInfo.schemeType", "transferStatus")),
+              Aggregates.group(
+                BsonDocument()
+                  .append("schemeType", BsonString("$metaData.schemeInfo.schemeType"))
+                  .append("transferStatus", BsonString("$transferStatus")),
+                sum("count", 1)
+              )
+            )
           )
-        )
-      ))
+      )
       .toFuture()
       .map(_.asRight)
       .recover {
@@ -225,8 +243,11 @@ class MetadataMongoRepository @Inject() (val applicationConfig: ApplicationConfi
   }
 
   def getStatusForSelectedSchemes(sessionId: String, selectors: Selectors): ERSEnvelope[Seq[JsObject]] = EitherT {
-    this.ObservableFuture(collection
-      .find(filter = selectors.metadataSchemeRefSelector))
+    this
+      .ObservableFuture(
+        collection
+          .find(filter = selectors.metadataSchemeRefSelector)
+      )
       .toFuture()
       .map(_.asRight)
       .recover {

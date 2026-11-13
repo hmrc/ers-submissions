@@ -209,10 +209,18 @@ class ResubPresubmissionServiceSpec extends ERSTestHelper with BeforeAndAfterEac
             .thenReturn(ERSEnvelope(updateResult))
           when(mockMetadataMongoRepository.findErsSummaries(mockEq(failedJobIds), any()))
             .thenReturn(ERSEnvelope(ersSummaries))
-          when(mockSubmissionService.callProcessData(mockEq(firstErsSummary), any(), any(), anyBoolean())(using any(), any()))
+          when(
+            mockSubmissionService.callProcessData(mockEq(firstErsSummary), any(), any(), anyBoolean())(using
+              any(),
+              any()
+            )
+          )
             .thenReturn(ERSEnvelope(firstResult))
           when(
-            mockSubmissionService.callProcessData(mockEq(secondErsSummary), any(), any(), anyBoolean())(using any(), any())
+            mockSubmissionService.callProcessData(mockEq(secondErsSummary), any(), any(), anyBoolean())(using
+              any(),
+              any()
+            )
           )
             .thenReturn(ERSEnvelope(secondResult))
 
@@ -231,7 +239,10 @@ class ResubPresubmissionServiceSpec extends ERSTestHelper with BeforeAndAfterEac
 
     "return the result of callProcessData if ErsSubmissions is successfully extracted" in {
       when(
-        mockSubmissionService.callProcessData(any[ErsSummary](), anyString(), anyString(), anyBoolean())(using any(), any())
+        mockSubmissionService.callProcessData(any[ErsSummary](), anyString(), anyString(), anyBoolean())(using
+          any(),
+          any()
+        )
       )
         .thenReturn(ERSEnvelope(true))
 
@@ -243,7 +254,10 @@ class ResubPresubmissionServiceSpec extends ERSTestHelper with BeforeAndAfterEac
 
     "audit failed submission if callProcessData returns error" in {
       when(
-        mockSubmissionService.callProcessData(any[ErsSummary](), anyString(), anyString(), anyBoolean())(using any(), any())
+        mockSubmissionService.callProcessData(any[ErsSummary](), anyString(), anyString(), anyBoolean())(using
+          any(),
+          any()
+        )
       )
         .thenReturn(ERSEnvelope(ResubmissionError()))
 
@@ -255,7 +269,10 @@ class ResubPresubmissionServiceSpec extends ERSTestHelper with BeforeAndAfterEac
 
     "return ResubmissionError if ADRTransferError occurs" in {
       when(
-        mockSubmissionService.callProcessData(any[ErsSummary](), anyString(), anyString(), anyBoolean())(using any(), any())
+        mockSubmissionService.callProcessData(any[ErsSummary](), anyString(), anyString(), anyBoolean())(using
+          any(),
+          any()
+        )
       )
         .thenReturn(ERSEnvelope(ADRTransferError()))
 
@@ -267,7 +284,10 @@ class ResubPresubmissionServiceSpec extends ERSTestHelper with BeforeAndAfterEac
 
     "log error and send ADR audit event if callProcessData returns false" in {
       when(
-        mockSubmissionService.callProcessData(any[ErsSummary](), anyString(), anyString(), anyBoolean())(using any(), any())
+        mockSubmissionService.callProcessData(any[ErsSummary](), anyString(), anyString(), anyBoolean())(using
+          any(),
+          any()
+        )
       )
         .thenReturn(ERSEnvelope(false))
 
@@ -280,7 +300,9 @@ class ResubPresubmissionServiceSpec extends ERSTestHelper with BeforeAndAfterEac
 
       result.value shouldBe false
       verify(mockAuditEvents)
-        .sendToAdrEvent(mockEq("ErsTransferToAdrFailed"), any[ErsSummary](), any(), mockEq(Some("scheduler")))(using any())
+        .sendToAdrEvent(mockEq("ErsTransferToAdrFailed"), any[ErsSummary](), any(), mockEq(Some("scheduler")))(using
+          any()
+        )
 
       verify(resubPresubmissionService).logError(expectedErrorLog)
     }

@@ -31,8 +31,7 @@ import utils.LoggingAndExceptions.ErsLogger
 import javax.inject.Inject
 import scala.concurrent.Future
 
-class FileDownloadService @Inject() (appConfig: ApplicationConfig)(using actorSystem: ActorSystem)
-    extends ErsLogger {
+class FileDownloadService @Inject() (appConfig: ApplicationConfig)(using actorSystem: ActorSystem) extends ErsLogger {
 
   def extractEntityData(response: HttpResponse): Source[ByteString, ?] = {
     val uploadFileSizeLimit = appConfig.uploadFileSizeLimit

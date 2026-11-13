@@ -28,6 +28,7 @@ import org.scalatest.{BeforeAndAfterEach, EitherValues}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 import repositories.PresubmissionMongoRepository
+import org.mongodb.scala.ObservableFuture
 
 class ValidatorIntegrationSpec
     extends AnyWordSpecLike with Matchers with BeforeAndAfterEach with FakeAuthService with EitherValues {

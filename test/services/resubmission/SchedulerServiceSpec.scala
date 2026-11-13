@@ -32,8 +32,8 @@ import scala.concurrent.Future
 
 class SchedulerServiceSpec extends ERSTestHelper with BeforeAndAfterEach with EitherValues {
 
-  given hc: HeaderCarrier                               = HeaderCarrier()
-  given request: Request[?]                             = FakeRequest()
+  given hc: HeaderCarrier                                      = HeaderCarrier()
+  given request: Request[?]                                    = FakeRequest()
   val mockApplicationConfig: ApplicationConfig                 = app.injector.instanceOf[ApplicationConfig]
   val mockMongoLockRepository: DefaultLockRepositoryProvider   = mock[DefaultLockRepositoryProvider]
   val mockResubPresubmissionService: ResubPresubmissionService = mock[ResubPresubmissionService]

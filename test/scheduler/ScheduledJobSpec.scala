@@ -43,12 +43,12 @@ class ScheduledJobSpec extends AnyWordSpecLike with Matchers with MockitoSugar {
     )
 
     val job: ScheduledJob = new ScheduledJob {
-      override val scheduledMessage: SchedulingActor.ScheduledMessage[?]      = ResubmissionServiceClass(mockService)
-      override val config: Configuration                                      = testConfig
-      override val actorSystem: ActorSystem                                   = mockActorSystem
-      override lazy val jobName: String                                       = jobNameTest
-      override lazy val scheduler: QuartzSchedulerExtension                   = mockQuartzSchedulerExtension
-      override lazy val applicationLifecycle: ApplicationLifecycle                 = mockApplicationLifecycle
+      override val scheduledMessage: SchedulingActor.ScheduledMessage[?] = ResubmissionServiceClass(mockService)
+      override val config: Configuration                                 = testConfig
+      override val actorSystem: ActorSystem                              = mockActorSystem
+      override lazy val jobName: String                                  = jobNameTest
+      override lazy val scheduler: QuartzSchedulerExtension              = mockQuartzSchedulerExtension
+      override lazy val applicationLifecycle: ApplicationLifecycle       = mockApplicationLifecycle
     }
 
   }
