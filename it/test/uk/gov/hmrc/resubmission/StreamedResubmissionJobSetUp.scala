@@ -28,9 +28,11 @@ import scheduler.StreamedResubmissionServiceImpl
 import services.resubmission.ProcessFailedSubmissionsConfig
 
 import scala.concurrent.{ExecutionContext, Future}
-import org.mongodb.scala.ObservableFuture
+import uk.gov.hmrc.mongo.logging.ObservableFutureImplicits.SingleObservableFuture
 
 case class StreamedResubmissionJobSetUp(app: Application) {
+
+  implicit val ec: ExecutionContext = app.injector.instanceOf[ExecutionContext]
 
   val metadataMongoRepository: MetadataMongoRepository           = app.injector.instanceOf[MetadataMongoRepository]
   val collection: MongoCollection[JsObject]                      = metadataMongoRepository.collection
@@ -40,8 +42,6 @@ case class StreamedResubmissionJobSetUp(app: Application) {
   await(collectionPs.drop().toFuture())
 
   val getJob: StreamedResubmissionServiceImpl = app.injector.instanceOf[StreamedResubmissionServiceImpl]
-
-  implicit val ec: ExecutionContext = app.injector.instanceOf[ExecutionContext]
 
   def countMetadataRecordsWithSelector(filter: Bson): Long =
     await(collection.countDocuments(filter).toFuture())

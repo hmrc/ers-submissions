@@ -94,8 +94,7 @@ class MetadataMongoRepository @Inject() (val applicationConfig: ApplicationConfi
 
   def updateStatus(schemeInfo: SchemeInfo, status: String, sessionId: String): ERSEnvelope[Boolean] = EitherT {
     val selector = buildSelector(schemeInfo)
-    // TODO: COME BACK TO
-    val update   = BsonDocument().append("$setf", BsonDocument().append("transferStatus", BsonString(status)))
+    val update   = BsonDocument().append("$set", BsonDocument().append("transferStatus", BsonString(status)))
 
     this
       .SingleObservableFuture(collection.updateOne(selector, update))
@@ -149,9 +148,8 @@ class MetadataMongoRepository @Inject() (val applicationConfig: ApplicationConfi
   def findAndUpdateByStatus(jobIdsToUpdate: scala.Seq[ObjectId], sessionId: String): ERSEnvelope[UpdateResult] =
     EitherT {
       val selector = Filters.in(objectIdKey, jobIdsToUpdate*)
-      // TODO: COME BACK TO
       val modifier =
-        BsonDocument().append("$setf", BsonDocument().append("transferStatus", BsonString(Statuses.Process.toString)))
+        BsonDocument().append("$set", BsonDocument().append("transferStatus", BsonString(Statuses.Process.toString)))
 
       this
         .SingleObservableFuture(
