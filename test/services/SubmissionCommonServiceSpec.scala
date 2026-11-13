@@ -310,7 +310,9 @@ class SubmissionCommonServiceSpec extends ERSTestHelper with BeforeAndAfterEach 
     }
 
     "return result from updatePostsubmission if sending to ADR is successful when streamed" in {
-      when(adrConnector.sendDataStreamed(any[JsObject](), anyString())(using any[ExecutionContext](), any[HeaderCarrier]()))
+      when(
+        adrConnector.sendDataStreamed(any[JsObject](), anyString())(using any[ExecutionContext](), any[HeaderCarrier]())
+      )
         .thenReturn(ERSEnvelope(Future.successful(HttpResponse(202, ""))))
 
       val result = await(
@@ -333,7 +335,9 @@ class SubmissionCommonServiceSpec extends ERSTestHelper with BeforeAndAfterEach 
     }
 
     "return result from updatePostsubmission if sending to ADR failed when streamed" in {
-      when(adrConnector.sendDataStreamed(any[JsObject](), anyString())(using any[ExecutionContext](), any[HeaderCarrier]()))
+      when(
+        adrConnector.sendDataStreamed(any[JsObject](), anyString())(using any[ExecutionContext](), any[HeaderCarrier]())
+      )
         .thenReturn(ERSEnvelope(Future.successful(HttpResponse(500, ""))))
 
       val result = await(
@@ -353,7 +357,9 @@ class SubmissionCommonServiceSpec extends ERSTestHelper with BeforeAndAfterEach 
     }
 
     "return ADRTransferError if sending to ADR returns error when streamed" in {
-      when(adrConnector.sendDataStreamed(any[JsObject](), anyString())(using any[ExecutionContext](), any[HeaderCarrier]()))
+      when(
+        adrConnector.sendDataStreamed(any[JsObject](), anyString())(using any[ExecutionContext](), any[HeaderCarrier]())
+      )
         .thenReturn(ERSEnvelope(ADRTransferError()))
 
       val result = await(

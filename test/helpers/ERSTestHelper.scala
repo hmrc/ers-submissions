@@ -40,7 +40,7 @@ trait ERSTestHelper extends AnyWordSpecLike with Matchers with OptionValues with
       .disable[SchedulerModule]
       .build()
 
-  val mockCc: ControllerComponents        = stubControllerComponents()
+  val mockCc: ControllerComponents = stubControllerComponents()
   given materializer: Materializer = Play.materializer(using fakeApplication())
   given ec: ExecutionContext       = mockCc.executionContext
 

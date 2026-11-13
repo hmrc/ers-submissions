@@ -49,8 +49,8 @@ class SubmissionController @Inject() (
       case JsSuccess(ersSummary, _) =>
         (for {
           result <-
-            submissionCommonService.callProcessData(ersSummary, Statuses.Failed.toString, Statuses.Sent.toString)(
-              using request,
+            submissionCommonService.callProcessData(ersSummary, Statuses.Failed.toString, Statuses.Sent.toString)(using
+              request,
               hc
             )
         } yield result).value.map {

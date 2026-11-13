@@ -27,8 +27,8 @@ import utils.LoggingAndExceptions.ErsLogger
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Try
 
-case class AuthorisedAction(slashSeperatedRef: String, authConnector: AuthConnector, bodyParser: PlayBodyParsers)(
-  using val executionContext: ExecutionContext
+case class AuthorisedAction(slashSeperatedRef: String, authConnector: AuthConnector, bodyParser: PlayBodyParsers)(using
+  val executionContext: ExecutionContext
 ) extends AuthAction {
   override val optionalEmpRef: Option[EmpRef] = Try(EmpRef.fromIdentifiers(slashSeperatedRef)).toOption
   val parser: BodyParser[AnyContent]          = bodyParser.default

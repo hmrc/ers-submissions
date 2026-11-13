@@ -28,6 +28,7 @@ import scheduler.StreamedResubmissionServiceImpl
 import services.resubmission.ProcessFailedSubmissionsConfig
 
 import scala.concurrent.{ExecutionContext, Future}
+import org.mongodb.scala.ObservableFuture
 
 case class StreamedResubmissionJobSetUp(app: Application) {
 

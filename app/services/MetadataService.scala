@@ -44,7 +44,7 @@ class MetadataService @Inject() (metadataRepository: MetadataMongoRepository, au
 
   def validateErsSummaryFromJson(json: JsObject): JsResult[ErsSummary] =
     json.validate[ErsSummary] match {
-      case JsSuccess(ersSummary, _)  =>
+      case JsSuccess(ersSummary, _)                                                      =>
         val isMetadataValid: (Boolean, Option[String]) = validateErsSummary(ersSummary)
         if (isMetadataValid._1) {
           JsSuccess(ersSummary)
@@ -57,7 +57,7 @@ class MetadataService @Inject() (metadataRepository: MetadataMongoRepository, au
 
           JsError(s"Metadata invalid: ${isMetadataValid._2.getOrElse("")}")
         }
-      case JsError(error: collection.Seq[(JsPath, collection.Seq[JsonValidationError])])                    =>
+      case JsError(error: collection.Seq[(JsPath, collection.Seq[JsonValidationError])]) =>
         logWarn(
           "[MetadataService][validateErsSummaryFromJson] Invalid request. Errors: " + JsError.toJson(error).toString()
         )

@@ -63,7 +63,8 @@ class CSOP_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with 
         ERSEnvelope(Future.successful(List()))
       )
 
-      val result = await(adrSubmission.generateSubmission(CSOP.metadataNilReturnWithoutAltAmmends)(using request, hc).value)
+      val result =
+        await(adrSubmission.generateSubmission(CSOP.metadataNilReturnWithoutAltAmmends)(using request, hc).value)
       result.value - "acknowledgementReference" shouldBe Json.parse("""{
           |"regime":"ERS",
           |"schemeType":"CSOP",
@@ -114,7 +115,8 @@ class CSOP_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with 
         ERSEnvelope(Future.successful(List()))
       )
 
-      val result = await(adrSubmission.generateSubmission(CSOP.metadataNilReturnWithSomeAltAmmends)(using request, hc).value)
+      val result =
+        await(adrSubmission.generateSubmission(CSOP.metadataNilReturnWithSomeAltAmmends)(using request, hc).value)
       result.value - "acknowledgementReference" shouldBe Json.parse("""{
           |"regime":"ERS",
           |"schemeType":"CSOP",
@@ -178,7 +180,8 @@ class CSOP_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with 
         ERSEnvelope(Future.successful(List()))
       )
 
-      val result = await(adrSubmission.generateSubmission(CSOP.metadataNilReturnWithAllAltAmmends)(using request, hc).value)
+      val result =
+        await(adrSubmission.generateSubmission(CSOP.metadataNilReturnWithAllAltAmmends)(using request, hc).value)
       result.value - "acknowledgementReference" shouldBe Json.parse("""{
           |"regime":"ERS",
           |"schemeType":"CSOP",

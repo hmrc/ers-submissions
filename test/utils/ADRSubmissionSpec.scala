@@ -36,8 +36,8 @@ import scala.collection.mutable.ListBuffer
 
 class ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with EitherValues {
 
-  given hc: HeaderCarrier                     = new HeaderCarrier()
-  given request: FakeRequest[JsObject]        = FakeRequest().withBody(Fixtures.metadataJson)
+  given hc: HeaderCarrier                            = new HeaderCarrier()
+  given request: FakeRequest[JsObject]               = FakeRequest().withBody(Fixtures.metadataJson)
   val mockSubmissionCommon: SubmissionCommon         = mock[SubmissionCommon]
   val mockPresubmissionService: PresubmissionService = mock[PresubmissionService]
   val mockAdrExceptionEmitter: ADRExceptionEmitter   = app.injector.instanceOf[ADRExceptionEmitter]
@@ -117,7 +117,8 @@ class ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with Eithe
     }
 
     "return createRootJson result for NilReturn submission" in {
-      val result = await(mockAdrSubmission.generateSubmission(Fixtures.metadataNilReturn)(using request, hc).value).value
+      val result =
+        await(mockAdrSubmission.generateSubmission(Fixtures.metadataNilReturn)(using request, hc).value).value
       result shouldBe nilReturnJson
     }
   }
@@ -143,7 +144,9 @@ class ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with Eithe
 
     "return the result of createRootJson" in {
       val result =
-        await(mockAdrSubmission.createSubmissionJson(Fixtures.metadata, Fixtures.schemeType)(using request, hc).value).value
+        await(
+          mockAdrSubmission.createSubmissionJson(Fixtures.metadata, Fixtures.schemeType)(using request, hc).value
+        ).value
       result shouldBe notNilReturnJson
     }
   }
@@ -190,7 +193,11 @@ class ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with Eithe
         .thenReturn(ERSEnvelope(MongoGenericError("There was a problem")))
 
       val result =
-        await(mockAdrSubmission.createSheetsJson(Json.obj(), Fixtures.metadata, Fixtures.schemeType)(using request, hc).value)
+        await(
+          mockAdrSubmission
+            .createSheetsJson(Json.obj(), Fixtures.metadata, Fixtures.schemeType)(using request, hc)
+            .value
+        )
       result.swap.value shouldBe MongoGenericError("There was a problem")
     }
 

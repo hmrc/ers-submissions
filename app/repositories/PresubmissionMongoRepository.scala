@@ -63,8 +63,11 @@ class PresubmissionMongoRepository @Inject() (applicationConfig: ApplicationConf
     .append("schemeInfo.timestamp", BsonInt64(schemeInfo.timestamp.toEpochMilli))
 
   def storeJson(presubmissionData: SchemeData, sessionId: String): ERSEnvelope[Boolean] = EitherT {
-    this.SingleObservableFuture(collection
-      .insertOne(createDocumentToInsert(presubmissionData)))
+    this
+      .SingleObservableFuture(
+        collection
+          .insertOne(createDocumentToInsert(presubmissionData))
+      )
       .toFuture()
       .map(_.wasAcknowledged())
       .map(_.asRight)
@@ -81,9 +84,12 @@ class PresubmissionMongoRepository @Inject() (applicationConfig: ApplicationConf
 
   def getJson(schemeInfo: SchemeInfo, sessionId: String): ERSEnvelope[scala.Seq[JsObject]] = EitherT {
     logInfo(s"[PresubmissionMongoRepository][getJson][selector]: ${buildSelector(schemeInfo).toJson}")
-    this.ObservableFuture(collection
-      .find(buildSelector(schemeInfo))
-      .batchSize(Int.MaxValue))
+    this
+      .ObservableFuture(
+        collection
+          .find(buildSelector(schemeInfo))
+          .batchSize(Int.MaxValue)
+      )
       .toFuture()
       .map(_.asRight)
       .recover {
@@ -98,8 +104,11 @@ class PresubmissionMongoRepository @Inject() (applicationConfig: ApplicationConf
   }
 
   def count(schemeInfo: SchemeInfo, sessionId: String): ERSEnvelope[Long] = EitherT {
-    this.SingleObservableFuture(collection
-      .countDocuments(buildSelector(schemeInfo)))
+    this
+      .SingleObservableFuture(
+        collection
+          .countDocuments(buildSelector(schemeInfo))
+      )
       .toFuture()
       .map(_.asRight)
       .recover {
@@ -114,8 +123,11 @@ class PresubmissionMongoRepository @Inject() (applicationConfig: ApplicationConf
   }
 
   def removeJson(schemeInfo: SchemeInfo, sessionId: String): ERSEnvelope[DeleteResult] = EitherT {
-    this.SingleObservableFuture(collection
-      .deleteMany(buildSelector(schemeInfo)))
+    this
+      .SingleObservableFuture(
+        collection
+          .deleteMany(buildSelector(schemeInfo))
+      )
       .toFuture()
       .map(_.asRight)
       .recover {
@@ -134,8 +146,11 @@ class PresubmissionMongoRepository @Inject() (applicationConfig: ApplicationConf
       Json.obj("createdAt" -> MongoJavatimeFormats.instantWrites.writes(schemeData.schemeInfo.timestamp))
 
   def getStatusForSelectedSchemes(sessionId: String, selectors: Selectors): ERSEnvelope[Seq[JsObject]] = EitherT {
-    this.ObservableFuture(collection
-      .find(filter = selectors.preSubmissionSchemeRefSelector))
+    this
+      .ObservableFuture(
+        collection
+          .find(filter = selectors.preSubmissionSchemeRefSelector)
+      )
       .toFuture()
       .map(_.asRight)
       .recover {

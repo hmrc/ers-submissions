@@ -35,6 +35,7 @@ import uk.gov.hmrc.Fixtures.buildErsSummary
 import java.time.Instant
 import java.time.temporal.ChronoUnit
 import scala.concurrent.Future
+import org.mongodb.scala.ObservableFuture
 
 class ADRSubmissionIntegration extends AnyWordSpecLike with Matchers with BeforeAndAfterEach with FakeErsStubService {
 

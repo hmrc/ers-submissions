@@ -40,7 +40,7 @@ class PresubmissionControllerSpec extends ERSTestHelper with BeforeAndAfterEach 
   val mockMetrics: Metrics                           = mock[Metrics]
   val mockPresubmissionService: PresubmissionService = mock[PresubmissionService]
   val mockAuditEvents: AuditEvents                   = mock[AuditEvents]
-  given hc: HeaderCarrier                     = new HeaderCarrier()
+  given hc: HeaderCarrier                            = new HeaderCarrier()
 
   override def beforeEach(): Unit = {
     super.beforeEach()
