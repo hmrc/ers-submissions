@@ -25,17 +25,17 @@ class StatusesSpec extends AnyWordSpec with Matchers {
   "Statuses" should {
 
     val cases = Table(
-      ("status",           "expected"),
-      (Statuses.Saved,     "saved"),
-      (Statuses.Sent,      "sent"),
-      (Statuses.Failed,    "failed"),
-      (Statuses.Process,   "process")
+      ("status", "expected"),
+      (Statuses.Saved, "saved"),
+      (Statuses.Sent, "sent"),
+      (Statuses.Failed, "failed"),
+      (Statuses.Process, "process")
     )
 
-    "have the correct value" in {
+    "have the correct value" in
       forAll(cases) { (status, expected) =>
         status.value shouldBe expected
       }
-    }
   }
+
 }

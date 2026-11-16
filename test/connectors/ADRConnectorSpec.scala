@@ -33,35 +33,40 @@ import org.scalatest.wordspec.AnyWordSpecLike
 import scala.concurrent.ExecutionContext.Implicits.global
 
 class ADRConnectorSpec
-  extends AnyWordSpecLike
+    extends AnyWordSpecLike
     with MockitoSugar
     with Matchers
     with WireMockSupport
     with HttpClientV2Support
     with ScalaFutures {
 
-  val mockApplicationConfig: ApplicationConfig    = mock[ApplicationConfig]
+  val mockApplicationConfig: ApplicationConfig = mock[ApplicationConfig]
   when(mockApplicationConfig.adrFullSubmissionURI).thenReturn("etmpFullSubmit")
   when(mockApplicationConfig.adrBaseURI).thenReturn(s"http://$wireMockHost:$wireMockPort/ers-stub")
 
-  val connector = new ADRConnector(mockApplicationConfig, httpClientV2)
+  val connector           = new ADRConnector(mockApplicationConfig, httpClientV2)
   given hc: HeaderCarrier = new HeaderCarrier()
 
   "sendData handle error correctly" in {
-    stubFor(post(urlEqualTo("/ers-stub/etmpFullSubmit/emi")).willReturn(aResponse().withFault(Fault.CONNECTION_RESET_BY_PEER)))
+    stubFor(
+      post(urlEqualTo("/ers-stub/etmpFullSubmit/emi")).willReturn(aResponse().withFault(Fault.CONNECTION_RESET_BY_PEER))
+    )
 
     connector.sendData(Fixtures.metadataJson, "emi").value.futureValue match {
-      case Left(error: ERSError) => error shouldBe ADRTransferError()
+      case Left(error: ERSError)     => error shouldBe ADRTransferError()
       case Right(resp: HttpResponse) => fail(s"Expected Left but got Right with status ${resp.status}")
     }
   }
 
   "sendDataStreamed handle error correctly" in {
-    stubFor(post(urlEqualTo("/ers-stub/etmpFullSubmit/emi")).willReturn(aResponse().withFault(Fault.CONNECTION_RESET_BY_PEER)))
+    stubFor(
+      post(urlEqualTo("/ers-stub/etmpFullSubmit/emi")).willReturn(aResponse().withFault(Fault.CONNECTION_RESET_BY_PEER))
+    )
 
     connector.sendDataStreamed(Fixtures.metadataJson, "emi").value.futureValue match {
-      case Left(error: ERSError) => error shouldBe ADRTransferError()
+      case Left(error: ERSError)     => error shouldBe ADRTransferError()
       case Right(resp: HttpResponse) => fail(s"Expected Left but got Right with status ${resp.status}")
     }
   }
+
 }
