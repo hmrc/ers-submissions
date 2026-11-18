@@ -49,7 +49,7 @@ class PresubmissionMongoRepository @Inject() (applicationConfig: ApplicationConf
           ascending("createdAt"),
           indexOptions = IndexOptions()
             .name("schemeInfoTimeToLive")
-            .expireAfter(scala.Predef.long2Long(applicationConfig.presubmissionCollectionTTL), TimeUnit.DAYS)
+            .expireAfter(applicationConfig.presubmissionCollectionTTL.toLong, TimeUnit.DAYS)
         )
       ),
       replaceIndexes = applicationConfig.presubmissionCollectionIndexReplace
