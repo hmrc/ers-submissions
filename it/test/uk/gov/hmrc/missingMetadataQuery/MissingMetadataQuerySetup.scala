@@ -30,7 +30,7 @@ import scala.concurrent.duration.{DurationLong, FiniteDuration}
 import scala.concurrent.{ExecutionContext, Future}
 import uk.gov.hmrc.mongo.logging.ObservableFutureImplicits.{ObservableFuture, SingleObservableFuture}
 
-class MissingMetadataQuerySetup(applicationConfig: ApplicationConfig)(implicit ec: ExecutionContext)
+class MissingMetadataQuerySetup(applicationConfig: ApplicationConfig)(using ec: ExecutionContext)
     extends MongoSupport {
 
   override def initTimeout: FiniteDuration = 30.seconds
@@ -52,7 +52,7 @@ class MissingMetadataQuerySetup(applicationConfig: ApplicationConfig)(implicit e
       _ <- presubmissionCollection.deleteMany(Document())
     } yield ()
 
-  def storeMultipleErsSummary(ersSummaries: Seq[JsObject])(implicit ec: ExecutionContext): Future[Boolean] =
+  def storeMultipleErsSummary(ersSummaries: Seq[JsObject])(using ec: ExecutionContext): Future[Boolean] =
     metadataCollection.insertMany(ersSummaries).toFuture().map { res =>
       res.wasAcknowledged()
     }
@@ -67,7 +67,7 @@ class MissingMetadataQuerySetup(applicationConfig: ApplicationConfig)(implicit e
       .countDocuments()
       .toFuture()
 
-  def storeMultiplePresubmissionData(presubmissionData: Seq[JsObject])(implicit ec: ExecutionContext): Future[Boolean] =
+  def storeMultiplePresubmissionData(presubmissionData: Seq[JsObject])(using ec: ExecutionContext): Future[Boolean] =
     presubmissionCollection.insertMany(presubmissionData).toFuture().map { res =>
       res.wasAcknowledged()
     }

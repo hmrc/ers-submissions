@@ -30,7 +30,7 @@ import scala.concurrent.ExecutionContext
 
 class PreSubWithoutMetadataQuerySpec extends AnyWordSpec with Matchers with MockitoSugar {
 
-  implicit val ec: ExecutionContext = ExecutionContext.global
+  given ec: ExecutionContext = ExecutionContext.global
 
   val mockApplicationConfig: ApplicationConfig = mock[ApplicationConfig]
 

@@ -33,7 +33,7 @@ import uk.gov.hmrc.mongo.logging.ObservableFutureImplicits.SingleObservableFutur
 
 case class ResubmissionJobSetUp(app: Application) {
 
-  implicit val ec: ExecutionContext = app.injector.instanceOf[ExecutionContext]
+  given ec: ExecutionContext = app.injector.instanceOf[ExecutionContext]
 
   val metadataMongoRepository: MetadataMongoRepository           = app.injector.instanceOf[MetadataMongoRepository]
   val collection: MongoCollection[JsObject]                      = metadataMongoRepository.collection
@@ -50,12 +50,12 @@ case class ResubmissionJobSetUp(app: Application) {
       .toFuture()
   )
 
-  def storeMultipleErsSummary(ersSummaries: Seq[JsObject])(implicit ec: ExecutionContext): Future[Boolean] =
+  def storeMultipleErsSummary(ersSummaries: Seq[JsObject])(using ec: ExecutionContext): Future[Boolean] =
     collection.insertMany(ersSummaries).toFuture().map { res =>
       res.wasAcknowledged()
     }
 
-  def storeMultiplePresubmissionData(presubmissionData: Seq[JsObject])(implicit ec: ExecutionContext): Future[Boolean] =
+  def storeMultiplePresubmissionData(presubmissionData: Seq[JsObject])(using ec: ExecutionContext): Future[Boolean] =
     collectionPs.insertMany(presubmissionData).toFuture().map { res =>
       res.wasAcknowledged()
     }
