@@ -8,7 +8,7 @@ object AppDependencies {
   private val compile: Seq[ModuleID] = Seq(
     "uk.gov.hmrc"             %% "bootstrap-backend-play-30" % bootstrapVersion,
     "uk.gov.hmrc.mongo"       %% "hmrc-mongo-play-30"        % mongoVersion,
-    "uk.gov.hmrc"             %% "domain-play-30"            % "11.0.0",
+    "uk.gov.hmrc"             %% "domain-play-30"            % "13.0.0",
     "org.apache.pekko"        %% "pekko-connectors-csv"      % "1.0.2",
     "org.typelevel"           %% "cats-core"                 % "2.13.0",
     // CVE-2026-27830: pekko-quartz-scheduler -> quartz -> c3p0 pulls in com.mchange:c3p0. This should be removed when
