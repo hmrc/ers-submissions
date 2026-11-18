@@ -18,7 +18,6 @@ package connectors
 
 import config.ApplicationConfig
 import fixtures.Fixtures
-import org.mockito.Mockito.when
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 
 import com.github.tomakehurst.wiremock.client.WireMock.*
@@ -27,29 +26,30 @@ import models.{ADRTransferError, ERSError}
 import uk.gov.hmrc.http.test.{HttpClientV2Support, WireMockSupport}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.concurrent.ScalaFutures
-import org.scalatestplus.mockito.MockitoSugar
 import org.scalatest.wordspec.AnyWordSpecLike
 
 import scala.concurrent.ExecutionContext.Implicits.global
+import play.api.Configuration
+import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
 class ADRConnectorSpec
-    extends AnyWordSpecLike
-    with MockitoSugar
-    with Matchers
-    with WireMockSupport
-    with HttpClientV2Support
-    with ScalaFutures {
+    extends AnyWordSpecLike with Matchers with WireMockSupport with HttpClientV2Support with ScalaFutures {
 
-  val mockApplicationConfig: ApplicationConfig = mock[ApplicationConfig]
-  when(mockApplicationConfig.adrFullSubmissionURI).thenReturn("etmpFullSubmit")
-  when(mockApplicationConfig.adrBaseURI).thenReturn(s"http://$wireMockHost:$wireMockPort/ers-stub")
+  val testConfig: Configuration = Configuration(
+    "microservice.services.ers-stub.full-submission-url" -> "etmpFullSubmit",
+    "microservice.services.ers-stub.host"                -> wireMockHost,
+    "microservice.services.ers-stub.port"                -> wireMockPort,
+    "microservice.services.ers-stub.environment"         -> "abc0",
+    "microservice.services.ers-stub.authorization-token" -> "XX_XXXXXa"
+  )
 
-  val connector           = new ADRConnector(mockApplicationConfig, httpClientV2)
-  given hc: HeaderCarrier = new HeaderCarrier()
+  val applicationConfig: ApplicationConfig = new ApplicationConfig(new ServicesConfig(testConfig))
+  val connector                            = new ADRConnector(applicationConfig, httpClientV2)
+  given hc: HeaderCarrier                  = new HeaderCarrier()
 
   "sendData handle error correctly" in {
     stubFor(
-      post(urlEqualTo("/ers-stub/etmpFullSubmit/emi")).willReturn(aResponse().withFault(Fault.CONNECTION_RESET_BY_PEER))
+      post(urlEqualTo("/etmpFullSubmit/emi")).willReturn(aResponse().withFault(Fault.CONNECTION_RESET_BY_PEER))
     )
 
     connector.sendData(Fixtures.metadataJson, "emi").value.futureValue match {
@@ -60,7 +60,7 @@ class ADRConnectorSpec
 
   "sendDataStreamed handle error correctly" in {
     stubFor(
-      post(urlEqualTo("/ers-stub/etmpFullSubmit/emi")).willReturn(aResponse().withFault(Fault.CONNECTION_RESET_BY_PEER))
+      post(urlEqualTo("/etmpFullSubmit/emi")).willReturn(aResponse().withFault(Fault.CONNECTION_RESET_BY_PEER))
     )
 
     connector.sendDataStreamed(Fixtures.metadataJson, "emi").value.futureValue match {
