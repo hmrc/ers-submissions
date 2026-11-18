@@ -30,8 +30,7 @@ import scala.concurrent.duration.{DurationLong, FiniteDuration}
 import scala.concurrent.{ExecutionContext, Future}
 import uk.gov.hmrc.mongo.logging.ObservableFutureImplicits.{ObservableFuture, SingleObservableFuture}
 
-class MissingMetadataQuerySetup(applicationConfig: ApplicationConfig)(using ec: ExecutionContext)
-    extends MongoSupport {
+class MissingMetadataQuerySetup(applicationConfig: ApplicationConfig)(using ec: ExecutionContext) extends MongoSupport {
 
   override def initTimeout: FiniteDuration = 30.seconds
 
