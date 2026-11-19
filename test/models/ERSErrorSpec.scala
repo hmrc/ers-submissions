@@ -19,7 +19,7 @@ package models
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
-class ERSErrorSpec extends AnyWordSpec with Matchers{
+class ERSErrorSpec extends AnyWordSpec with Matchers {
 
   "ADRTransferError" should {
     "use the expected defaults" in {
@@ -32,7 +32,7 @@ class ERSErrorSpec extends AnyWordSpec with Matchers{
     "use the expected defaults" in {
       val model = SubmissionStatusUpdateError()
       model.adrSubmissionTransferStatus shouldBe None
-      model.transferStatus shouldBe None
+      model.transferStatus              shouldBe None
     }
   }
 

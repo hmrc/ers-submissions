@@ -22,13 +22,13 @@ import fixtures.Fixtures
 import helpers.ERSTestHelper
 import metrics.Metrics
 import models.{MongoUnavailableError, NoData, SchemeInfo}
-import org.mockito.ArgumentMatchers._
-import org.mockito.Mockito._
+import org.mockito.ArgumentMatchers.*
+import org.mockito.Mockito.*
 import org.mockito.internal.verification.VerificationModeFactory
 import org.scalatest.BeforeAndAfterEach
 import play.api.libs.json.{JsObject, Json}
-import play.api.test.Helpers._
-import play.api.test._
+import play.api.test.Helpers.*
+import play.api.test.*
 import services.PresubmissionService
 import services.audit.AuditEvents
 import uk.gov.hmrc.http.HeaderCarrier

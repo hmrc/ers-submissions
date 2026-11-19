@@ -18,8 +18,8 @@ package uk.gov.hmrc.resubmission
 
 import _root_.play.api.Application
 import _root_.play.api.inject.guice.GuiceApplicationBuilder
-import _root_.play.api.libs.json._
-import _root_.play.api.test.Helpers._
+import _root_.play.api.libs.json.*
+import _root_.play.api.test.Helpers.*
 import models.{ERSError, ErsSummary, SchemeData}
 import org.mongodb.scala.model.Filters
 import org.scalatest.matchers.should.Matchers

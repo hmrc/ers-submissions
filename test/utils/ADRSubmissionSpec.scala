@@ -22,8 +22,8 @@ import common.ERSEnvelope.ERSEnvelope
 import fixtures.Fixtures
 import helpers.ERSTestHelper
 import models.{ErsSummary, MongoGenericError, SchemeInfo}
-import org.mockito.ArgumentMatchers._
-import org.mockito.Mockito._
+import org.mockito.ArgumentMatchers.*
+import org.mockito.Mockito.*
 import org.scalatest.{BeforeAndAfterEach, EitherValues}
 import play.api.libs.json.{JsObject, Json}
 import play.api.mvc.Request

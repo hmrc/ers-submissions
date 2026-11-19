@@ -19,7 +19,7 @@ package utils
 import com.typesafe.config.Config
 import common.ERSEnvelope
 import common.ERSEnvelope.ERSEnvelope
-import models._
+import models.*
 import play.api.libs.json.{JsObject, Json}
 import play.api.mvc.Request
 import services.PresubmissionService
@@ -104,7 +104,7 @@ class ADRSubmission @Inject() (
     ERSEnvelope(buildRoot(rootConfigData, ersSummary, sheetsJson, ersSummary, schemeType))
   }
 
-  import scala.jdk.CollectionConverters._
+  import scala.jdk.CollectionConverters.*
 
   def buildRoot(configData: Config, metadata: Object, sheetsJson: JsObject, ersSummary: ErsSummary, schemeType: String)(
     using
@@ -177,7 +177,7 @@ class ADRSubmission @Inject() (
     sheetName: Option[String] = None,
     schemeInfo: Option[SchemeInfo] = None
   )(using request: Request[?], hc: HeaderCarrier): JsObject = {
-    import scala.jdk.CollectionConverters._
+    import scala.jdk.CollectionConverters.*
 
     val fieldsConfigList = configData.getConfigList("fields").asScala
     fieldsConfigList.foldLeft(EmptyJson) { (json, elem) =>

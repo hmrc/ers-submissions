@@ -18,7 +18,7 @@ package services
 
 import config.ApplicationConfig
 import models.PreSubWithoutMetadata
-import org.mockito.Mockito._
+import org.mockito.Mockito.*
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec

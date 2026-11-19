@@ -26,7 +26,7 @@ import utils.LoggingAndExceptions.ErsLogger
 
 import java.time.format.DateTimeFormatter
 import java.time.{Instant, ZoneId}
-import javax.inject._
+import javax.inject.*
 import scala.concurrent.{ExecutionContext, Future}
 
 class PresSubWithoutMetadataQueryService @Inject() (

@@ -22,9 +22,9 @@ import connectors.ADRConnector
 import fixtures.Fixtures
 import helpers.ERSTestHelper
 import metrics.Metrics
-import models._
-import org.mockito.ArgumentMatchers._
-import org.mockito.Mockito._
+import models.*
+import org.mockito.ArgumentMatchers.*
+import org.mockito.Mockito.*
 import org.mockito.internal.verification.VerificationModeFactory
 import org.scalatest.{BeforeAndAfterEach, EitherValues}
 import play.api.http.Status.INTERNAL_SERVER_ERROR

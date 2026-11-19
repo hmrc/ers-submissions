@@ -21,10 +21,10 @@ import common.ERSEnvelope
 import fixtures.{Common, Fixtures, OTHER}
 import helpers.ERSTestHelper
 import models.{SchemeData, SchemeInfo}
-import org.mockito.ArgumentMatchers._
-import org.mockito.Mockito._
+import org.mockito.ArgumentMatchers.*
+import org.mockito.Mockito.*
 import org.scalatest.{BeforeAndAfterEach, EitherValues}
-import play.api.libs.json._
+import play.api.libs.json.*
 import play.api.test.FakeRequest
 import services.PresubmissionService
 import uk.gov.hmrc.http.HeaderCarrier

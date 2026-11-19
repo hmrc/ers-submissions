@@ -28,15 +28,15 @@ import controllers.auth.AuthAction
 import fixtures.{Fixtures, SIP, WithMockedAuthActions}
 import helpers.ERSTestHelper
 import metrics.Metrics
-import models._
-import org.mockito.ArgumentMatchers._
-import org.mockito.Mockito._
+import models.*
+import org.mockito.ArgumentMatchers.*
+import org.mockito.Mockito.*
 import org.mockito.internal.verification.VerificationModeFactory
 import org.scalatest.BeforeAndAfterEach
 import play.api.http.Status
 import play.api.mvc.PlayBodyParsers
 import play.api.test.FakeRequest
-import play.api.test.Helpers._
+import play.api.test.Helpers.*
 import services.audit.AuditEvents
 import services.{FileDownloadService, PresubmissionService}
 import uk.gov.hmrc.auth.core.AuthConnector

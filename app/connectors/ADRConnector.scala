@@ -17,7 +17,7 @@
 package connectors
 
 import cats.data.EitherT
-import cats.syntax.all._
+import cats.syntax.all.*
 import com.typesafe.config.ConfigFactory
 import common.ERSEnvelope.ERSEnvelope
 import config.ApplicationConfig
@@ -25,7 +25,7 @@ import org.apache.pekko.stream.scaladsl.Source
 import org.apache.pekko.util.ByteString
 import play.api.libs.json.{JsObject, Json}
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, StringContextOps}
-import uk.gov.hmrc.http.HttpReads.Implicits._
+import uk.gov.hmrc.http.HttpReads.Implicits.*
 import uk.gov.hmrc.http.client.HttpClientV2
 import utils.{CorrelationIdHelper, ErrorHandlerHelper}
 import play.api.http.HeaderNames.CONTENT_TYPE

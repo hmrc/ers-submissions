@@ -17,10 +17,10 @@
 package controllers
 
 import metrics.Metrics
-import models._
-import play.api.libs.json._
-import play.api.mvc._
-import services._
+import models.*
+import play.api.libs.json.*
+import play.api.mvc.*
+import services.*
 import services.audit.AuditEvents
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController

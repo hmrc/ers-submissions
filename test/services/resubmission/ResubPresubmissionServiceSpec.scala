@@ -17,16 +17,16 @@
 package services.resubmission
 
 import com.mongodb.client.result.UpdateResult
-import common._
+import common.*
 import fixtures.Fixtures
 import helpers.ERSTestHelper
-import models._
+import models.*
 import org.bson.BsonValue
 import org.mockito.ArgumentMatchers.{any, anyBoolean, anyString, eq => mockEq}
-import org.mockito.Mockito._
+import org.mockito.Mockito.*
 import org.mongodb.scala.bson.{BsonString, ObjectId}
 import org.scalatest.{BeforeAndAfterEach, EitherValues}
-import play.api.libs.json._
+import play.api.libs.json.*
 import play.api.mvc.Request
 import play.api.test.FakeRequest
 import repositories.{MetadataMongoRepository, PresubmissionMongoRepository}

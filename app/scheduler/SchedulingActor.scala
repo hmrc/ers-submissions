@@ -17,7 +17,7 @@
 package scheduler
 
 import org.apache.pekko.actor.{Actor, ActorLogging, Props}
-import scheduler.SchedulingActor._
+import scheduler.SchedulingActor.*
 import services.PresSubWithoutMetadataQueryService
 import services.resubmission.{ReSubmissionSchedulerService, StreamedResubmissionSchedulerService}
 

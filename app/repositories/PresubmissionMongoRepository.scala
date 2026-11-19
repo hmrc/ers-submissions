@@ -17,13 +17,13 @@
 package repositories
 
 import cats.data.EitherT
-import cats.syntax.all._
+import cats.syntax.all.*
 import common.ERSEnvelope.ERSEnvelope
 import config.ApplicationConfig
-import models._
+import models.*
 import org.mongodb.scala.bson.{BsonDocument, BsonInt64, BsonString}
-import org.mongodb.scala.model.Sorts._
-import org.mongodb.scala.model._
+import org.mongodb.scala.model.Sorts.*
+import org.mongodb.scala.model.*
 import org.mongodb.scala.result.DeleteResult
 import play.api.libs.json.OFormat.oFormatFromReadsAndOWrites
 import play.api.libs.json.{Format, JsObject, Json}

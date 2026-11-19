@@ -26,8 +26,8 @@ import config.ApplicationConfig
 import controllers.auth.{AuthAction, AuthorisedAction}
 import metrics.Metrics
 import models.{SchemeData, SubmissionsSchemeData}
-import play.api.libs.json._
-import play.api.mvc._
+import play.api.libs.json.*
+import play.api.mvc.*
 import services.audit.AuditEvents
 import services.{FileDownloadService, PresubmissionService}
 import uk.gov.hmrc.auth.core.AuthConnector

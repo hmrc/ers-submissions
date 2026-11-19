@@ -20,8 +20,8 @@ import common.ERSEnvelope
 import fixtures.Fixtures
 import helpers.ERSTestHelper
 import models.{ErsSummary, MongoGenericError}
-import org.mockito.ArgumentMatchers._
-import org.mockito.Mockito._
+import org.mockito.ArgumentMatchers.*
+import org.mockito.Mockito.*
 import org.mockito.internal.verification.VerificationModeFactory
 import org.scalatest.{BeforeAndAfterEach, EitherValues}
 import repositories.MetadataMongoRepository

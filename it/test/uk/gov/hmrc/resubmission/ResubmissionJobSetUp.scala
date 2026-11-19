@@ -27,7 +27,7 @@ import scheduler.ResubmissionServiceImpl
 import services.resubmission.ProcessFailedSubmissionsConfig
 
 import scala.concurrent.{ExecutionContext, Future}
-import _root_.play.api.test.Helpers._
+import _root_.play.api.test.Helpers.*
 
 import uk.gov.hmrc.mongo.logging.ObservableFutureImplicits.SingleObservableFuture
 

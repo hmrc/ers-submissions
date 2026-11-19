@@ -25,7 +25,7 @@ import config.ApplicationConfig
 import fixtures.SIP
 import helpers.ERSTestHelper
 import models.{SubmissionsSchemeData, UpscanCallback}
-import org.mockito.Mockito._
+import org.mockito.Mockito.*
 import org.scalatest.concurrent.ScalaFutures
 import uk.gov.hmrc.http.UpstreamErrorResponse
 

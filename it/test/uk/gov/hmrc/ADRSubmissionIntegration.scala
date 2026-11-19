@@ -22,7 +22,7 @@ import _root_.play.api.libs.json.JsObject
 import _root_.play.api.libs.ws.WSClient
 import _root_.play.api.mvc.Result
 import _root_.play.api.test.FakeRequest
-import _root_.play.api.test.Helpers._
+import _root_.play.api.test.Helpers.*
 import controllers.SubmissionController
 import models.ErsSummary
 import org.mongodb.scala.bson.BsonDocument

@@ -16,13 +16,13 @@
 
 package services.resubmission
 
-import cats.implicits._
+import cats.implicits.*
 import common.ERSEnvelope
 import common.ERSEnvelope.ERSEnvelope
-import messages._
-import models._
+import messages.*
+import models.*
 import org.mongodb.scala.bson.BsonDocument
-import play.api.libs.json._
+import play.api.libs.json.*
 import play.api.mvc.Request
 import repositories.{MetadataMongoRepository, PresubmissionMongoRepository, Selectors}
 import services.SubmissionService

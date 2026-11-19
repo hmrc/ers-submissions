@@ -19,7 +19,7 @@ package services.resubmission
 import common.ERSEnvelope
 import common.ERSEnvelope.ERSEnvelope
 import config.ApplicationConfig
-import messages._
+import messages.*
 import play.api.libs.json.JsObject
 import play.api.mvc.Request
 import repositories.LockRepositoryProvider
@@ -31,7 +31,7 @@ import utils.LoggingAndExceptions.ErsLogger
 
 import javax.inject.Inject
 import scala.concurrent.ExecutionContext
-import scala.concurrent.duration._
+import scala.concurrent.duration.*
 
 class StreamedResubmissionSchedulerService @Inject() (
   val applicationConfig: ApplicationConfig,
@@ -45,7 +45,7 @@ class StreamedResubmissionSchedulerService @Inject() (
   private val lockoutTimeout    = getLockoutTimeout(jobName)
 
   // same lock id as the non-streamed job so the two can't run concurrently
-  private val lockService: LockService = LockService(
+  val lockService: LockService = LockService(
     lockRepositoryProvider.repo,
     lockId = "resubmission-service-job-lock",
     ttl = Duration.create(lockoutTimeout, SECONDS)

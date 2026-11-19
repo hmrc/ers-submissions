@@ -20,7 +20,7 @@ import config.ApplicationConfig
 import models.PreSubWithoutMetadata
 import org.mongodb.scala.bson.conversions.Bson
 import org.mongodb.scala.bson.{BsonArray, BsonDocument, BsonString}
-import org.mongodb.scala.model._
+import org.mongodb.scala.model.*
 import play.api.libs.json.{JsError, JsObject, JsPath, JsSuccess, JsonValidationError, Reads}
 
 import java.time.format.DateTimeFormatter

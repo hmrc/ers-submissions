@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.resubmission
 
-import _root_.play.api.test.Helpers._
+import _root_.play.api.test.Helpers.*
 import org.mongodb.scala.MongoCollection
 import org.mongodb.scala.bson.BsonDocument
 import org.mongodb.scala.bson.conversions.Bson

@@ -16,8 +16,8 @@
 
 package fixtures
 
-import fixtures.Common._
-import models._
+import fixtures.Common.*
+import models.*
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.libs.json.{JsObject, JsValue, Json}
 import uk.gov.hmrc.domain.NinoGenerator
