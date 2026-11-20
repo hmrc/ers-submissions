@@ -29,7 +29,7 @@ class SchedulerModuleSpec extends AnyWordSpec with Matchers {
   "SchedulerModule" should {
 
     val elements     = Elements.getElements(new SchedulerModule).asScala.toList
-    val boundClasses = elements.collect { case b: Binding[_] =>
+    val boundClasses = elements.collect { case b: Binding[?] =>
       b.getKey.getTypeLiteral.getRawType
     }
 
