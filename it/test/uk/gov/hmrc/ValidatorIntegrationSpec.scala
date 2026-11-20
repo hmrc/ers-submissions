@@ -21,13 +21,14 @@ import _root_.play.api.inject.guice.GuiceApplicationBuilder
 import _root_.play.api.libs.json.{JsObject, Json}
 import _root_.play.api.libs.ws.WSClient
 import _root_.play.api.test.FakeRequest
-import _root_.play.api.test.Helpers._
+import _root_.play.api.test.Helpers.*
 import controllers.{PresubmissionController, ReceivePresubmissionController}
 import models.SubmissionsSchemeData
 import org.scalatest.{BeforeAndAfterEach, EitherValues}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 import repositories.PresubmissionMongoRepository
+import org.mongodb.scala.ObservableFuture
 
 class ValidatorIntegrationSpec
     extends AnyWordSpecLike with Matchers with BeforeAndAfterEach with FakeAuthService with EitherValues {

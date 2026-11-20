@@ -30,7 +30,7 @@ class ERSRequestSpec extends AnyWordSpecLike with Matchers {
       "create a valid Request[JsObject] instance" in {
         val request: Request[JsObject] = ERSRequest.createERSRequest()
 
-        request shouldBe a[Request[_]]
+        request shouldBe a[Request[?]]
       }
 
       "have correct connection properties" in {

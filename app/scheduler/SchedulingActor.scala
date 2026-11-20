@@ -17,14 +17,14 @@
 package scheduler
 
 import org.apache.pekko.actor.{Actor, ActorLogging, Props}
-import scheduler.SchedulingActor._
+import scheduler.SchedulingActor.*
 import services.PresSubWithoutMetadataQueryService
 import services.resubmission.{ReSubmissionSchedulerService, StreamedResubmissionSchedulerService}
 
 class SchedulingActor extends Actor with ActorLogging {
   import context.dispatcher
 
-  override def receive: Receive = { case message: ScheduledMessage[_] =>
+  override def receive: Receive = { case message: ScheduledMessage[?] =>
     log.info(s"Received update request from the ${message.getClass.getSimpleName}")
     message.service.invoke
   }

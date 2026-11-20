@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.resubmission
 
-import models._
+import models.*
 import play.api.libs.json.{JsObject, JsValue, Json}
 
 import java.time.format.DateTimeFormatter
