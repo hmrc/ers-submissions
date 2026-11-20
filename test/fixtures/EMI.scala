@@ -32,8 +32,8 @@ object EMI {
     schemeType = schemeType
   )
 
-  // EMI40_Adjustments_V4
-  def buildAdjustmentsV4(withAllFields: Boolean = true, disqualifyingEvent: String): Seq[String] = Seq(
+  // EMI40_Adjustments_V4/ EMI40_Adjustments_V7
+  def buildAdjustmentsV4V7(withAllFields: Boolean = true, disqualifyingEvent: String): Seq[String] = Seq(
     "yes",
     "yes",
     disqualifyingEvent,
@@ -52,8 +52,8 @@ object EMI {
     "10.1244"
   )
 
-  // EMI40_Replaced_V4
-  def buildReplacedV4(withAllFields: Boolean = true): Seq[String] = Seq(
+  // EMI40_Replaced_V4/ EMI40_Replaced_V7
+  def buildReplacedV4V7(withAllFields: Boolean = true): Seq[String] = Seq(
     "2014-12-10",
     "2014-12-10",
     "First",
@@ -78,8 +78,8 @@ object EMI {
     "1234567899"
   )
 
-  // EMI40_RLC_V4
-  def buildRLCV4(withAllFields: Boolean = true, disqualifyingEvent: String, moneyValueReceived: String): Seq[String] =
+  // EMI40_RLC_V4 / EMI40_RLC_V7
+  def buildRLCV4V7(withAllFields: Boolean = true, disqualifyingEvent: String, moneyValueReceived: String): Seq[String] =
     Seq(
       "2014-12-10",
       disqualifyingEvent,
@@ -97,8 +97,8 @@ object EMI {
       if (moneyValueReceived == "yes") "yes" else ""
     )
 
-  // EMI40_NonTaxable_V4
-  def buildNonTaxableV4(
+  // EMI40_NonTaxable_V4 / EMI40_NonTaxable_V7
+  def buildNonTaxableV4V7(
     withAllFields: Boolean = true,
     sharesListedOnSE: String,
     marketValueAgreedHMRC: String
@@ -122,8 +122,8 @@ object EMI {
     "yes"
   )
 
-  // EMI40_Taxable_V4
-  def buildTaxableV4(
+  // EMI40_Taxable_V4 / EMI40_Taxable_V7
+  def buildTaxableV4V7(
     withAllFields: Boolean = true,
     disqualifyingEvent: String,
     sharesListedOnSE: String,
