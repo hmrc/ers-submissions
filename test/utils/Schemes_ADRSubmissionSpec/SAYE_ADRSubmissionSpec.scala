@@ -39,9 +39,9 @@ class SAYE_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with 
 
   given request: FakeRequest[JsObject] = FakeRequest().withBody(Fixtures.metadataJson)
 
-  val mockSubmissionCommon: SubmissionCommon = app.injector.instanceOf[SubmissionCommon]
+  val mockSubmissionCommon: SubmissionCommon         = app.injector.instanceOf[SubmissionCommon]
   val mockPresubmissionService: PresubmissionService = mock[PresubmissionService]
-  val mockConfigUtils: ConfigUtils = app.injector.instanceOf[ConfigUtils]
+  val mockConfigUtils: ConfigUtils                   = app.injector.instanceOf[ConfigUtils]
 
   val mockAdrSubmission: ADRSubmission = new ADRSubmission(
     mockSubmissionCommon,
@@ -53,6 +53,9 @@ class SAYE_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with 
     super.beforeEach()
     reset(mockPresubmissionService)
   }
+
+  private def loadConfig(schemeType: String, sheetName: String): Config =
+    Common.loadConfiguration(schemeType, sheetName, mockConfigUtils)
 
   "calling generateSubmissionReturn" should {
 
@@ -66,8 +69,7 @@ class SAYE_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with 
 
       val result =
         await(mockAdrSubmission.generateSubmission(SAYE.ersSummaryNilReturnWithoutAltAmmends)(using request, hc).value)
-      result.value - "acknowledgementReference" shouldBe Json.parse(
-        """{
+      result.value - "acknowledgementReference" shouldBe Json.parse("""{
           |"regime":"ERS",
           |"schemeType":"SAYE",
           |"schemeReference":"XA1100000000000",
@@ -121,8 +123,7 @@ class SAYE_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with 
 
       val result =
         await(mockAdrSubmission.generateSubmission(SAYE.ersSummaryNilReturnWithSomeAltAmmends)(using request, hc).value)
-      result.value - "acknowledgementReference" shouldBe Json.parse(
-        """{
+      result.value - "acknowledgementReference" shouldBe Json.parse("""{
           |"regime":"ERS",
           |"schemeType":"SAYE",
           |"schemeReference":"XA1100000000000",
@@ -189,8 +190,7 @@ class SAYE_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with 
 
       val result =
         await(mockAdrSubmission.generateSubmission(SAYE.ersSummaryNilReturnWithAllAltAmmends)(using request, hc).value)
-      result.value - "acknowledgementReference" shouldBe Json.parse(
-        """{
+      result.value - "acknowledgementReference" shouldBe Json.parse("""{
           |"regime":"ERS",
           |"schemeType":"SAYE",
           |"schemeReference":"XA1100000000000",
@@ -262,8 +262,7 @@ class SAYE_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with 
       )
 
       val result = await(mockAdrSubmission.generateSubmission(SAYE.ersSumarryWithAllAmmends)(using request, hc).value)
-      result.value - "acknowledgementReference" shouldBe Json.parse(
-        """{
+      result.value - "acknowledgementReference" shouldBe Json.parse("""{
           |"regime":"ERS",
           |"schemeType":"SAYE",
           |"schemeReference":"XA1100000000000",
@@ -357,15 +356,19 @@ class SAYE_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with 
         ERSEnvelope(
           Future.successful(
             List(
-              SchemeData(SAYE.schemeInfo, "SAYE_Granted_V4", None, Some(ListBuffer(SAYE.buildGrantedV4("yes", "yes"))))
+              SchemeData(
+                SAYE.schemeInfo,
+                "SAYE_Granted_V4",
+                None,
+                Some(ListBuffer(SAYE.buildGrantedV4V7("yes", "yes")))
+              )
             )
           )
         )
       )
 
       val result = await(mockAdrSubmission.generateSubmission(SAYE.ersSumarryWithAllAmmends)(using request, hc).value)
-      result.value - "acknowledgementReference" shouldBe Json.parse(
-        """{
+      result.value - "acknowledgementReference" shouldBe Json.parse("""{
           |"regime":"ERS",
           |"schemeType":"SAYE",
           |"schemeReference":"XA1100000000000",
@@ -471,16 +474,25 @@ class SAYE_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with 
         ERSEnvelope(
           Future.successful(
             List(
-              SchemeData(SAYE.schemeInfo, "SAYE_Granted_V4", None, Some(ListBuffer(SAYE.buildGrantedV4("yes", "yes")))),
-              SchemeData(SAYE.schemeInfo, "SAYE_Granted_V4", None, Some(ListBuffer(SAYE.buildGrantedV4("yes", "yes"))))
+              SchemeData(
+                SAYE.schemeInfo,
+                "SAYE_Granted_V4",
+                None,
+                Some(ListBuffer(SAYE.buildGrantedV4V7("yes", "yes")))
+              ),
+              SchemeData(
+                SAYE.schemeInfo,
+                "SAYE_Granted_V4",
+                None,
+                Some(ListBuffer(SAYE.buildGrantedV4V7("yes", "yes")))
+              )
             )
           )
         )
       )
 
       val result = await(mockAdrSubmission.generateSubmission(SAYE.ersSumarryWithAllAmmends)(using request, hc).value)
-      result.value - "acknowledgementReference" shouldBe Json.parse(
-        """{
+      result.value - "acknowledgementReference" shouldBe Json.parse("""{
           |"regime":"ERS",
           |"schemeType":"SAYE",
           |"schemeReference":"XA1100000000000",
@@ -594,15 +606,14 @@ class SAYE_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with 
         ERSEnvelope(
           Future.successful(
             List(
-              SchemeData(SAYE.schemeInfo, "SAYE_RCL_V4", None, Some(ListBuffer(SAYE.buildRCLV4("yes"))))
+              SchemeData(SAYE.schemeInfo, "SAYE_RCL_V4", None, Some(ListBuffer(SAYE.buildRCLV4V7("yes"))))
             )
           )
         )
       )
 
       val result = await(mockAdrSubmission.generateSubmission(SAYE.ersSumarryWithAllAmmends)(using request, hc).value)
-      result.value - "acknowledgementReference" shouldBe Json.parse(
-        """{
+      result.value - "acknowledgementReference" shouldBe Json.parse("""{
           |"regime":"ERS",
           |"schemeType":"SAYE",
           |"schemeReference":"XA1100000000000",
@@ -713,16 +724,15 @@ class SAYE_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with 
         ERSEnvelope(
           Future.successful(
             List(
-              SchemeData(SAYE.schemeInfo, "SAYE_RCL_V4", None, Some(ListBuffer(SAYE.buildRCLV4("yes")))),
-              SchemeData(SAYE.schemeInfo, "SAYE_RCL_V4", None, Some(ListBuffer(SAYE.buildRCLV4("yes"))))
+              SchemeData(SAYE.schemeInfo, "SAYE_RCL_V4", None, Some(ListBuffer(SAYE.buildRCLV4V7("yes")))),
+              SchemeData(SAYE.schemeInfo, "SAYE_RCL_V4", None, Some(ListBuffer(SAYE.buildRCLV4V7("yes"))))
             )
           )
         )
       )
 
       val result = await(mockAdrSubmission.generateSubmission(SAYE.ersSumarryWithAllAmmends)(using request, hc).value)
-      result.value - "acknowledgementReference" shouldBe Json.parse(
-        """{
+      result.value - "acknowledgementReference" shouldBe Json.parse("""{
           |"regime":"ERS",
           |"schemeType":"SAYE",
           |"schemeReference":"XA1100000000000",
@@ -852,7 +862,7 @@ class SAYE_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with 
                 None,
                 Some(
                   ListBuffer(
-                    SAYE.buildExercisedV4(allFields = true, sharesListedOnSE = "yes", marketValueAgreedHMRC = "yes")
+                    SAYE.buildExercisedV4V7(allFields = true, sharesListedOnSE = "yes", marketValueAgreedHMRC = "yes")
                   )
                 )
               )
@@ -862,8 +872,7 @@ class SAYE_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with 
       )
 
       val result = await(mockAdrSubmission.generateSubmission(SAYE.ersSumarryWithAllAmmends)(using request, hc).value)
-      result.value - "acknowledgementReference" shouldBe Json.parse(
-        """{
+      result.value - "acknowledgementReference" shouldBe Json.parse("""{
           |"regime":"ERS",
           |"schemeType":"SAYE",
           |"schemeReference":"XA1100000000000",
@@ -985,7 +994,7 @@ class SAYE_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with 
                 None,
                 Some(
                   ListBuffer(
-                    SAYE.buildExercisedV4(allFields = true, sharesListedOnSE = "yes", marketValueAgreedHMRC = "yes")
+                    SAYE.buildExercisedV4V7(allFields = true, sharesListedOnSE = "yes", marketValueAgreedHMRC = "yes")
                   )
                 )
               ),
@@ -995,7 +1004,7 @@ class SAYE_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with 
                 None,
                 Some(
                   ListBuffer(
-                    SAYE.buildExercisedV4(allFields = true, sharesListedOnSE = "yes", marketValueAgreedHMRC = "yes")
+                    SAYE.buildExercisedV4V7(allFields = true, sharesListedOnSE = "yes", marketValueAgreedHMRC = "yes")
                   )
                 )
               )
@@ -1005,8 +1014,7 @@ class SAYE_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with 
       )
 
       val result = await(mockAdrSubmission.generateSubmission(SAYE.ersSumarryWithAllAmmends)(using request, hc).value)
-      result.value - "acknowledgementReference" shouldBe Json.parse(
-        """{
+      result.value - "acknowledgementReference" shouldBe Json.parse("""{
           |"regime":"ERS",
           |"schemeType":"SAYE",
           |"schemeReference":"XA1100000000000",
@@ -1140,15 +1148,20 @@ class SAYE_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with 
         ERSEnvelope(
           Future.successful(
             List(
-              SchemeData(SAYE.schemeInfo, "SAYE_Granted_V4", None, Some(ListBuffer(SAYE.buildGrantedV4("yes", "yes")))),
-              SchemeData(SAYE.schemeInfo, "SAYE_RCL_V4", None, Some(ListBuffer(SAYE.buildRCLV4("yes")))),
+              SchemeData(
+                SAYE.schemeInfo,
+                "SAYE_Granted_V4",
+                None,
+                Some(ListBuffer(SAYE.buildGrantedV4V7("yes", "yes")))
+              ),
+              SchemeData(SAYE.schemeInfo, "SAYE_RCL_V4", None, Some(ListBuffer(SAYE.buildRCLV4V7("yes")))),
               SchemeData(
                 SAYE.schemeInfo,
                 "SAYE_Exercised_V4",
                 None,
                 Some(
                   ListBuffer(
-                    SAYE.buildExercisedV4(allFields = true, sharesListedOnSE = "yes", marketValueAgreedHMRC = "yes")
+                    SAYE.buildExercisedV4V7(allFields = true, sharesListedOnSE = "yes", marketValueAgreedHMRC = "yes")
                   )
                 )
               )
@@ -1158,8 +1171,7 @@ class SAYE_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with 
       )
 
       val result = await(mockAdrSubmission.generateSubmission(SAYE.ersSumarryWithAllAmmends)(using request, hc).value)
-      result.value - "acknowledgementReference" shouldBe Json.parse(
-        """{
+      result.value - "acknowledgementReference" shouldBe Json.parse("""{
           |"regime":"ERS",
           |"schemeType":"SAYE",
           |"schemeReference":"XA1100000000000",
@@ -1304,17 +1316,27 @@ class SAYE_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with 
         ERSEnvelope(
           Future.successful(
             List(
-              SchemeData(SAYE.schemeInfo, "SAYE_Granted_V4", None, Some(ListBuffer(SAYE.buildGrantedV4("yes", "yes")))),
-              SchemeData(SAYE.schemeInfo, "SAYE_Granted_V4", None, Some(ListBuffer(SAYE.buildGrantedV4("yes", "yes")))),
-              SchemeData(SAYE.schemeInfo, "SAYE_RCL_V4", None, Some(ListBuffer(SAYE.buildRCLV4("yes")))),
-              SchemeData(SAYE.schemeInfo, "SAYE_RCL_V4", None, Some(ListBuffer(SAYE.buildRCLV4("yes")))),
+              SchemeData(
+                SAYE.schemeInfo,
+                "SAYE_Granted_V4",
+                None,
+                Some(ListBuffer(SAYE.buildGrantedV4V7("yes", "yes")))
+              ),
+              SchemeData(
+                SAYE.schemeInfo,
+                "SAYE_Granted_V4",
+                None,
+                Some(ListBuffer(SAYE.buildGrantedV4V7("yes", "yes")))
+              ),
+              SchemeData(SAYE.schemeInfo, "SAYE_RCL_V4", None, Some(ListBuffer(SAYE.buildRCLV4V7("yes")))),
+              SchemeData(SAYE.schemeInfo, "SAYE_RCL_V4", None, Some(ListBuffer(SAYE.buildRCLV4V7("yes")))),
               SchemeData(
                 SAYE.schemeInfo,
                 "SAYE_Exercised_V4",
                 None,
                 Some(
                   ListBuffer(
-                    SAYE.buildExercisedV4(allFields = true, sharesListedOnSE = "yes", marketValueAgreedHMRC = "yes")
+                    SAYE.buildExercisedV4V7(allFields = true, sharesListedOnSE = "yes", marketValueAgreedHMRC = "yes")
                   )
                 )
               ),
@@ -1324,7 +1346,7 @@ class SAYE_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with 
                 None,
                 Some(
                   ListBuffer(
-                    SAYE.buildExercisedV4(allFields = true, sharesListedOnSE = "yes", marketValueAgreedHMRC = "yes")
+                    SAYE.buildExercisedV4V7(allFields = true, sharesListedOnSE = "yes", marketValueAgreedHMRC = "yes")
                   )
                 )
               )
@@ -1334,8 +1356,7 @@ class SAYE_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with 
       )
 
       val result = await(mockAdrSubmission.generateSubmission(SAYE.ersSumarryWithAllAmmends)(using request, hc).value)
-      result.value - "acknowledgementReference" shouldBe Json.parse(
-        """{
+      result.value - "acknowledgementReference" shouldBe Json.parse("""{
           |"regime":"ERS",
           |"schemeType":"SAYE",
           |"schemeReference":"XA1100000000000",
@@ -1514,395 +1535,390 @@ class SAYE_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with 
   }
 
   // SAYE_Exercised_V4
-  "calling generateJson for Exercised_V4" should {
 
-    val configData: Config = Common.loadConfiguration(SAYE.sayeSchemeType, "SAYE_Exercised_V4", mockConfigUtils)
+  Seq("V4" -> "SAYE_Exercised_V4", "V7" -> "SAYE_Exercised_V7").foreach { case (version, sheetName) =>
+    s"calling generateJson for Exercised $version" should {
+      val configData: Config = loadConfig(SAYE.sayeSchemeType, sheetName)
 
-    "create a valid JSON with allFields = (true or false), sharesListedOnSE = \"yes\", marketValueAgreedHMRC = \"yes\"" in {
-      val result = mockAdrSubmission.buildJson(
-        configData,
-        ListBuffer(
-          SAYE.buildExercisedV4(allFields = true, sharesListedOnSE = "yes", marketValueAgreedHMRC = "yes"),
-          SAYE.buildExercisedV4(allFields = false, sharesListedOnSE = "yes", marketValueAgreedHMRC = "yes")
+      "create a valid JSON with allFields = (true or false), sharesListedOnSE = \"yes\", marketValueAgreedHMRC = \"yes\"" in {
+        val result = mockAdrSubmission.buildJson(
+          configData,
+          ListBuffer(
+            SAYE.buildExercisedV4V7(allFields = true, sharesListedOnSE = "yes", marketValueAgreedHMRC = "yes"),
+            SAYE.buildExercisedV4V7(allFields = false, sharesListedOnSE = "yes", marketValueAgreedHMRC = "yes")
+          )
         )
-      )
-      result shouldBe Json.parse(
-        """{
-          |"optionsExercisedInYear":true,
-          |"exercised":{
-          |"exerciseEvents":[
-          |{
-          |"dateOfEvent":"2014-01-01",
-          |"individual":{
-          |"firstName":"First",
-          |"secondName":"Second",
-          |"surname":"Last",
-          |"nino":"NINO",
-          |"payeReference":"123/XZ55555555"
-          |},
-          |"dateOfGrant":"2015-12-31",
-          |"numberOfSharesAcquired":10.12,
-          |"sharesListedOnSE":true,
-          |"actualMarketValuePerShareAtAcquisitionDate":10.1234,
-          |"exercisePricePerShare":10.1234,
-          |"unrestrictedMarketValuePerShareAtExerciseDate":11.1234,
-          |"qualifyForTaxRelief":true,
-          |"sharesSoldInConnectionWithTheExercise":true
-          |},
-          |{
-          |"dateOfEvent":"2014-01-01",
-          |"individual":{
-          |"firstName":"First",
-          |"surname":"Last",
-          |"payeReference":"123/XZ55555555"
-          |},
-          |"dateOfGrant":"2015-12-31",
-          |"numberOfSharesAcquired":10.12,
-          |"sharesListedOnSE":true,
-          |"actualMarketValuePerShareAtAcquisitionDate":10.1234,
-          |"exercisePricePerShare":10.1234,
-          |"unrestrictedMarketValuePerShareAtExerciseDate":11.1234,
-          |"qualifyForTaxRelief":true,
-          |"sharesSoldInConnectionWithTheExercise":true
-          |}
-          |]
-          |}
-          |}""".stripMargin)
-    }
+        result shouldBe Json.parse("""{
+            |"optionsExercisedInYear":true,
+            |"exercised":{
+            |"exerciseEvents":[
+            |{
+            |"dateOfEvent":"2014-01-01",
+            |"individual":{
+            |"firstName":"First",
+            |"secondName":"Second",
+            |"surname":"Last",
+            |"nino":"NINO",
+            |"payeReference":"123/XZ55555555"
+            |},
+            |"dateOfGrant":"2015-12-31",
+            |"numberOfSharesAcquired":10.12,
+            |"sharesListedOnSE":true,
+            |"actualMarketValuePerShareAtAcquisitionDate":10.1234,
+            |"exercisePricePerShare":10.1234,
+            |"unrestrictedMarketValuePerShareAtExerciseDate":11.1234,
+            |"qualifyForTaxRelief":true,
+            |"sharesSoldInConnectionWithTheExercise":true
+            |},
+            |{
+            |"dateOfEvent":"2014-01-01",
+            |"individual":{
+            |"firstName":"First",
+            |"surname":"Last",
+            |"payeReference":"123/XZ55555555"
+            |},
+            |"dateOfGrant":"2015-12-31",
+            |"numberOfSharesAcquired":10.12,
+            |"sharesListedOnSE":true,
+            |"actualMarketValuePerShareAtAcquisitionDate":10.1234,
+            |"exercisePricePerShare":10.1234,
+            |"unrestrictedMarketValuePerShareAtExerciseDate":11.1234,
+            |"qualifyForTaxRelief":true,
+            |"sharesSoldInConnectionWithTheExercise":true
+            |}
+            |]
+            |}
+            |}""".stripMargin)
+      }
 
-    "create a valid JSON with allFields = true, sharesListedOnSE = (\"yes\" or \"no\"), marketValueAgreedHMRC = \"yes\"" in {
-      val result = mockAdrSubmission.buildJson(
-        configData,
-        ListBuffer(
-          SAYE.buildExercisedV4(allFields = true, sharesListedOnSE = "yes", marketValueAgreedHMRC = "yes"),
-          SAYE.buildExercisedV4(allFields = true, sharesListedOnSE = "no", marketValueAgreedHMRC = "yes")
+      "create a valid JSON with allFields = true, sharesListedOnSE = (\"yes\" or \"no\"), marketValueAgreedHMRC = \"yes\"" in {
+        val result = mockAdrSubmission.buildJson(
+          configData,
+          ListBuffer(
+            SAYE.buildExercisedV4V7(allFields = true, sharesListedOnSE = "yes", marketValueAgreedHMRC = "yes"),
+            SAYE.buildExercisedV4V7(allFields = true, sharesListedOnSE = "no", marketValueAgreedHMRC = "yes")
+          )
         )
-      )
-      result shouldBe Json.parse(
-        """{
-          |"optionsExercisedInYear":true,
-          |"exercised":{
-          |"exerciseEvents":[
-          |{
-          |"dateOfEvent":"2014-01-01",
-          |"individual":{
-          |"firstName":"First",
-          |"secondName":"Second",
-          |"surname":"Last",
-          |"nino":"NINO",
-          |"payeReference":"123/XZ55555555"
-          |},
-          |"dateOfGrant":"2015-12-31",
-          |"numberOfSharesAcquired":10.12,
-          |"sharesListedOnSE":true,
-          |"actualMarketValuePerShareAtAcquisitionDate":10.1234,
-          |"exercisePricePerShare":10.1234,
-          |"unrestrictedMarketValuePerShareAtExerciseDate":11.1234,
-          |"qualifyForTaxRelief":true,
-          |"sharesSoldInConnectionWithTheExercise":true
-          |},
-          |{
-          |"dateOfEvent":"2014-01-01",
-          |"individual":{
-          |"firstName":"First",
-          |"secondName":"Second",
-          |"surname":"Last",
-          |"nino":"NINO",
-          |"payeReference":"123/XZ55555555"
-          |},
-          |"dateOfGrant":"2015-12-31",
-          |"numberOfSharesAcquired":10.12,
-          |"sharesListedOnSE":false,
-          |"marketValueAgreedHMRC":true,
-          |"hmrcRef":"aa12345678",
-          |"actualMarketValuePerShareAtAcquisitionDate":10.1234,
-          |"exercisePricePerShare":10.1234,
-          |"unrestrictedMarketValuePerShareAtExerciseDate":11.1234,
-          |"qualifyForTaxRelief":true,
-          |"sharesSoldInConnectionWithTheExercise":true
-          |}
-          |]
-          |}
-          |}""".stripMargin)
-    }
+        result shouldBe Json.parse("""{
+            |"optionsExercisedInYear":true,
+            |"exercised":{
+            |"exerciseEvents":[
+            |{
+            |"dateOfEvent":"2014-01-01",
+            |"individual":{
+            |"firstName":"First",
+            |"secondName":"Second",
+            |"surname":"Last",
+            |"nino":"NINO",
+            |"payeReference":"123/XZ55555555"
+            |},
+            |"dateOfGrant":"2015-12-31",
+            |"numberOfSharesAcquired":10.12,
+            |"sharesListedOnSE":true,
+            |"actualMarketValuePerShareAtAcquisitionDate":10.1234,
+            |"exercisePricePerShare":10.1234,
+            |"unrestrictedMarketValuePerShareAtExerciseDate":11.1234,
+            |"qualifyForTaxRelief":true,
+            |"sharesSoldInConnectionWithTheExercise":true
+            |},
+            |{
+            |"dateOfEvent":"2014-01-01",
+            |"individual":{
+            |"firstName":"First",
+            |"secondName":"Second",
+            |"surname":"Last",
+            |"nino":"NINO",
+            |"payeReference":"123/XZ55555555"
+            |},
+            |"dateOfGrant":"2015-12-31",
+            |"numberOfSharesAcquired":10.12,
+            |"sharesListedOnSE":false,
+            |"marketValueAgreedHMRC":true,
+            |"hmrcRef":"aa12345678",
+            |"actualMarketValuePerShareAtAcquisitionDate":10.1234,
+            |"exercisePricePerShare":10.1234,
+            |"unrestrictedMarketValuePerShareAtExerciseDate":11.1234,
+            |"qualifyForTaxRelief":true,
+            |"sharesSoldInConnectionWithTheExercise":true
+            |}
+            |]
+            |}
+            |}""".stripMargin)
+      }
 
-    "create a valid JSON with allFields = true, sharesListedOnSE = \"no\", marketValueAgreedHMRC = (\"yes\" or \"no\")" in {
-      val result = mockAdrSubmission.buildJson(
-        configData,
-        ListBuffer(
-          SAYE.buildExercisedV4(allFields = true, sharesListedOnSE = "no", marketValueAgreedHMRC = "yes"),
-          SAYE.buildExercisedV4(allFields = true, sharesListedOnSE = "no", marketValueAgreedHMRC = "no")
+      "create a valid JSON with allFields = true, sharesListedOnSE = \"no\", marketValueAgreedHMRC = (\"yes\" or \"no\")" in {
+        val result = mockAdrSubmission.buildJson(
+          configData,
+          ListBuffer(
+            SAYE.buildExercisedV4V7(allFields = true, sharesListedOnSE = "no", marketValueAgreedHMRC = "yes"),
+            SAYE.buildExercisedV4V7(allFields = true, sharesListedOnSE = "no", marketValueAgreedHMRC = "no")
+          )
         )
-      )
-      result shouldBe Json.parse(
-        """{
-          |"optionsExercisedInYear":true,
-          |"exercised":{
-          |"exerciseEvents":[
-          |{
-          |"dateOfEvent":"2014-01-01",
-          |"individual":{
-          |"firstName":"First",
-          |"secondName":"Second",
-          |"surname":"Last",
-          |"nino":"NINO",
-          |"payeReference":"123/XZ55555555"
-          |},
-          |"dateOfGrant":"2015-12-31",
-          |"numberOfSharesAcquired":10.12,
-          |"sharesListedOnSE":false,
-          |"marketValueAgreedHMRC":true,
-          |"hmrcRef":"aa12345678",
-          |"actualMarketValuePerShareAtAcquisitionDate":10.1234,
-          |"exercisePricePerShare":10.1234,
-          |"unrestrictedMarketValuePerShareAtExerciseDate":11.1234,
-          |"qualifyForTaxRelief":true,
-          |"sharesSoldInConnectionWithTheExercise":true
-          |},
-          |{
-          |"dateOfEvent":"2014-01-01",
-          |"individual":{
-          |"firstName":"First",
-          |"secondName":"Second",
-          |"surname":"Last",
-          |"nino":"NINO",
-          |"payeReference":"123/XZ55555555"
-          |},
-          |"dateOfGrant":"2015-12-31",
-          |"numberOfSharesAcquired":10.12,
-          |"sharesListedOnSE":false,
-          |"marketValueAgreedHMRC":false,
-          |"actualMarketValuePerShareAtAcquisitionDate":10.1234,
-          |"exercisePricePerShare":10.1234,
-          |"unrestrictedMarketValuePerShareAtExerciseDate":11.1234,
-          |"qualifyForTaxRelief":true,
-          |"sharesSoldInConnectionWithTheExercise":true
-          |}
-          |]
-          |}
-          |}""".stripMargin)
+        result shouldBe Json.parse("""{
+            |"optionsExercisedInYear":true,
+            |"exercised":{
+            |"exerciseEvents":[
+            |{
+            |"dateOfEvent":"2014-01-01",
+            |"individual":{
+            |"firstName":"First",
+            |"secondName":"Second",
+            |"surname":"Last",
+            |"nino":"NINO",
+            |"payeReference":"123/XZ55555555"
+            |},
+            |"dateOfGrant":"2015-12-31",
+            |"numberOfSharesAcquired":10.12,
+            |"sharesListedOnSE":false,
+            |"marketValueAgreedHMRC":true,
+            |"hmrcRef":"aa12345678",
+            |"actualMarketValuePerShareAtAcquisitionDate":10.1234,
+            |"exercisePricePerShare":10.1234,
+            |"unrestrictedMarketValuePerShareAtExerciseDate":11.1234,
+            |"qualifyForTaxRelief":true,
+            |"sharesSoldInConnectionWithTheExercise":true
+            |},
+            |{
+            |"dateOfEvent":"2014-01-01",
+            |"individual":{
+            |"firstName":"First",
+            |"secondName":"Second",
+            |"surname":"Last",
+            |"nino":"NINO",
+            |"payeReference":"123/XZ55555555"
+            |},
+            |"dateOfGrant":"2015-12-31",
+            |"numberOfSharesAcquired":10.12,
+            |"sharesListedOnSE":false,
+            |"marketValueAgreedHMRC":false,
+            |"actualMarketValuePerShareAtAcquisitionDate":10.1234,
+            |"exercisePricePerShare":10.1234,
+            |"unrestrictedMarketValuePerShareAtExerciseDate":11.1234,
+            |"qualifyForTaxRelief":true,
+            |"sharesSoldInConnectionWithTheExercise":true
+            |}
+            |]
+            |}
+            |}""".stripMargin)
+      }
     }
   }
-
   // SAYE_Granted_V4
-  "calling generateJson for Granted_V4" should {
 
-    val configData: Config = Common.loadConfiguration(SAYE.sayeSchemeType, "SAYE_Granted_V4", mockConfigUtils)
+  Seq("V4" -> "SAYE_Granted_V4", "V7" -> "SAYE_Granted_V7").foreach { case (version, sheetName) =>
+    s"calling generateJson for Granted $version" should {
+      val configData: Config = loadConfig(SAYE.sayeSchemeType, sheetName)
 
-    "create valid JSON with sharesListedOnSE = (\"yes\" or \"no\"), marketValueAgreedHMRC = \"yes\"" in {
+      "create valid JSON with sharesListedOnSE = (\"yes\" or \"no\"), marketValueAgreedHMRC = \"yes\"" in {
 
-      val result = mockAdrSubmission.buildJson(
-        configData,
-        ListBuffer(
-          SAYE.buildGrantedV4(sharesListedOnSE = "yes", marketValueAgreedHMRC = "yes"),
-          SAYE.buildGrantedV4(sharesListedOnSE = "no", marketValueAgreedHMRC = "yes")
+        val result = mockAdrSubmission.buildJson(
+          configData,
+          ListBuffer(
+            SAYE.buildGrantedV4V7(sharesListedOnSE = "yes", marketValueAgreedHMRC = "yes"),
+            SAYE.buildGrantedV4V7(sharesListedOnSE = "no", marketValueAgreedHMRC = "yes")
+          )
         )
-      )
 
-      result shouldBe Json.parse(
-        """{
-          |"optionsGrantedInYear":true,
-          |"granted":{
-          |"grantEvents":[
-          |{
-          |"dateOfGrant":"2015-12-31",
-          |"numberOfIndividuals":123456,
-          |"numberOfSharesGrantedOver":100.0,
-          |"marketValuePerShareUsedToDetermineExercisePrice":10.1234,
-          |"exercisePricePerShare":10.1234,
-          |"sharesListedOnSE":true
-          |},
-          |{
-          |"dateOfGrant":"2015-12-31",
-          |"numberOfIndividuals":123456,
-          |"numberOfSharesGrantedOver":100.0,
-          |"marketValuePerShareUsedToDetermineExercisePrice":10.1234,
-          |"exercisePricePerShare":10.1234,
-          |"sharesListedOnSE":false,
-          |"marketValueAgreedHMRC":true,
-          |"hmrcRef":"aa12345678"
-          |}
-          |]
-          |}
-          |}""".stripMargin)
+        result shouldBe Json.parse("""{
+            |"optionsGrantedInYear":true,
+            |"granted":{
+            |"grantEvents":[
+            |{
+            |"dateOfGrant":"2015-12-31",
+            |"numberOfIndividuals":123456,
+            |"numberOfSharesGrantedOver":100.0,
+            |"marketValuePerShareUsedToDetermineExercisePrice":10.1234,
+            |"exercisePricePerShare":10.1234,
+            |"sharesListedOnSE":true
+            |},
+            |{
+            |"dateOfGrant":"2015-12-31",
+            |"numberOfIndividuals":123456,
+            |"numberOfSharesGrantedOver":100.0,
+            |"marketValuePerShareUsedToDetermineExercisePrice":10.1234,
+            |"exercisePricePerShare":10.1234,
+            |"sharesListedOnSE":false,
+            |"marketValueAgreedHMRC":true,
+            |"hmrcRef":"aa12345678"
+            |}
+            |]
+            |}
+            |}""".stripMargin)
 
-    }
+      }
 
-    "create valid JSON with sharesListedOnSE = \"no\", marketValueAgreedHMRC = (\"yes\" or \"no\")" in {
+      "create valid JSON with sharesListedOnSE = \"no\", marketValueAgreedHMRC = (\"yes\" or \"no\")" in {
 
-      val result = mockAdrSubmission.buildJson(
-        configData,
-        ListBuffer(
-          SAYE.buildGrantedV4(sharesListedOnSE = "no", marketValueAgreedHMRC = "yes"),
-          SAYE.buildGrantedV4(sharesListedOnSE = "no", marketValueAgreedHMRC = "no")
+        val result = mockAdrSubmission.buildJson(
+          configData,
+          ListBuffer(
+            SAYE.buildGrantedV4V7(sharesListedOnSE = "no", marketValueAgreedHMRC = "yes"),
+            SAYE.buildGrantedV4V7(sharesListedOnSE = "no", marketValueAgreedHMRC = "no")
+          )
         )
-      )
 
-      result shouldBe Json.parse(
-        """{
-          |"optionsGrantedInYear":true,
-          |"granted":{
-          |"grantEvents":[
-          |{
-          |"dateOfGrant":"2015-12-31",
-          |"numberOfIndividuals":123456,
-          |"numberOfSharesGrantedOver":100.0,
-          |"marketValuePerShareUsedToDetermineExercisePrice":10.1234,
-          |"exercisePricePerShare":10.1234,
-          |"sharesListedOnSE":false,
-          |"marketValueAgreedHMRC":true,
-          |"hmrcRef":"aa12345678"
-          |},
-          |{
-          |"dateOfGrant":"2015-12-31",
-          |"numberOfIndividuals":123456,
-          |"numberOfSharesGrantedOver":100.0,
-          |"marketValuePerShareUsedToDetermineExercisePrice":10.1234,
-          |"exercisePricePerShare":10.1234,
-          |"sharesListedOnSE":false,
-          |"marketValueAgreedHMRC":false
-          |}
-          |]
-          |}
-          |}""".stripMargin)
+        result shouldBe Json.parse("""{
+            |"optionsGrantedInYear":true,
+            |"granted":{
+            |"grantEvents":[
+            |{
+            |"dateOfGrant":"2015-12-31",
+            |"numberOfIndividuals":123456,
+            |"numberOfSharesGrantedOver":100.0,
+            |"marketValuePerShareUsedToDetermineExercisePrice":10.1234,
+            |"exercisePricePerShare":10.1234,
+            |"sharesListedOnSE":false,
+            |"marketValueAgreedHMRC":true,
+            |"hmrcRef":"aa12345678"
+            |},
+            |{
+            |"dateOfGrant":"2015-12-31",
+            |"numberOfIndividuals":123456,
+            |"numberOfSharesGrantedOver":100.0,
+            |"marketValuePerShareUsedToDetermineExercisePrice":10.1234,
+            |"exercisePricePerShare":10.1234,
+            |"sharesListedOnSE":false,
+            |"marketValueAgreedHMRC":false
+            |}
+            |]
+            |}
+            |}""".stripMargin)
 
+      }
     }
   }
 
   // SAYE_RCL_V4
-  "calling generateJson for RCL_V4" should {
 
-    val configData: Config = Common.loadConfiguration(SAYE.sayeSchemeType, "SAYE_RCL_V4", mockConfigUtils)
+  Seq("V4" -> "SAYE_RCL_V4", "V7" -> "SAYE_RCL_V7").foreach { case (version, sheetName) =>
+    s"calling generateJson for RCL $version" should {
+      val configData: Config = loadConfig(SAYE.sayeSchemeType, sheetName)
 
-    "create valid JSON with wasMoneyOrValueGiven = \"yes\"" in {
+      "create valid JSON with wasMoneyOrValueGiven = \"yes\"" in {
 
-      val result = mockAdrSubmission.buildJson(
-        configData,
-        ListBuffer(
-          SAYE.buildRCLV4(wasMoneyOrValueGiven = "yes")
+        val result = mockAdrSubmission.buildJson(
+          configData,
+          ListBuffer(
+            SAYE.buildRCLV4V7(wasMoneyOrValueGiven = "yes")
+          )
         )
-      )
 
-      result shouldBe Json.parse(
-        """{
-          |"optionsReleasedCancelledInYear":true,
-          |"released":{
-          |"releasedEvents":[
-          |{
-          |"dateOfEvent":"2015-12-31",
-          |"wasMoneyOrValueGiven":true,
-          |"amountReleased":10.1234,
-          |"individualReleased":{
-          |"firstName":"First",
-          |"secondName":"Second",
-          |"surname":"Last",
-          |"nino":"NINO",
-          |"payeReference":"123/XZ55555555"
-          |},
-          |"payeOperatedApplied":true
-          |}
-          |]
-          |}
-          |}""".stripMargin)
+        result shouldBe Json.parse("""{
+            |"optionsReleasedCancelledInYear":true,
+            |"released":{
+            |"releasedEvents":[
+            |{
+            |"dateOfEvent":"2015-12-31",
+            |"wasMoneyOrValueGiven":true,
+            |"amountReleased":10.1234,
+            |"individualReleased":{
+            |"firstName":"First",
+            |"secondName":"Second",
+            |"surname":"Last",
+            |"nino":"NINO",
+            |"payeReference":"123/XZ55555555"
+            |},
+            |"payeOperatedApplied":true
+            |}
+            |]
+            |}
+            |}""".stripMargin)
 
-    }
+      }
 
-    "create valid JSON with wasMoneyOrValueGiven = \"no\"" in {
+      "create valid JSON with wasMoneyOrValueGiven = \"no\"" in {
 
-      val result = mockAdrSubmission.buildJson(
-        configData,
-        ListBuffer(
-          SAYE.buildRCLV4(wasMoneyOrValueGiven = "no")
+        val result = mockAdrSubmission.buildJson(
+          configData,
+          ListBuffer(
+            SAYE.buildRCLV4V7(wasMoneyOrValueGiven = "no")
+          )
         )
-      )
 
-      result shouldBe Json.parse(
-        """{
-          |"optionsReleasedCancelledInYear":true,
-          |"released":{
-          |"releasedEvents":[
-          |{
-          |"dateOfEvent":"2015-12-31",
-          |"wasMoneyOrValueGiven":false,
-          |"individualReleased":{
-          |"firstName":"First",
-          |"secondName":"Second",
-          |"surname":"Last",
-          |"nino":"NINO",
-          |"payeReference":"123/XZ55555555"
-          |},
-          |"payeOperatedApplied":true
-          |}
-          |]
-          |}
-          |}""".stripMargin)
+        result shouldBe Json.parse("""{
+            |"optionsReleasedCancelledInYear":true,
+            |"released":{
+            |"releasedEvents":[
+            |{
+            |"dateOfEvent":"2015-12-31",
+            |"wasMoneyOrValueGiven":false,
+            |"individualReleased":{
+            |"firstName":"First",
+            |"secondName":"Second",
+            |"surname":"Last",
+            |"nino":"NINO",
+            |"payeReference":"123/XZ55555555"
+            |},
+            |"payeOperatedApplied":true
+            |}
+            |]
+            |}
+            |}""".stripMargin)
 
-    }
+      }
 
-    "create valid JSON without a secondName" in {
+      "create valid JSON without a secondName" in {
 
-      val result = mockAdrSubmission.buildJson(
-        configData,
-        ListBuffer(
-          SAYE.buildRCLV4(secondName = "")
+        val result = mockAdrSubmission.buildJson(
+          configData,
+          ListBuffer(
+            SAYE.buildRCLV4V7(secondName = "")
+          )
         )
-      )
 
-      result shouldBe Json.parse(
-        """{
-          |"optionsReleasedCancelledInYear":true,
-          |"released":{
-          |"releasedEvents":[
-          |{
-          |"dateOfEvent":"2015-12-31",
-          |"wasMoneyOrValueGiven":true,
-          |"amountReleased":10.1234,
-          |"individualReleased":{
-          |"firstName":"First",
-          |"surname":"Last",
-          |"nino":"NINO",
-          |"payeReference":"123/XZ55555555"
-          |},
-          |"payeOperatedApplied":true
-          |}
-          |]
-          |}
-          |}""".stripMargin)
+        result shouldBe Json.parse("""{
+            |"optionsReleasedCancelledInYear":true,
+            |"released":{
+            |"releasedEvents":[
+            |{
+            |"dateOfEvent":"2015-12-31",
+            |"wasMoneyOrValueGiven":true,
+            |"amountReleased":10.1234,
+            |"individualReleased":{
+            |"firstName":"First",
+            |"surname":"Last",
+            |"nino":"NINO",
+            |"payeReference":"123/XZ55555555"
+            |},
+            |"payeOperatedApplied":true
+            |}
+            |]
+            |}
+            |}""".stripMargin)
 
-    }
+      }
 
-    "create valid JSON without a nino" in {
+      "create valid JSON without a nino" in {
 
-      val result = mockAdrSubmission.buildJson(
-        configData,
-        ListBuffer(
-          SAYE.buildRCLV4(nino = "")
+        val result = mockAdrSubmission.buildJson(
+          configData,
+          ListBuffer(
+            SAYE.buildRCLV4V7(nino = "")
+          )
         )
-      )
 
-      result shouldBe Json.parse(
-        """{
-          |"optionsReleasedCancelledInYear":true,
-          |"released":{
-          |"releasedEvents":[
-          |{
-          |"dateOfEvent":"2015-12-31",
-          |"wasMoneyOrValueGiven":true,
-          |"amountReleased":10.1234,
-          |"individualReleased":{
-          |"firstName":"First",
-          |"secondName":"Second",
-          |"surname":"Last",
-          |"payeReference":"123/XZ55555555"
-          |},
-          |"payeOperatedApplied":true
-          |}
-          |]
-          |}
-          |}""".stripMargin)
+        result shouldBe Json.parse("""{
+            |"optionsReleasedCancelledInYear":true,
+            |"released":{
+            |"releasedEvents":[
+            |{
+            |"dateOfEvent":"2015-12-31",
+            |"wasMoneyOrValueGiven":true,
+            |"amountReleased":10.1234,
+            |"individualReleased":{
+            |"firstName":"First",
+            |"secondName":"Second",
+            |"surname":"Last",
+            |"payeReference":"123/XZ55555555"
+            |},
+            |"payeOperatedApplied":true
+            |}
+            |]
+            |}
+            |}""".stripMargin)
 
+      }
     }
-
   }
 
   "return Exception when passing config other than V4 or V7" in {
@@ -1912,4 +1928,5 @@ class SAYE_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with 
     exception.getMessage shouldBe "Trying to load invalid configuration. Path: SAYE/SAYE_Exercised_V6, value: SAYE_Exercised_V6"
 
   }
+
 }
