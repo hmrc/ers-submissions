@@ -20,7 +20,7 @@ import com.typesafe.config.Config
 import common.ERSEnvelope
 import fixtures.{Common, EMI, Fixtures}
 import helpers.ERSTestHelper
-import models.{SchemeData, SchemeInfo}
+import models.{ADRTransferException, SchemeData, SchemeInfo}
 import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
 import org.scalatest.{BeforeAndAfterEach, EitherValues}
@@ -2617,6 +2617,14 @@ class EMI_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with E
                                      |}""".stripMargin)
       }
     }
+  }
+
+  "return Exception when passing config other than V4 or V7" in {
+    val exception = intercept[ADRTransferException] {
+      Common.loadConfiguration(EMI.schemeType, "EMI40_Adjustments_V6", mockConfigUtils)
+    }
+    exception.getMessage shouldBe "Trying to load invalid configuration. Path: EMI/EMI40_Adjustments_V6, value: EMI40_Adjustments_V6"
+
   }
 
 }
