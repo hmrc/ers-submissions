@@ -60,10 +60,10 @@ class EMI_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with E
 
     "create valid json for NilReturn" in {
 
-      when(mockPresubmissionService.getJson(any[SchemeInfo]())(any()))
+      when(mockPresubmissionService.getJson(any[SchemeInfo]())(using any()))
         .thenReturn(ERSEnvelope(Future.successful(List())))
 
-      val result = await(mockAdrSubmission.generateSubmission(EMI.metadataNilReturn)(request, hc).value)
+      val result = await(mockAdrSubmission.generateSubmission(EMI.metadataNilReturn)(using request, hc).value)
       result.value - "acknowledgementReference" shouldBe Json.parse("""{
                                                                 |"regime":"ERS",
                                                                 |"schemeType":"EMI",
@@ -180,26 +180,26 @@ class EMI_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with E
                 EMI.schemeInfo,
                 "EMI40_Adjustments_V4",
                 None,
-                Some(ListBuffer(EMI.buildAdjustmentsV4(withAllFields = true, "yes")))
+                Some(ListBuffer(EMI.buildAdjustmentsV4V7(withAllFields = true, "yes")))
               ),
-              SchemeData(EMI.schemeInfo, "EMI40_Replaced_V4", None, Some(ListBuffer(EMI.buildReplacedV4(true)))),
+              SchemeData(EMI.schemeInfo, "EMI40_Replaced_V4", None, Some(ListBuffer(EMI.buildReplacedV4V7(true)))),
               SchemeData(
                 EMI.schemeInfo,
                 "EMI40_RLC_V4",
                 None,
-                Some(ListBuffer(EMI.buildRLCV4(withAllFields = true, "yes", "yes")))
+                Some(ListBuffer(EMI.buildRLCV4V7(withAllFields = true, "yes", "yes")))
               ),
               SchemeData(
                 EMI.schemeInfo,
                 "EMI40_NonTaxable_V4",
                 None,
-                Some(ListBuffer(EMI.buildNonTaxableV4(withAllFields = true, "yes", "yes")))
+                Some(ListBuffer(EMI.buildNonTaxableV4V7(withAllFields = true, "yes", "yes")))
               ),
               SchemeData(
                 EMI.schemeInfo,
                 "EMI40_Taxable_V4",
                 None,
-                Some(ListBuffer(EMI.buildTaxableV4(withAllFields = true, "yes", "yes", "yes")))
+                Some(ListBuffer(EMI.buildTaxableV4V7(withAllFields = true, "yes", "yes", "yes")))
               )
             )
           )
@@ -395,51 +395,51 @@ class EMI_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with E
                 EMI.schemeInfo,
                 "EMI40_Adjustments_V4",
                 None,
-                Some(ListBuffer(EMI.buildAdjustmentsV4(withAllFields = true, "yes")))
+                Some(ListBuffer(EMI.buildAdjustmentsV4V7(withAllFields = true, "yes")))
               ),
               SchemeData(
                 EMI.schemeInfo,
                 "EMI40_Adjustments_V4",
                 None,
-                Some(ListBuffer(EMI.buildAdjustmentsV4(withAllFields = true, "yes")))
+                Some(ListBuffer(EMI.buildAdjustmentsV4V7(withAllFields = true, "yes")))
               ),
-              SchemeData(EMI.schemeInfo, "EMI40_Replaced_V4", None, Some(ListBuffer(EMI.buildReplacedV4(true)))),
-              SchemeData(EMI.schemeInfo, "EMI40_Replaced_V4", None, Some(ListBuffer(EMI.buildReplacedV4(true)))),
+              SchemeData(EMI.schemeInfo, "EMI40_Replaced_V4", None, Some(ListBuffer(EMI.buildReplacedV4V7(true)))),
+              SchemeData(EMI.schemeInfo, "EMI40_Replaced_V4", None, Some(ListBuffer(EMI.buildReplacedV4V7(true)))),
               SchemeData(
                 EMI.schemeInfo,
                 "EMI40_RLC_V4",
                 None,
-                Some(ListBuffer(EMI.buildRLCV4(withAllFields = true, "yes", "yes")))
+                Some(ListBuffer(EMI.buildRLCV4V7(withAllFields = true, "yes", "yes")))
               ),
               SchemeData(
                 EMI.schemeInfo,
                 "EMI40_RLC_V4",
                 None,
-                Some(ListBuffer(EMI.buildRLCV4(withAllFields = true, "yes", "yes")))
+                Some(ListBuffer(EMI.buildRLCV4V7(withAllFields = true, "yes", "yes")))
               ),
               SchemeData(
                 EMI.schemeInfo,
                 "EMI40_NonTaxable_V4",
                 None,
-                Some(ListBuffer(EMI.buildNonTaxableV4(withAllFields = true, "yes", "yes")))
+                Some(ListBuffer(EMI.buildNonTaxableV4V7(withAllFields = true, "yes", "yes")))
               ),
               SchemeData(
                 EMI.schemeInfo,
                 "EMI40_NonTaxable_V4",
                 None,
-                Some(ListBuffer(EMI.buildNonTaxableV4(withAllFields = true, "yes", "yes")))
+                Some(ListBuffer(EMI.buildNonTaxableV4V7(withAllFields = true, "yes", "yes")))
               ),
               SchemeData(
                 EMI.schemeInfo,
                 "EMI40_Taxable_V4",
                 None,
-                Some(ListBuffer(EMI.buildTaxableV4(withAllFields = true, "yes", "yes", "yes")))
+                Some(ListBuffer(EMI.buildTaxableV4V7(withAllFields = true, "yes", "yes", "yes")))
               ),
               SchemeData(
                 EMI.schemeInfo,
                 "EMI40_Taxable_V4",
                 None,
-                Some(ListBuffer(EMI.buildTaxableV4(withAllFields = true, "yes", "yes", "yes")))
+                Some(ListBuffer(EMI.buildTaxableV4V7(withAllFields = true, "yes", "yes", "yes")))
               )
             )
           )
@@ -729,7 +729,7 @@ class EMI_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with E
                 EMI.schemeInfo,
                 "EMI40_Adjustments_V4",
                 None,
-                Some(ListBuffer(EMI.buildAdjustmentsV4(withAllFields = true, "yes")))
+                Some(ListBuffer(EMI.buildAdjustmentsV4V7(withAllFields = true, "yes")))
               )
             )
           )
@@ -829,13 +829,13 @@ class EMI_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with E
                 EMI.schemeInfo,
                 "EMI40_Adjustments_V4",
                 None,
-                Some(ListBuffer(EMI.buildAdjustmentsV4(withAllFields = true, "yes")))
+                Some(ListBuffer(EMI.buildAdjustmentsV4V7(withAllFields = true, "yes")))
               ),
               SchemeData(
                 EMI.schemeInfo,
                 "EMI40_Adjustments_V4",
                 None,
-                Some(ListBuffer(EMI.buildAdjustmentsV4(withAllFields = true, "yes")))
+                Some(ListBuffer(EMI.buildAdjustmentsV4V7(withAllFields = true, "yes")))
               )
             )
           )
@@ -949,7 +949,7 @@ class EMI_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with E
                 EMI.schemeInfo,
                 "EMI40_RLC_V4",
                 None,
-                Some(ListBuffer(EMI.buildRLCV4(withAllFields = true, "yes", "yes")))
+                Some(ListBuffer(EMI.buildRLCV4V7(withAllFields = true, "yes", "yes")))
               )
             )
           )
@@ -1048,13 +1048,13 @@ class EMI_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with E
                 EMI.schemeInfo,
                 "EMI40_RLC_V4",
                 None,
-                Some(ListBuffer(EMI.buildRLCV4(withAllFields = true, "yes", "yes")))
+                Some(ListBuffer(EMI.buildRLCV4V7(withAllFields = true, "yes", "yes")))
               ),
               SchemeData(
                 EMI.schemeInfo,
                 "EMI40_RLC_V4",
                 None,
-                Some(ListBuffer(EMI.buildRLCV4(withAllFields = true, "yes", "yes")))
+                Some(ListBuffer(EMI.buildRLCV4V7(withAllFields = true, "yes", "yes")))
               )
             )
           )
@@ -1169,7 +1169,7 @@ class EMI_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with E
                 EMI.schemeInfo,
                 "EMI40_RLC_V4",
                 None,
-                Some(ListBuffer(EMI.buildRLCV4(withAllFields = true, "yes", "yes")))
+                Some(ListBuffer(EMI.buildRLCV4V7(withAllFields = true, "yes", "yes")))
               )
             )
           )
@@ -1268,13 +1268,13 @@ class EMI_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with E
                 EMI.schemeInfo,
                 "EMI40_RLC_V4",
                 None,
-                Some(ListBuffer(EMI.buildRLCV4(withAllFields = true, "yes", "yes")))
+                Some(ListBuffer(EMI.buildRLCV4V7(withAllFields = true, "yes", "yes")))
               ),
               SchemeData(
                 EMI.schemeInfo,
                 "EMI40_RLC_V4",
                 None,
-                Some(ListBuffer(EMI.buildRLCV4(withAllFields = true, "yes", "yes")))
+                Some(ListBuffer(EMI.buildRLCV4V7(withAllFields = true, "yes", "yes")))
               )
             )
           )
@@ -1389,7 +1389,7 @@ class EMI_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with E
                 EMI.schemeInfo,
                 "EMI40_NonTaxable_V4",
                 None,
-                Some(ListBuffer(EMI.buildNonTaxableV4(withAllFields = true, "yes", "yes")))
+                Some(ListBuffer(EMI.buildNonTaxableV4V7(withAllFields = true, "yes", "yes")))
               )
             )
           )
@@ -1489,13 +1489,13 @@ class EMI_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with E
                 EMI.schemeInfo,
                 "EMI40_NonTaxable_V4",
                 None,
-                Some(ListBuffer(EMI.buildNonTaxableV4(withAllFields = true, "yes", "yes")))
+                Some(ListBuffer(EMI.buildNonTaxableV4V7(withAllFields = true, "yes", "yes")))
               ),
               SchemeData(
                 EMI.schemeInfo,
                 "EMI40_NonTaxable_V4",
                 None,
-                Some(ListBuffer(EMI.buildNonTaxableV4(withAllFields = true, "yes", "yes")))
+                Some(ListBuffer(EMI.buildNonTaxableV4V7(withAllFields = true, "yes", "yes")))
               )
             )
           )
@@ -1612,7 +1612,7 @@ class EMI_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with E
                 EMI.schemeInfo,
                 "EMI40_Taxable_V4",
                 None,
-                Some(ListBuffer(EMI.buildTaxableV4(withAllFields = true, "yes", "yes", "yes")))
+                Some(ListBuffer(EMI.buildTaxableV4V7(withAllFields = true, "yes", "yes", "yes")))
               )
             )
           )
@@ -1717,13 +1717,13 @@ class EMI_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with E
                 EMI.schemeInfo,
                 "EMI40_Taxable_V4",
                 None,
-                Some(ListBuffer(EMI.buildTaxableV4(withAllFields = true, "yes", "yes", "yes")))
+                Some(ListBuffer(EMI.buildTaxableV4V7(withAllFields = true, "yes", "yes", "yes")))
               ),
               SchemeData(
                 EMI.schemeInfo,
                 "EMI40_Taxable_V4",
                 None,
-                Some(ListBuffer(EMI.buildTaxableV4(withAllFields = true, "yes", "yes", "yes")))
+                Some(ListBuffer(EMI.buildTaxableV4V7(withAllFields = true, "yes", "yes", "yes")))
               )
             )
           )
@@ -1840,786 +1840,791 @@ class EMI_ADRSubmissionSpec extends ERSTestHelper with BeforeAndAfterEach with E
 
   }
 
-  "calling generateJson for Adjustments V4" should {
+  Seq("V4" -> "EMI40_Adjustments_V4", "V7" -> "EMI40_Adjustments_V7").foreach { case (version, sheetName) =>
+    s"calling generateJson for Adjustments $version" should {
+      val configData: Config = loadConfig(EMI.schemeType, sheetName)
+      "create valid JSON with disqualifyingEvent = \"yes\"" in {
 
-    val configData: Config = Common.loadConfiguration(EMI.schemeType, "EMI40_Adjustments_V4", mockConfigUtils)
-
-    "create valid JSON with disqualifyingEvent = \"yes\"" in {
-
-      val result = mockAdrSubmission.buildJson(
-        configData,
-        ListBuffer(
-          EMI.buildAdjustmentsV4(withAllFields = true, disqualifyingEvent = "yes"),
-          EMI.buildAdjustmentsV4(withAllFields = false, disqualifyingEvent = "yes")
+        val result = mockAdrSubmission.buildJson(
+          configData,
+          ListBuffer(
+            EMI.buildAdjustmentsV4V7(disqualifyingEvent = "yes"),
+            EMI.buildAdjustmentsV4V7(withAllFields = false, disqualifyingEvent = "yes")
+          )
         )
-      )
 
-      result shouldBe Json.parse("""{
-                                  |"adjustmentOfOptionsFollowingVariation":true,
-                                  |"changeInDescriptionOfShares":true,
-                                  |"disqualifyingEvent":true,
-                                  |"natureOfDisqualifyingEvent":"4",
-                                  |"adjustment":{
-                                  |"adjustmentEvents":[
-                                  |{
-                                  |"dateOptionAdjusted":"2011-10-13",
-                                  |"individual":{
-                                  |"firstName":"First",
-                                  |"secondName":"Second",
-                                  |"surname":"Last",
-                                  |"nino":"NINO",
-                                  |"payeReference":"123/XZ55555555"
-                                  |},
-                                  |"exercisePricePerSUOPBeforeAdjustment":10.1234,
-                                  |"numberOfSUOPAfterAdjustment":10.14,
-                                  |"exercisePricePerSUOPAfterAdjustment":10.1324,
-                                  |"actualMarketValueOfShareAtGrantDate":10.1244
-                                  |},
-                                  |{
-                                  |"dateOptionAdjusted":"2011-10-13",
-                                  |"individual":{
-                                  |"firstName":"First",
-                                  |"surname":"Last",
-                                  |"payeReference":"123/XZ55555555"
-                                  |},
-                                  |"exercisePricePerSUOPBeforeAdjustment":10.1234,
-                                  |"numberOfSUOPAfterAdjustment":10.14,
-                                  |"exercisePricePerSUOPAfterAdjustment":10.1324,
-                                  |"actualMarketValueOfShareAtGrantDate":10.1244
-                                  |}
-                                  |]
-                                  |}
-                                  |}""".stripMargin)
-    }
+        result shouldBe Json.parse("""{
+                                     |"adjustmentOfOptionsFollowingVariation":true,
+                                     |"changeInDescriptionOfShares":true,
+                                     |"disqualifyingEvent":true,
+                                     |"natureOfDisqualifyingEvent":"4",
+                                     |"adjustment":{
+                                     |"adjustmentEvents":[
+                                     |{
+                                     |"dateOptionAdjusted":"2011-10-13",
+                                     |"individual":{
+                                     |"firstName":"First",
+                                     |"secondName":"Second",
+                                     |"surname":"Last",
+                                     |"nino":"NINO",
+                                     |"payeReference":"123/XZ55555555"
+                                     |},
+                                     |"exercisePricePerSUOPBeforeAdjustment":10.1234,
+                                     |"numberOfSUOPAfterAdjustment":10.14,
+                                     |"exercisePricePerSUOPAfterAdjustment":10.1324,
+                                     |"actualMarketValueOfShareAtGrantDate":10.1244
+                                     |},
+                                     |{
+                                     |"dateOptionAdjusted":"2011-10-13",
+                                     |"individual":{
+                                     |"firstName":"First",
+                                     |"surname":"Last",
+                                     |"payeReference":"123/XZ55555555"
+                                     |},
+                                     |"exercisePricePerSUOPBeforeAdjustment":10.1234,
+                                     |"numberOfSUOPAfterAdjustment":10.14,
+                                     |"exercisePricePerSUOPAfterAdjustment":10.1324,
+                                     |"actualMarketValueOfShareAtGrantDate":10.1244
+                                     |}
+                                     |]
+                                     |}
+                                     |}""".stripMargin)
+      }
 
-    "create valid JSON with disqualifyingEvent = \"no\"" in {
+      "create valid JSON with disqualifyingEvent = \"no\"" in {
 
-      val result = mockAdrSubmission.buildJson(
-        configData,
-        ListBuffer(
-          EMI.buildAdjustmentsV4(withAllFields = true, disqualifyingEvent = "no"),
-          EMI.buildAdjustmentsV4(withAllFields = false, disqualifyingEvent = "no")
+        val result = mockAdrSubmission.buildJson(
+          configData,
+          ListBuffer(
+            EMI.buildAdjustmentsV4V7(disqualifyingEvent = "no"),
+            EMI.buildAdjustmentsV4V7(withAllFields = false, disqualifyingEvent = "no")
+          )
         )
-      )
 
-      result shouldBe Json.parse("""{
-                                   |"adjustmentOfOptionsFollowingVariation":true,
-                                   |"changeInDescriptionOfShares":true,
-                                   |"disqualifyingEvent":false,
-                                   |"adjustment":{
-                                   |"adjustmentEvents":[
-                                   |{
-                                   |"dateOptionAdjusted":"2011-10-13",
-                                   |"individual":{
-                                   |"firstName":"First",
-                                   |"secondName":"Second",
-                                   |"surname":"Last",
-                                   |"nino":"NINO",
-                                   |"payeReference":"123/XZ55555555"
-                                   |},
-                                   |"exercisePricePerSUOPBeforeAdjustment":10.1234,
-                                   |"numberOfSUOPAfterAdjustment":10.14,
-                                   |"exercisePricePerSUOPAfterAdjustment":10.1324,
-                                   |"actualMarketValueOfShareAtGrantDate":10.1244
-                                   |},
-                                   |{
-                                   |"dateOptionAdjusted":"2011-10-13",
-                                   |"individual":{
-                                   |"firstName":"First",
-                                   |"surname":"Last",
-                                   |"payeReference":"123/XZ55555555"
-                                   |},
-                                   |"exercisePricePerSUOPBeforeAdjustment":10.1234,
-                                   |"numberOfSUOPAfterAdjustment":10.14,
-                                   |"exercisePricePerSUOPAfterAdjustment":10.1324,
-                                   |"actualMarketValueOfShareAtGrantDate":10.1244
-                                   |}
-                                   |]
-                                   |}
-                                   |}""".stripMargin)
+        result shouldBe Json.parse("""{
+                                     |"adjustmentOfOptionsFollowingVariation":true,
+                                     |"changeInDescriptionOfShares":true,
+                                     |"disqualifyingEvent":false,
+                                     |"adjustment":{
+                                     |"adjustmentEvents":[
+                                     |{
+                                     |"dateOptionAdjusted":"2011-10-13",
+                                     |"individual":{
+                                     |"firstName":"First",
+                                     |"secondName":"Second",
+                                     |"surname":"Last",
+                                     |"nino":"NINO",
+                                     |"payeReference":"123/XZ55555555"
+                                     |},
+                                     |"exercisePricePerSUOPBeforeAdjustment":10.1234,
+                                     |"numberOfSUOPAfterAdjustment":10.14,
+                                     |"exercisePricePerSUOPAfterAdjustment":10.1324,
+                                     |"actualMarketValueOfShareAtGrantDate":10.1244
+                                     |},
+                                     |{
+                                     |"dateOptionAdjusted":"2011-10-13",
+                                     |"individual":{
+                                     |"firstName":"First",
+                                     |"surname":"Last",
+                                     |"payeReference":"123/XZ55555555"
+                                     |},
+                                     |"exercisePricePerSUOPBeforeAdjustment":10.1234,
+                                     |"numberOfSUOPAfterAdjustment":10.14,
+                                     |"exercisePricePerSUOPAfterAdjustment":10.1324,
+                                     |"actualMarketValueOfShareAtGrantDate":10.1244
+                                     |}
+                                     |]
+                                     |}
+                                     |}""".stripMargin)
+      }
     }
   }
 
-  "calling generateJson for Replaced V4" should {
+  Seq("V4" -> "EMI40_RLC_V4", "V7" -> "EMI40_RLC_V7").foreach { case (version, sheetName) =>
+    s"calling generateJson for RLC $version" should {
+      val configData: Config = loadConfig(EMI.schemeType, sheetName)
+      "create valid JSON for withAllFields = (true or false), disqualifyingEvent = \"yes\" and moneyValueReceived = \"yes\"" in {
 
-    val configData: Config = Common.loadConfiguration(EMI.schemeType, "EMI40_Replaced_V4", mockConfigUtils)
-
-    "create valid JSON" in {
-
-      val result = mockAdrSubmission.buildJson(
-        configData,
-        ListBuffer(
-          EMI.buildReplacedV4(withAllFields = true),
-          EMI.buildReplacedV4(withAllFields = false)
+        val result = mockAdrSubmission.buildJson(
+          configData,
+          ListBuffer(
+            EMI.buildRLCV4V7(disqualifyingEvent = "yes", moneyValueReceived = "yes"),
+            EMI.buildRLCV4V7(withAllFields = false, disqualifyingEvent = "yes", moneyValueReceived = "yes")
+          )
         )
-      )
 
-      result shouldBe Json.parse("""{
-                                   |"replaced":{
-                                   |"replacementEvents":[
-                                   |{
-                                   |"grantDateOfOldOption":"2014-12-10",
-                                   |"grantDateOfNewOption":"2014-12-10",
-                                   |"individualReleased":{
-                                   |"firstName":"First",
-                                   |"secondName":"Second",
-                                   |"surname":"Last",
-                                   |"nino":"NINO",
-                                   |"payeReference":"123/XZ55555555"
-                                   |},
-                                   |"actualMarketValuePerShareReplacementAtDate":10.1234,
-                                   |"snopCompany":{
-                                   |"companyName":"company",
-                                   |"companyAddress":{
-                                   |"addressLine1":"1 Beth Street",
-                                   |"addressLine2":"Bucknall",
-                                   |"addressLine3":"Stoke",
-                                   |"addressLine4":"Staffordshire",
-                                   |"country":"UK",
-                                   |"postcode":"SE1 2AB"
-                                   |},
-                                   |"companyCRN":"XT123456",
-                                   |"companyCTRef":"1234567899"
-                                   |}
-                                   |},
-                                   |{
-                                   |"grantDateOfOldOption":"2014-12-10",
-                                   |"grantDateOfNewOption":"2014-12-10",
-                                   |"individualReleased":{
-                                   |"firstName":"First",
-                                   |"surname":"Last",
-                                   |"payeReference":"123/XZ55555555"
-                                   |},
-                                   |"actualMarketValuePerShareReplacementAtDate":10.1234,
-                                   |"snopCompany":{
-                                   |"companyName":"company",
-                                   |"companyAddress":{
-                                   |"addressLine1":"1 Beth Street",
-                                   |"country":"UK",
-                                   |"postcode":"SE1 2AB"
-                                   |},
-                                   |"companyCRN":"XT123456",
-                                   |"companyCTRef":"1234567899"
-                                   |}
-                                   |}
-                                   |]
-                                   |}
-                                   |}""".stripMargin)
-    }
+        result shouldBe Json.parse("""{
+                                     |"optionsReleasedLapsedCancelled":true,
+                                     |"released":{
+                                     |"releasedEvents":[
+                                     |{
+                                     |"dateOfEvent":"2014-12-10",
+                                     |"disqualifyingEvent":true,
+                                     |"natureOfDisqualifyingEvent":"1",
+                                     |"individualRelLapsedCanc":{
+                                     |"firstName":"First",
+                                     |"secondName":"Second",
+                                     |"surname":"Last",
+                                     |"nino":"NINO",
+                                     |"payeReference":"123/XZ55555555"
+                                     |},
+                                     |"numberOfSharesWhichCanNoLongerBeExercised":10.12,
+                                     |"moneyValueReceived":true,
+                                     |"receivedAmount":123.1234,
+                                     |"payeOperatedApplied":true
+                                     |},
+                                     |{
+                                     |"dateOfEvent":"2014-12-10",
+                                     |"disqualifyingEvent":true,
+                                     |"natureOfDisqualifyingEvent":"1",
+                                     |"individualRelLapsedCanc":{
+                                     |"firstName":"First",
+                                     |"surname":"Last",
+                                     |"payeReference":"123/XZ55555555"
+                                     |},
+                                     |"numberOfSharesWhichCanNoLongerBeExercised":10.12,
+                                     |"moneyValueReceived":true,
+                                     |"receivedAmount":123.1234,
+                                     |"payeOperatedApplied":true
+                                     |}
+                                     |]
+                                     |}
+                                     |}""".stripMargin)
+      }
 
-  }
+      "create valid JSON for withAllFields = true, disqualifyingEvent = (\"yes\" or \"no\") and moneyValueReceived = \"yes\"" in {
 
-  "calling generateJson for RLC V4" should {
-
-    val configData: Config = Common.loadConfiguration(EMI.schemeType, "EMI40_RLC_V4", mockConfigUtils)
-
-    "create valid JSON for withAllFields = (true or false), disqualifyingEvent = \"yes\" and moneyValueReceived = \"yes\"" in {
-
-      val result = mockAdrSubmission.buildJson(
-        configData,
-        ListBuffer(
-          EMI.buildRLCV4(withAllFields = true, disqualifyingEvent = "yes", moneyValueReceived = "yes"),
-          EMI.buildRLCV4(withAllFields = false, disqualifyingEvent = "yes", moneyValueReceived = "yes")
+        val result = mockAdrSubmission.buildJson(
+          configData,
+          ListBuffer(
+            EMI.buildRLCV4V7(disqualifyingEvent = "yes", moneyValueReceived = "yes"),
+            EMI.buildRLCV4V7(disqualifyingEvent = "no", moneyValueReceived = "yes")
+          )
         )
-      )
 
-      result shouldBe Json.parse("""{
-                                   |"optionsReleasedLapsedCancelled":true,
-                                   |"released":{
-                                   |"releasedEvents":[
-                                   |{
-                                   |"dateOfEvent":"2014-12-10",
-                                   |"disqualifyingEvent":true,
-                                   |"natureOfDisqualifyingEvent":"1",
-                                   |"individualRelLapsedCanc":{
-                                   |"firstName":"First",
-                                   |"secondName":"Second",
-                                   |"surname":"Last",
-                                   |"nino":"NINO",
-                                   |"payeReference":"123/XZ55555555"
-                                   |},
-                                   |"numberOfSharesWhichCanNoLongerBeExercised":10.12,
-                                   |"moneyValueReceived":true,
-                                   |"receivedAmount":123.1234,
-                                   |"payeOperatedApplied":true
-                                   |},
-                                   |{
-                                   |"dateOfEvent":"2014-12-10",
-                                   |"disqualifyingEvent":true,
-                                   |"natureOfDisqualifyingEvent":"1",
-                                   |"individualRelLapsedCanc":{
-                                   |"firstName":"First",
-                                   |"surname":"Last",
-                                   |"payeReference":"123/XZ55555555"
-                                   |},
-                                   |"numberOfSharesWhichCanNoLongerBeExercised":10.12,
-                                   |"moneyValueReceived":true,
-                                   |"receivedAmount":123.1234,
-                                   |"payeOperatedApplied":true
-                                   |}
-                                   |]
-                                   |}
-                                   |}""".stripMargin)
-    }
+        result shouldBe Json.parse("""{
+                                     |"optionsReleasedLapsedCancelled":true,
+                                     |"released":{
+                                     |"releasedEvents":[
+                                     |{
+                                     |"dateOfEvent":"2014-12-10",
+                                     |"disqualifyingEvent":true,
+                                     |"natureOfDisqualifyingEvent":"1",
+                                     |"individualRelLapsedCanc":{
+                                     |"firstName":"First",
+                                     |"secondName":"Second",
+                                     |"surname":"Last",
+                                     |"nino":"NINO",
+                                     |"payeReference":"123/XZ55555555"
+                                     |},
+                                     |"numberOfSharesWhichCanNoLongerBeExercised":10.12,
+                                     |"moneyValueReceived":true,
+                                     |"receivedAmount":123.1234,
+                                     |"payeOperatedApplied":true
+                                     |},
+                                     |{
+                                     |"dateOfEvent":"2014-12-10",
+                                     |"disqualifyingEvent":false,
+                                     |"individualRelLapsedCanc":{
+                                     |"firstName":"First",
+                                     |"secondName":"Second",
+                                     |"surname":"Last",
+                                     |"nino":"NINO",
+                                     |"payeReference":"123/XZ55555555"
+                                     |},
+                                     |"numberOfSharesWhichCanNoLongerBeExercised":10.12,
+                                     |"moneyValueReceived":true,
+                                     |"receivedAmount":123.1234,
+                                     |"payeOperatedApplied":true
+                                     |}
+                                     |]
+                                     |}
+                                     |}""".stripMargin)
+      }
 
-    "create valid JSON for withAllFields = true, disqualifyingEvent = (\"yes\" or \"no\") and moneyValueReceived = \"yes\"" in {
+      "create valid JSON for withAllFields = true, disqualifyingEvent = \"yes\" and moneyValueReceived = (\"yes\" or \"no\")" in {
 
-      val result = mockAdrSubmission.buildJson(
-        configData,
-        ListBuffer(
-          EMI.buildRLCV4(withAllFields = true, disqualifyingEvent = "yes", moneyValueReceived = "yes"),
-          EMI.buildRLCV4(withAllFields = true, disqualifyingEvent = "no", moneyValueReceived = "yes")
+        val result = mockAdrSubmission.buildJson(
+          configData,
+          ListBuffer(
+            EMI.buildRLCV4V7(disqualifyingEvent = "yes", moneyValueReceived = "yes"),
+            EMI.buildRLCV4V7(disqualifyingEvent = "yes", moneyValueReceived = "no")
+          )
         )
-      )
 
-      result shouldBe Json.parse("""{
-                                   |"optionsReleasedLapsedCancelled":true,
-                                   |"released":{
-                                   |"releasedEvents":[
-                                   |{
-                                   |"dateOfEvent":"2014-12-10",
-                                   |"disqualifyingEvent":true,
-                                   |"natureOfDisqualifyingEvent":"1",
-                                   |"individualRelLapsedCanc":{
-                                   |"firstName":"First",
-                                   |"secondName":"Second",
-                                   |"surname":"Last",
-                                   |"nino":"NINO",
-                                   |"payeReference":"123/XZ55555555"
-                                   |},
-                                   |"numberOfSharesWhichCanNoLongerBeExercised":10.12,
-                                   |"moneyValueReceived":true,
-                                   |"receivedAmount":123.1234,
-                                   |"payeOperatedApplied":true
-                                   |},
-                                   |{
-                                   |"dateOfEvent":"2014-12-10",
-                                   |"disqualifyingEvent":false,
-                                   |"individualRelLapsedCanc":{
-                                   |"firstName":"First",
-                                   |"secondName":"Second",
-                                   |"surname":"Last",
-                                   |"nino":"NINO",
-                                   |"payeReference":"123/XZ55555555"
-                                   |},
-                                   |"numberOfSharesWhichCanNoLongerBeExercised":10.12,
-                                   |"moneyValueReceived":true,
-                                   |"receivedAmount":123.1234,
-                                   |"payeOperatedApplied":true
-                                   |}
-                                   |]
-                                   |}
-                                   |}""".stripMargin)
-    }
-
-    "create valid JSON for withAllFields = true, disqualifyingEvent = \"yes\" and moneyValueReceived = (\"yes\" or \"no\")" in {
-
-      val result = mockAdrSubmission.buildJson(
-        configData,
-        ListBuffer(
-          EMI.buildRLCV4(withAllFields = true, disqualifyingEvent = "yes", moneyValueReceived = "yes"),
-          EMI.buildRLCV4(withAllFields = true, disqualifyingEvent = "yes", moneyValueReceived = "no")
-        )
-      )
-
-      result shouldBe Json.parse("""{
-                                   |"optionsReleasedLapsedCancelled":true,
-                                   |"released":{
-                                   |"releasedEvents":[
-                                   |{
-                                   |"dateOfEvent":"2014-12-10",
-                                   |"disqualifyingEvent":true,
-                                   |"natureOfDisqualifyingEvent":"1",
-                                   |"individualRelLapsedCanc":{
-                                   |"firstName":"First",
-                                   |"secondName":"Second",
-                                   |"surname":"Last",
-                                   |"nino":"NINO",
-                                   |"payeReference":"123/XZ55555555"
-                                   |},
-                                   |"numberOfSharesWhichCanNoLongerBeExercised":10.12,
-                                   |"moneyValueReceived":true,
-                                   |"receivedAmount":123.1234,
-                                   |"payeOperatedApplied":true
-                                   |},
-                                   |{
-                                   |"dateOfEvent":"2014-12-10",
-                                   |"disqualifyingEvent":true,
-                                   |"natureOfDisqualifyingEvent":"1",
-                                   |"individualRelLapsedCanc":{
-                                   |"firstName":"First",
-                                   |"secondName":"Second",
-                                   |"surname":"Last",
-                                   |"nino":"NINO",
-                                   |"payeReference":"123/XZ55555555"
-                                   |},
-                                   |"numberOfSharesWhichCanNoLongerBeExercised":10.12,
-                                   |"moneyValueReceived":false
-                                   |}
-                                   |]
-                                   |}
-                                   |}""".stripMargin)
-    }
-
-  }
-
-  "calling generateJson for NonTaxable V4" should {
-
-    val configData: Config = Common.loadConfiguration(EMI.schemeType, "EMI40_NonTaxable_V4", mockConfigUtils)
-
-    "create valid JSON for withAllFields = (true or false), sharesListedOnSE = \"yes\" and marketValueAgreedHMRC = \"yes\"" in {
-
-      val result = mockAdrSubmission.buildJson(
-        configData,
-        ListBuffer(
-          EMI.buildNonTaxableV4(withAllFields = true, sharesListedOnSE = "yes", marketValueAgreedHMRC = "yes"),
-          EMI.buildNonTaxableV4(withAllFields = false, sharesListedOnSE = "yes", marketValueAgreedHMRC = "yes")
-        )
-      )
-
-      result shouldBe Json.parse("""{
-                                   |"ntExercise":{
-                                   |"ntExerciseEvents":[
-                                   |{
-                                   |"exerciseDate":"2015-03-03",
-                                   |"individualNTExercise":{
-                                   |"firstName":"First",
-                                   |"secondName":"Second",
-                                   |"surname":"Last",
-                                   |"nino":"NINO",
-                                   |"payeReference":"123/XZ55555555"
-                                   |},
-                                   |"numberOfSharesAcquired":100.0,
-                                   |"actualMarketValueAtGrantDate":10.1234,
-                                   |"exercisePrice":10.1234,
-                                   |"actualMarketValuePerShareAtExerciseDate":10.1234,
-                                   |"sharesListedOnSE":true,
-                                   |"totalAmountPaidToAcquireShares":10.1234,
-                                   |"sharesDisposedOnSameDay":true
-                                   |},
-                                   |{
-                                   |"exerciseDate":"2015-03-03",
-                                   |"individualNTExercise":{
-                                   |"firstName":"First",
-                                   |"surname":"Last",
-                                   |"payeReference":"123/XZ55555555"
-                                   |},
-                                   |"numberOfSharesAcquired":100.0,
-                                   |"actualMarketValueAtGrantDate":10.1234,
-                                   |"exercisePrice":10.1234,
-                                   |"actualMarketValuePerShareAtExerciseDate":10.1234,
-                                   |"sharesListedOnSE":true,
-                                   |"totalAmountPaidToAcquireShares":10.1234,
-                                   |"sharesDisposedOnSameDay":true
-                                   |}
-                                   |]
-                                   |}
-                                   |}""".stripMargin)
-    }
-
-    "create valid JSON for withAllFields = true, sharesListedOnSE = (\"yes\" or \"no\") and marketValueAgreedHMRC = \"yes\"" in {
-
-      val result = mockAdrSubmission.buildJson(
-        configData,
-        ListBuffer(
-          EMI.buildNonTaxableV4(withAllFields = true, sharesListedOnSE = "yes", marketValueAgreedHMRC = "yes"),
-          EMI.buildNonTaxableV4(withAllFields = true, sharesListedOnSE = "no", marketValueAgreedHMRC = "yes")
-        )
-      )
-
-      result shouldBe Json.parse("""{
-                                   |"ntExercise":{
-                                   |"ntExerciseEvents":[
-                                   |{
-                                   |"exerciseDate":"2015-03-03",
-                                   |"individualNTExercise":{
-                                   |"firstName":"First",
-                                   |"secondName":"Second",
-                                   |"surname":"Last",
-                                   |"nino":"NINO",
-                                   |"payeReference":"123/XZ55555555"
-                                   |},
-                                   |"numberOfSharesAcquired":100.0,
-                                   |"actualMarketValueAtGrantDate":10.1234,
-                                   |"exercisePrice":10.1234,
-                                   |"actualMarketValuePerShareAtExerciseDate":10.1234,
-                                   |"sharesListedOnSE":true,
-                                   |"totalAmountPaidToAcquireShares":10.1234,
-                                   |"sharesDisposedOnSameDay":true
-                                   |},
-                                   |{
-                                   |"exerciseDate":"2015-03-03",
-                                   |"individualNTExercise":{
-                                   |"firstName":"First",
-                                   |"secondName":"Second",
-                                   |"surname":"Last",
-                                   |"nino":"NINO",
-                                   |"payeReference":"123/XZ55555555"
-                                   |},
-                                   |"numberOfSharesAcquired":100.0,
-                                   |"actualMarketValueAtGrantDate":10.1234,
-                                   |"exercisePrice":10.1234,
-                                   |"actualMarketValuePerShareAtExerciseDate":10.1234,
-                                   |"sharesListedOnSE":false,
-                                   |"marketValueAgreedHMRC": true,
-                                   |"hmrcRef": "aa12345678",
-                                   |"totalAmountPaidToAcquireShares":10.1234,
-                                   |"sharesDisposedOnSameDay":true
-                                   |}
-                                   |]
-                                   |}
-                                   |}""".stripMargin)
-    }
-
-    "create valid JSON for withAllFields = true, sharesListedOnSE = \"no\" and marketValueAgreedHMRC = (\"yes\" or \"no\")" in {
-
-      val result = mockAdrSubmission.buildJson(
-        configData,
-        ListBuffer(
-          EMI.buildNonTaxableV4(withAllFields = true, sharesListedOnSE = "no", marketValueAgreedHMRC = "yes"),
-          EMI.buildNonTaxableV4(withAllFields = true, sharesListedOnSE = "no", marketValueAgreedHMRC = "no")
-        )
-      )
-
-      result shouldBe Json.parse("""{
-                                   |"ntExercise":{
-                                   |"ntExerciseEvents":[
-                                   |{
-                                   |"exerciseDate":"2015-03-03",
-                                   |"individualNTExercise":{
-                                   |"firstName":"First",
-                                   |"secondName":"Second",
-                                   |"surname":"Last",
-                                   |"nino":"NINO",
-                                   |"payeReference":"123/XZ55555555"
-                                   |},
-                                   |"numberOfSharesAcquired":100.0,
-                                   |"actualMarketValueAtGrantDate":10.1234,
-                                   |"exercisePrice":10.1234,
-                                   |"actualMarketValuePerShareAtExerciseDate":10.1234,
-                                   |"sharesListedOnSE":false,
-                                   |"marketValueAgreedHMRC": true,
-                                   |"hmrcRef": "aa12345678",
-                                   |"totalAmountPaidToAcquireShares":10.1234,
-                                   |"sharesDisposedOnSameDay":true
-                                   |},
-                                   |{
-                                   |"exerciseDate":"2015-03-03",
-                                   |"individualNTExercise":{
-                                   |"firstName":"First",
-                                   |"secondName":"Second",
-                                   |"surname":"Last",
-                                   |"nino":"NINO",
-                                   |"payeReference":"123/XZ55555555"
-                                   |},
-                                   |"numberOfSharesAcquired":100.0,
-                                   |"actualMarketValueAtGrantDate":10.1234,
-                                   |"exercisePrice":10.1234,
-                                   |"actualMarketValuePerShareAtExerciseDate":10.1234,
-                                   |"sharesListedOnSE":false,
-                                   |"marketValueAgreedHMRC": false,
-                                   |"totalAmountPaidToAcquireShares":10.1234,
-                                   |"sharesDisposedOnSameDay":true
-                                   |}
-                                   |]
-                                   |}
-                                   |}""".stripMargin)
+        result shouldBe Json.parse("""{
+                                     |"optionsReleasedLapsedCancelled":true,
+                                     |"released":{
+                                     |"releasedEvents":[
+                                     |{
+                                     |"dateOfEvent":"2014-12-10",
+                                     |"disqualifyingEvent":true,
+                                     |"natureOfDisqualifyingEvent":"1",
+                                     |"individualRelLapsedCanc":{
+                                     |"firstName":"First",
+                                     |"secondName":"Second",
+                                     |"surname":"Last",
+                                     |"nino":"NINO",
+                                     |"payeReference":"123/XZ55555555"
+                                     |},
+                                     |"numberOfSharesWhichCanNoLongerBeExercised":10.12,
+                                     |"moneyValueReceived":true,
+                                     |"receivedAmount":123.1234,
+                                     |"payeOperatedApplied":true
+                                     |},
+                                     |{
+                                     |"dateOfEvent":"2014-12-10",
+                                     |"disqualifyingEvent":true,
+                                     |"natureOfDisqualifyingEvent":"1",
+                                     |"individualRelLapsedCanc":{
+                                     |"firstName":"First",
+                                     |"secondName":"Second",
+                                     |"surname":"Last",
+                                     |"nino":"NINO",
+                                     |"payeReference":"123/XZ55555555"
+                                     |},
+                                     |"numberOfSharesWhichCanNoLongerBeExercised":10.12,
+                                     |"moneyValueReceived":false
+                                     |}
+                                     |]
+                                     |}
+                                     |}""".stripMargin)
+      }
     }
   }
 
-  "calling generateJson for Taxable V4" should {
+  Seq("V4" -> "EMI40_NonTaxable_V4", "V7" -> "EMI40_NonTaxable_V7").foreach { case (version, sheetName) =>
+    s"calling generateJson for NonTaxable $version" should {
+      val configData: Config = loadConfig(EMI.schemeType, sheetName)
+      "create valid JSON for withAllFields = (true or false), sharesListedOnSE = \"yes\" and marketValueAgreedHMRC = \"yes\"" in {
 
-    val configData: Config = Common.loadConfiguration(EMI.schemeType, "EMI40_Taxable_V4", mockConfigUtils)
-
-    "create valid JSON for withAllFields = (true or false), disqualifyingEvent = \"yes\", sharesListedOnSE = \"yes\" and marketValueAgreedHMRC = \"yes\"" in {
-
-      val result = mockAdrSubmission.buildJson(
-        configData,
-        ListBuffer(
-          EMI.buildTaxableV4(
-            withAllFields = true,
-            disqualifyingEvent = "yes",
-            sharesListedOnSE = "yes",
-            marketValueAgreedHMRC = "yes"
-          ),
-          EMI.buildTaxableV4(
-            withAllFields = false,
-            disqualifyingEvent = "yes",
-            sharesListedOnSE = "yes",
-            marketValueAgreedHMRC = "yes"
+        val result = mockAdrSubmission.buildJson(
+          configData,
+          ListBuffer(
+            EMI.buildNonTaxableV4V7(sharesListedOnSE = "yes", marketValueAgreedHMRC = "yes"),
+            EMI.buildNonTaxableV4V7(withAllFields = false, sharesListedOnSE = "yes", marketValueAgreedHMRC = "yes")
           )
         )
-      )
 
-      result shouldBe Json.parse("""{
-                                   |"taxExercise":{
-                                   |"taxExercise":[
-                                   |{
-                                   |"exerciseDate":"2015-06-04",
-                                   |"disqualifyingEvent":true,
-                                   |"natureOfDisqualifyingEvent":"3",
-                                   |"individualTaxExercise":{
-                                   |"firstName":"First",
-                                   |"secondName":"Second",
-                                   |"surname":"Last",
-                                   |"nino":"NINO",
-                                   |"payeReference":"123/XZ55555555"
-                                   |},
-                                   |"numberOfSharesAcquired":100.0,
-                                   |"actualMarketValueAtGrantDate":10.1234,
-                                   |"exercisePricePaidToAcquireAShare":10.1234,
-                                   |"actualMarketValuePerShareAtExerciseDate":10.1234,
-                                   |"unrestrictedMarketValuePerShareAtExerciseDate":10.1234,
-                                   |"totalAmountPaidToAcquireTheShares":10.1234,
-                                   |"sharesListedOnSE":true,
-                                   |"electionMadeUnderSection431":true,
-                                   |"nicsElectionAgreementEnteredInto":true,
-                                   |"amountSubjectToPAYE":10.1234
-                                   |},
-                                   |{
-                                   |"exerciseDate":"2015-06-04",
-                                   |"disqualifyingEvent":true,
-                                   |"natureOfDisqualifyingEvent":"3",
-                                   |"individualTaxExercise":{
-                                   |"firstName":"First",
-                                   |"surname":"Last",
-                                   |"payeReference":"123/XZ55555555"
-                                   |},
-                                   |"numberOfSharesAcquired":100.0,
-                                   |"actualMarketValueAtGrantDate":10.1234,
-                                   |"exercisePricePaidToAcquireAShare":10.1234,
-                                   |"actualMarketValuePerShareAtExerciseDate":10.1234,
-                                   |"unrestrictedMarketValuePerShareAtExerciseDate":10.1234,
-                                   |"totalAmountPaidToAcquireTheShares":10.1234,
-                                   |"sharesListedOnSE":true,
-                                   |"electionMadeUnderSection431":true,
-                                   |"nicsElectionAgreementEnteredInto":true,
-                                   |"amountSubjectToPAYE":10.1234
-                                   |}
-                                   |]
-                                   |}
-                                   |}""".stripMargin)
-    }
+        result shouldBe Json.parse("""{
+                                     |"ntExercise":{
+                                     |"ntExerciseEvents":[
+                                     |{
+                                     |"exerciseDate":"2015-03-03",
+                                     |"individualNTExercise":{
+                                     |"firstName":"First",
+                                     |"secondName":"Second",
+                                     |"surname":"Last",
+                                     |"nino":"NINO",
+                                     |"payeReference":"123/XZ55555555"
+                                     |},
+                                     |"numberOfSharesAcquired":100.0,
+                                     |"actualMarketValueAtGrantDate":10.1234,
+                                     |"exercisePrice":10.1234,
+                                     |"actualMarketValuePerShareAtExerciseDate":10.1234,
+                                     |"sharesListedOnSE":true,
+                                     |"totalAmountPaidToAcquireShares":10.1234,
+                                     |"sharesDisposedOnSameDay":true
+                                     |},
+                                     |{
+                                     |"exerciseDate":"2015-03-03",
+                                     |"individualNTExercise":{
+                                     |"firstName":"First",
+                                     |"surname":"Last",
+                                     |"payeReference":"123/XZ55555555"
+                                     |},
+                                     |"numberOfSharesAcquired":100.0,
+                                     |"actualMarketValueAtGrantDate":10.1234,
+                                     |"exercisePrice":10.1234,
+                                     |"actualMarketValuePerShareAtExerciseDate":10.1234,
+                                     |"sharesListedOnSE":true,
+                                     |"totalAmountPaidToAcquireShares":10.1234,
+                                     |"sharesDisposedOnSameDay":true
+                                     |}
+                                     |]
+                                     |}
+                                     |}""".stripMargin)
+      }
 
-    "create valid JSON for withAllFields = true, disqualifyingEvent = (\"yes\" or \"no\"), sharesListedOnSE = \"yes\" and marketValueAgreedHMRC = \"yes\"" in {
+      "create valid JSON for withAllFields = true, sharesListedOnSE = (\"yes\" or \"no\") and marketValueAgreedHMRC = \"yes\"" in {
 
-      val result = mockAdrSubmission.buildJson(
-        configData,
-        ListBuffer(
-          EMI.buildTaxableV4(
-            withAllFields = true,
-            disqualifyingEvent = "yes",
-            sharesListedOnSE = "yes",
-            marketValueAgreedHMRC = "yes"
-          ),
-          EMI.buildTaxableV4(
-            withAllFields = true,
-            disqualifyingEvent = "no",
-            sharesListedOnSE = "yes",
-            marketValueAgreedHMRC = "yes"
+        val result = mockAdrSubmission.buildJson(
+          configData,
+          ListBuffer(
+            EMI.buildNonTaxableV4V7(sharesListedOnSE = "yes", marketValueAgreedHMRC = "yes"),
+            EMI.buildNonTaxableV4V7(sharesListedOnSE = "no", marketValueAgreedHMRC = "yes")
           )
         )
-      )
 
-      result shouldBe Json.parse("""{
-                                   |"taxExercise":{
-                                   |"taxExercise":[
-                                   |{
-                                   |"exerciseDate":"2015-06-04",
-                                   |"disqualifyingEvent":true,
-                                   |"natureOfDisqualifyingEvent":"3",
-                                   |"individualTaxExercise":{
-                                   |"firstName":"First",
-                                   |"secondName":"Second",
-                                   |"surname":"Last",
-                                   |"nino":"NINO",
-                                   |"payeReference":"123/XZ55555555"
-                                   |},
-                                   |"numberOfSharesAcquired":100.0,
-                                   |"actualMarketValueAtGrantDate":10.1234,
-                                   |"exercisePricePaidToAcquireAShare":10.1234,
-                                   |"actualMarketValuePerShareAtExerciseDate":10.1234,
-                                   |"unrestrictedMarketValuePerShareAtExerciseDate":10.1234,
-                                   |"totalAmountPaidToAcquireTheShares":10.1234,
-                                   |"sharesListedOnSE":true,
-                                   |"electionMadeUnderSection431":true,
-                                   |"nicsElectionAgreementEnteredInto":true,
-                                   |"amountSubjectToPAYE":10.1234
-                                   |},
-                                   |{
-                                   |"exerciseDate":"2015-06-04",
-                                   |"disqualifyingEvent":false,
-                                   |"individualTaxExercise":{
-                                   |"firstName":"First",
-                                   |"secondName":"Second",
-                                   |"surname":"Last",
-                                   |"nino":"NINO",
-                                   |"payeReference":"123/XZ55555555"
-                                   |},
-                                   |"numberOfSharesAcquired":100.0,
-                                   |"actualMarketValueAtGrantDate":10.1234,
-                                   |"exercisePricePaidToAcquireAShare":10.1234,
-                                   |"actualMarketValuePerShareAtExerciseDate":10.1234,
-                                   |"unrestrictedMarketValuePerShareAtExerciseDate":10.1234,
-                                   |"totalAmountPaidToAcquireTheShares":10.1234,
-                                   |"sharesListedOnSE":true,
-                                   |"electionMadeUnderSection431":true,
-                                   |"nicsElectionAgreementEnteredInto":true,
-                                   |"amountSubjectToPAYE":10.1234
-                                   |}
-                                   |]
-                                   |}
-                                   |}""".stripMargin)
-    }
+        result shouldBe Json.parse("""{
+                                     |"ntExercise":{
+                                     |"ntExerciseEvents":[
+                                     |{
+                                     |"exerciseDate":"2015-03-03",
+                                     |"individualNTExercise":{
+                                     |"firstName":"First",
+                                     |"secondName":"Second",
+                                     |"surname":"Last",
+                                     |"nino":"NINO",
+                                     |"payeReference":"123/XZ55555555"
+                                     |},
+                                     |"numberOfSharesAcquired":100.0,
+                                     |"actualMarketValueAtGrantDate":10.1234,
+                                     |"exercisePrice":10.1234,
+                                     |"actualMarketValuePerShareAtExerciseDate":10.1234,
+                                     |"sharesListedOnSE":true,
+                                     |"totalAmountPaidToAcquireShares":10.1234,
+                                     |"sharesDisposedOnSameDay":true
+                                     |},
+                                     |{
+                                     |"exerciseDate":"2015-03-03",
+                                     |"individualNTExercise":{
+                                     |"firstName":"First",
+                                     |"secondName":"Second",
+                                     |"surname":"Last",
+                                     |"nino":"NINO",
+                                     |"payeReference":"123/XZ55555555"
+                                     |},
+                                     |"numberOfSharesAcquired":100.0,
+                                     |"actualMarketValueAtGrantDate":10.1234,
+                                     |"exercisePrice":10.1234,
+                                     |"actualMarketValuePerShareAtExerciseDate":10.1234,
+                                     |"sharesListedOnSE":false,
+                                     |"marketValueAgreedHMRC": true,
+                                     |"hmrcRef": "aa12345678",
+                                     |"totalAmountPaidToAcquireShares":10.1234,
+                                     |"sharesDisposedOnSameDay":true
+                                     |}
+                                     |]
+                                     |}
+                                     |}""".stripMargin)
+      }
 
-    "create valid JSON for withAllFields = true, disqualifyingEvent = \"yes\", sharesListedOnSE = (\"yes\" or \"no\") and marketValueAgreedHMRC = \"yes\"" in {
+      "create valid JSON for withAllFields = true, sharesListedOnSE = \"no\" and marketValueAgreedHMRC = (\"yes\" or \"no\")" in {
 
-      val result = mockAdrSubmission.buildJson(
-        configData,
-        ListBuffer(
-          EMI.buildTaxableV4(
-            withAllFields = true,
-            disqualifyingEvent = "yes",
-            sharesListedOnSE = "yes",
-            marketValueAgreedHMRC = "yes"
-          ),
-          EMI.buildTaxableV4(
-            withAllFields = true,
-            disqualifyingEvent = "yes",
-            sharesListedOnSE = "no",
-            marketValueAgreedHMRC = "yes"
+        val result = mockAdrSubmission.buildJson(
+          configData,
+          ListBuffer(
+            EMI.buildNonTaxableV4V7(sharesListedOnSE = "no", marketValueAgreedHMRC = "yes"),
+            EMI.buildNonTaxableV4V7(sharesListedOnSE = "no", marketValueAgreedHMRC = "no")
           )
         )
-      )
 
-      result shouldBe Json.parse("""{
-                                   |"taxExercise":{
-                                   |"taxExercise":[
-                                   |{
-                                   |"exerciseDate":"2015-06-04",
-                                   |"disqualifyingEvent":true,
-                                   |"natureOfDisqualifyingEvent":"3",
-                                   |"individualTaxExercise":{
-                                   |"firstName":"First",
-                                   |"secondName":"Second",
-                                   |"surname":"Last",
-                                   |"nino":"NINO",
-                                   |"payeReference":"123/XZ55555555"
-                                   |},
-                                   |"numberOfSharesAcquired":100.0,
-                                   |"actualMarketValueAtGrantDate":10.1234,
-                                   |"exercisePricePaidToAcquireAShare":10.1234,
-                                   |"actualMarketValuePerShareAtExerciseDate":10.1234,
-                                   |"unrestrictedMarketValuePerShareAtExerciseDate":10.1234,
-                                   |"totalAmountPaidToAcquireTheShares":10.1234,
-                                   |"sharesListedOnSE":true,
-                                   |"electionMadeUnderSection431":true,
-                                   |"nicsElectionAgreementEnteredInto":true,
-                                   |"amountSubjectToPAYE":10.1234
-                                   |},
-                                   |{
-                                   |"exerciseDate":"2015-06-04",
-                                   |"disqualifyingEvent":true,
-                                   |"natureOfDisqualifyingEvent":"3",
-                                   |"individualTaxExercise":{
-                                   |"firstName":"First",
-                                   |"secondName":"Second",
-                                   |"surname":"Last",
-                                   |"nino":"NINO",
-                                   |"payeReference":"123/XZ55555555"
-                                   |},
-                                   |"numberOfSharesAcquired":100.0,
-                                   |"actualMarketValueAtGrantDate":10.1234,
-                                   |"exercisePricePaidToAcquireAShare":10.1234,
-                                   |"actualMarketValuePerShareAtExerciseDate":10.1234,
-                                   |"unrestrictedMarketValuePerShareAtExerciseDate":10.1234,
-                                   |"totalAmountPaidToAcquireTheShares":10.1234,
-                                   |"sharesListedOnSE":false,
-                                   |"marketValueAgreedHMRC": true,
-                                   |"hmrcRef": "aa12345678",
-                                   |"electionMadeUnderSection431":true,
-                                   |"nicsElectionAgreementEnteredInto":true,
-                                   |"amountSubjectToPAYE":10.1234
-                                   |}
-                                   |]
-                                   |}
-                                   |}""".stripMargin)
+        result shouldBe Json.parse("""{
+                                     |"ntExercise":{
+                                     |"ntExerciseEvents":[
+                                     |{
+                                     |"exerciseDate":"2015-03-03",
+                                     |"individualNTExercise":{
+                                     |"firstName":"First",
+                                     |"secondName":"Second",
+                                     |"surname":"Last",
+                                     |"nino":"NINO",
+                                     |"payeReference":"123/XZ55555555"
+                                     |},
+                                     |"numberOfSharesAcquired":100.0,
+                                     |"actualMarketValueAtGrantDate":10.1234,
+                                     |"exercisePrice":10.1234,
+                                     |"actualMarketValuePerShareAtExerciseDate":10.1234,
+                                     |"sharesListedOnSE":false,
+                                     |"marketValueAgreedHMRC": true,
+                                     |"hmrcRef": "aa12345678",
+                                     |"totalAmountPaidToAcquireShares":10.1234,
+                                     |"sharesDisposedOnSameDay":true
+                                     |},
+                                     |{
+                                     |"exerciseDate":"2015-03-03",
+                                     |"individualNTExercise":{
+                                     |"firstName":"First",
+                                     |"secondName":"Second",
+                                     |"surname":"Last",
+                                     |"nino":"NINO",
+                                     |"payeReference":"123/XZ55555555"
+                                     |},
+                                     |"numberOfSharesAcquired":100.0,
+                                     |"actualMarketValueAtGrantDate":10.1234,
+                                     |"exercisePrice":10.1234,
+                                     |"actualMarketValuePerShareAtExerciseDate":10.1234,
+                                     |"sharesListedOnSE":false,
+                                     |"marketValueAgreedHMRC": false,
+                                     |"totalAmountPaidToAcquireShares":10.1234,
+                                     |"sharesDisposedOnSameDay":true
+                                     |}
+                                     |]
+                                     |}
+                                     |}""".stripMargin)
+      }
     }
+  }
 
-    "create valid JSON for withAllFields = true, disqualifyingEvent = \"yes\", sharesListedOnSE = \"no\" and marketValueAgreedHMRC = (\"yes\" or \"no\")" in {
+  Seq("V4" -> "EMI40_Replaced_V4", "V7" -> "EMI40_Replaced_V7").foreach { case (version, sheetName) =>
+    s"calling generateJson for Replaced $version" should {
+      val configData: Config = loadConfig(EMI.schemeType, sheetName)
+      "create valid JSON" in {
 
-      val result = mockAdrSubmission.buildJson(
-        configData,
-        ListBuffer(
-          EMI.buildTaxableV4(
-            withAllFields = true,
-            disqualifyingEvent = "yes",
-            sharesListedOnSE = "no",
-            marketValueAgreedHMRC = "yes"
-          ),
-          EMI.buildTaxableV4(
-            withAllFields = true,
-            disqualifyingEvent = "yes",
-            sharesListedOnSE = "no",
-            marketValueAgreedHMRC = "no"
+        val result = mockAdrSubmission.buildJson(
+          configData,
+          ListBuffer(
+            EMI.buildReplacedV4V7(),
+            EMI.buildReplacedV4V7(withAllFields = false)
           )
         )
-      )
 
-      result shouldBe Json.parse("""{
-                                   |"taxExercise":{
-                                   |"taxExercise":[
-                                   |{
-                                   |"exerciseDate":"2015-06-04",
-                                   |"disqualifyingEvent":true,
-                                   |"natureOfDisqualifyingEvent":"3",
-                                   |"individualTaxExercise":{
-                                   |"firstName":"First",
-                                   |"secondName":"Second",
-                                   |"surname":"Last",
-                                   |"nino":"NINO",
-                                   |"payeReference":"123/XZ55555555"
-                                   |},
-                                   |"numberOfSharesAcquired":100.0,
-                                   |"actualMarketValueAtGrantDate":10.1234,
-                                   |"exercisePricePaidToAcquireAShare":10.1234,
-                                   |"actualMarketValuePerShareAtExerciseDate":10.1234,
-                                   |"unrestrictedMarketValuePerShareAtExerciseDate":10.1234,
-                                   |"totalAmountPaidToAcquireTheShares":10.1234,
-                                   |"sharesListedOnSE":false,
-                                   |"marketValueAgreedHMRC": true,
-                                   |"hmrcRef": "aa12345678",
-                                   |"electionMadeUnderSection431":true,
-                                   |"nicsElectionAgreementEnteredInto":true,
-                                   |"amountSubjectToPAYE":10.1234
-                                   |},
-                                   |{
-                                   |"exerciseDate":"2015-06-04",
-                                   |"disqualifyingEvent":true,
-                                   |"natureOfDisqualifyingEvent":"3",
-                                   |"individualTaxExercise":{
-                                   |"firstName":"First",
-                                   |"secondName":"Second",
-                                   |"surname":"Last",
-                                   |"nino":"NINO",
-                                   |"payeReference":"123/XZ55555555"
-                                   |},
-                                   |"numberOfSharesAcquired":100.0,
-                                   |"actualMarketValueAtGrantDate":10.1234,
-                                   |"exercisePricePaidToAcquireAShare":10.1234,
-                                   |"actualMarketValuePerShareAtExerciseDate":10.1234,
-                                   |"unrestrictedMarketValuePerShareAtExerciseDate":10.1234,
-                                   |"totalAmountPaidToAcquireTheShares":10.1234,
-                                   |"sharesListedOnSE":false,
-                                   |"marketValueAgreedHMRC": false,
-                                   |"electionMadeUnderSection431":true,
-                                   |"nicsElectionAgreementEnteredInto":true,
-                                   |"amountSubjectToPAYE":10.1234
-                                   |}
-                                   |]
-                                   |}
-                                   |}""".stripMargin)
+        result shouldBe Json.parse("""{
+                                     |"replaced":{
+                                     |"replacementEvents":[
+                                     |{
+                                     |"grantDateOfOldOption":"2014-12-10",
+                                     |"grantDateOfNewOption":"2014-12-10",
+                                     |"individualReleased":{
+                                     |"firstName":"First",
+                                     |"secondName":"Second",
+                                     |"surname":"Last",
+                                     |"nino":"NINO",
+                                     |"payeReference":"123/XZ55555555"
+                                     |},
+                                     |"actualMarketValuePerShareReplacementAtDate":10.1234,
+                                     |"snopCompany":{
+                                     |"companyName":"company",
+                                     |"companyAddress":{
+                                     |"addressLine1":"1 Beth Street",
+                                     |"addressLine2":"Bucknall",
+                                     |"addressLine3":"Stoke",
+                                     |"addressLine4":"Staffordshire",
+                                     |"country":"UK",
+                                     |"postcode":"SE1 2AB"
+                                     |},
+                                     |"companyCRN":"XT123456",
+                                     |"companyCTRef":"1234567899"
+                                     |}
+                                     |},
+                                     |{
+                                     |"grantDateOfOldOption":"2014-12-10",
+                                     |"grantDateOfNewOption":"2014-12-10",
+                                     |"individualReleased":{
+                                     |"firstName":"First",
+                                     |"surname":"Last",
+                                     |"payeReference":"123/XZ55555555"
+                                     |},
+                                     |"actualMarketValuePerShareReplacementAtDate":10.1234,
+                                     |"snopCompany":{
+                                     |"companyName":"company",
+                                     |"companyAddress":{
+                                     |"addressLine1":"1 Beth Street",
+                                     |"country":"UK",
+                                     |"postcode":"SE1 2AB"
+                                     |},
+                                     |"companyCRN":"XT123456",
+                                     |"companyCTRef":"1234567899"
+                                     |}
+                                     |}
+                                     |]
+                                     |}
+                                     |}""".stripMargin)
+      }
     }
+  }
+
+  Seq("V4" -> "EMI40_Taxable_V4", "V7" -> "EMI40_Taxable_V7").foreach { case (version, sheetName) =>
+    s"calling generateJson for Taxable $version" should {
+      val configData: Config = loadConfig(EMI.schemeType, sheetName)
+      "create valid JSON for withAllFields = (true or false), disqualifyingEvent = \"yes\", sharesListedOnSE = \"yes\" and marketValueAgreedHMRC = \"yes\"" in {
+
+        val result = mockAdrSubmission.buildJson(
+          configData,
+          ListBuffer(
+            EMI.buildTaxableV4V7(
+              disqualifyingEvent = "yes",
+              sharesListedOnSE = "yes",
+              marketValueAgreedHMRC = "yes"
+            ),
+            EMI.buildTaxableV4V7(
+              withAllFields = false,
+              disqualifyingEvent = "yes",
+              sharesListedOnSE = "yes",
+              marketValueAgreedHMRC = "yes"
+            )
+          )
+        )
+
+        result shouldBe Json.parse("""{
+                                     |"taxExercise":{
+                                     |"taxExercise":[
+                                     |{
+                                     |"exerciseDate":"2015-06-04",
+                                     |"disqualifyingEvent":true,
+                                     |"natureOfDisqualifyingEvent":"3",
+                                     |"individualTaxExercise":{
+                                     |"firstName":"First",
+                                     |"secondName":"Second",
+                                     |"surname":"Last",
+                                     |"nino":"NINO",
+                                     |"payeReference":"123/XZ55555555"
+                                     |},
+                                     |"numberOfSharesAcquired":100.0,
+                                     |"actualMarketValueAtGrantDate":10.1234,
+                                     |"exercisePricePaidToAcquireAShare":10.1234,
+                                     |"actualMarketValuePerShareAtExerciseDate":10.1234,
+                                     |"unrestrictedMarketValuePerShareAtExerciseDate":10.1234,
+                                     |"totalAmountPaidToAcquireTheShares":10.1234,
+                                     |"sharesListedOnSE":true,
+                                     |"electionMadeUnderSection431":true,
+                                     |"nicsElectionAgreementEnteredInto":true,
+                                     |"amountSubjectToPAYE":10.1234
+                                     |},
+                                     |{
+                                     |"exerciseDate":"2015-06-04",
+                                     |"disqualifyingEvent":true,
+                                     |"natureOfDisqualifyingEvent":"3",
+                                     |"individualTaxExercise":{
+                                     |"firstName":"First",
+                                     |"surname":"Last",
+                                     |"payeReference":"123/XZ55555555"
+                                     |},
+                                     |"numberOfSharesAcquired":100.0,
+                                     |"actualMarketValueAtGrantDate":10.1234,
+                                     |"exercisePricePaidToAcquireAShare":10.1234,
+                                     |"actualMarketValuePerShareAtExerciseDate":10.1234,
+                                     |"unrestrictedMarketValuePerShareAtExerciseDate":10.1234,
+                                     |"totalAmountPaidToAcquireTheShares":10.1234,
+                                     |"sharesListedOnSE":true,
+                                     |"electionMadeUnderSection431":true,
+                                     |"nicsElectionAgreementEnteredInto":true,
+                                     |"amountSubjectToPAYE":10.1234
+                                     |}
+                                     |]
+                                     |}
+                                     |}""".stripMargin)
+      }
+
+      "create valid JSON for withAllFields = true, disqualifyingEvent = (\"yes\" or \"no\"), sharesListedOnSE = \"yes\" and marketValueAgreedHMRC = \"yes\"" in {
+
+        val result = mockAdrSubmission.buildJson(
+          configData,
+          ListBuffer(
+            EMI.buildTaxableV4V7(
+              withAllFields = true,
+              disqualifyingEvent = "yes",
+              sharesListedOnSE = "yes",
+              marketValueAgreedHMRC = "yes"
+            ),
+            EMI.buildTaxableV4V7(
+              withAllFields = true,
+              disqualifyingEvent = "no",
+              sharesListedOnSE = "yes",
+              marketValueAgreedHMRC = "yes"
+            )
+          )
+        )
+
+        result shouldBe Json.parse("""{
+                                     |"taxExercise":{
+                                     |"taxExercise":[
+                                     |{
+                                     |"exerciseDate":"2015-06-04",
+                                     |"disqualifyingEvent":true,
+                                     |"natureOfDisqualifyingEvent":"3",
+                                     |"individualTaxExercise":{
+                                     |"firstName":"First",
+                                     |"secondName":"Second",
+                                     |"surname":"Last",
+                                     |"nino":"NINO",
+                                     |"payeReference":"123/XZ55555555"
+                                     |},
+                                     |"numberOfSharesAcquired":100.0,
+                                     |"actualMarketValueAtGrantDate":10.1234,
+                                     |"exercisePricePaidToAcquireAShare":10.1234,
+                                     |"actualMarketValuePerShareAtExerciseDate":10.1234,
+                                     |"unrestrictedMarketValuePerShareAtExerciseDate":10.1234,
+                                     |"totalAmountPaidToAcquireTheShares":10.1234,
+                                     |"sharesListedOnSE":true,
+                                     |"electionMadeUnderSection431":true,
+                                     |"nicsElectionAgreementEnteredInto":true,
+                                     |"amountSubjectToPAYE":10.1234
+                                     |},
+                                     |{
+                                     |"exerciseDate":"2015-06-04",
+                                     |"disqualifyingEvent":false,
+                                     |"individualTaxExercise":{
+                                     |"firstName":"First",
+                                     |"secondName":"Second",
+                                     |"surname":"Last",
+                                     |"nino":"NINO",
+                                     |"payeReference":"123/XZ55555555"
+                                     |},
+                                     |"numberOfSharesAcquired":100.0,
+                                     |"actualMarketValueAtGrantDate":10.1234,
+                                     |"exercisePricePaidToAcquireAShare":10.1234,
+                                     |"actualMarketValuePerShareAtExerciseDate":10.1234,
+                                     |"unrestrictedMarketValuePerShareAtExerciseDate":10.1234,
+                                     |"totalAmountPaidToAcquireTheShares":10.1234,
+                                     |"sharesListedOnSE":true,
+                                     |"electionMadeUnderSection431":true,
+                                     |"nicsElectionAgreementEnteredInto":true,
+                                     |"amountSubjectToPAYE":10.1234
+                                     |}
+                                     |]
+                                     |}
+                                     |}""".stripMargin)
+      }
+
+      "create valid JSON for withAllFields = true, disqualifyingEvent = \"yes\", sharesListedOnSE = (\"yes\" or \"no\") and marketValueAgreedHMRC = \"yes\"" in {
+
+        val result = mockAdrSubmission.buildJson(
+          configData,
+          ListBuffer(
+            EMI.buildTaxableV4V7(
+              withAllFields = true,
+              disqualifyingEvent = "yes",
+              sharesListedOnSE = "yes",
+              marketValueAgreedHMRC = "yes"
+            ),
+            EMI.buildTaxableV4V7(
+              withAllFields = true,
+              disqualifyingEvent = "yes",
+              sharesListedOnSE = "no",
+              marketValueAgreedHMRC = "yes"
+            )
+          )
+        )
+
+        result shouldBe Json.parse("""{
+                                     |"taxExercise":{
+                                     |"taxExercise":[
+                                     |{
+                                     |"exerciseDate":"2015-06-04",
+                                     |"disqualifyingEvent":true,
+                                     |"natureOfDisqualifyingEvent":"3",
+                                     |"individualTaxExercise":{
+                                     |"firstName":"First",
+                                     |"secondName":"Second",
+                                     |"surname":"Last",
+                                     |"nino":"NINO",
+                                     |"payeReference":"123/XZ55555555"
+                                     |},
+                                     |"numberOfSharesAcquired":100.0,
+                                     |"actualMarketValueAtGrantDate":10.1234,
+                                     |"exercisePricePaidToAcquireAShare":10.1234,
+                                     |"actualMarketValuePerShareAtExerciseDate":10.1234,
+                                     |"unrestrictedMarketValuePerShareAtExerciseDate":10.1234,
+                                     |"totalAmountPaidToAcquireTheShares":10.1234,
+                                     |"sharesListedOnSE":true,
+                                     |"electionMadeUnderSection431":true,
+                                     |"nicsElectionAgreementEnteredInto":true,
+                                     |"amountSubjectToPAYE":10.1234
+                                     |},
+                                     |{
+                                     |"exerciseDate":"2015-06-04",
+                                     |"disqualifyingEvent":true,
+                                     |"natureOfDisqualifyingEvent":"3",
+                                     |"individualTaxExercise":{
+                                     |"firstName":"First",
+                                     |"secondName":"Second",
+                                     |"surname":"Last",
+                                     |"nino":"NINO",
+                                     |"payeReference":"123/XZ55555555"
+                                     |},
+                                     |"numberOfSharesAcquired":100.0,
+                                     |"actualMarketValueAtGrantDate":10.1234,
+                                     |"exercisePricePaidToAcquireAShare":10.1234,
+                                     |"actualMarketValuePerShareAtExerciseDate":10.1234,
+                                     |"unrestrictedMarketValuePerShareAtExerciseDate":10.1234,
+                                     |"totalAmountPaidToAcquireTheShares":10.1234,
+                                     |"sharesListedOnSE":false,
+                                     |"marketValueAgreedHMRC": true,
+                                     |"hmrcRef": "aa12345678",
+                                     |"electionMadeUnderSection431":true,
+                                     |"nicsElectionAgreementEnteredInto":true,
+                                     |"amountSubjectToPAYE":10.1234
+                                     |}
+                                     |]
+                                     |}
+                                     |}""".stripMargin)
+      }
+
+      "create valid JSON for withAllFields = true, disqualifyingEvent = \"yes\", sharesListedOnSE = \"no\" and marketValueAgreedHMRC = (\"yes\" or \"no\")" in {
+
+        val result = mockAdrSubmission.buildJson(
+          configData,
+          ListBuffer(
+            EMI.buildTaxableV4V7(
+              withAllFields = true,
+              disqualifyingEvent = "yes",
+              sharesListedOnSE = "no",
+              marketValueAgreedHMRC = "yes"
+            ),
+            EMI.buildTaxableV4V7(
+              withAllFields = true,
+              disqualifyingEvent = "yes",
+              sharesListedOnSE = "no",
+              marketValueAgreedHMRC = "no"
+            )
+          )
+        )
+
+        result shouldBe Json.parse("""{
+                                     |"taxExercise":{
+                                     |"taxExercise":[
+                                     |{
+                                     |"exerciseDate":"2015-06-04",
+                                     |"disqualifyingEvent":true,
+                                     |"natureOfDisqualifyingEvent":"3",
+                                     |"individualTaxExercise":{
+                                     |"firstName":"First",
+                                     |"secondName":"Second",
+                                     |"surname":"Last",
+                                     |"nino":"NINO",
+                                     |"payeReference":"123/XZ55555555"
+                                     |},
+                                     |"numberOfSharesAcquired":100.0,
+                                     |"actualMarketValueAtGrantDate":10.1234,
+                                     |"exercisePricePaidToAcquireAShare":10.1234,
+                                     |"actualMarketValuePerShareAtExerciseDate":10.1234,
+                                     |"unrestrictedMarketValuePerShareAtExerciseDate":10.1234,
+                                     |"totalAmountPaidToAcquireTheShares":10.1234,
+                                     |"sharesListedOnSE":false,
+                                     |"marketValueAgreedHMRC": true,
+                                     |"hmrcRef": "aa12345678",
+                                     |"electionMadeUnderSection431":true,
+                                     |"nicsElectionAgreementEnteredInto":true,
+                                     |"amountSubjectToPAYE":10.1234
+                                     |},
+                                     |{
+                                     |"exerciseDate":"2015-06-04",
+                                     |"disqualifyingEvent":true,
+                                     |"natureOfDisqualifyingEvent":"3",
+                                     |"individualTaxExercise":{
+                                     |"firstName":"First",
+                                     |"secondName":"Second",
+                                     |"surname":"Last",
+                                     |"nino":"NINO",
+                                     |"payeReference":"123/XZ55555555"
+                                     |},
+                                     |"numberOfSharesAcquired":100.0,
+                                     |"actualMarketValueAtGrantDate":10.1234,
+                                     |"exercisePricePaidToAcquireAShare":10.1234,
+                                     |"actualMarketValuePerShareAtExerciseDate":10.1234,
+                                     |"unrestrictedMarketValuePerShareAtExerciseDate":10.1234,
+                                     |"totalAmountPaidToAcquireTheShares":10.1234,
+                                     |"sharesListedOnSE":false,
+                                     |"marketValueAgreedHMRC": false,
+                                     |"electionMadeUnderSection431":true,
+                                     |"nicsElectionAgreementEnteredInto":true,
+                                     |"amountSubjectToPAYE":10.1234
+                                     |}
+                                     |]
+                                     |}
+                                     |}""".stripMargin)
+      }
+    }
+  }
+
+  "return Exception when passing config other than V4 or V7" in {
+    val exception = intercept[ADRTransferException] {
+      Common.loadConfiguration(EMI.schemeType, "EMI40_Adjustments_V6", mockConfigUtils)
+    }
+    exception.getMessage shouldBe "Trying to load invalid configuration. Path: EMI/EMI40_Adjustments_V6, value: EMI40_Adjustments_V6"
+
   }
 
 }
