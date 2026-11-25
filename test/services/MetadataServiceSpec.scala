@@ -20,8 +20,8 @@ import common.ERSEnvelope
 import fixtures.Fixtures
 import helpers.ERSTestHelper
 import models.{ErsSummary, MongoGenericError}
-import org.mockito.ArgumentMatchers._
-import org.mockito.Mockito._
+import org.mockito.ArgumentMatchers.*
+import org.mockito.Mockito.*
 import org.mockito.internal.verification.VerificationModeFactory
 import org.scalatest.{BeforeAndAfterEach, EitherValues}
 import repositories.MetadataMongoRepository
@@ -30,7 +30,7 @@ import uk.gov.hmrc.http.HeaderCarrier
 
 class MetadataServiceSpec extends ERSTestHelper with BeforeAndAfterEach with EitherValues {
 
-  implicit val hc: HeaderCarrier = new HeaderCarrier()
+  given hc: HeaderCarrier = new HeaderCarrier()
 
   val mockAuditEvents: AuditEvents                    = mock[AuditEvents]
   val mockMetadataRepository: MetadataMongoRepository = mock[MetadataMongoRepository]
@@ -48,7 +48,7 @@ class MetadataServiceSpec extends ERSTestHelper with BeforeAndAfterEach with Eit
       when(mockMetadataRepository.storeErsSummary(any[ErsSummary](), any()))
         .thenReturn(ERSEnvelope(true))
 
-      val result = await(metadataService.storeErsSummary(Fixtures.metadata)(hc).value)
+      val result = await(metadataService.storeErsSummary(Fixtures.metadata)(using hc).value)
       result.value shouldBe true
     }
 
@@ -56,9 +56,9 @@ class MetadataServiceSpec extends ERSTestHelper with BeforeAndAfterEach with Eit
       when(mockMetadataRepository.storeErsSummary(any[ErsSummary](), any()))
         .thenReturn(ERSEnvelope(MongoGenericError("Mongo operation failed")))
 
-      val result = await(metadataService.storeErsSummary(Fixtures.metadata)(hc).value)
+      val result = await(metadataService.storeErsSummary(Fixtures.metadata)(using hc).value)
       result.value shouldBe false
-      verify(mockAuditEvents, VerificationModeFactory.times(1)).auditError(any(), any())(any())
+      verify(mockAuditEvents, VerificationModeFactory.times(1)).auditError(any(), any())(using any())
 
     }
   }

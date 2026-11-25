@@ -16,8 +16,8 @@
 
 package fixtures
 
-import fixtures.Common._
-import models._
+import fixtures.Common.*
+import models.*
 
 object SAYE {
 

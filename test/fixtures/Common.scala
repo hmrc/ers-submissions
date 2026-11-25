@@ -18,7 +18,7 @@ package fixtures
 
 import com.typesafe.config.Config
 import helpers.ERSTestHelper
-import play.api.test.Helpers._
+import play.api.test.Helpers.*
 import uk.gov.hmrc.http.HeaderCarrier
 import utils.ConfigUtils
 
@@ -32,7 +32,9 @@ object Common extends ERSTestHelper {
 
   def loadConfiguration(schemeType: String, sheetName: String, configUtils: ConfigUtils): Config =
     running(app) {
-      configUtils.getConfigData(schemeType + "/" + sheetName, sheetName, Fixtures.EMISummaryDate)(new HeaderCarrier())
+      configUtils.getConfigData(schemeType + "/" + sheetName, sheetName, Fixtures.EMISummaryDate)(using
+        new HeaderCarrier()
+      )
     }
 
 }

@@ -20,7 +20,7 @@ import _root_.play.api.Application
 import _root_.play.api.inject.guice.GuiceApplicationBuilder
 import _root_.play.api.libs.json.{JsObject, Json}
 import _root_.play.api.libs.ws.WSClient
-import _root_.play.api.test.Helpers._
+import _root_.play.api.test.Helpers.*
 import com.mongodb.client.result.DeleteResult
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
@@ -29,6 +29,7 @@ import repositories.PresubmissionMongoRepository
 
 import java.util.concurrent.TimeUnit
 import scala.collection.mutable.ListBuffer
+import org.mongodb.scala.ObservableFuture
 
 class PresubmissionMongoRepositorySpec extends AnyWordSpecLike with Matchers with BeforeAndAfterEach with EitherValues {
 

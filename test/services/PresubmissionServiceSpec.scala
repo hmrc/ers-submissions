@@ -20,9 +20,9 @@ import com.mongodb.client.result.DeleteResult
 import common.ERSEnvelope
 import fixtures.Fixtures
 import helpers.ERSTestHelper
-import models._
-import org.mockito.ArgumentMatchers._
-import org.mockito.Mockito._
+import models.*
+import org.mockito.ArgumentMatchers.*
+import org.mockito.Mockito.*
 import org.scalatest.EitherValues
 import play.api.libs.json.{JsObject, Json}
 import play.api.test.FakeRequest
@@ -33,8 +33,8 @@ import scala.concurrent.ExecutionContext
 
 class PresubmissionServiceSpec extends ERSTestHelper with EitherValues {
 
-  implicit val hc: HeaderCarrier                                = HeaderCarrier()
-  implicit val request: FakeRequest[JsObject]                   = FakeRequest().withBody(Fixtures.metadataJson)
+  given hc: HeaderCarrier                                       = HeaderCarrier()
+  given request: FakeRequest[JsObject]                          = FakeRequest().withBody(Fixtures.metadataJson)
   val mockPresubmissionRepository: PresubmissionMongoRepository = mock[PresubmissionMongoRepository]
   val validGetJsonResult: Seq[JsObject]                         = Seq(Json.toJsObject(Fixtures.schemeData))
   val invalidGetJsonResult: Seq[JsObject]                       = Seq(Json.toJsObject(Fixtures.schemeData) - "sheetName")
@@ -46,7 +46,7 @@ class PresubmissionServiceSpec extends ERSTestHelper with EitherValues {
     storeJsonResult: Option[Boolean] = Some(true),
     getJsonResult: Seq[JsObject] = validGetJsonResult,
     removeJsonResult: Option[DeleteResult] = Some(deleteResultAcknowledged1)
-  )(implicit ec: ExecutionContext): PresubmissionService = {
+  )(using ec: ExecutionContext): PresubmissionService = {
     when(mockPresubmissionRepository.storeJson(any[SchemeData], any()))
       .thenReturn(ERSEnvelope(storeJsonResult.toRight(MongoGenericError("Mongo operation failed"))))
     when(mockPresubmissionRepository.getJson(any[SchemeInfo], any()))

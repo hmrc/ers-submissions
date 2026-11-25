@@ -26,7 +26,7 @@ import utils.LoggingAndExceptions.ErsLogger
 
 import java.time.format.DateTimeFormatter
 import java.time.{Instant, ZoneId}
-import javax.inject._
+import javax.inject.*
 import scala.concurrent.{ExecutionContext, Future}
 
 class PresSubWithoutMetadataQueryService @Inject() (
@@ -37,7 +37,7 @@ class PresSubWithoutMetadataQueryService @Inject() (
 
   private val className = "PresSubWithoutMetadataQueryService"
 
-  override def invoke(implicit ec: ExecutionContext): ERSEnvelope[Unit] = {
+  override def invoke(using ec: ExecutionContext): ERSEnvelope[Unit] = {
 
     val result: Future[Unit] = preSubWithoutMetadataQuery.runQuery
       .map { validationInfo =>
@@ -62,7 +62,7 @@ class PresSubWithoutMetadataQueryService @Inject() (
       }
 
     logInfo("[PresSubWithoutMetadataQueryService][invoke] Finished running PresSubWithoutMetadataQueryService")
-    ERSEnvelope(result)(ec)
+    ERSEnvelope(result)(using ec)
   }
 
   private def logPresubmissionRecordsWithoutMetadata(

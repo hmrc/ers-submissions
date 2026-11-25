@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.resubmission
 
-import models._
+import models.*
 
 import java.time.{Instant, LocalDateTime, ZoneId}
 

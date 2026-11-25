@@ -16,11 +16,11 @@
 
 package fixtures
 
-import fixtures.Common._
-import models._
+import fixtures.Common.*
+import models.*
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.libs.json.{JsObject, JsValue, Json}
-import uk.gov.hmrc.domain.Generator
+import uk.gov.hmrc.domain.NinoGenerator
 
 import java.time.temporal.ChronoUnit
 import java.time.{Instant, ZoneId, ZonedDateTime}
@@ -28,7 +28,7 @@ import scala.collection.mutable.ListBuffer
 
 object Fixtures extends MockitoSugar {
 
-  lazy val nino: String = new Generator().nextNino.nino
+  lazy val nino: String = NinoGenerator().nextNino.nino
 
   val timestamp: Instant =
     ZonedDateTime.of(2015, 12, 5, 12, 50, 55, 0, ZoneId.of("UTC")).toInstant.truncatedTo(ChronoUnit.MILLIS)

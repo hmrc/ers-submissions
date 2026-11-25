@@ -19,7 +19,6 @@ package utils.LoggingAndExceptions
 import fixtures.Fixtures
 import helpers.ERSTestHelper
 import models.ADRTransferException
-import utils.LoggingAndExceptions.ErsExceptionMessages
 
 class ErsExceptionMessagesSpec extends ERSTestHelper {
 
