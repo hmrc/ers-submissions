@@ -20,7 +20,7 @@ import config.ApplicationConfig
 import models.PreSubWithoutMetadata
 import org.mongodb.scala.bson.conversions.Bson
 import org.mongodb.scala.bson.{BsonArray, BsonDocument, BsonString}
-import org.mongodb.scala.model._
+import org.mongodb.scala.model.*
 import play.api.libs.json.{JsError, JsObject, JsPath, JsSuccess, JsonValidationError, Reads}
 
 import java.time.format.DateTimeFormatter
@@ -28,11 +28,13 @@ import java.time.{Instant, LocalDate, ZoneId}
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
+import org.mongodb.scala.ObservableFuture
+
 @Singleton
 class PreSubWithoutMetadataQuery @Inject() (
   presubmissionRepository: PresubmissionMongoRepository,
   val applicationConfig: ApplicationConfig
-)(implicit ec: ExecutionContext) {
+)(using ec: ExecutionContext) {
 
   private val letVariables: Seq[Variable[BsonString]] = Seq(
     new Variable("preSubSchemeRef", BsonString("$schemeInfo.schemeRef")),
@@ -100,7 +102,7 @@ class PreSubWithoutMetadataQuery @Inject() (
       projectFields
     )
 
-  def validateJson[T](record: JsObject)(implicit reads: Reads[T]): Either[String, T] =
+  def validateJson[T](record: JsObject)(using reads: Reads[T]): Either[String, T] =
     record.validate[T] match {
       case JsSuccess(obj, _)                                                              =>
         Right(obj)

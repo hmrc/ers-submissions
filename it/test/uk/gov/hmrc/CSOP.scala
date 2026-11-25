@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc
 
-import models._
+import models.*
 
 import java.time.{Instant, LocalDateTime, ZoneId}
 

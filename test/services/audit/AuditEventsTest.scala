@@ -26,7 +26,6 @@ import org.mockito.internal.verification.VerificationModeFactory
 import org.scalatest.BeforeAndAfterEach
 import play.api.mvc.AnyContent
 import play.api.test.FakeRequest
-import services.audit.{AuditEvents, AuditService}
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 import uk.gov.hmrc.play.audit.http.connector.AuditResult.{Disabled, Failure, Success}
@@ -36,8 +35,8 @@ import scala.concurrent.Future
 
 class AuditEventsTest extends ERSTestHelper with BeforeAndAfterEach {
 
-  implicit val request: FakeRequest[AnyContent] = FakeRequest()
-  implicit var hc: HeaderCarrier                = new HeaderCarrier()
+  given request: FakeRequest[AnyContent] = FakeRequest()
+  given hc: HeaderCarrier                = new HeaderCarrier()
 
   val rsc: ErsMetaData = ErsMetaData(
     SchemeInfo(schemeRef = "", schemeId = "", taxYear = "", schemeName = "", schemeType = ""),
@@ -59,29 +58,29 @@ class AuditEventsTest extends ERSTestHelper with BeforeAndAfterEach {
 
   for (eventResult <- Seq(Success, Failure("failed"), Disabled)) {
     s"it should audit runtime errors with result $eventResult" in {
-      when(mockAuditService.sendEvent(any(), any())(any())).thenReturn(Future.successful(eventResult))
+      when(mockAuditService.sendEvent(any(), any())(using any())).thenReturn(Future.successful(eventResult))
 
       val result = await(testAuditEvents.auditRunTimeError(new RuntimeException, "some context"))
 
       result shouldBe eventResult
 
       verify(mockAuditService, VerificationModeFactory.times(1))
-        .sendEvent(any(), any())(any())
+        .sendEvent(any(), any())(using any())
     }
 
     s"it should audit generic error with result $eventResult" in {
-      when(mockAuditService.sendEvent(any(), any())(any())).thenReturn(Future.successful(eventResult))
+      when(mockAuditService.sendEvent(any(), any())(using any())).thenReturn(Future.successful(eventResult))
 
       val result = await(testAuditEvents.auditError("someContext", "someMessage"))
 
       result shouldBe eventResult
 
       verify(mockAuditService, VerificationModeFactory.times(1))
-        .sendEvent(any(), any())(any())
+        .sendEvent(any(), any())(using any())
     }
 
     s"public to protected audit event with result $eventResult" in {
-      when(mockAuditService.sendEvent(any(), any())(any())).thenReturn(Future.successful(eventResult))
+      when(mockAuditService.sendEvent(any(), any())(using any())).thenReturn(Future.successful(eventResult))
 
       val result = await(
         testAuditEvents.publicToProtectedEvent(
@@ -94,29 +93,29 @@ class AuditEventsTest extends ERSTestHelper with BeforeAndAfterEach {
       result shouldBe eventResult
 
       verify(mockAuditService, VerificationModeFactory.times(1))
-        .sendEvent(any(), any())(any())
+        .sendEvent(any(), any())(using any())
     }
 
     s"send To Adr Event audit event with result $eventResult" in {
-      when(mockAuditService.sendEvent(any(), any())(any())).thenReturn(Future.successful(eventResult))
+      when(mockAuditService.sendEvent(any(), any())(using any())).thenReturn(Future.successful(eventResult))
 
       val result = await(testAuditEvents.sendToAdrEvent("send To Adr Event", Fixtures.EMISummaryDate))
 
       result shouldBe eventResult
 
       verify(mockAuditService, VerificationModeFactory.times(1))
-        .sendEvent(any(), any())(any())
+        .sendEvent(any(), any())(using any())
     }
 
     s"send resubmissionResult Event audit event with result $eventResult" in {
-      when(mockAuditService.sendEvent(any(), any())(any())).thenReturn(Future.successful(eventResult))
+      when(mockAuditService.sendEvent(any(), any())(using any())).thenReturn(Future.successful(eventResult))
 
       val result = await(testAuditEvents.resubmissionResult(Fixtures.schemeInfo, res = true))
 
       result shouldBe eventResult
 
       verify(mockAuditService, VerificationModeFactory.times(1))
-        .sendEvent(any(), any())(any())
+        .sendEvent(any(), any())(using any())
     }
   }
 

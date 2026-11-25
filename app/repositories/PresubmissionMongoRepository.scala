@@ -17,13 +17,13 @@
 package repositories
 
 import cats.data.EitherT
-import cats.syntax.all._
+import cats.syntax.all.*
 import common.ERSEnvelope.ERSEnvelope
 import config.ApplicationConfig
-import models._
+import models.*
 import org.mongodb.scala.bson.{BsonDocument, BsonInt64, BsonString}
-import org.mongodb.scala.model.Sorts._
-import org.mongodb.scala.model._
+import org.mongodb.scala.model.Sorts.*
+import org.mongodb.scala.model.*
 import org.mongodb.scala.result.DeleteResult
 import play.api.libs.json.OFormat.oFormatFromReadsAndOWrites
 import play.api.libs.json.{Format, JsObject, Json}
@@ -37,7 +37,7 @@ import javax.inject.{Inject, Singleton}
 import scala.concurrent.ExecutionContext
 
 @Singleton
-class PresubmissionMongoRepository @Inject() (applicationConfig: ApplicationConfig, mc: MongoComponent)(implicit
+class PresubmissionMongoRepository @Inject() (applicationConfig: ApplicationConfig, mc: MongoComponent)(using
   ec: ExecutionContext
 ) extends PlayMongoRepository[JsObject](
       mongoComponent = mc,
@@ -49,7 +49,7 @@ class PresubmissionMongoRepository @Inject() (applicationConfig: ApplicationConf
           ascending("createdAt"),
           indexOptions = IndexOptions()
             .name("schemeInfoTimeToLive")
-            .expireAfter(applicationConfig.presubmissionCollectionTTL, TimeUnit.DAYS)
+            .expireAfter(applicationConfig.presubmissionCollectionTTL.toLong, TimeUnit.DAYS)
         )
       ),
       replaceIndexes = applicationConfig.presubmissionCollectionIndexReplace
@@ -58,10 +58,9 @@ class PresubmissionMongoRepository @Inject() (applicationConfig: ApplicationConf
 
   private val className = getClass.getSimpleName
 
-  def buildSelector(schemeInfo: SchemeInfo): BsonDocument = BsonDocument(
-    "schemeInfo.schemeRef" -> BsonString(schemeInfo.schemeRef),
-    "schemeInfo.timestamp" -> BsonInt64(schemeInfo.timestamp.toEpochMilli)
-  )
+  def buildSelector(schemeInfo: SchemeInfo): BsonDocument = BsonDocument()
+    .append("schemeInfo.schemeRef", BsonString(schemeInfo.schemeRef))
+    .append("schemeInfo.timestamp", BsonInt64(schemeInfo.timestamp.toEpochMilli))
 
   def storeJson(presubmissionData: SchemeData, sessionId: String): ERSEnvelope[Boolean] = EitherT {
     collection

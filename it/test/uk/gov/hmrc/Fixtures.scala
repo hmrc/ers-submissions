@@ -16,8 +16,8 @@
 
 package uk.gov.hmrc
 
-import _root_.play.api.libs.json._
-import models._
+import _root_.play.api.libs.json.*
+import models.*
 
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit

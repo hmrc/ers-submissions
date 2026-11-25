@@ -27,9 +27,13 @@ import scheduler.ResubmissionServiceImpl
 import services.resubmission.ProcessFailedSubmissionsConfig
 
 import scala.concurrent.{ExecutionContext, Future}
-import _root_.play.api.test.Helpers._
+import _root_.play.api.test.Helpers.*
+
+import uk.gov.hmrc.mongo.logging.ObservableFutureImplicits.SingleObservableFuture
 
 case class ResubmissionJobSetUp(app: Application) {
+
+  given ec: ExecutionContext = app.injector.instanceOf[ExecutionContext]
 
   val metadataMongoRepository: MetadataMongoRepository           = app.injector.instanceOf[MetadataMongoRepository]
   val collection: MongoCollection[JsObject]                      = metadataMongoRepository.collection
@@ -40,20 +44,18 @@ case class ResubmissionJobSetUp(app: Application) {
 
   val getJob: ResubmissionServiceImpl = app.injector.instanceOf[ResubmissionServiceImpl]
 
-  implicit val ec: ExecutionContext = app.injector.instanceOf[ExecutionContext]
-
   def countMetadataRecordsWithSelector(filter: Bson): Long = await(
     collection
       .countDocuments(filter)
       .toFuture()
   )
 
-  def storeMultipleErsSummary(ersSummaries: Seq[JsObject])(implicit ec: ExecutionContext): Future[Boolean] =
+  def storeMultipleErsSummary(ersSummaries: Seq[JsObject])(using ec: ExecutionContext): Future[Boolean] =
     collection.insertMany(ersSummaries).toFuture().map { res =>
       res.wasAcknowledged()
     }
 
-  def storeMultiplePresubmissionData(presubmissionData: Seq[JsObject])(implicit ec: ExecutionContext): Future[Boolean] =
+  def storeMultiplePresubmissionData(presubmissionData: Seq[JsObject])(using ec: ExecutionContext): Future[Boolean] =
     collectionPs.insertMany(presubmissionData).toFuture().map { res =>
       res.wasAcknowledged()
     }

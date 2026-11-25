@@ -19,7 +19,7 @@ package services.resubmission
 import common.ERSEnvelope
 import common.ERSEnvelope.ERSEnvelope
 import config.ApplicationConfig
-import messages._
+import messages.*
 import play.api.libs.json.JsObject
 import play.api.mvc.Request
 import repositories.LockRepositoryProvider
@@ -31,30 +31,30 @@ import utils.LoggingAndExceptions.ErsLogger
 
 import javax.inject.Inject
 import scala.concurrent.ExecutionContext
-import scala.concurrent.duration._
+import scala.concurrent.duration.*
 
 class ReSubmissionSchedulerService @Inject() (
   val applicationConfig: ApplicationConfig,
   lockRepositoryProvider: LockRepositoryProvider,
   resubPresubmissionService: ResubPresubmissionService
-)(implicit ec: ExecutionContext)
+)(using ec: ExecutionContext)
     extends ScheduledService[Boolean] with ErsLogger with SchedulerConfig with CorrelationIdHelper {
 
   override val jobName: String  = "resubmission-service"
   private val resubmissionLimit = getResubmissionLimit(jobName)
   private val lockoutTimeout    = getLockoutTimeout(jobName)
 
-  private val lockService: LockService = LockService(
+  val lockService: LockService = LockService(
     lockRepositoryProvider.repo,
     lockId = "resubmission-service-job-lock",
     ttl = Duration.create(lockoutTimeout, SECONDS)
   )
 
-  implicit val processFailedSubmissionsConfig: ProcessFailedSubmissionsConfig = getProcessFailedSubmissionsConfig(
+  given processFailedSubmissionsConfig: ProcessFailedSubmissionsConfig = getProcessFailedSubmissionsConfig(
     resubmissionLimit
   )
 
-  def resubmit()(implicit request: Request[_], hc: HeaderCarrier): ERSEnvelope[Boolean] = {
+  def resubmit()(using request: Request[?], hc: HeaderCarrier): ERSEnvelope[Boolean] = {
     logInfo(ResubmissionLimitMessage(resubmissionLimit).message)
     resubPresubmissionService.processFailedSubmissions(processFailedSubmissionsConfig).map { result =>
       if (result) {
@@ -66,9 +66,9 @@ class ReSubmissionSchedulerService @Inject() (
     }
   }
 
-  override def invoke(implicit ec: ExecutionContext): ERSEnvelope[Boolean] = {
+  override def invoke(using ec: ExecutionContext): ERSEnvelope[Boolean] = {
     val request: Request[JsObject] = ERSRequest.createERSRequest()
-    implicit val hc: HeaderCarrier = getOrCreateCorrelationID(request)
+    given hc: HeaderCarrier        = getOrCreateCorrelationID(request)
 
     logIfEnabled(applicationConfig.schedulerEnableAdditionalLogs(jobName)) {
       resubPresubmissionService
@@ -88,7 +88,7 @@ class ReSubmissionSchedulerService @Inject() (
         .map(message => logInfo(message))
     }
 
-    ERSEnvelope(lockService.withLock(resubmit()(request, hc).value).map {
+    ERSEnvelope(lockService.withLock(resubmit()(using request, hc).value).map {
       case Some(_) =>
         logInfo(FinishedResubmissionJob.message)
         true

@@ -19,7 +19,7 @@ package utils
 import helpers.ERSTestHelper
 import models.ADRTransferError
 import play.api.http.Status.BAD_REQUEST
-import play.api.libs.json._
+import play.api.libs.json.*
 
 class ErrorHandlerHelperSpec extends ERSTestHelper with ErrorHandlerHelper {
   override val className: String = "someClassName"

@@ -17,23 +17,28 @@
 package services.resubmission
 
 import common.ERSEnvelope
+import common.ERSEnvelope.ERSEnvelope
 import config.ApplicationConfig
 import helpers.ERSTestHelper
 import models.ResubmissionError
 import org.mockito.ArgumentMatchers.any
-import org.mockito.Mockito._
+import org.mockito.Mockito.*
 import org.scalatest.{BeforeAndAfterEach, EitherValues}
 import play.api.mvc.Request
 import play.api.test.FakeRequest
 import repositories.DefaultLockRepositoryProvider
 import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.mongo.lock.{LockRepository, LockService}
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.duration.{Duration, SECONDS}
+import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
+import play.api.Configuration
 
 class SchedulerServiceSpec extends ERSTestHelper with BeforeAndAfterEach with EitherValues {
 
-  implicit val hc: HeaderCarrier                               = HeaderCarrier()
-  implicit val request: Request[_]                             = FakeRequest()
+  given hc: HeaderCarrier                                      = HeaderCarrier()
+  given request: Request[?]                                    = FakeRequest()
   val mockApplicationConfig: ApplicationConfig                 = app.injector.instanceOf[ApplicationConfig]
   val mockMongoLockRepository: DefaultLockRepositoryProvider   = mock[DefaultLockRepositoryProvider]
   val mockResubPresubmissionService: ResubPresubmissionService = mock[ResubPresubmissionService]
@@ -49,7 +54,7 @@ class SchedulerServiceSpec extends ERSTestHelper with BeforeAndAfterEach with Ei
       val schedulerService: ReSubmissionSchedulerService =
         new ReSubmissionSchedulerService(mockApplicationConfig, mockMongoLockRepository, mockResubPresubmissionService)
 
-      when(mockResubPresubmissionService.processFailedSubmissions(any())(any(), any()))
+      when(mockResubPresubmissionService.processFailedSubmissions(any())(using any(), any()))
         .thenReturn(ERSEnvelope(Future.successful(true)))
 
       val result = await(schedulerService.resubmit().value)
@@ -60,7 +65,7 @@ class SchedulerServiceSpec extends ERSTestHelper with BeforeAndAfterEach with Ei
       val schedulerService: ReSubmissionSchedulerService =
         new ReSubmissionSchedulerService(mockApplicationConfig, mockMongoLockRepository, mockResubPresubmissionService)
 
-      when(mockResubPresubmissionService.processFailedSubmissions(any())(any(), any()))
+      when(mockResubPresubmissionService.processFailedSubmissions(any())(using any(), any()))
         .thenReturn(ERSEnvelope(Future.successful(false)))
 
       val result = await(schedulerService.resubmit().value)
@@ -71,7 +76,7 @@ class SchedulerServiceSpec extends ERSTestHelper with BeforeAndAfterEach with Ei
       val schedulerService: ReSubmissionSchedulerService =
         new ReSubmissionSchedulerService(mockApplicationConfig, mockMongoLockRepository, mockResubPresubmissionService)
 
-      when(mockResubPresubmissionService.processFailedSubmissions(any())(any(), any()))
+      when(mockResubPresubmissionService.processFailedSubmissions(any())(using any(), any()))
         .thenReturn(ERSEnvelope(ResubmissionError()))
 
       val result = await(schedulerService.resubmit().value)
@@ -89,7 +94,7 @@ class SchedulerServiceSpec extends ERSTestHelper with BeforeAndAfterEach with Ei
           mockResubPresubmissionService
         )
 
-      when(mockResubPresubmissionService.processFailedSubmissions(any())(any(), any()))
+      when(mockResubPresubmissionService.processFailedSubmissions(any())(using any(), any()))
         .thenReturn(ERSEnvelope(Future.successful(true)))
 
       val result = await(schedulerService.resubmit().value)
@@ -104,7 +109,7 @@ class SchedulerServiceSpec extends ERSTestHelper with BeforeAndAfterEach with Ei
           mockResubPresubmissionService
         )
 
-      when(mockResubPresubmissionService.processFailedSubmissions(any())(any(), any()))
+      when(mockResubPresubmissionService.processFailedSubmissions(any())(using any(), any()))
         .thenReturn(ERSEnvelope(Future.successful(false)))
 
       val result = await(schedulerService.resubmit().value)
@@ -119,7 +124,7 @@ class SchedulerServiceSpec extends ERSTestHelper with BeforeAndAfterEach with Ei
           mockResubPresubmissionService
         )
 
-      when(mockResubPresubmissionService.processFailedSubmissions(any())(any(), any()))
+      when(mockResubPresubmissionService.processFailedSubmissions(any())(using any(), any()))
         .thenReturn(ERSEnvelope(ResubmissionError()))
 
       val result = await(schedulerService.resubmit().value)
@@ -136,6 +141,85 @@ class SchedulerServiceSpec extends ERSTestHelper with BeforeAndAfterEach with Ei
 
       schedulerService.processFailedSubmissionsConfig.streamed shouldBe true
       schedulerService.jobName                                 shouldBe "resubmission-streamed-service"
+    }
+  }
+
+  "resubmission service invoke" should {
+
+    "return false when lock returns None" in {
+
+      val config = Configuration(
+        "schedules.resubmission-service.resubmissionLimit"        -> 10,
+        "schedules.resubmission-service.lockTimeout"              -> 10,
+        "schedules.resubmission-service.enabled"                  -> true,
+        "schedules.resubmission-service.dateTimeFilter.enabled"   -> false,
+        "schedules.resubmission-service.schemaRefsFilter.enabled" -> false,
+        "schedules.resubmission-service.schemaFilter.enabled"     -> false,
+        "schedules.resubmission-service.additional-logs.enabled"  -> false
+      )
+
+      val applicationConfigWithoutLogging: ApplicationConfig = new ApplicationConfig(new ServicesConfig(config))
+
+      val schedulerService: ReSubmissionSchedulerService =
+        new ReSubmissionSchedulerService(
+          applicationConfigWithoutLogging,
+          mockMongoLockRepository,
+          mockResubPresubmissionService
+        ) {
+          override def resubmit()(using request: Request[?], hc: HeaderCarrier): ERSEnvelope[Boolean] =
+            ERSEnvelope(false)
+
+          override val lockService: LockService = new LockService {
+            override val lockRepository: LockRepository = mockMongoLockRepository.repo
+            override val lockId: String                 = "test"
+            override val ttl: Duration                  = Duration(10, SECONDS)
+
+            override def withLock[T](body: => Future[T])(implicit ec: ExecutionContext): Future[Option[T]] =
+              Future.successful(None)
+          }
+        }
+
+      await(schedulerService.invoke.value).value shouldBe false
+    }
+
+  }
+
+  "streamed resubmission service invoke" should {
+
+    "return false when lock returns None" in {
+
+      val config = Configuration(
+        "schedules.resubmission-streamed-service.resubmissionLimit"        -> 10,
+        "schedules.resubmission-streamed-service.lockTimeout"              -> 10,
+        "schedules.resubmission-streamed-service.enabled"                  -> true,
+        "schedules.resubmission-streamed-service.dateTimeFilter.enabled"   -> false,
+        "schedules.resubmission-streamed-service.schemaRefsFilter.enabled" -> false,
+        "schedules.resubmission-streamed-service.schemaFilter.enabled"     -> false,
+        "schedules.resubmission-streamed-service.additional-logs.enabled"  -> false
+      )
+
+      val applicationConfigWithoutLogging: ApplicationConfig = new ApplicationConfig(new ServicesConfig(config))
+
+      val schedulerService: StreamedResubmissionSchedulerService =
+        new StreamedResubmissionSchedulerService(
+          applicationConfigWithoutLogging,
+          mockMongoLockRepository,
+          mockResubPresubmissionService
+        ) {
+          override def resubmit()(using request: Request[?], hc: HeaderCarrier): ERSEnvelope[Boolean] =
+            ERSEnvelope(false)
+
+          override val lockService: LockService = new LockService {
+            override val lockRepository: LockRepository = mockMongoLockRepository.repo
+            override val lockId: String                 = "test"
+            override val ttl: Duration                  = Duration(10, SECONDS)
+
+            override def withLock[T](body: => Future[T])(implicit ec: ExecutionContext): Future[Option[T]] =
+              Future.successful(None)
+          }
+        }
+
+      await(schedulerService.invoke.value).value shouldBe false
     }
   }
 

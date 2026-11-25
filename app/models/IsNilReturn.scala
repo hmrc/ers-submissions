@@ -16,8 +16,9 @@
 
 package models
 
-object IsNilReturn extends Enumeration {
-  type IsNilReturn = Value
-  val True  = Value("2")
-  val False = Value("1")
+enum IsNilReturn(val value: String) {
+  case True extends IsNilReturn("2")
+  case False extends IsNilReturn("1")
+
+  override def toString: String = value
 }
