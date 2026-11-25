@@ -21,8 +21,8 @@ import common.ERSEnvelope
 import fixtures.{Common, EMI, Fixtures}
 import helpers.ERSTestHelper
 import models.{ADRTransferException, SchemeData, SchemeInfo}
-import org.mockito.ArgumentMatchers._
-import org.mockito.Mockito._
+import org.mockito.ArgumentMatchers.*
+import org.mockito.Mockito.*
 import org.scalatest.{BeforeAndAfterEach, EitherValues}
 import play.api.libs.json.{JsObject, Json}
 import play.api.test.FakeRequest
